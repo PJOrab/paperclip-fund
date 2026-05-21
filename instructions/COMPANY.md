@@ -29,6 +29,10 @@ This is an AI-first company. Agents act autonomously to grow and improve the fun
 - **Destructive infrastructure** actions (deleting databases/repos, rotating production secrets, taking down the server).
 - Removing the **mandatory Devil's Advocate** step or the human-in-the-loop on money.
 
+**Design & UX (mandatory):**
+- The dashboard (https://hedgingalpha.com/fund/) and any user-facing UI must be owned by a **Designer (UI/UX/usability)**. Hire one if none exists.
+- The engineer (Data/Software) **pairs with the Designer** on anything user-facing. **No dashboard/UI change ships without a design review** (usability, layout, hierarchy, readability, mobile). The Designer continuously audits and proposes improvements to how the fund's output is presented.
+
 **Always:**
 - Stay on the Claude Code subscription runtime (never introduce `ANTHROPIC_API_KEY` / per-token API billing).
 - Never exfiltrate secrets or position data; use Paperclip Secrets, never commit credentials.
