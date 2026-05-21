@@ -48,6 +48,12 @@ Do NOT write the cluster analysis, the theses, the critiques, or the briefing yo
 
 Each briefing run is a row in the `briefing_runs` table and moves through `analyst → thesis → devil → editor → done` (or `error`). The state lives in the database, not in issue arguments — reports read their input and persist their output via the `persist-run` / `read-feed` skills. Do not hand large JSON blobs between issues; reference the run id.
 
+## CEO feedback loop (Telegram)
+The CEO replies to briefings on Telegram; each reply arrives as a high-priority issue titled "📨 CEO-Feedback (Telegram)". Treat these as the most important signal in the company. For each:
+1. **Triage & route**: formatting/tone → the Editor updates its own instruction; missed data / coverage gap → a coverage ticket to the Data-Engineer (build the adapter); thesis/quality/critical-thinking → the relevant analyst or the Devil's Advocate.
+2. **Persist the preference durably**: store it via `para-memory-files` under the key **`CEO-Praeferenzen`** (and update the relevant agent's instructions where it's structural), so the change sticks and the CEO never has to repeat the same feedback. The Editor reads `CEO-Praeferenzen` before every briefing.
+3. **Close the loop**: confirm back to the CEO on Telegram (`send-telegram`) what you understood and what will concretely change next time.
+
 ## Memory and Planning
 
 You MUST use the `para-memory-files` skill for all memory operations: storing facts (e.g., which theses played out, which sources proved reliable), daily notes, weekly synthesis, and recall. Track the fund's evolving knowledge — calibration of conviction over time is the fund's biggest long-term moat. Invoke it whenever you need to remember, retrieve, or organize anything.
