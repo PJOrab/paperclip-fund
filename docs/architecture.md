@@ -176,3 +176,28 @@ System-Prompt mit klarer Rolle, eigenem Datenzugriff und Output-Schema:
   `macro-agent`-Adapter scaffolden (Phase 0). *Empfohlen.*
 - **(b)** System-Prompts des Agenten-Gremiums (inkl. Devil's Advocate)
   ausformulieren.
+
+---
+
+## 8. Standing Rule — Coverage
+
+**Jede verpasste Großmeldung ist ein Coverage-Bug.** Wenn das Briefing eine
+materielle Story verpasst (IPO/S-1, großes Funding, M&A, Major-Launch,
+Regulierung), gilt: Root-Cause diagnostizieren → Adapter bauen oder patchen →
+Guardrail ergänzen, damit es nicht erneut passiert.
+
+Konkrete Leitplanken, die aus dieser Regel folgen:
+
+- **Watchlist = Untergrenze, kein Zaun** (`ingestion/watchlist.py`,
+  `COMPANY.md`). Material relevante Player/Events außerhalb der Watchlist müssen
+  trotzdem erfasst werden — nicht weil ein Ticker fehlt, wird gefiltert.
+- **Off-Watchlist-Erfassung:** `SECRegistrationsAdapter`
+  (`ingestion/sources_aitech.py`) zieht den breiten SEC-`getcurrent`-Atom-Feed je
+  Formtyp (S-1, S-1/A, F-1, F-1/A, 424B4) über ALLE Filer und markiert AI/Tech-
+  Relevanz (`AITECH_KEYWORDS` + `NOTABLE_PRIVATE_PLAYERS`), statt hart zu filtern.
+  Auslöser dieser Regel: eine SpaceX-S-1 (Nasdaq-IPO) wurde verpasst, weil der
+  alte `EDGARAdapter` nur Watchlist-CIKs (8-K/Form-4) zog.
+- **Triage surfaced Off-Watchlist-Großmeldungen:** `agents/prompts.py`
+  (`TRIAGE_SYSTEM`/`triage_user`) behandelt IPO/Funding/M&A/Launch als
+  High-Importance-Cluster; Cluster ohne `tickers` (private/neue Player) sind
+  zulässig (`fund_skills/validate_output.py`).
