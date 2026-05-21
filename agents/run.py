@@ -21,8 +21,8 @@ from ingestion.db import client
 from . import prompts as P
 from . import claude_cli as C
 
-# Modell-Tier je Rolle
-MODEL = {"triage": "haiku", "analyst": "sonnet",
+# Modell je Rolle — auf Wunsch alle auf Opus 4.7 ('opus' = neuestes Opus).
+MODEL = {"triage": "opus", "analyst": "opus",
          "thesis": "opus", "devil": "opus", "editor": "opus"}
 
 

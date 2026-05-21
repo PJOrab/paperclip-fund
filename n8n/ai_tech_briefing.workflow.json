@@ -76,8 +76,24 @@
       "name": "Telegram: CEO-Briefing",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [ 1560, 300 ],
+      "position": [ 1560, 200 ],
       "credentials": { "telegramApi": { "id": "REPLACE_TG_CRED", "name": "Fund Telegram Bot" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "REPLACE_FROM_EMAIL",
+        "toEmail": "philipp.baro@gmail.com",
+        "subject": "=AI/Tech CEO-Briefing — {{ $now.format('dd.MM.yyyy') }}",
+        "emailFormat": "text",
+        "text": "={{ $json.stdout }}",
+        "options": {}
+      },
+      "id": "f1a00000-0000-4000-8000-000000000008",
+      "name": "E-Mail: CEO-Briefing",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [ 1560, 400 ],
+      "credentials": { "smtp": { "id": "REPLACE_SMTP_CRED", "name": "Gmail SMTP" } }
     }
   ],
   "connections": {
@@ -86,7 +102,7 @@
     "Agent: Analyst (Sonnet)": { "main": [ [ { "node": "Agent: These (Opus)", "type": "main", "index": 0 } ] ] },
     "Agent: These (Opus)": { "main": [ [ { "node": "Agent: Devil's Advocate (Opus)", "type": "main", "index": 0 } ] ] },
     "Agent: Devil's Advocate (Opus)": { "main": [ [ { "node": "Agent: Editor (Opus)", "type": "main", "index": 0 } ] ] },
-    "Agent: Editor (Opus)": { "main": [ [ { "node": "Telegram: CEO-Briefing", "type": "main", "index": 0 } ] ] }
+    "Agent: Editor (Opus)": { "main": [ [ { "node": "Telegram: CEO-Briefing", "type": "main", "index": 0 }, { "node": "E-Mail: CEO-Briefing", "type": "main", "index": 0 } ] ] }
   },
   "settings": { "executionOrder": "v1" }
 }

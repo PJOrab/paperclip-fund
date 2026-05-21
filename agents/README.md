@@ -11,11 +11,14 @@ Schedule (n8n) → SSH:triage → SSH:analyst → SSH:thesis → SSH:devil → S
 
 | Stufe | Modell | Aufgabe |
 |---|---|---|
-| triage | haiku | Roh-Feed → ~12 materielle Cluster (legt neuen `briefing_runs`-Eintrag an) |
-| analyst | sonnet | Faktenlage & Marktwirkung je Cluster |
+| triage | opus | Roh-Feed → ~12 materielle Cluster (legt neuen `briefing_runs`-Eintrag an) |
+| analyst | opus | Faktenlage & Marktwirkung je Cluster |
 | thesis | opus | 3-5 investierbare Thesen (Bull/Bear, Katalysatoren, Conviction) |
 | devil | opus | Devil's Advocate: greift jede These an, Falsifikation, Verdikt |
-| editor | opus | CEO-Briefing (Markdown, deutsch) → stdout → Telegram |
+| editor | opus | CEO-Briefing (Markdown, deutsch) → stdout → Telegram + E-Mail |
+
+Alle Stufen laufen auf **Opus 4.7** (`MODEL` in `run.py`). Tier je Rolle ist dort
+einzeilig anpassbar (z.B. triage auf `haiku` für günstigere Vorfilterung).
 
 Jede Stufe arbeitet auf der jüngsten `briefing_runs`-Zeile mit passendem `status`
 (`analyst→thesis→devil→editor→done`). Kein Argument-Passing zwischen Nodes nötig.
@@ -40,12 +43,21 @@ python -m agents.run analyst   # usw.
    - Private Key: ein Key, dessen Public-Key in `~/.ssh/authorized_keys` des VPS liegt
    - *Wichtig:* `claude` muss für diesen SSH-User funktionieren (eingeloggt sein).
 3. **Telegram-Credential** anlegen (Bot-Token aus `macro-agent/.env` → `TELEGRAM_BOT_TOKEN`).
-4. **Workflow importieren**: `n8n/ai_tech_briefing.workflow.json`
+4. **E-Mail (SMTP)-Credential** anlegen — bei Gmail:
+   - Host `smtp.gmail.com`, Port `465`, SSL an
+   - User: deine Gmail-Adresse, Passwort: ein **App-Passwort**
+     (Google-Konto → Sicherheit → App-Passwörter; erfordert 2FA)
+5. **Workflow importieren**: `n8n/ai_tech_briefing.workflow.json`
    (Workflows → Import from File).
-5. Nach dem Import in jeder SSH-Node die **SSH-Credential** zuweisen
-   (Platzhalter `REPLACE_SSH_CRED`), in der Telegram-Node das **Credential** +
-   `chatId` (`REPLACE_CHAT_ID` → deine `TELEGRAM_CHAT_ID`).
-6. Workflow aktivieren. Standard-Schedule: werktags 06:30 (Cron `30 6 * * 1-5`).
+6. Nach dem Import zuweisen:
+   - jede SSH-Node → **SSH-Credential** (`REPLACE_SSH_CRED`)
+   - Telegram-Node → Credential + `chatId` (`REPLACE_CHAT_ID` → `TELEGRAM_CHAT_ID`)
+   - E-Mail-Node → SMTP-Credential + `fromEmail` (`REPLACE_FROM_EMAIL`); `toEmail`
+     ist auf philipp.baro@gmail.com vorbelegt
+7. Workflow aktivieren. Standard-Schedule: werktags 06:30 (Cron `30 6 * * 1-5`).
+
+Editor fächert auf **Telegram UND E-Mail** parallel. Brauchst du nur einen Kanal,
+lösch den anderen Node. Alternative zu SMTP: der native **Gmail-Node** (OAuth2).
 
 ## Hinweise
 
