@@ -37,6 +37,28 @@ def finish_run(run_id: str, *, status: str, items_fetched: int,
     }).eq("id", run_id).execute()
 
 
+def ensure_sources(items: list[dict]) -> None:
+    """
+    Registriert alle in den Items vorkommenden Quellen in der sources-Tabelle,
+    bevor raw_items eingefügt wird (sonst Foreign-Key-Verletzung für neue
+    Kategorien wie z.B. 'crypto_intel' aus den X-Account-Tiers).
+    Bestehende Einträge (mit kuratierter reliability/kind) werden NICHT überschrieben.
+    """
+    by_name: dict[str, dict] = {}
+    for it in items:
+        name = it.get("source") or "unknown"
+        if name not in by_name:
+            rel = it.get("reliability")
+            by_name[name] = {
+                "name": name,
+                "reliability": rel if rel is not None else 0.25,
+            }
+    if by_name:
+        (client().table("sources")
+         .upsert(list(by_name.values()), on_conflict="name", ignore_duplicates=True)
+         .execute())
+
+
 def upsert_raw_items(items: list[dict]) -> int:
     """
     Upsert auf content_hash (Duplikate werden ignoriert).
@@ -44,6 +66,7 @@ def upsert_raw_items(items: list[dict]) -> int:
     """
     if not items:
         return 0
+    ensure_sources(items)
     # Innerhalb des Batches auf content_hash deduplizieren (sonst ON CONFLICT-Fehler)
     by_hash = {it["content_hash"]: it for it in items}
     rows = list(by_hash.values())
