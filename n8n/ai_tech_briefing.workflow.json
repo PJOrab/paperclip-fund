@@ -1,0 +1,92 @@
+{
+  "name": "AI/Tech CEO-Briefing",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [ { "field": "cronExpression", "expression": "30 6 * * 1-5" } ] }
+      },
+      "id": "f1a00000-0000-4000-8000-000000000001",
+      "name": "Schedule 06:30 Mo-Fr",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [ 240, 300 ]
+    },
+    {
+      "parameters": {
+        "command": "cd /root/ai-tech-fund && /root/ai-tech-fund/venv/bin/python -m agents.run triage --window 24"
+      },
+      "id": "f1a00000-0000-4000-8000-000000000002",
+      "name": "Agent: Triage (Haiku)",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [ 460, 300 ],
+      "credentials": { "sshPrivateKey": { "id": "REPLACE_SSH_CRED", "name": "VPS SSH" } }
+    },
+    {
+      "parameters": {
+        "command": "cd /root/ai-tech-fund && /root/ai-tech-fund/venv/bin/python -m agents.run analyst"
+      },
+      "id": "f1a00000-0000-4000-8000-000000000003",
+      "name": "Agent: Analyst (Sonnet)",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [ 680, 300 ],
+      "credentials": { "sshPrivateKey": { "id": "REPLACE_SSH_CRED", "name": "VPS SSH" } }
+    },
+    {
+      "parameters": {
+        "command": "cd /root/ai-tech-fund && /root/ai-tech-fund/venv/bin/python -m agents.run thesis"
+      },
+      "id": "f1a00000-0000-4000-8000-000000000004",
+      "name": "Agent: These (Opus)",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [ 900, 300 ],
+      "credentials": { "sshPrivateKey": { "id": "REPLACE_SSH_CRED", "name": "VPS SSH" } }
+    },
+    {
+      "parameters": {
+        "command": "cd /root/ai-tech-fund && /root/ai-tech-fund/venv/bin/python -m agents.run devil"
+      },
+      "id": "f1a00000-0000-4000-8000-000000000005",
+      "name": "Agent: Devil's Advocate (Opus)",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [ 1120, 300 ],
+      "credentials": { "sshPrivateKey": { "id": "REPLACE_SSH_CRED", "name": "VPS SSH" } }
+    },
+    {
+      "parameters": {
+        "command": "cd /root/ai-tech-fund && /root/ai-tech-fund/venv/bin/python -m agents.run editor"
+      },
+      "id": "f1a00000-0000-4000-8000-000000000006",
+      "name": "Agent: Editor (Opus)",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [ 1340, 300 ],
+      "credentials": { "sshPrivateKey": { "id": "REPLACE_SSH_CRED", "name": "VPS SSH" } }
+    },
+    {
+      "parameters": {
+        "chatId": "REPLACE_CHAT_ID",
+        "text": "={{ $json.stdout }}",
+        "additionalFields": {}
+      },
+      "id": "f1a00000-0000-4000-8000-000000000007",
+      "name": "Telegram: CEO-Briefing",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [ 1560, 300 ],
+      "credentials": { "telegramApi": { "id": "REPLACE_TG_CRED", "name": "Fund Telegram Bot" } }
+    }
+  ],
+  "connections": {
+    "Schedule 06:30 Mo-Fr": { "main": [ [ { "node": "Agent: Triage (Haiku)", "type": "main", "index": 0 } ] ] },
+    "Agent: Triage (Haiku)": { "main": [ [ { "node": "Agent: Analyst (Sonnet)", "type": "main", "index": 0 } ] ] },
+    "Agent: Analyst (Sonnet)": { "main": [ [ { "node": "Agent: These (Opus)", "type": "main", "index": 0 } ] ] },
+    "Agent: These (Opus)": { "main": [ [ { "node": "Agent: Devil's Advocate (Opus)", "type": "main", "index": 0 } ] ] },
+    "Agent: Devil's Advocate (Opus)": { "main": [ [ { "node": "Agent: Editor (Opus)", "type": "main", "index": 0 } ] ] },
+    "Agent: Editor (Opus)": { "main": [ [ { "node": "Telegram: CEO-Briefing", "type": "main", "index": 0 } ] ] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
