@@ -44,9 +44,12 @@ def build_adapters():
         adapters.append(("NewsAPI", m.NewsAPIAdapter()))
     if getattr(m, "FRED_API_KEY", ""):
         adapters.append(("FRED", m.FREDAdapter()))
-    # X/Suche nur, wenn Cookies gesetzt (laufen sonst in 401 — wird gefangen)
+    # X nur, wenn Cookies gesetzt. XGraphQLAdapter = kuratierte Account-Timelines
+    # (der ergiebige Adapter, ~100+ Items). XSearchAdapter (Keyword-Suche) ist
+    # derzeit serverseitig geschützt (404) und liefert 0 — bleibt deshalb draußen,
+    # bis die Queries auf AI/Tech umgestellt + der Endpoint wieder erreichbar ist.
     if getattr(m, "X_AUTH_TOKEN", "") and getattr(m, "X_CT0", ""):
-        adapters.append(("X/Suche", m.XSearchAdapter()))
+        adapters.append(("X/Twitter", m.XGraphQLAdapter()))
     return adapters
 
 
