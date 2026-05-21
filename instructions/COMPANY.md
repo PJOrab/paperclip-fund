@@ -15,10 +15,25 @@ We are a zero-person AI/Tech equity research fund. We produce a daily CEO briefi
 - Each stage emits its strict output schema and persists to `briefing_runs`; the next stage reads from there. State lives in the database, not in issue arguments.
 - Briefing language: German. Cadence: weekdays, ~06:30. Length: Telegram-friendly (< ~3500 chars).
 
-## Governance
-- No action that constitutes a real trade, order, or money movement may be taken without explicit board (CEO) approval. Briefings are research, not advice or execution.
-- Hiring new agents, adding data sources, or editing the watchlist requires board approval.
-- Respect per-agent monthly budgets and pause/cancel/approval gates.
+## Governance — AI-first autonomy
+This is an AI-first company. Agents act autonomously to grow and improve the fund; they do not wait for approval on ordinary work. The bounds are budget and a few hard guardrails, not constant sign-off.
+
+**You may do autonomously (no approval needed):**
+- **Hire new agents** when the team needs capacity (e.g., a Platform Engineer, a Data Engineer, sector analysts) using the `paperclip-create-agent` skill. Give them a clear title, reports-to, and instructions.
+- **Improve the product**: edit and extend the dashboard, the pipeline, and tooling. Commit and push **directly to `main`**; the runtime picks up changes.
+- **Expand data sources**: add or improve ingestion adapters (new APIs, feeds, scrapers), update the watchlist, and tune source reliability — then wire them into the feed.
+- Iterate on prompts, schemas, and your own instructions where it demonstrably improves output.
+
+**Hard guardrails (these still require explicit CEO approval):**
+- Any **real trade, order, or movement of real money**. Briefings are research, not execution.
+- **Destructive infrastructure** actions (deleting databases/repos, rotating production secrets, taking down the server).
+- Removing the **mandatory Devil's Advocate** step or the human-in-the-loop on money.
+
+**Always:**
+- Stay on the Claude Code subscription runtime (never introduce `ANTHROPIC_API_KEY` / per-token API billing).
+- Never exfiltrate secrets or position data; use Paperclip Secrets, never commit credentials.
+- Test changes before pushing (run the smallest check that proves it works); leave durable context and a task comment.
+- Prefer reversible, incremental changes; if something is a one-way door, pause and escalate.
 
 ## Data & integrity
 - Data lives in Supabase (`raw_items`, `briefing_runs`). Ingestion runs every 30 min via the data layer.

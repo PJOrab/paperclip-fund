@@ -1,0 +1,252 @@
+"""
+AI/Tech-spezifische Datenquellen.
+
+Nutzt die HTTP-Helfer (fetch_url/fetch_json) und den XGraphQLAdapter aus
+macro-agent wieder, ohne dieses Projekt zu verändern. Konfiguration kommt
+ausschließlich aus watchlist.py. Jeder Adapter liefert .fetch() →
+list[{text, source, url?, reliability?}].
+"""
+import re
+import time
+from datetime import datetime, timezone, timedelta
+from urllib.parse import quote
+
+from . import watchlist as W
+from .adapters import _load_macro
+
+# SEC verlangt einen User-Agent mit Kontakt; GitHub verlangt überhaupt einen UA.
+UA = {"User-Agent": "ai-tech-fund/0.1 (research; philipp.baro@gmail.com)"}
+
+
+def _m():
+    return _load_macro()
+
+
+class EDGARAdapter:
+    """SEC-Pflichtmeldungen (8-K Material Events, Form 4 Insider-Trades) je Ticker."""
+    TICKERS_MAP = "https://www.sec.gov/files/company_tickers.json"
+    SUBMISSIONS = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
+
+    def __init__(self):
+        self._cik = None  # {TICKER: (cik:int, title)}
+
+    def _load_cik_map(self):
+        data = _m().fetch_json(self.TICKERS_MAP, headers=UA, timeout=20)
+        out = {}
+        if isinstance(data, dict):
+            for row in data.values():
+                out[str(row.get("ticker", "")).upper()] = (
+                    int(row["cik_str"]), row.get("title", ""))
+        return out
+
+    def fetch(self):
+        m = _m()
+        if self._cik is None:
+            self._cik = self._load_cik_map()
+        if not self._cik:
+            return []
+        cutoff = datetime.now(timezone.utc).date() - timedelta(days=W.EDGAR_LOOKBACK_DAYS)
+        forms = set(W.EDGAR_FORMS)
+        out = []
+        for tk in W.TICKERS:
+            ent = self._cik.get(tk.upper())
+            if not ent:
+                continue
+            cik, title = ent
+            data = m.fetch_json(self.SUBMISSIONS.format(cik=cik), headers=UA, timeout=20)
+            time.sleep(0.2)  # SEC: max 10 req/s
+            if not data:
+                continue
+            recent = data.get("filings", {}).get("recent", {})
+            form_l = recent.get("form", [])
+            date_l = recent.get("filingDate", [])
+            acc_l = recent.get("accessionNumber", [])
+            doc_l = recent.get("primaryDocument", [])
+            desc_l = recent.get("primaryDocDescription", [])
+            for i, form in enumerate(form_l):
+                if form not in forms:
+                    continue
+                try:
+                    fdate = datetime.strptime(date_l[i], "%Y-%m-%d").date()
+                except Exception:
+                    continue
+                if fdate < cutoff:
+                    continue
+                acc = acc_l[i].replace("-", "") if i < len(acc_l) else ""
+                doc = doc_l[i] if i < len(doc_l) else ""
+                desc = (desc_l[i] if i < len(desc_l) else "") or form
+                src = "sec_form4" if form == "4" else "sec_8k"
+                label = "Insider Form 4" if form == "4" else "8-K"
+                acc_disp = acc_l[i] if i < len(acc_l) else ""
+                out.append({
+                    # Accession-Nr. im Text → jede Einreichung distinkt (Dedup-Hash)
+                    "text": f"[EDGAR {label}] {tk} {title}: {desc} (filed {date_l[i]}, {acc_disp})",
+                    "source": src,
+                    "url": f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{doc}",
+                    "reliability": W.SOURCE_RELIABILITY.get(src),
+                })
+        return out
+
+
+class ArxivAdapter:
+    """Neueste AI/ML-Paper (Forschungsfront) via arXiv-API."""
+    def fetch(self):
+        q = "+OR+".join(f"cat:{c}" for c in W.ARXIV_CATEGORIES)
+        url = (f"http://export.arxiv.org/api/query?search_query={q}"
+               f"&start=0&max_results={W.ARXIV_MAX}"
+               f"&sortBy=submittedDate&sortOrder=descending")
+        xml = _m().fetch_url(url, timeout=20)
+        if not xml:
+            return []
+        out = []
+        for entry in xml.split("<entry>")[1:]:
+            t = re.search(r"<title>(.*?)</title>", entry, re.DOTALL)
+            link = re.search(r"<id>(.*?)</id>", entry)
+            if not t:
+                continue
+            title = re.sub(r"\s+", " ", t.group(1)).strip()
+            if not title:
+                continue
+            out.append({
+                "text": f"[arXiv] {title}",
+                "source": "arxiv",
+                "url": link.group(1).strip() if link else None,
+                "reliability": W.SOURCE_RELIABILITY["arxiv"],
+            })
+        return out
+
+
+class HackerNewsAdapter:
+    """Hochbewertete HN-Stories zu AI/Tech (Algolia-Suche, nach Datum + Punkten)."""
+    def fetch(self):
+        m = _m()
+        out, seen = [], set()
+        for q in W.HN_QUERIES:
+            url = (f"https://hn.algolia.com/api/v1/search_by_date?tags=story"
+                   f"&query={quote(q)}&numericFilters=points>{W.HN_MIN_POINTS}"
+                   f"&hitsPerPage=5")
+            data = m.fetch_json(url, timeout=15)
+            time.sleep(0.3)
+            if not data:
+                continue
+            for h in data.get("hits", []):
+                oid = h.get("objectID")
+                title = h.get("title") or ""
+                if not oid or oid in seen or not title:
+                    continue
+                seen.add(oid)
+                pts = h.get("points", 0)
+                out.append({
+                    "text": f"[HN {pts}pts] {title}",
+                    "source": "hackernews",
+                    "url": h.get("url") or f"https://news.ycombinator.com/item?id={oid}",
+                    "reliability": W.SOURCE_RELIABILITY["hackernews"],
+                })
+        return out
+
+
+class GitHubTrendingAdapter:
+    """Aufkommende AI-Repos: zuletzt erstellt, nach Stars (GitHub Search-API)."""
+    def fetch(self):
+        m = _m()
+        headers = {**UA, "Accept": "application/vnd.github+json"}
+        since = (datetime.now(timezone.utc).date()
+                 - timedelta(days=W.GITHUB_CREATED_LOOKBACK_DAYS)).isoformat()
+        out, seen = [], set()
+        for topic in W.GITHUB_TOPICS:
+            q = f"topic:{topic} created:>{since}"
+            url = (f"https://api.github.com/search/repositories?q={quote(q)}"
+                   f"&sort=stars&order=desc&per_page=5")
+            data = m.fetch_json(url, headers=headers, timeout=15)
+            time.sleep(2)  # Search-API: ~10 req/min unauthentifiziert
+            if not data:
+                continue
+            for r in data.get("items", []):
+                full = r.get("full_name")
+                if not full or full in seen:
+                    continue
+                seen.add(full)
+                stars = r.get("stargazers_count", 0)
+                desc = (r.get("description") or "").strip()
+                out.append({
+                    "text": f"[GitHub ★{stars}] {full}: {desc}"[:280],
+                    "source": "github_trending",
+                    "url": r.get("html_url"),
+                    "reliability": W.SOURCE_RELIABILITY["github_trending"],
+                })
+        return out
+
+
+class TechRSSAdapter:
+    """Kuratierte AI/Tech-News-RSS/Atom-Feeds (failsafe je Feed)."""
+    def fetch(self):
+        m = _m()
+        out = []
+        for name, feed in W.TECH_RSS_FEEDS.items():
+            try:
+                text = m.fetch_url(feed, timeout=15)
+                if not text:
+                    continue
+                sep = "<item>" if "<item>" in text else "<entry>"
+                for block in text.split(sep)[1:6]:
+                    t = re.search(r"<title>(.*?)</title>", block, re.DOTALL)
+                    if not t:
+                        continue
+                    title = re.sub(r"<[^>]+>", "", t.group(1))
+                    title = (title.replace("<![CDATA[", "").replace("]]>", "")
+                             .replace("&amp;", "&").replace("&#039;", "'").strip())
+                    if not title:
+                        continue
+                    link = (re.search(r'<link[^>]*href="([^"]+)"', block)
+                            or re.search(r"<link>(.*?)</link>", block))
+                    out.append({
+                        "text": f"[{name}] {title}",
+                        "source": "tech_news",
+                        "url": link.group(1).strip() if link else None,
+                        "reliability": W.SOURCE_RELIABILITY["tech_news"],
+                    })
+            except Exception:
+                continue
+        return out
+
+
+class AITechNewsAPIAdapter:
+    """NewsAPI mit AI/Tech-Equity-Query (nur wenn NEWSAPI_KEY gesetzt)."""
+    def fetch(self):
+        m = _m()
+        key = getattr(m, "NEWSAPI_KEY", "")
+        if not key:
+            return []
+        url = (f"https://newsapi.org/v2/everything?q={quote(W.NEWSAPI_QUERY)}"
+               f"&language=en&sortBy=publishedAt&pageSize=15&apiKey={key}")
+        data = m.fetch_json(url, timeout=15)
+        out = []
+        if data and data.get("status") == "ok":
+            for art in data.get("articles", []):
+                title = art.get("title") or ""
+                if not title:
+                    continue
+                desc = art.get("description") or ""
+                out.append({
+                    "text": f"{title}. {desc[:200]}",
+                    "source": "tech_news",
+                    "url": art.get("url"),
+                    "reliability": 0.6,
+                })
+        return out
+
+
+class XAITechAdapter:
+    """
+    Account-Timelines der AI/Tech-Accounts. Verwendet den XGraphQLAdapter aus
+    macro-agent wieder, indem dessen Account-Globals (nur in diesem Prozess)
+    auf die AI/Tech-Liste aus watchlist.py gesetzt werden.
+    """
+    def __init__(self):
+        m = _m()
+        m.X_ACCOUNTS_TIERED = dict(W.X_ACCOUNTS_AITECH)
+        m.X_ACCOUNTS = list(W.X_ACCOUNTS_AITECH.keys())
+        self._inner = m.XGraphQLAdapter()
+
+    def fetch(self):
+        return self._inner.fetch()
