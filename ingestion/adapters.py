@@ -31,25 +31,27 @@ def _load_macro():
 
 
 def build_adapters():
-    """Baut die Liste (name, adapter)-Tupel — gespiegelt aus macro-agent run_scan."""
+    """
+    AI/Tech-Quellen-Set. Eigene Adapter aus sources_aitech.py; nur FRED bleibt
+    aus macro-agent als Rates-/Liquiditäts-Overlay (Tech ist zinssensitiv).
+    Funktionsinterner Import vermeidet Zirkularität (sources_aitech → adapters).
+    """
     m = _load_macro()
+    from . import sources_aitech as S
+
     adapters = [
-        ("GDELT", m.GDELTAdapter()),
-        ("Zentralbanken", m.CentralBankAdapter()),
-        ("CBOE P/C", m.CBOEPutCallAdapter()),
-        ("CFTC COT", m.CFTCCOTAdapter()),
+        ("SEC EDGAR", S.EDGARAdapter()),
+        ("arXiv", S.ArxivAdapter()),
+        ("Hacker News", S.HackerNewsAdapter()),
+        ("GitHub", S.GitHubTrendingAdapter()),
+        ("Tech RSS", S.TechRSSAdapter()),
     ]
-    # Schlüsselabhängige Quellen nur, wenn Key vorhanden
     if getattr(m, "NEWSAPI_KEY", ""):
-        adapters.append(("NewsAPI", m.NewsAPIAdapter()))
+        adapters.append(("NewsAPI AI", S.AITechNewsAPIAdapter()))
     if getattr(m, "FRED_API_KEY", ""):
-        adapters.append(("FRED", m.FREDAdapter()))
-    # X nur, wenn Cookies gesetzt. XGraphQLAdapter = kuratierte Account-Timelines
-    # (der ergiebige Adapter, ~100+ Items). XSearchAdapter (Keyword-Suche) ist
-    # derzeit serverseitig geschützt (404) und liefert 0 — bleibt deshalb draußen,
-    # bis die Queries auf AI/Tech umgestellt + der Endpoint wieder erreichbar ist.
+        adapters.append(("FRED (Macro)", m.FREDAdapter()))
     if getattr(m, "X_AUTH_TOKEN", "") and getattr(m, "X_CT0", ""):
-        adapters.append(("X/Twitter", m.XGraphQLAdapter()))
+        adapters.append(("X/AI-Tech", S.XAITechAdapter()))
     return adapters
 
 
