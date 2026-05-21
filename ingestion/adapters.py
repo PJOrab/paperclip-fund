@@ -41,6 +41,7 @@ def build_adapters():
 
     adapters = [
         ("SEC EDGAR", S.EDGARAdapter()),
+        ("SEC Registrierungen", S.SECRegistrationsAdapter()),
         ("arXiv", S.ArxivAdapter()),
         ("Hacker News", S.HackerNewsAdapter()),
         ("GitHub", S.GitHubTrendingAdapter()),

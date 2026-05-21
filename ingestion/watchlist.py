@@ -69,9 +69,38 @@ X_ACCOUNTS_AITECH = {
     "EMostaque":      {"tier": 3, "reliability": 0.65, "category": "x_tech_analyst"},
 }
 
+# SEC-Registrierungen / IPO-Pipeline (OFF-WATCHLIST, breit über alle Filer).
+# getcurrent-Atom-Feed je Formtyp — fängt IPO-Registrierungen wie den SpaceX-Fall,
+# die der watchlist-gebundene EDGAR-Adapter strukturell verpasst.
+REGISTRATION_FORMS = ["S-1", "S-1/A", "F-1", "F-1/A", "424B4"]
+REGISTRATION_COUNT = 100
+
+# AI/Tech-Relevanz-Heuristik für off-watchlist-Filings. Treffer im Firmennamen
+# → als AI/TECH markiert (Triage stuft solche Cluster hoch). Generös halten:
+# jede verpasste Großmeldung ist ein Coverage-Bug (Standing Rule, COMPANY.md).
+AITECH_KEYWORDS = [
+    "artificial intelligence", " ai ", " ai,", " ai.", "a.i.", "machine learning",
+    "deep learning", "neural", "llm", "large language", "generative", "semiconductor",
+    "chip", "silicon", "gpu", "data center", "datacenter", "cloud", "software",
+    "saas", "robot", "autonom", "self-driving", "quantum", "space", "satellite",
+    "rocket", "launch", "cyber", "fintech", "platform", "compute", "inference",
+    "foundation model", "biotech", "fusion", "battery", "lidar", "drone",
+]
+
+# Notable private/neue Player — bei Registrierung sofort hochgestuft, auch wenn
+# der Name kein generisches Keyword trifft. Watchlist ist Untergrenze, kein Zaun.
+NOTABLE_PRIVATE_PLAYERS = [
+    "spacex", "openai", "anthropic", "databricks", "stripe", "xai", "x.ai",
+    "scale ai", "anduril", "figure ai", "cerebras", "groq", "mistral",
+    "perplexity", "canva", "discord", "epic games", "bytedance", "shein",
+    "starlink", "neuralink", "waymo", "cruise", "rivian", "wiz",
+    "coreweave", "lambda labs", "together ai", "cohere", "hugging face",
+    "runway", "midjourney", "safe superintelligence", "thinking machines",
+]
+
 # Default-Reliability je neuer Quellen-Kategorie (für sources-Tabelle)
 SOURCE_RELIABILITY = {
-    "sec_8k": 0.95, "sec_form4": 0.90,
+    "sec_8k": 0.95, "sec_form4": 0.90, "sec_registration": 0.92,
     "arxiv": 0.80, "github_trending": 0.60,
     "hackernews": 0.55, "tech_news": 0.60,
 }
