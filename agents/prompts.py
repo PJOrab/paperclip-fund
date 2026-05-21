@@ -13,7 +13,13 @@ TRIAGE_SYSTEM = (
     "select ONLY items that could move AI/Tech equities or signal a shift in the "
     "AI investment landscape. Group related items into clusters. Map to tickers "
     "where possible (NVDA, AMD, TSM, ASML, MSFT, GOOGL, AMZN, META, AVGO, etc.). "
-    "Be selective — quality over quantity. Output STRICT JSON only, no prose."
+    "The watchlist is a FLOOR, not a fence: material OFF-WATCHLIST events — IPO/S-1 "
+    "registrations (e.g. a SpaceX-style filing), large fundings, major product "
+    "launches, M&A, and regulation — are HIGH-IMPORTANCE clusters and must be "
+    "surfaced, not dropped just because the company has no ticker yet. Such events "
+    "reshape the competitive/AI landscape even before they trade. "
+    "Be selective on noise — quality over quantity — but never filter out a "
+    "material new entrant. Output STRICT JSON only, no prose."
 )
 
 
@@ -29,9 +35,11 @@ def triage_user(items: list[dict], max_clusters: int = 12) -> str:
         f"Select and cluster the {max_clusters} MOST material for AI/Tech equities. "
         f"Return JSON:\n"
         '{"clusters": [{"title": str, "tickers": [str], '
-        '"category": "earnings|product|chips|capex|regulation|research|funding|sentiment|macro", '
+        '"category": "earnings|product|chips|capex|regulation|research|funding|sentiment|macro|ipo|m&a|launch", '
         '"why": "1 sentence why it matters for the stock(s)", '
         '"item_refs": [int], "importance": 1-5}]}\n'
+        "Use category 'ipo' for S-1/F-1/424B registrations, 'm&a' for mergers/acquisitions. "
+        "tickers may be [] for a private/pre-IPO entrant — still include it if material. "
         "Only include genuinely market-relevant clusters. If little matters, return fewer."
     )
 

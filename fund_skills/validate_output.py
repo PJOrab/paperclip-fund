@@ -10,7 +10,7 @@ import json
 import sys
 
 CATEGORIES = {"earnings", "product", "chips", "capex", "regulation",
-              "research", "funding", "sentiment", "macro"}
+              "research", "funding", "sentiment", "macro", "ipo", "m&a", "launch"}
 
 
 def fail(errors: list[str]) -> None:

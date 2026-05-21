@@ -88,6 +88,79 @@ class EDGARAdapter:
         return out
 
 
+class SECRegistrationsAdapter:
+    """
+    Breiter SEC-Registrierungs-/IPO-Feed (OFF-WATCHLIST). Zieht den getcurrent-
+    Atom-Feed je Formtyp (S-1, S-1/A, F-1, 424B …) über ALLE Filer — nicht nur
+    Watchlist-CIKs. Fängt IPO-Registrierungen wie den SpaceX-Fall, die der
+    watchlist-gebundene EDGARAdapter strukturell verpasst.
+
+    AI/Tech-Relevanz wird per Firmenname markiert ([AI/TECH] vs [other]) als
+    Signal für die Triage. Nicht-relevante Micro-Cap/SPAC-Filings werden hier
+    weggelassen, um das Feed-Budget zu schützen — die Watchlist bleibt aber eine
+    Untergrenze, kein Zaun: jeder AI/Tech- oder Notable-Player-Treffer kommt rein.
+    """
+    BASE = ("https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent"
+            "&type={typ}&output=atom&count={count}")
+    # SEC-Pflicht: User-Agent mit Organisation + Kontakt.
+    HEADERS = {"User-Agent": "HedgingAlphaFund research philipp.baro@gmail.com"}
+
+    _ENTRY_RE = re.compile(r"<entry>(.*?)</entry>", re.DOTALL)
+    _TITLE_RE = re.compile(r"<title>(.*?)</title>", re.DOTALL)
+    _HREF_RE = re.compile(r'<link[^>]*href="([^"]+)"')
+    _TERM_RE = re.compile(r'term="([^"]+)"')
+    _ACC_RE = re.compile(r"accession-number=([0-9-]+)")
+    _FILED_RE = re.compile(r"Filed:.*?(\d{4}-\d{2}-\d{2})")
+
+    def _is_aitech(self, name: str) -> bool:
+        low = f" {name.lower()} "
+        if any(p in low for p in W.NOTABLE_PRIVATE_PLAYERS):
+            return True
+        return any(k in low for k in W.AITECH_KEYWORDS)
+
+    def fetch(self):
+        m = _m()
+        out, seen = [], set()
+        for typ in W.REGISTRATION_FORMS:
+            url = self.BASE.format(typ=quote(typ), count=W.REGISTRATION_COUNT)
+            xml = m.fetch_url(url, headers=self.HEADERS, timeout=20)
+            time.sleep(0.3)  # SEC: max 10 req/s
+            if not xml:
+                continue
+            for block in self._ENTRY_RE.findall(xml):
+                t = self._TITLE_RE.search(block)
+                if not t:
+                    continue
+                title = re.sub(r"\s+", " ", t.group(1)).strip()
+                acc_m = self._ACC_RE.search(block)
+                acc = acc_m.group(1) if acc_m else ""
+                if not acc or acc in seen:
+                    continue
+                # Title-Format: "S-1 - Company Name (0001234567) (Filer)"
+                term = self._TERM_RE.search(block)
+                form = (term.group(1) if term
+                        else (title.split(" - ", 1)[0] if " - " in title else "?"))
+                company = title.split(" - ", 1)[1] if " - " in title else title
+                company = re.sub(r"\s*\(\d{6,}\)\s*\(.*?\)\s*$", "", company).strip()
+                if not company:
+                    continue
+                relevant = self._is_aitech(company)
+                if not relevant:
+                    continue  # Budgetschutz: nur AI/Tech- oder Notable-Player-Filings
+                seen.add(acc)
+                href = self._HREF_RE.search(block)
+                filed = self._FILED_RE.search(block)
+                filed_s = filed.group(1) if filed else ""
+                out.append({
+                    "text": (f"[SEC {form} · AI/TECH] {company} — Registrierung/IPO-Filing "
+                             f"(filed {filed_s}, {acc})"),
+                    "source": "sec_registration",
+                    "url": href.group(1).strip() if href else None,
+                    "reliability": W.SOURCE_RELIABILITY.get("sec_registration"),
+                })
+        return out
+
+
 class ArxivAdapter:
     """Neueste AI/ML-Paper (Forschungsfront) via arXiv-API."""
     def fetch(self):
