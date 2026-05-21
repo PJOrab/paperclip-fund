@@ -43,23 +43,16 @@ python -m agents.run analyst   # usw.
    - Private Key: ein Key, dessen Public-Key in `~/.ssh/authorized_keys` des VPS liegt
    - *Wichtig:* `claude` muss für diesen SSH-User funktionieren (eingeloggt sein).
 3. **Telegram-Credential** anlegen (Bot-Token aus `macro-agent/.env` → `TELEGRAM_BOT_TOKEN`).
-4. **Gmail-OAuth2-Credential** anlegen (Credentials → Gmail OAuth2):
-   - In der Google Cloud Console ein OAuth-Client (Web) erstellen, Gmail-API aktivieren
-   - n8n zeigt dir die Redirect-URL → in der Cloud Console als „Authorized redirect URI"
-     eintragen; dann in n8n „Sign in with Google" klicken
-   - (n8n-Doku: Gmail-Credential — führt Schritt für Schritt durch)
-5. **Workflow importieren**: `n8n/ai_tech_briefing.workflow.json`
+4. **Workflow importieren**: `n8n/ai_tech_briefing.workflow.json`
    (Workflows → Import from File).
-6. Nach dem Import zuweisen:
+5. Nach dem Import zuweisen:
    - jede SSH-Node → **SSH-Credential** (`REPLACE_SSH_CRED`)
    - Telegram-Node → Credential + `chatId` (`REPLACE_CHAT_ID` → `TELEGRAM_CHAT_ID`)
-   - Gmail-Node → **Gmail-OAuth2-Credential** (`REPLACE_GMAIL_CRED`); `sendTo` ist auf
-     philipp.baro@gmail.com vorbelegt. Prüfe, dass „Email Type = HTML" gesetzt ist.
-7. Workflow aktivieren. Standard-Schedule: werktags 06:30 (Cron `30 6 * * 1-5`).
+6. Workflow aktivieren. Standard-Schedule: werktags 06:30 (Cron `30 6 * * 1-5`).
 
-Der Editor liefert Markdown. Telegram bekommt es direkt; die E-Mail läuft über einen
-**Markdown→HTML**-Node und geht **formatiert (HTML)** an den Gmail-Node. Beide Kanäle
-feuern parallel — brauchst du nur einen, lösch den anderen Zweig.
+Zustellung läuft über **Telegram**. (E-Mail per Gmail-OAuth wurde wegen des
+Setup-Aufwands rausgenommen; bei Bedarf wieder ergänzbar — SMTP+App-Passwort wäre
+der schnellere Weg.)
 
 ## Hinweise
 

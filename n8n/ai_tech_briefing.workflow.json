@@ -76,37 +76,8 @@
       "name": "Telegram: CEO-Briefing",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [ 1560, 200 ],
+      "position": [ 1560, 300 ],
       "credentials": { "telegramApi": { "id": "REPLACE_TG_CRED", "name": "Fund Telegram Bot" } }
-    },
-    {
-      "parameters": {
-        "mode": "markdownToHtml",
-        "markdown": "={{ $json.stdout }}",
-        "options": { "destinationKey": "html" }
-      },
-      "id": "f1a00000-0000-4000-8000-000000000008",
-      "name": "Markdown → HTML",
-      "type": "n8n-nodes-base.markdown",
-      "typeVersion": 1,
-      "position": [ 1560, 420 ]
-    },
-    {
-      "parameters": {
-        "resource": "message",
-        "operation": "send",
-        "sendTo": "philipp.baro@gmail.com",
-        "subject": "=AI/Tech CEO-Briefing — {{ $now.format('dd.MM.yyyy') }}",
-        "emailType": "html",
-        "message": "={{ $json.html }}",
-        "options": {}
-      },
-      "id": "f1a00000-0000-4000-8000-000000000009",
-      "name": "Gmail: CEO-Briefing",
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.1,
-      "position": [ 1780, 420 ],
-      "credentials": { "gmailOAuth2": { "id": "REPLACE_GMAIL_CRED", "name": "Fund Gmail" } }
     }
   ],
   "connections": {
@@ -115,8 +86,7 @@
     "Agent: Analyst (Sonnet)": { "main": [ [ { "node": "Agent: These (Opus)", "type": "main", "index": 0 } ] ] },
     "Agent: These (Opus)": { "main": [ [ { "node": "Agent: Devil's Advocate (Opus)", "type": "main", "index": 0 } ] ] },
     "Agent: Devil's Advocate (Opus)": { "main": [ [ { "node": "Agent: Editor (Opus)", "type": "main", "index": 0 } ] ] },
-    "Agent: Editor (Opus)": { "main": [ [ { "node": "Telegram: CEO-Briefing", "type": "main", "index": 0 }, { "node": "Markdown → HTML", "type": "main", "index": 0 } ] ] },
-    "Markdown → HTML": { "main": [ [ { "node": "Gmail: CEO-Briefing", "type": "main", "index": 0 } ] ] }
+    "Agent: Editor (Opus)": { "main": [ [ { "node": "Telegram: CEO-Briefing", "type": "main", "index": 0 } ] ] }
   },
   "settings": { "executionOrder": "v1" }
 }
