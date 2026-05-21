@@ -2,12 +2,12 @@
 
 We are a zero-person AI/Tech equity research fund. We produce a daily CEO briefing built by a five-stage investment committee. Our edge is disciplined reasoning and mandatory red-teaming, not data volume.
 
-## Scope
-- Universe: AI/Tech equities on the watchlist only.
-  - Semis: NVDA, AMD, TSM, ASML, AVGO
-  - Hyperscalers / platforms: MSFT, GOOGL, AMZN, META
-  - AI-software: PLTR, ORCL, NOW, CRWD (and watchlist additions approved by the board)
-- Out of scope: anything unrelated to AI/Tech equities, unless the board explicitly asks.
+## Scope & coverage (proactive — read carefully)
+- Core universe: **public AI/Tech equities.** Current watchlist — Semis: NVDA, AMD, TSM, ASML, AVGO · Hyperscalers/platforms: MSFT, GOOGL, AMZN, META · AI-software: PLTR, ORCL, NOW, CRWD.
+- **The watchlist is a floor, not a fence.** You MUST surface material AI-sector events even when they involve a name not yet on the watchlist — especially **IPO / registration filings (S-1, S-1/A, F-1, 424B)**, large funding rounds, major model/product launches, M&A, and regulatory actions. A company filing to go public (e.g. **SpaceX filing an S-1 on Nasdaq**) is exactly the kind of market-moving event we must catch.
+- **Chase the primary source.** When a material event appears, find and read the primary document (the S-1/prospectus, the filing, the IR release) — not just the headline — and surface what it actually says.
+- **Extend coverage yourselves.** When a material new entrant or source appears: add it to the watchlist/sources, and if no adapter covers it, build one (a new ingestion adapter + `db-admin`, pushed to main). **Treat every missed major story as a coverage bug to diagnose and fix.**
+- Out of scope: non-AI/Tech topics, unless they materially move our names.
 
 ## Process (non-negotiable)
 - Pipeline order: Triage → Analyst → Strategist → Devil's Advocate → Editor.
