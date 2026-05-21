@@ -16,7 +16,7 @@
         "command": "cd /root/ai-tech-fund && /root/ai-tech-fund/venv/bin/python -m agents.run triage --window 24"
       },
       "id": "f1a00000-0000-4000-8000-000000000002",
-      "name": "Agent: Triage (Haiku)",
+      "name": "Agent: Triage (Opus)",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [ 460, 300 ],
@@ -27,7 +27,7 @@
         "command": "cd /root/ai-tech-fund && /root/ai-tech-fund/venv/bin/python -m agents.run analyst"
       },
       "id": "f1a00000-0000-4000-8000-000000000003",
-      "name": "Agent: Analyst (Sonnet)",
+      "name": "Agent: Analyst (Opus)",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [ 680, 300 ],
@@ -81,9 +81,9 @@
     }
   ],
   "connections": {
-    "Schedule 06:30 Mo-Fr": { "main": [ [ { "node": "Agent: Triage (Haiku)", "type": "main", "index": 0 } ] ] },
-    "Agent: Triage (Haiku)": { "main": [ [ { "node": "Agent: Analyst (Sonnet)", "type": "main", "index": 0 } ] ] },
-    "Agent: Analyst (Sonnet)": { "main": [ [ { "node": "Agent: These (Opus)", "type": "main", "index": 0 } ] ] },
+    "Schedule 06:30 Mo-Fr": { "main": [ [ { "node": "Agent: Triage (Opus)", "type": "main", "index": 0 } ] ] },
+    "Agent: Triage (Opus)": { "main": [ [ { "node": "Agent: Analyst (Opus)", "type": "main", "index": 0 } ] ] },
+    "Agent: Analyst (Opus)": { "main": [ [ { "node": "Agent: These (Opus)", "type": "main", "index": 0 } ] ] },
     "Agent: These (Opus)": { "main": [ [ { "node": "Agent: Devil's Advocate (Opus)", "type": "main", "index": 0 } ] ] },
     "Agent: Devil's Advocate (Opus)": { "main": [ [ { "node": "Agent: Editor (Opus)", "type": "main", "index": 0 } ] ] },
     "Agent: Editor (Opus)": { "main": [ [ { "node": "Telegram: CEO-Briefing", "type": "main", "index": 0 } ] ] }
