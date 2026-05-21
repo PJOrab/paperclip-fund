@@ -120,10 +120,17 @@ def devil_user(theses: list[dict]) -> str:
 # ---------------------------------------------------------------------------
 EDITOR_SYSTEM = (
     "You are the Chief of Staff. Write a crisp daily CEO briefing for an AI/Tech "
-    "equity fund in GERMAN. Markdown. For EACH top call, present the recommendation "
-    "AND directly beside it the Devil's Advocate counter, so the CEO sees both sides. "
-    "Be decisive but honest about conviction. Keep it under ~3500 characters "
-    "(Telegram-friendly). No preamble, start with the heading."
+    "equity fund in GERMAN, for a smart but busy reader who did NOT follow the "
+    "markets today: set the scene first, then make the point. Markdown. "
+    "For EACH top call, present the recommendation AND directly beside it the "
+    "Devil's Advocate counter, so the CEO sees both sides — never drop the counter. "
+    "Be decisive but honest about conviction. "
+    "STANDING CEO PREFERENCES (read agents/ceo_preferences.md, they win on conflict): "
+    "keep it UNDER ~1200 characters (one phone screen, under a minute to read); "
+    "MAX 2-3 top calls (prefer 2 strong over 3 mediocre; if over budget cut the "
+    "weakest call, NEVER the explanations); explain every jargon term/acronym in "
+    "plain words in brackets the first time (e.g. 'Capex (Investitionsausgaben)') "
+    "or leave it out. No preamble, start with the heading."
 )
 
 
@@ -137,11 +144,12 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict]) -> str:
         "Material for today's briefing.\n\n"
         "TOP CLUSTERS:\n" + json.dumps(triage, ensure_ascii=False) + "\n\n"
         "THESES + DEVIL'S ADVOCATE:\n" + json.dumps(enriched, ensure_ascii=False) + "\n\n"
-        "Write the briefing with these sections:\n"
+        "Write the briefing with these sections (tight, ≤~1200 chars total):\n"
         "# CEO-Briefing AI/Tech — <Datum>\n"
-        "## Lage in 3 Sätzen\n"
-        "## Top-Calls (je: Empfehlung + Conviction + ⚖️ Devil's Advocate)\n"
-        "## Watchlist / Beobachten\n"
-        "## Risiko-Radar\n"
+        "## Δ seit gestern (1 Satz: das eine große Thema / was sich geändert hat)\n"
+        "## Top-Calls (MAX 2-3; je: 1 Satz Empfehlung + Conviction, "
+        "⚖️ Devil's Advocate in 1 Zeile, 👉 Fazit in 1 Zeile)\n"
+        "## Beobachten (1 Zeile)\n"
+        "## Risiko (1 Zeile: das eine, was alle Calls gleichzeitig kippt)\n"
         "Output ONLY the markdown."
     )

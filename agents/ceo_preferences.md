@@ -6,10 +6,10 @@ Neue CEO-Präferenzen werden hier oben angehängt (mit Datum + Quelle).
 
 ## Stehende Präferenzen
 
-### Länge & Verständlichkeit  (2026-05-21, CEO via Telegram)
-- **Kürzer:** Ziellänge ~1500–2000 Zeichen (vorher ~3500). Lieber weglassen als überladen.
-- **Verständlicher:** einfache, klare deutsche Sprache; kurze Sätze; keine Wall-of-Text.
-- **Jargon sparsam:** Fachbegriffe/Akronyme entweder vermeiden oder in 2–3 Wörtern in Klammern erklären (z. B. „Capex (Investitionsausgaben)“).
-- **Fokus:** nur die 2–3 wirklich wichtigsten Top-Calls; je 1 Satz Empfehlung + 1 Satz Devil's Advocate.
-- **Kein Vorgeplänkel:** direkt mit der Überschrift starten; „Lage in 3 Sätzen“ muss in <3 kurzen Sätzen den Kern liefern.
-- Quelle: CEO-Feedback HED-14 (Telegram chat 7056050174, msg 3230).
+### Länge & Verständlichkeit  (v2: 2026-05-21, CEO via Telegram)
+- **Kürzer:** Ziellänge ≤ ~1200 Zeichen (vorher ~3500, dann ~1500–2000 — jetzt strenger). Muss auf einen Handy-Screen passen, Lesezeit unter einer Minute. Im Zweifel den schwächsten Call streichen — NIE die Erklärungen.
+- **Verständlicher:** einfache, klare deutsche Sprache; kurze Sätze; keine Wall-of-Text. Für einen Leser schreiben, der den Tag NICHT verfolgt hat: erst die Lage erklären, dann der Punkt.
+- **Jargon sparsam:** jeden Fachbegriff/jedes Akronym beim ersten Mal in Alltagssprache in Klammern erklären (z. B. „Capex (Investitionsausgaben)“) — oder ganz weglassen. Wer es nicht in wenigen Wörtern erklären kann, lässt es weg.
+- **Fokus:** max. 2–3 Top-Calls. Lieber 2 starke als 3 mittelmäßige. Je 1 Satz Empfehlung + 1 Zeile Devil's Advocate + 1 Zeile Fazit.
+- **Δ seit gestern zuerst:** direkt nach der Überschrift in 1 Satz sagen, was sich seit gestern geändert hat / das eine große Thema — kein Vorgeplänkel.
+- Quelle: CEO-Feedback HED-14/HED-15 (Telegram chat 7056050174, msg 3230); v2-Straffung HED-30.
