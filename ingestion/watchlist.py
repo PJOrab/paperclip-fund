@@ -46,6 +46,18 @@ TECH_RSS_FEEDS = {
     "theverge_ai":   "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
 }
 
+# Allgemeines RSS-Lookback-Fenster (Tage). Wird vom FundingNewsAdapter genutzt.
+RSS_LOOKBACK_DAYS = 3
+
+# Dedizierte Funding/VC/IPO/Launch-Feeds (alle RSS, kein API-Key). Schließt die
+# Lücke, die den Exa-$250M-Miss (HED-24) verursachte: TechRSS/NewsAPI sind
+# generalistisch, runden-/launch-spezifische Meldungen fallen sonst durch.
+FUNDING_RSS_FEEDS = {
+    "techcrunch_startups": "https://techcrunch.com/category/startups/feed/",
+    "techcrunch_funding":  "https://techcrunch.com/tag/funding/feed/",
+    "venturebeat":         "https://venturebeat.com/feed/",
+}
+
 # X/Twitter: AI/Tech-Accounts (ersetzen die Makro-Liste von macro-agent).
 # category → wird zum 'source'-Wert in raw_items.
 X_ACCOUNTS_AITECH = {
@@ -104,4 +116,5 @@ SOURCE_RELIABILITY = {
     "sec_8k": 0.95, "sec_form4": 0.90, "sec_registration": 0.92,
     "arxiv": 0.80, "github_trending": 0.60,
     "hackernews": 0.55, "tech_news": 0.60,
+    "funding_news": 0.80,
 }
