@@ -33,12 +33,13 @@ def main() -> None:
         print("missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID", file=sys.stderr)
         sys.exit(1)
     text = (sys.stdin.read() if a.file == "-" else open(a.file).read())[:TG_MAX]
-    r = requests.post(
-        f"https://api.telegram.org/bot{token}/sendMessage",
-        json={"chat_id": a.chat_id, "text": text,
-              "parse_mode": "Markdown", "disable_web_page_preview": True},
-        timeout=30,
-    )
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    base = {"chat_id": a.chat_id, "text": text, "disable_web_page_preview": True}
+    # Telegram renders <b>/<i>/<a> via HTML; if the editor emits invalid markup
+    # Telegram returns 400 — fall back to plain text so the briefing still arrives.
+    r = requests.post(url, json={**base, "parse_mode": "HTML"}, timeout=30)
+    if not r.ok:
+        r = requests.post(url, json=base, timeout=30)
     try:
         print(r.json())
     except Exception:  # noqa: BLE001
