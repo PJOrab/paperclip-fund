@@ -96,6 +96,7 @@ NOTABLE_PRIVATE_PLAYERS = [
     "starlink", "neuralink", "waymo", "cruise", "rivian", "wiz",
     "coreweave", "lambda labs", "together ai", "cohere", "hugging face",
     "runway", "midjourney", "safe superintelligence", "thinking machines",
+    "exa", "exa labs",  # AI search infra; $250M Series C @ $2.2B (May 2026)
 ]
 
 # Default-Reliability je neuer Quellen-Kategorie (für sources-Tabelle)
