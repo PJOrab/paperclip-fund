@@ -56,6 +56,18 @@ python -m ingestion.run_ingest --loop --interval 20
   (`md5(text[:200] + source)`). Originaldaten in `raw` (jsonb).
 - **`ingestion_runs`** — Protokoll je Lauf (Counts, per-Adapter, Fehler).
 
+## Dashboard
+
+MVP-Dashboard unter **https://hedgingalpha.com/fund/** — zeigt Workflow-Diagramm,
+Feed-Statistik und das letzte Briefing (Thesen + Devil's Advocate).
+
+```bash
+python -m dashboard.build            # baut /var/www/html/fund/index.html
+python -m dashboard.build --stdout   # HTML auf stdout (Test)
+```
+Generator liest Supabase serverseitig und bettet die Daten statisch ein (keine
+Secrets im Browser). Cron baut alle 15 min neu; nginx serviert statisch.
+
 ## Nächste Schritte
 
 - Adapter-Queries von Makro/Geopolitik auf **AI/Tech-Equities** umstellen
