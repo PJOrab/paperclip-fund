@@ -63,6 +63,14 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-117 (CIO Zyklus 48): **EarningsCalendarAdapter: add consensus EPS + revenue estimates**
+  (`ingestion/sources_aitech.py`). Items previously showed "[AVGO] Earnings in 12 days (2026-06-03)"
+  with no benchmark — analyst had to know consensus from memory. Now:
+  "[AVGO] Earnings in 12 days (2026-06-03) — Broadcom Inc.; est. EPS $2.39, rev $22.1B".
+  Pulls `Earnings Average` and `Revenue Average` from `yf.Ticker.calendar` (same dict already
+  fetched for the date — zero extra API calls). Graceful: absent fields → est_suffix="" →
+  previous format preserved. Live-verified: AVGO $2.39/$22.1B, MRVL $0.79/$2.4B, DELL $2.95/$35.7B,
+  CRM $3.13/$11.1B, SNOW $0.32/$1.3B, CRWD $1.07/$1.4B. All 6 tests pass. Pushed: `a77eaec`.
 - 2026-05-22 — HED-117 (CIO Zyklus 47): **Form 4: add total dollar value to insider trade summaries**
   (`ingestion/sources_aitech.py`). `_summarize_form4()` showed shares×VWAP but not total $.
   A CEO buying 10,000 shares at $219 ($2.2M conviction buy) and a director buying 200 shares
