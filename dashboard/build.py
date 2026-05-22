@@ -1129,7 +1129,7 @@ function calibSvg(buckets){
   // Build sector map from sector_view taxonomy
   const SECTOR_MAP={};
   ((D.sector_view||{}).sectors||[]).forEach(s=>{
-    (s.tickers||[]).forEach(tk=>{ SECTOR_MAP[tk.toUpperCase()]=s.id+" "+s.name; });
+    (s.tickers||[]).forEach(tk=>{ const sym=tk&&tk.ticker!=null?String(tk.ticker).toUpperCase():(typeof tk==="string"?tk.toUpperCase():null); if(sym) SECTOR_MAP[sym]=s.id+" "+s.name; });
   });
   const longCalls=active.filter(t=>(t.direction||"").toLowerCase()==="long");
   const shortCalls=active.filter(t=>(t.direction||"").toLowerCase()==="short");
