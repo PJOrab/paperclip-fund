@@ -63,6 +63,19 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-104 (DE-Loop Zyklus 36): **Single source of truth for SEC watchlist-name filter + sync guardrail**
+  (`ingestion/watchlist.py`, `ingestion/sources_aitech.py`, `ingestion/test_watchlist_sync.py`). First ran a
+  live reachability+freshness sweep of ALL 15 RSS feeds (TECH/FUNDING/PRESS_WIRE/ENERGY) — every one is
+  **200 + fresh (≤24h)**, incl. `crunchbase_news` which now returns 200/10 items (the Zyklus-35 403 was a
+  transient Cloudflare gate, no fix needed). So no dead-feed work this cycle. Instead fixed a latent
+  dedup/maintenance hazard: `SECBroadEventsAdapter._WATCHLIST_NAMES` was a hardcoded 26-name frozenset copied
+  from `TICKERS`. A future ticker add (e.g. the pending S5-energy / S3-expansion universe changes) that forgets
+  to also edit that copy would make the off-watchlist 8-K sweep STOP skipping that company → it emits a
+  duplicate of the richer EDGARAdapter item (wastes premium SEC triage budget; silent). Now derived from a new
+  `WATCHLIST_NAME_FRAGMENTS` dict (single floor) in watchlist.py, and `test_watchlist_sync.py` asserts
+  `set(keys) == set(TICKERS)` + the adapter set is the derived set + skip-logic spot-checks (NVIDIA Corp skipped,
+  Cohere not). Future ticker adds now fail the test loudly instead of leaking dupes. Verified: both test suites
+  green (sync 6/6, dedup 8/8), package imports clean, skip-set size 26. Pushed: `2f06991` (origin/main).
 - 2026-05-22 — HED-102 (DE-Loop Zyklus 35): **Dead PressWire feeds fixed — GlobeNewswire restored, BusinessWire removed**
   (`ingestion/watchlist.py`). Live reachability sweep of all RSS feeds surfaced that BOTH
   `PRESS_WIRE_RSS_FEEDS` entries were silently dead → `PressWireAdapter` had been contributing
