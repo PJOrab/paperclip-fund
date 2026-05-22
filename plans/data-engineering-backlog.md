@@ -63,6 +63,21 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-117 (CIO Zyklus 49): **coverage_qc: buyback + dividend patterns; graceful macro fallback; better degraded-adapter alert**
+  (`agents/coverage_qc.py`, `agents/prompts.py`, `ingestion/adapters.py`, `ingestion/run_ingest.py`).
+  (1) Two new BIG_EVENT_PATTERNS (11→13 total): `buyback/high` catches "$50B share repurchase
+  program" / "authorizes new buyback"; `dividend/medium` catches "declares special dividend of
+  $3.00/share" / "increases quarterly dividend" / "initiates a dividend". 8/8 new pattern tests
+  pass. Previously both events were completely invisible to coverage QC despite being common
+  for AAPL/META/MSFT.
+  (2) `triage_user()` earnings_calendar description updated with new consensus-estimate format
+  from Zyklus 48 ("est. EPS $X.XX, rev $X.XB") and instruction to carry estimates into the
+  cluster 'why' for downstream actual-vs-consensus comparison.
+  (3) `_load_macro()` no longer calls SystemExit if macro-agent is absent — degrades gracefully
+  with a warning and _macro_missing flag. Missing optional overlay was killing entire ingest runs.
+  (4) Telegram adapter-degradation alert now covers ALL degraded adapters (errored + silent zeros)
+  with per-adapter detail lines; fixed bug where silent_zeros were added to errors after the check.
+  All 6 tests pass. Pushed: `8996511` + `c3cdc96`.
 - 2026-05-22 — HED-117 (CIO Zyklus 48): **EarningsCalendarAdapter: add consensus EPS + revenue estimates**
   (`ingestion/sources_aitech.py`). Items previously showed "[AVGO] Earnings in 12 days (2026-06-03)"
   with no benchmark — analyst had to know consensus from memory. Now:
