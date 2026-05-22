@@ -638,11 +638,21 @@ class GitHubTrendingAdapter:
 
 
 class TechRSSAdapter:
-    """Kuratierte AI/Tech-News-RSS/Atom-Feeds (failsafe je Feed)."""
+    """
+    Kuratierte AI/Tech-News-RSS/Atom-Feeds (failsafe je Feed).
+
+    Lookback = RSS_LOOKBACK_DAYS (default 3) filtert veraltete Artikel: viele
+    Tech-Feeds liefern Items, die Wochen zurückreichen — ohne Cutoff würden die
+    jeden 30-Min-Lauf als "frisch" eingelesen und belegen Triage-Slots. Items
+    ohne parsbares Datum werden behalten (Coverage > Präzision), identisch zu
+    FundingNewsAdapter.
+    """
+    LOOKBACK_DAYS = getattr(W, "RSS_LOOKBACK_DAYS", 3)
 
     def fetch(self):
         m = _m()
         out = []
+        cutoff = datetime.now(timezone.utc) - timedelta(days=self.LOOKBACK_DAYS)
         for name, feed in W.TECH_RSS_FEEDS.items():
             try:
                 text = m.fetch_url(feed, timeout=15)
@@ -653,6 +663,13 @@ class TechRSSAdapter:
                     title = _rss_text(block, "title")
                     if not title:
                         continue
+                    date_m = (re.search(r"<pubDate>(.*?)</pubDate>", block, re.DOTALL)
+                              or re.search(r"<updated>(.*?)</updated>", block, re.DOTALL)
+                              or re.search(r"<published>(.*?)</published>", block, re.DOTALL))
+                    if date_m:
+                        pub = _parse_rss_date(date_m.group(1).strip())
+                        if pub and pub < cutoff:
+                            continue
                     desc = _rss_desc(block)
                     item_text = f"[{name}] {title}"
                     if desc:
