@@ -63,6 +63,18 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-89 (DE-Loop Zyklus 29): **Press wire adapter (BusinessWire + GlobeNewswire)**
+  (`ingestion/sources_aitech.py`, `ingestion/watchlist.py`, `ingestion/adapters.py`).
+  Zero press wire coverage existed — official company press releases (earnings releases,
+  product launches, partnership announcements, guidance updates) arrived hours after
+  editorial coverage and before the 8-K hits EDGAR. New `PressWireAdapter` follows
+  the `FundingNewsAdapter` pattern: per-feed try/except isolation, RSS_LOOKBACK_DAYS
+  cutoff, URL dedup across feeds. AI/tech relevance gate (`AITECH_KEYWORDS` +
+  `NOTABLE_PRIVATE_PLAYERS`) filters out non-AI corporate PRs from the broad sector
+  feeds. source=`press_wire`, reliability=0.78 (company-authored primary source,
+  above editorial tech news 0.60, below SEC filings). Feeds: BusinessWire Technology
+  + GlobeNewswire PressRelease. Registered as "Press Wire" in `build_adapters()`.
+  Tested keyword filter: 8/8 correct. Pushed: `8940394`.
 - 2026-05-22 — HED-89 (DE-Loop Zyklus 28): **Earnings-result detection in Yahoo Finance items**
   (`ingestion/sources_aitech.py`, `ingestion/watchlist.py`, `agents/prompts.py`).
   Actual earnings beats/misses arriving via Yahoo Finance RSS were indistinguishable
