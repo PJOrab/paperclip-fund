@@ -12,17 +12,23 @@ in that window against what the briefing actually delivered
 uncovered big event as a Coverage-Bug ticket.
 
 Usage:
-  python scripts/coverage_qc.py --run-id <ID>                 # report only
-  python scripts/coverage_qc.py --run-id <ID> --open-tickets  # file bugs
-  python scripts/coverage_qc.py --json                        # latest done run
+  python scripts/coverage_qc.py --run-id <ID>    # report + file tickets
+  python scripts/coverage_qc.py --dry-run        # print gaps only, no tickets
+  python scripts/coverage_qc.py                  # latest done run + tickets
 
-All flags are forwarded to agents/coverage_qc.py (run with --help).
-Errors inside the QC pass are logged, not raised, so a post-run hook never
-crashes the pipeline.
+Legacy flags from the old fund_skills implementation (--json, --open-tickets)
+are silently ignored — agents/coverage_qc always outputs JSON and opens tickets
+by default.
 """
 import sys
 
-from agents.coverage_qc import main as _main
+# Strip legacy flags that were accepted by fund_skills/coverage_qc but are
+# either defaults or redundant in agents/coverage_qc (--json always outputs
+# JSON; --open-tickets is the default, suppressed only by --dry-run).
+_LEGACY_FLAGS = {"--json", "--open-tickets"}
+sys.argv = [sys.argv[0]] + [a for a in sys.argv[1:] if a not in _LEGACY_FLAGS]
+
+from agents.coverage_qc import main as _main  # noqa: E402
 
 
 def main() -> int:
