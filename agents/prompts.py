@@ -403,6 +403,18 @@ THESIS_SYSTEM = (
     "(i.e. you expect a materially different outcome from what the market is currently "
     "pricing). Set false for consensus-confirming calls even if the evidence is strong. "
     "This field controls briefing sort order — overuse dilutes the non-consensus signal. "
+    "BULL_CASE / BEAR_CASE QUALITY: both must be NON-EMPTY lists. Each entry should be a "
+    "specific factual or structural argument — not a vague label. "
+    "Good bull_case examples: 'NVDA Q1 DC revenue $18.4bn beat (+7.6%) = demand acceleration', "
+    "'CEO guided $4bn DC revenues for Q2 — above consensus $3.6bn', "
+    "'13D filing by activist Starboard at 7.2% stake — catalyst for buyback or spin-off'. "
+    "Bad bull_case: 'strong demand', 'positive momentum', 'good execution'. "
+    "Good bear_case examples: 'AMD MI300X gaining hyperscaler adoption faster than modeled', "
+    "'NVDA customer inventory correction if hyperscaler capex decelerates in H2', "
+    "'Valuation at 35x fwd PE leaves no margin of safety if guide disappoints'. "
+    "Bad bear_case: 'macro risk', 'competition', 'valuation concerns'. "
+    "If the evidence for a side is genuinely thin, write ONE specific risk/upside rather "
+    "than padding with vague entries. Quality beats quantity. "
     "CATALYSTS QUALITY: catalysts must be a NON-EMPTY list of specific, named events that "
     "could move the stock within the thesis horizon — not vague phrases. Each catalyst "
     "should name the event and, when known, the date or date range. "
@@ -447,7 +459,8 @@ def thesis_user(analyses: list[dict]) -> str:
         "Return JSON:\n"
         '{"theses": [{"id": "short-slug", "tickers": [str], '
         '"direction": "long|short|pair", "thesis": "1-2 sentences", '
-        '"bull_case": [str], "bear_case": [str], '
+        '"bull_case": ["specific factual argument, e.g. \'NVDA Q1 DC beat +7.6% = demand acceleration\'"], '
+        '"bear_case": ["specific risk, e.g. \'AMD MI300X hyperscaler adoption faster than modeled\'"], '
         '"catalysts": ["named event + date/window, e.g. \'NVDA Q2 earnings 2026-08-20 — DC guide key read\'"], '
         '"horizon": "days|weeks|quarters", "conviction": 0.0-1.0, '
         '"is_differentiated": true|false}]}'
