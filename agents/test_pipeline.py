@@ -222,6 +222,28 @@ def test_classify_item() -> None:
            "energy_power_deal" in labels(
                "GE Vernova wins $2B grid infrastructure contract for AI build-out"))
 
+    # capex_announcement (new pattern)
+    _check("$100B capex matches capex_announcement",
+           "capex_announcement" in labels(
+               "Microsoft announces $100 billion capex plan for AI infrastructure through 2028"))
+    _check("datacenter investment matches capex_announcement",
+           "capex_announcement" in labels(
+               "Google raises datacenter investment to $75bn for 2026"))
+    _check("AI infrastructure spending matches capex_announcement",
+           "capex_announcement" in labels(
+               "Amazon Web Services AI infrastructure spending rises 40% YoY in Q1"))
+
+    # improved launch patterns (previews, drops, open-sources, reasoning)
+    _check("previews model matches launch",
+           "launch" in labels(
+               "Anthropic previews Claude 4 with extended reasoning capabilities"))
+    _check("open-sources weights matches launch",
+           "launch" in labels(
+               "Meta open-sources Llama 4 model weights — 400B parameters"))
+
+    print("ok: classify_item coverage_qc patterns (including capex + improved launch)")
+
+
 
 # ---------------------------------------------------------------------------
 # validate_output schema tests

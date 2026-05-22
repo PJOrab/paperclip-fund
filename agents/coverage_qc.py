@@ -45,9 +45,15 @@ BIG_EVENT_PATTERNS = [
     (r"\b(FTC|DOJ|antitrust|SEC charges|CFPB|regulatory action|fine of \$[\d,]+)\b",
      "regulatory", "medium"),
     # Major product / model launches
-    (r"\b(launches|announces|releases|unveils|introduces)\b.{0,80}"
-     r"\b(model|agent|chip|product|platform|API|service)\b",
+    (r"\b(launches|announces|releases|unveils|introduces|previews|drops|debuts|open.sources)\b.{0,80}"
+     r"\b(model|agent|chip|product|platform|API|service|reasoning|multimodal|inference|weights)\b",
      "launch", "medium"),
+    # Hyperscaler capex announcements — direct AI-infrastructure demand signal
+    # Catches: "$Xbn capex", "datacenter investment", "AI infrastructure spending"
+    (r"\b(capex|capital\s+expenditure|datacenter\s+(?:investment|spending|buildout)"
+     r"|AI\s+infrastructure|data\s+center\s+(?:capacity|expansion|investment)"
+     r"|\$\d+\s*(?:billion|bn)\s+(?:in\s+)?(?:capex|investment|spend))\b",
+     "capex_announcement", "high"),
     # Acquisition / merger
     (r"\b(acquires|acquisition|merger|takeover|buyout|LOI|definitive agreement)\b",
      "M&A", "high"),
