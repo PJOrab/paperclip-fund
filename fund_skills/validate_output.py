@@ -59,6 +59,11 @@ def validate(schema: str, data: dict) -> list[str]:
             need(x.get("consensus_view") != "differentiated" or
                  (isinstance(x.get("differentiation"), str) and x.get("differentiation", "").strip()),
                  f"analyses[{i}] differentiation must be non-empty when consensus_view='differentiated'", errs)
+            # consensus_anchor: optional but must be non-empty string when present
+            ca = x.get("consensus_anchor")
+            if ca is not None:
+                need(isinstance(ca, str) and ca.strip(),
+                     f"analyses[{i}] consensus_anchor must be non-empty string when present", errs)
     elif schema == "thesis":
         need(isinstance(data.get("theses"), list), "missing 'theses' list", errs)
         for i, x in enumerate(data.get("theses", []) or []):

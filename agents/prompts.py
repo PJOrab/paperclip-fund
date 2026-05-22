@@ -472,12 +472,18 @@ def analyst_user(clusters: list[dict]) -> str:
         "If there are more than 12 clusters, return at most 12 analyses — drop the lowest-importance "
         "macro/sentiment clusters when trimming. Always keep earnings_result, sec_8k, sec_form4, "
         "sec_registration, and sec_13dg clusters regardless of importance score.\n\n"
+        "CONSENSUS ANCHOR: for each analysis, state the specific thing the street currently expects "
+        "in numbers when available (e.g. 'consensus EPS $0.89, rev $44.6B, DC rev $16.5B'). "
+        "This is the baseline against which differentiation is measured. "
+        "If no consensus estimate is available from the feed, set consensus_anchor='unknown'. "
+        "Do NOT leave it empty — 'unknown' is a valid answer and signals where data is thin.\n\n"
         "Return JSON:\n"
         '{"analyses": [{"title": str, "tickers": [str], '
         '"read": "bullish|bearish|mixed", "magnitude": "low|medium|high", '
         '"horizon": "days|weeks|quarters", '
         '"key_facts": ["specific verifiable data point from the feed, e.g. \'NVDA Q1 DC revenue $18.4bn vs $17.1bn est\'"], '
         '"key_uncertainty": str, '
+        '"consensus_anchor": "what the street currently prices in for this ticker/event, in specific numbers when known (e.g. \'consensus EPS $0.89, rev $44.6B\') or \'unknown\'", '
         '"consensus_view": "aligned|differentiated|unclear", '
         '"differentiation": "1 sentence: where our read diverges from what the market prices in, or empty string if aligned"}]}'
     )
