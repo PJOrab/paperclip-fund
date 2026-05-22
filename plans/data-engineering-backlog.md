@@ -150,6 +150,8 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   Earnings-Überraschungen, Regulatorik. Jeder Treffer → Paperclip Coverage-Bug-Ticket
   (assigned DE, priority=high/medium). Wired in `stage_editor()` (best-effort, non-fatal)
   → läuft automatisch nach jedem Briefing-Run. Auf origin/main gepusht: `8002b4e..813aacb`.
+- 2026-05-22 — HED-77 (DE-Loop Zyklus 12): **HN_MIN_POINTS 80→60** (`ingestion/watchlist.py`).
+  Semiconductor ticker queries (TSMC/ASML/AMD, added Zyklus 11) rarely hit 80pts. Material stories at 60-79pts were being dropped at source. Correct tradeoff: over-capture at ingest + triage AI filters noise (already reliability-weighted since Zyklus 5). Pushed: `99d0e3a..501139a`. idea "Data quality / HN floor tuning".
 - 2026-05-22 — HED-77 (DE-Loop Zyklus 11): **HN queries: semiconductor + TSMC + ASML + AMD** (`ingestion/watchlist.py`).
   HN_QUERIES 12→16. TSMC/ASML/AMD are top-5 watchlist positions with zero prior HN coverage. HN routinely surfaces capex stories ("TSMC Arizona expansion"), export controls ("ASML EUV to China"), and competitive dynamics ("AMD MI300X inference") before mainstream press. Pushed: `062b3b0..99d0e3a`. idea "Coverage / semiconductor HN".
 - 2026-05-22 — HED-77 (DE-Loop Zyklus 10): **GitHub topics: robot-learning + embodied-ai added** (`ingestion/watchlist.py`).
