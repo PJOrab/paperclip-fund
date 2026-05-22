@@ -156,6 +156,10 @@ def _yahoo_quote(ticker: str) -> dict | None:
             result["pct_vs_ma30"] = round((price - ma30) / ma30 * 100, 1)
         if rsi14 is not None:
             result["rsi14"] = rsi14
+        # Sparkline: last 30 closes (rounded to 2dp) for mini chart in sector tile
+        if len(closes) >= 5:
+            spark = [round(c, 2) for c in closes[-30:]]
+            result["spark"] = spark
         return result
     except Exception:
         return None
@@ -429,6 +433,9 @@ a.call-chip:hover{border-color:var(--accent);background:var(--panel)}
 .sec-row .w52{font-size:10px;color:var(--mut);min-width:36px;text-align:right;white-space:nowrap}
 .sec-row .rsi{font-size:10px;min-width:32px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .rsi-ob{color:#f78166}.rsi-os{color:#3fb950}.rsi-n{color:var(--mut)}
+.spark{display:block;overflow:visible}
+.spark-line{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.spark-up{stroke:#3fb950}.spark-dn{stroke:#f78166}.spark-flat{stroke:var(--mut)}
 .sec-ph{color:var(--mut);font-size:var(--fs-h2);padding:var(--s2) 0}
 @media (max-width:760px){
   .cards{grid-template-columns:repeat(2,1fr)}
@@ -660,6 +667,17 @@ $("feed").innerHTML = (D.recent||[]).map(r=>{
 
 // Briefing
 function dirClass(d){return d==="long"?"cd-long":d==="short"?"cd-short":"cd-pair";}
+function sparklineSvg(data,w,h){
+  if(!data||data.length<2) return "";
+  const mn=Math.min(...data),mx=Math.max(...data);
+  const rng=mx-mn||1;
+  const xStep=(w-4)/(data.length-1);
+  const pts=data.map((v,i)=>`${(2+i*xStep).toFixed(1)},${(h-2-(v-mn)/rng*(h-4)).toFixed(1)}`).join(" ");
+  const up=data[data.length-1]>=data[0];
+  const flat=Math.abs(data[data.length-1]-data[0])/data[0]<0.001;
+  const cls=flat?"spark-flat":up?"spark-up":"spark-dn";
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline class="spark-line ${cls}" points="${pts}"/></svg>`;
+}
 const b = D.briefing;
 if(!b){ $("briefing").innerHTML='<div class="panel muted">Noch kein Briefing. Sobald der n8n-Workflow lief, erscheint es hier.</div>'; }
 else{
@@ -1048,7 +1066,8 @@ function calibSvg(buckets){
         const rsi = t.rsi14!=null
           ? `<span class="rsi ${rsiCls}" title="${rsiTip}RSI14: ${t.rsi14}${t.rsi14>70?" — overbought":t.rsi14<30?" — oversold":""}">${t.rsi14}</span>`
           : "";
-        return `<div class="sec-row">${tkHtml}<span class="px">${px}</span>${chCell(t.change_pct)}${w52}${rsi}</div>`;
+        const spark=t.spark?sparklineSvg(t.spark,56,22):"";
+        return `<div class="sec-row">${tkHtml}<span class="px">${px}</span>${chCell(t.change_pct)}${w52}${rsi}${spark}</div>`;
       }).join("");
     } else {
       body = `<div class="sec-ph">${esc(s.note||"Keine in-universe Ticker.")}</div>`;
