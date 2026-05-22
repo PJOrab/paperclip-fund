@@ -229,6 +229,14 @@ border-radius:8px;font-size:var(--fs-h2)}
 .devil .v{font-weight:600;text-transform:uppercase;font-size:var(--fs-micro)}
 .brief{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:20px 24px;
 max-width:var(--measure);margin-inline:0;line-height:1.75}
+/* two-column briefing on wide viewports: prose left at reading measure, thesis+Devil's-Advocate cards right — fills the desktop void beside the 72ch column, surfaces counter-arguments next to the call, shortens scroll (Gestalt Common Region/Proximity, F-pattern, Goal-Gradient) */
+.brief-region{display:block}
+.brief-aside-h2{margin-top:20px}
+@media (min-width:1100px){
+  .brief-region{display:grid;grid-template-columns:var(--measure) minmax(0,1fr);gap:var(--s5);align-items:start}
+  .brief-region .brief{max-width:none;width:100%}
+  .brief-aside-h2{margin-top:0}
+}
 .brief h1{font-size:18px;margin:0 0 var(--s3)}.brief h2{color:var(--txt);text-transform:none;letter-spacing:0;font-size:15px;margin-top:var(--s5)}
 /* briefing title line (bold-only first paragraph) styled as a heading */
 .brief-title{font-size:16px;font-weight:700;color:var(--txt);margin:0 0 var(--s3)}
@@ -640,6 +648,7 @@ else{
   } else {
     html+=`<div class="calls-strip"><div class="call-chip call-chip--empty"><span class="cc">Kein aktiver Call heute</span></div></div>`;
   }
+  html+=`<div class="brief-region"><div class="brief-main">`;
   if(!b.briefing_md){
     html+=`<div class="panel brief-processing"><span class="brief-proc-icon">⏳</span><span class="muted">Briefing wird verarbeitet…</span></div>`;
   } else if(b.briefing_md){
@@ -668,8 +677,9 @@ else{
     }
     html+=`<div class="brief">${briefHtml}</div>`;
   }
+  html+=`</div>`; // .brief-main
   if(theses.length){
-    html+='<h2 style="margin-top:20px">Thesen & Devil\'s Advocate</h2>';
+    html+='<div class="brief-aside"><h2 class="brief-aside-h2">Thesen & Devil\'s Advocate</h2>';
     html+=theses.map((t,i)=>{
       const c=cmap[t.id]||{};
       return `<div class="thesis" id="thesis-${i+1}" tabindex="-1"><div class="h"><span class="idx-badge" aria-label="These ${i+1}">${i+1}</span>${(t.tickers||[]).join(", ")}
@@ -679,7 +689,9 @@ else{
         ${c.strongest_counter?`<div class="devil"><span class="v">⚖️ Devil's Advocate (${c.verdict||"?"})</span><br>${esc(c.strongest_counter)}
         ${c.blind_spot?`<br><span class="muted">Blind spot: ${esc(c.blind_spot)}</span>`:""}</div>`:""}
       </div>`;}).join("");
+    html+=`</div>`; // .brief-aside
   }
+  html+=`</div>`; // .brief-region
   $("briefing").innerHTML=html||'<div class="panel muted">Briefing vorhanden, aber leer.</div>';
 }
 // Thesen-Track-Record (HED-29)
@@ -925,6 +937,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
 
 
 
