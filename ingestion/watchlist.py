@@ -79,7 +79,9 @@ TECH_RSS_FEEDS = {
     # Research-grade + financial-press additions (Zyklus 5): close the gap between
     # tech-blog coverage and serious editorial/market coverage of our tickers.
     "mit_tech_review":  "https://www.technologyreview.com/feed/",   # depth + AI policy
-    "wsj_tech":         "https://feeds.a.dj.com/rss/RSSWSJD.xml",  # financial press, market-moving
+    # NOTE: wsj_tech (feeds.a.dj.com/rss/RSSWSJD.xml) removed Zyklus 34 — feed is frozen
+    # at 2025-01-27 (verified status 200 but 16 months stale); RSS_LOOKBACK_DAYS dropped
+    # 100% of its items every cycle, so it was pure dead weight. Dropped from config.
     # CNBC Tech (Zyklus 15): first-mover on earnings reactions, analyst calls, M&A — covers
     # market-moving events (Workday beat, Anthropic/MSFT chip deal, SpaceX IPO) that
     # pure-tech blogs and WSJ lag on. Standard RSS 2.0, no CDATA in titles.
@@ -90,8 +92,10 @@ TECH_RSS_FEEDS = {
     "theregister":      "https://www.theregister.com/headlines.atom",
     # Wired AI (Zyklus 32): AI policy, regulation, safety, and breakthrough research —
     # fills the gap between MIT Tech Review (academic) and TechCrunch (startup/product).
-    # Atom feed for Wired's AI tag covers foundation-model launches, AI governance.
-    "wired_ai":         "https://www.wired.com/feed/tag/artificial-intelligence/latest/rss",
+    # RSS feed for Wired's AI tag covers foundation-model launches, AI governance.
+    # NOTE (Zyklus 34): tag slug is "ai", not "artificial-intelligence" — the old URL
+    # 404'd silently (verified); corrected URL returns fresh items.
+    "wired_ai":         "https://www.wired.com/feed/tag/ai/latest/rss",
 }
 
 # Allgemeines RSS-Lookback-Fenster (Tage). Wird vom FundingNewsAdapter genutzt.
