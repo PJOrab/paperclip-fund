@@ -45,7 +45,11 @@ def triage_user(items: list[dict], max_clusters: int = 12) -> str:
         src = it.get("source", "?")
         rel = it.get("reliability")
         rel_tag = f" rel={rel:.2f}" if rel is not None else ""
-        txt = (it.get("text") or "")[:300]
+        # High-reliability primary sources (SEC filings, earnings results, macro
+        # releases) extract up to 400 chars of content; preserve it for triage.
+        # Generic editorial/social items cap at 300 to keep the prompt lean.
+        item_rel = rel if rel is not None else 0.0
+        txt = (it.get("text") or "")[:400 if item_rel >= 0.85 else 300]
         lines.append(f"[{i}] ({src}{rel_tag}) {txt}")
     feed = "\n".join(lines)
     return (
