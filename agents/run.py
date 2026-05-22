@@ -262,6 +262,15 @@ def stage_editor():
         _log(f"[editor] {summary}")
     except Exception as score_err:
         _log(f"[editor] score_past_calls non-fatal error: {score_err}")
+    # Post-briefing reliability audit: surface source drift vs configured scores (best-effort, report-only)
+    try:
+        import subprocess as _sp, sys as _sys
+        _res = _sp.run([_sys.executable, "-m", "agents.reliability_audit", "--runs", "20"],
+                       capture_output=True, text=True, timeout=30)
+        if _res.stdout.strip():
+            _log(f"[editor] reliability_audit:\n{_res.stdout.strip()[:800]}")
+    except Exception as rel_err:
+        _log(f"[editor] reliability_audit non-fatal error: {rel_err}")
     # Post-briefing dashboard rebuild: embed fresh track_record + sector_view immediately (best-effort)
     try:
         import subprocess as _sp, sys as _sys
