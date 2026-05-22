@@ -298,7 +298,7 @@ abbr[title]{text-decoration:none;cursor:help}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* heutige calls hero strip */
 .calls-strip{display:flex;flex-wrap:wrap;gap:var(--s2);margin-bottom:var(--s4)}
-.call-chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);
+.call-chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);cursor:help;
   border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:var(--fs-h2);white-space:nowrap}
 .call-chip .ck{font-weight:700;font-size:var(--fs-body)}
 .call-chip .cd{font-size:var(--fs-micro);font-weight:600;letter-spacing:.04em;padding:1px 5px;
@@ -308,7 +308,7 @@ abbr[title]{text-decoration:none;cursor:help}
 .cd-pair{background:rgba(210,153,34,.18);color:var(--amber)}
 .call-chip .cc{color:var(--mut);font-size:var(--fs-cap);cursor:help;font-variant-numeric:tabular-nums;
   border-bottom:1px dotted currentColor;border-bottom-color:rgba(125,125,125,.5)}
-.call-chip--empty{opacity:.55;border-style:dashed}
+.call-chip--empty{opacity:.55;border-style:dashed;cursor:default}
 /* call index badge — maps a hero chip to its numbered prose call + thesis card */
 .idx-badge{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
   min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--panel);
@@ -545,7 +545,10 @@ else{
       const tks=(t.tickers||[]).join(" · ")||"?";
       const dir=t.direction||"pair";
       const conv=t.conviction!=null?`<abbr title="Conviction">Conv</abbr> ${t.conviction.toFixed(2)}`:"";
-      return `<div class="call-chip"><span class="idx-badge" aria-label="Call ${i+1}">${i+1}</span><span class="ck">${esc(tks)}</span>`+
+      // Thesis-preview tooltip: first 120 chars of thesis lets CEO distinguish identical tickers
+      const snip=(t.thesis||"").trim().slice(0,120)+(((t.thesis||"").trim().length>120)?"…":"");
+      const chipTip=`Call ${i+1}: ${tks} ${(dir||"").toUpperCase()}${t.conviction!=null?" · Conv "+t.conviction.toFixed(2):""}${snip?" — "+snip:""}`;
+      return `<div class="call-chip" tabindex="0" title="${esc(chipTip)}" aria-label="${esc(chipTip)}"><span class="idx-badge" aria-label="Call ${i+1}">${i+1}</span><span class="ck">${esc(tks)}</span>`+
         `<span class="cd ${dirCls(dir)}">${esc(dir)}</span>`+
         (conv?`<span class="cc ${convCls(t.conviction)}" title="${esc(convTip(t.conviction))}" aria-label="${esc(convTip(t.conviction))}">${conv}</span>`:"")+
         `</div>`;
