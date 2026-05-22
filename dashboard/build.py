@@ -85,7 +85,15 @@ h2{font-size:var(--fs-h2);text-transform:uppercase;letter-spacing:.06em;color:va
 .kpi{font-size:var(--fs-kpi);font-weight:700}
 .kpi small{font-size:var(--fs-h2);color:var(--mut);font-weight:400}
 /* pipeline */
-.flow{display:flex;align-items:stretch;gap:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.flow-wrap{position:relative}
+.flow{display:flex;align-items:stretch;gap:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
+scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding-bottom:var(--s1)}
+.flow::-webkit-scrollbar{height:6px}
+.flow::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
+.flow::-webkit-scrollbar-track{background:transparent}
+.flow-wrap::after{content:"";position:absolute;top:0;right:0;bottom:0;width:var(--s6);pointer-events:none;
+opacity:0;transition:opacity .2s;background:linear-gradient(to left,var(--bg),transparent)}
+.flow-wrap[data-overflow="1"]:not([data-end="1"])::after{opacity:1}
 .step{flex:0 0 auto;min-width:120px;background:var(--panel2);border:1px solid var(--line);
 border-radius:10px;padding:var(--s3);text-align:center;position:relative}
 .step .t{font-weight:600}.step .m{color:var(--mut);font-size:var(--fs-cap);margin-top:3px;white-space:nowrap}
@@ -158,7 +166,7 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
   </div>
 
   <h2>Workflow</h2>
-  <div class="flow" id="flow"></div>
+  <div class="flow-wrap"><div class="flow" id="flow"></div></div>
 
   <h2>Datenfeed <span id="feedstale"></span></h2>
   <div class="grid cards" id="kpis"></div>
@@ -191,6 +199,19 @@ const steps = [
 $("flow").innerHTML = steps.map((s,i)=>
   `<div class="step"><div class="t">${s.t}</div><div class="m">${s.m}</div></div>`+
   (i<steps.length-1?'<div class="arrow">›</div>':'')).join("");
+// Scroll affordance: show right-edge fade only while the strip overflows and more remains right (HED-47)
+(function(){
+  const fw=$("flow"), wrap=fw.parentElement;
+  function upd(){
+    const ov=fw.scrollWidth>fw.clientWidth+1;
+    const end=fw.scrollLeft+fw.clientWidth>=fw.scrollWidth-1;
+    wrap.dataset.overflow=ov?"1":"0";
+    wrap.dataset.end=end?"1":"0";
+  }
+  fw.addEventListener("scroll",upd,{passive:true});
+  window.addEventListener("resize",upd);
+  upd();
+})();
 
 // KPIs
 const lr = D.last_run||{};
