@@ -248,6 +248,72 @@ def _extract_8k_text(html_src: str, max_chars: int = 400) -> tuple[str, str, str
         return "", "", ""
 
 
+# 6-K: press-release dateline pattern — "[CITY, Country/State, Month Day, YYYY]"
+# Marks the start of the actual news content after the SEC header boilerplate.
+# Examples: "HSINCHU, Taiwan, R.O.C., May 15, 2026"  /  "VELDHOVEN, the Netherlands, Apr 23, 2026"
+_6K_DATELINE_RE = re.compile(
+    r"[A-Z][A-Z\s]+,\s+(?:[A-Za-z\s\.]+,\s+)?"  # CITY, Country[, State]
+    r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}",
+    re.IGNORECASE,
+)
+# Also match "[City] - [Month Day, Year] -" format used by some press releases
+_6K_RELEASE_RE = re.compile(
+    r"(?:January|February|March|April|May|June|July|August|September|October|November|December)"
+    r"\s+\d{1,2},\s+\d{4}\s*[-–—]",
+    re.IGNORECASE,
+)
+
+
+def _extract_6k_text(html_src: str, max_chars: int = 400) -> str:
+    """
+    Extract the press-release content from a 6-K HTML filing.
+    Skips the SEC header boilerplate (Form 6-K, Exchange Act references,
+    address, SIGNATURES block) and returns the first substantive paragraph.
+    Returns empty string when no press release is embedded (exhibit-based 6-Ks).
+    """
+    try:
+        txt = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", html_src)
+        txt = re.sub(r"<[^>]+>", " ", txt)
+        txt = _HTML_ENTITY_RE.sub(" ", txt)
+        txt = re.sub(r"\s+", " ", txt).strip()
+        # Skip past the SIGNATURES block (end of SEC header boilerplate).
+        # Press release content follows the CFO/VP signature line.
+        sig_m = re.search(
+            r"(?:Senior Vice President|Chief Financial Officer|Chief Executive Officer|"
+            r"President|Secretary|Director)[^.]{0,80}\n?",
+            txt, re.IGNORECASE,
+        )
+        search_start = sig_m.end() if sig_m else 0
+        # Find the dateline of the embedded press release
+        dl_m = _6K_DATELINE_RE.search(txt, search_start)
+        if dl_m:
+            return txt[dl_m.start(): dl_m.start() + max_chars].strip()
+        # Fallback: date-release format "Month Day, YYYY —"
+        rl_m = _6K_RELEASE_RE.search(txt, search_start)
+        if rl_m:
+            return txt[rl_m.start(): rl_m.start() + max_chars].strip()
+        # Exhibit-99.1 fallback: extract the press release title from the Exhibits table.
+        # Use findall and take the last match to skip "EXHIBIT 99.1 TO THIS REPORT ON FORM 6-K
+        # IS INCORPORATED BY REFERENCE" inline references that appear earlier in the document.
+        ex_matches = list(re.finditer(
+            r"(?:Exhibit[s]?\s+)?99\.1\s+(?!TO\s+THIS\s+REPORT)([^\n]{20,200})",
+            txt, re.IGNORECASE,
+        ))
+        if ex_matches:
+            ex_text = ex_matches[-1].group(1).strip()
+            # Trim at common trailer keywords that follow the exhibit description
+            ex_text = re.sub(r"\s+(?:SIGNATURES|Pursuant\s+to|EXHIBIT\s+\d|99\.\d)\b.*", "", ex_text).strip()
+            if ex_text:
+                return ex_text[:max_chars]
+        # Final fallback: if text after signatures is long enough, it has embedded content
+        tail = txt[search_start:].strip() if search_start else ""
+        if len(tail) > 200:
+            return tail[:max_chars]
+        return ""
+    except Exception:
+        return ""
+
+
 _10Q_SECTION_RE = re.compile(
     r"Item\s+2[\.\s]+(?:Management(?:'s|s)?\s+Discussion|Results?\s+of\s+Operations?)",
     re.IGNORECASE,
@@ -419,22 +485,15 @@ class EDGARAdapter:
                     except Exception:
                         pass
                 if form in ("6-K", "6-K/A") and acc and doc:
-                    # 6-K filings from foreign issuers (TSM, ASML, ARM) are HTML
-                    # press releases or quarterly summaries. Reuse 8-K text extraction
-                    # which finds the first substantive paragraph. Falls back on error.
+                    # 6-K filings (TSM, ASML, ARM) embed press releases after the SEC
+                    # header boilerplate. _extract_6k_text skips the header and finds
+                    # the dateline/content. For exhibit-only 6-Ks it returns "" and the
+                    # filing notice (metadata) remains as the detail text.
                     try:
                         html_src = m.fetch_url(doc_url, headers=UA, timeout=20)
                         time.sleep(0.15)  # SEC: max 10 req/s
                         if html_src:
-                            snippet, _, _ = _extract_8k_text(html_src)
-                            if not snippet:
-                                # 6-Ks often lack Item headers — grab first non-trivial paragraph
-                                txt = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", html_src)
-                                txt = re.sub(r"<[^>]+>", " ", txt)
-                                txt = _HTML_ENTITY_RE.sub(" ", txt)
-                                txt = re.sub(r"\s+", " ", txt).strip()
-                                if len(txt) > 50:
-                                    snippet = txt[:400]
+                            snippet = _extract_6k_text(html_src)
                             if snippet:
                                 detail = snippet
                     except Exception:
