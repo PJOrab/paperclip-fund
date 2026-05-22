@@ -63,6 +63,10 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 12 / CIO): **YahooFinanceTickerAdapter: pubDate-Filter**
+  (`ingestion/sources_aitech.py`). Fehlender Date-Guard: veraltete RSS-Artikel wurden als
+  "current" ingestiert. Fix: RSS_LOOKBACK_DAYS (3 Tage) Lookback identisch FundingNewsAdapter
+  + EnergyNewsAdapter. 138 Items, malformed=0. Auf origin/main: `932b668..b76fbbe`.
 - 2026-05-22 — HED-78 (CIO-Loop Zyklus 11): **Thesis track-record scorer**
   (`agents/score_past_calls.py`, `requirements.txt`). Liest alle done `briefing_runs`,
   extrahiert Thesen mit `direction` (long/short/pair), fetcht Entry-Preis (run.created_at)

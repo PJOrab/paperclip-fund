@@ -145,6 +145,9 @@ SOURCE_RELIABILITY = {
     "yahoo_finance": 0.72,
     "funding_news": 0.80,
     "energy_news": 0.72,
+    # Earnings dates from yfinance are authoritative forward-looking events.
+    # High reliability: directly from exchange/company filings via Yahoo.
+    "earnings_calendar": 0.88,
 }
 
 # S5 Energy/Power sector feeds — AI-capex risk thesis (power/grid strain).

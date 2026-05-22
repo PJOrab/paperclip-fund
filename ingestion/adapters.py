@@ -51,6 +51,7 @@ def build_adapters():
         ("Funding News", S.FundingNewsAdapter()),
         ("Energy/Power", S.EnergyNewsAdapter()),
         ("Yahoo Finance", S.YahooFinanceTickerAdapter()),
+        ("Earnings Calendar", S.EarningsCalendarAdapter()),
     ]
     if getattr(m, "NEWSAPI_KEY", ""):
         adapters.append(("NewsAPI AI", S.AITechNewsAPIAdapter()))

@@ -632,6 +632,102 @@ class AITechNewsAPIAdapter:
         return out
 
 
+class EarningsCalendarAdapter:
+    """
+    Upcoming earnings dates for all watchlist tickers via yfinance.
+
+    Generates early-warning items when a company is about to report:
+      "[NVDA] Earnings in 3 days (2026-05-28) — Nvidia Corp"
+      "[MSFT] Earnings TOMORROW (2026-05-22) — Microsoft Corp"
+      "[GOOGL] Earnings today! (2026-05-22) — Alphabet Inc"
+
+    Items are generated for events 0-14 days out. The text is stable
+    per (ticker, date) so dedup suppresses repeats across runs.
+    Silently skips tickers where yfinance returns no data.
+    """
+
+    LOOKAHEAD_DAYS = 14
+
+    def fetch(self) -> list[dict]:
+        try:
+            import yfinance as yf
+        except ImportError:
+            return []
+
+        today = datetime.now(timezone.utc).date()
+        out: list[dict] = []
+
+        for ticker in W.TICKERS:
+            try:
+                t = yf.Ticker(ticker)
+                cal = t.calendar  # dict or DataFrame depending on yfinance version
+                if cal is None:
+                    continue
+
+                # yfinance ≥0.2 returns a dict with key "Earnings Date"
+                earnings_date = None
+                if isinstance(cal, dict):
+                    ed = cal.get("Earnings Date")
+                    if ed:
+                        # may be a list or a single value
+                        if isinstance(ed, list):
+                            ed = ed[0] if ed else None
+                        from datetime import date as _date
+                        if isinstance(ed, _date) and not isinstance(ed, datetime):
+                            # yfinance returns datetime.date directly
+                            earnings_date = ed
+                        elif hasattr(ed, "date"):
+                            earnings_date = ed.date()
+                        elif isinstance(ed, str):
+                            try:
+                                earnings_date = datetime.fromisoformat(ed).date()
+                            except Exception:
+                                pass
+                else:
+                    # older yfinance returns a DataFrame; grab first value from row
+                    try:
+                        col = cal.loc["Earnings Date"] if "Earnings Date" in cal.index else None
+                        if col is not None:
+                            v = col.iloc[0]
+                            earnings_date = v.date() if hasattr(v, "date") else None
+                    except Exception:
+                        pass
+
+                if earnings_date is None:
+                    continue
+
+                days_out = (earnings_date - today).days
+                if days_out < 0 or days_out > self.LOOKAHEAD_DAYS:
+                    continue
+
+                if days_out == 0:
+                    when = "today!"
+                elif days_out == 1:
+                    when = "TOMORROW"
+                else:
+                    when = f"in {days_out} days"
+
+                try:
+                    name = t.info.get("shortName") or t.info.get("longName") or ticker
+                except Exception:
+                    name = ticker
+
+                text = f"[{ticker}] Earnings {when} ({earnings_date}) — {name}"
+                out.append({
+                    "text": text,
+                    "source": "earnings_calendar",
+                    "url": f"https://finance.yahoo.com/quote/{ticker}",
+                    "reliability": W.SOURCE_RELIABILITY.get("earnings_calendar", 0.88),
+                })
+
+                time.sleep(0.2)
+
+            except Exception:
+                continue
+
+        return out
+
+
 class XAITechAdapter:
     """
     Account-Timelines der AI/Tech-Accounts. Verwendet den XGraphQLAdapter aus
