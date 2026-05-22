@@ -63,6 +63,12 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-117 (CIO Zyklus 45): **TRIAGE_SYSTEM: add ITEM_REF ACCURACY self-verification step**
+  (`agents/prompts.py`). Systematic mis-indexing in triage item_refs degraded analyst grounding —
+  observed in run 11a62db6: Meta-layoffs cluster cited a Codex tweet + CAD repo while the real
+  layoff item sat under a different cluster. New rule: before outputting item_refs, verify each
+  index mentions the cluster's primary ticker/company/synonym; remove mismatches; empty list >
+  wrong list; cite 1-3 representative indices only. 6/6 tests pass. Pushed: `f3a11de`.
 - 2026-05-22 — HED-117 (CIO Zyklus 44): **coverage_qc: fix env-var loading + API defaults for production**
   (`fund_skills/coverage_qc.py`, `.env.example`). Two silent failures in production ticket-filing:
   (1) `CFG = dotenv_values(...)` ignored `PAPERCLIP_API_KEY` injected via SSH env → tickets never filed.
