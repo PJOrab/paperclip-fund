@@ -479,7 +479,7 @@ class FundingNewsAdapter:
                         "text": f"[Funding · {name}] {title}",
                         "source": "funding_news",
                         "url": url,
-                        "reliability": 0.8,
+                        "reliability": W.SOURCE_RELIABILITY.get("funding_news", 0.80),
                     })
             except Exception:
                 continue
@@ -560,7 +560,7 @@ class AITechNewsAPIAdapter:
                     "text": f"{title}. {desc[:200]}",
                     "source": "tech_news",
                     "url": art.get("url"),
-                    "reliability": 0.6,
+                    "reliability": W.SOURCE_RELIABILITY.get("tech_news", 0.60),
                 })
         return out
 

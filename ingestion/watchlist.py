@@ -24,7 +24,12 @@ ARXIV_CATEGORIES = ["cs.AI", "cs.LG", "cs.CL", "cs.CV"]
 ARXIV_MAX = 15
 
 # GitHub: Themen für aufkommende AI-Projekte (zuletzt erstellt, nach Stars)
-GITHUB_TOPICS = ["llm", "generative-ai", "ai-agents", "rag"]
+GITHUB_TOPICS = [
+    "llm", "generative-ai", "ai-agents", "rag",
+    # Added Zyklus 4: frontier model competition + inference efficiency stack.
+    "multimodal",     # multi-modal AI (GPT-4o/Gemini/Claude-vision competitor repos)
+    "llm-inference",  # inference engines, quantization, serving (compute-cost moat)
+]
 GITHUB_CREATED_LOOKBACK_DAYS = 30
 
 # Hacker News (Algolia): Begriffe + Mindest-Punktzahl (Story-Relevanz)
