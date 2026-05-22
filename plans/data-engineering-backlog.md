@@ -63,6 +63,17 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-99 (DE-Loop Zyklus 34): **Dead/broken TECH_RSS feeds fixed: wsj_tech removed, wired_ai URL corrected**
+  (`ingestion/watchlist.py`). Closes the follow-up flagged in Zyklus 33. Two feeds were dead weight:
+  (1) `wsj_tech` (feeds.a.dj.com/rss/RSSWSJD.xml) — verified status 200 but **frozen at 2025-01-27**
+  (16 months stale); RSS_LOOKBACK_DAYS dropped 100% of its items every cycle → removed from config.
+  (2) `wired_ai` (added Zyklus 32) — the tag slug `artificial-intelligence` **404'd silently** (returned
+  None, contributing 0 items since it was added). Correct slug is `ai`:
+  `https://www.wired.com/feed/tag/ai/latest/rss` — verified status 200, fresh items (2026-05-22).
+  Live end-to-end test (urllib-stubbed macro bridge, since macro-agent isn't present locally):
+  **56 items / 7 feeds, malformed=0**; wired_ai now contributes 8 fresh AI items/cycle
+  (e.g. "Can OpenAI's 'Master of Disaster' Fix AI's Reputation Crisis?"), wsj_tech absent.
+  Net: real coverage gain (Wired AI live for the first time) + dead-feed cleanup. Pushed: PENDING.
 - 2026-05-22 — HED-89 (DE-Loop Zyklus 33): **TechRSSAdapter freshness filter (RSS_LOOKBACK_DAYS)**
   (`ingestion/sources_aitech.py`). TechRSSAdapter was the ONLY RSS adapter with no date
   cutoff — every other RSS family (Funding/Energy/PressWire/Fed/BLS/Yahoo) already filters
