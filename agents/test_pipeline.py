@@ -257,11 +257,17 @@ def test_validate_output() -> None:
 
 # ---------------------------------------------------------------------------
 
+def test_watchlist_sync() -> None:
+    from ingestion.test_watchlist_sync import main as _wl_main
+    _wl_main()
+
+
 def main() -> None:
     test_parse_json()
     test_cross_check()
     test_classify_item()
     test_validate_output()
+    test_watchlist_sync()
     print("\nALL PIPELINE TESTS PASSED")
 
 
