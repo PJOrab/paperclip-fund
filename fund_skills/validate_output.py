@@ -53,6 +53,7 @@ def main() -> None:
                 need(k in x, f"analyses[{i}] missing '{k}'", errs)
             need(x.get("read") in {"bullish", "bearish", "mixed"}, f"analyses[{i}] bad read", errs)
             need(x.get("magnitude") in {"low", "medium", "high"}, f"analyses[{i}] bad magnitude", errs)
+            need(x.get("horizon") in {"days", "weeks", "quarters"}, f"analyses[{i}] bad horizon", errs)
 
     elif a.schema == "thesis":
         need(isinstance(data.get("theses"), list), "missing 'theses' list", errs)
@@ -61,8 +62,12 @@ def main() -> None:
                       "bear_case", "catalysts", "horizon", "conviction"):
                 need(k in x, f"theses[{i}] missing '{k}'", errs)
             need(x.get("direction") in {"long", "short", "pair"}, f"theses[{i}] bad direction", errs)
-            need(isinstance(x.get("conviction"), (int, float)) and 0 <= x.get("conviction", -1) <= 1,
+            need(x.get("horizon") in {"days", "weeks", "quarters"}, f"theses[{i}] bad horizon", errs)
+            conv = x.get("conviction")
+            need(isinstance(conv, (int, float)) and 0 <= conv <= 1,
                  f"theses[{i}] conviction must be 0.0-1.0", errs)
+            need(not isinstance(conv, (int, float)) or conv >= 0.40,
+                 f"theses[{i}] conviction {conv} below minimum tradeable floor 0.40", errs)
 
     elif a.schema == "devil":
         need(isinstance(data.get("critiques"), list), "missing 'critiques' list", errs)
