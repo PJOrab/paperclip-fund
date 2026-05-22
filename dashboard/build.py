@@ -219,6 +219,17 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
 .empty .ex{color:var(--mut);max-width:46ch;margin:var(--s2) auto 0}
 .countdown{display:inline-block;margin-top:var(--s3);background:var(--panel2);border:1px solid var(--line);
   border-radius:6px;padding:4px 10px;font-size:var(--fs-cap);color:var(--mut)}
+/* heutige calls hero strip */
+.calls-strip{display:flex;flex-wrap:wrap;gap:var(--s2);margin-bottom:var(--s4)}
+.call-chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);
+  border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:13px;white-space:nowrap}
+.call-chip .ck{font-weight:700;font-size:14px}
+.call-chip .cd{font-size:11px;font-weight:600;letter-spacing:.04em;padding:1px 5px;
+  border-radius:4px;text-transform:uppercase}
+.cd-long{background:rgba(63,185,80,.18);color:var(--green)}
+.cd-short{background:rgba(248,81,73,.18);color:var(--red)}
+.cd-pair{background:rgba(210,153,34,.18);color:var(--amber)}
+.call-chip .cc{color:var(--mut);font-size:12px}
 /* sector view (HED-48) */
 .sec-tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:var(--s4)}
 .sec-head{display:flex;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3)}
@@ -352,6 +363,20 @@ else{
   const crit=((b.devils_advocate||{}).critiques)||[];
   const cmap={}; crit.forEach(c=>cmap[c.id]=c);
   let html='';
+  // "Heutige Calls" hero strip: compact chips before prose (Recognition>Recall, Goal-Gradient, F-pattern lede)
+  if(theses.length){
+    const dirCls=d=>d==="long"?"cd-long":d==="short"?"cd-short":"cd-pair";
+    const chips=theses.map(t=>{
+      const tks=(t.tickers||[]).join(" · ")||"?";
+      const dir=t.direction||"pair";
+      const conv=t.conviction!=null?`Conv ${t.conviction.toFixed(2)}`:"";
+      return `<div class="call-chip"><span class="ck">${esc(tks)}</span>`+
+        `<span class="cd ${dirCls(dir)}">${esc(dir)}</span>`+
+        (conv?`<span class="cc">${conv}</span>`:"")+
+        `</div>`;
+    }).join("");
+    html+=`<div class="calls-strip">${chips}</div>`;
+  }
   if(b.briefing_md){ html+=`<div class="brief">${marked.parse(b.briefing_md)}</div>`; }
   if(theses.length){
     html+='<h2 style="margin-top:20px">Thesen & Devil\'s Advocate</h2>';
