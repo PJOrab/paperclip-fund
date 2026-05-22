@@ -20,8 +20,10 @@ EDGAR_FORMS = ["8-K", "4"]
 EDGAR_LOOKBACK_DAYS = 3
 
 # arXiv-Kategorien (AI/ML-Forschungsfront)
-ARXIV_CATEGORIES = ["cs.AI", "cs.LG", "cs.CL", "cs.CV"]
-ARXIV_MAX = 25
+# cs.RO added (Zyklus 8): embodied AI / robotics — NVDA Jetson, META embodied
+# AI, Figure AI (private watch). Distinct investment thesis, previously dark.
+ARXIV_CATEGORIES = ["cs.AI", "cs.LG", "cs.CL", "cs.CV", "cs.RO"]
+ARXIV_MAX = 30
 
 # GitHub: Themen für aufkommende AI-Projekte (zuletzt erstellt, nach Stars)
 GITHUB_TOPICS = [
