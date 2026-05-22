@@ -399,6 +399,16 @@ main:focus{outline:none}
   .tkl::after{content:" (" attr(href) ")";font-size:10px;color:var(--mut)}
 }
 /* respect reduced-motion: kill the infinite spinner + all transitions (WCAG 2.3.3, vestibular safety) */
+/* Back-to-top: long-page return affordance (Fitts's Law big circular target, Goal-Gradient) */
+.to-top{position:fixed;right:var(--s4);bottom:var(--s4);z-index:30;
+  width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--line);border-radius:50%;background:var(--panel2);
+  color:var(--txt);font-size:18px;line-height:1;cursor:pointer;
+  opacity:0;visibility:hidden;transform:translateY(8px);
+  transition:opacity .2s,transform .2s,visibility .2s,border-color .15s,background .15s;
+  box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.to-top.show{opacity:1;visibility:visible;transform:none}
+.to-top:hover{border-color:var(--accent);background:var(--panel)}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
     transition-duration:.001ms!important;scroll-behavior:auto!important}
@@ -451,6 +461,7 @@ main:focus{outline:none}
     <p class="foot-meta">AI/Tech Fund · generiert aus Supabase · keine Secrets im Browser</p>
   </footer>
 </div>
+<button id="totop" class="to-top" aria-label="Zum Seitenanfang springen" title="Zum Seitenanfang">↑</button>
 <script>
 const D = __DATA__;
 const $ = (id)=>document.getElementById(id);
@@ -770,6 +781,18 @@ function calibSvg(buckets){
 function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));}
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
 ["briefing","trackrecord","sectorview"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+
+// Back-to-top: reveal after scrolling past the briefing fold; smooth unless reduced-motion
+(function(){
+  const btn=$("totop"); if(!btn) return;
+  const onScroll=()=>{ btn.classList.toggle("show", window.scrollY>600); };
+  window.addEventListener("scroll",onScroll,{passive:true}); onScroll();
+  btn.addEventListener("click",()=>{
+    const reduce=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+    window.scrollTo({top:0,behavior:reduce?"auto":"smooth"});
+    const m=$("main"); if(m) m.focus({preventScroll:true});
+  });
+})();
 </script></body></html>"""
 
 
