@@ -1076,9 +1076,12 @@ function calibSvg(buckets){
       body = `<div class="sec-ph">${esc(s.note||"Keine in-universe Ticker.")}</div>`;
     }
     const ootCls=tks.length===0?" sec-tile--oot":"";
+    const validMoves=tks.map(t=>t.change_pct).filter(v=>v!=null);
+    const avgMove=validMoves.length?validMoves.reduce((a,b)=>a+b,0)/validMoves.length:null;
+    const avgHtml=avgMove!=null?chCell(avgMove):"";
     return `<div class="sec-tile${ootCls}"><div class="sec-head">
         <span class="id">${esc(s.id)}</span><span class="nm">${esc(s.name)}</span>
-        <span class="ct">${tks.length||""}</span></div>${body}</div>`;
+        <span class="ct">${tks.length||""}</span>${avgHtml}</div>${body}</div>`;
   }).join("");
 })();
 
