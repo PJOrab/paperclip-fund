@@ -192,7 +192,7 @@ EDITOR_SYSTEM = (
 
 
 def editor_user(triage: dict, theses: list[dict], critiques: list[dict]) -> str:
-    import json
+    import json, re
     crit_by_id = {c.get("id"): c for c in (critiques or [])}
     enriched = []
     for t in (theses or []):
@@ -205,18 +205,47 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict]) -> str:
         verdict_rank = {"agree": 0, "caution": 1, "reject": 2}.get(d.get("verdict", "caution"), 1)
         return (0 if differentiated else 1, verdict_rank)
     enriched.sort(key=call_priority)
+
+    # Extract earnings_calendar items from triage evidence for the Earnings section
+    earnings_lines: list[str] = []
+    _earnings_pat = re.compile(r"\[([A-Z]+)\] Earnings in (\d+) days? \((\d{4}-\d{2}-\d{2})\)")
+    for cl in (triage.get("clusters", []) if isinstance(triage, dict) else []):
+        for ev in (cl.get("evidence") or []):
+            m = _earnings_pat.search(ev)
+            if m:
+                earnings_lines.append(f"{m.group(1)} — {m.group(3)} (in {m.group(2)}d)")
+    # Deduplicate, sort by date
+    seen: set[str] = set()
+    unique_earnings: list[str] = []
+    for line in sorted(set(earnings_lines)):
+        if line not in seen:
+            seen.add(line)
+            unique_earnings.append(line)
+
+    earnings_section = (
+        "## 📅 Earnings diese Woche\n"
+        + "\n".join(f"- {e}" for e in unique_earnings[:8])
+        + "\n"
+    ) if unique_earnings else ""
+
     return (
         "Material for today's briefing.\n\n"
         "TOP CLUSTERS:\n" + json.dumps(triage, ensure_ascii=False) + "\n\n"
         "THESES + DEVIL'S ADVOCATE (sorted: non-consensus/is_differentiated=true first, "
         "then by devil verdict):\n" + json.dumps(enriched, ensure_ascii=False) + "\n\n"
-        "Write the briefing with these sections (tight, ≤~1200 chars total):\n"
+        + (f"UPCOMING EARNINGS (pre-extracted for you):\n{earnings_section}\n" if earnings_section else "")
+        + "Write the briefing with these sections (tight, ≤~1400 chars total):\n"
         "# CEO-Briefing AI/Tech — <Datum>\n"
         "## Δ seit gestern (1 Satz: das eine große Thema / was sich geändert hat)\n"
         "## Top-Calls (MAX 2-3; je: 1 Satz Empfehlung + Conviction, "
         "⚖️ Devil's Advocate in 1 Zeile, 👉 Fazit in 1 Zeile; "
         "prioritize is_differentiated=true calls)\n"
         "## Beobachten (1 Zeile)\n"
-        "## Risiko (1 Zeile: das eine, was alle Calls gleichzeitig kippt)\n"
+        + (
+            "## 📅 Earnings diese Woche (kompakt: TICKER — Datum, optional 1 Zeile Erwartung; "
+            "nur wenn Earnings in ≤7 Tagen; max 4 Zeilen)\n"
+            if earnings_section else ""
+        )
+        + "## Risiko (1 Zeile: das eine, was alle Calls gleichzeitig kippt)\n"
         "Output ONLY the markdown."
     )
