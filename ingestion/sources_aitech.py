@@ -486,6 +486,59 @@ class FundingNewsAdapter:
         return out
 
 
+class EnergyNewsAdapter:
+    """
+    S5 Energy/Power sector feed — AI-capex risk thesis (power/grid strain).
+    Quellen: Data Center Dynamics (AI data-center infra + hyperscaler power demand)
+    + Utility Dive (electric grid / utility regulation). Gleiche RSS-Parse-Logik
+    wie FundingNewsAdapter; Fehler je Feed gefangen, lookback = RSS_LOOKBACK_DAYS.
+    """
+    LOOKBACK_DAYS = getattr(W, "RSS_LOOKBACK_DAYS", 3)
+
+    def fetch(self):
+        m = _m()
+        out, seen = [], set()
+        cutoff = datetime.now(timezone.utc) - timedelta(days=self.LOOKBACK_DAYS)
+        for name, feed in W.ENERGY_RSS_FEEDS.items():
+            try:
+                text = m.fetch_url(feed, timeout=15)
+                if not text:
+                    continue
+                sep = "<item>" if "<item>" in text else "<entry>"
+                for block in text.split(sep)[1:21]:
+                    t = re.search(r"<title>(.*?)</title>", block, re.DOTALL)
+                    if not t:
+                        continue
+                    title = re.sub(r"<[^>]+>", "", t.group(1))
+                    title = html.unescape(
+                        title.replace("<![CDATA[", "").replace("]]>", "")).strip()
+                    if not title:
+                        continue
+                    link_m = (re.search(r'<link[^>]*href="([^"]+)"', block)
+                              or re.search(r"<link>(.*?)</link>", block))
+                    url = link_m.group(1).strip() if link_m else None
+                    key = hashlib.md5((url or title).encode()).hexdigest()
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    date_m = (re.search(r"<pubDate>(.*?)</pubDate>", block, re.DOTALL)
+                              or re.search(r"<updated>(.*?)</updated>", block, re.DOTALL)
+                              or re.search(r"<published>(.*?)</published>", block, re.DOTALL))
+                    if date_m:
+                        pub = _parse_rss_date(date_m.group(1).strip())
+                        if pub and pub < cutoff:
+                            continue
+                    out.append({
+                        "text": f"[Energy · {name}] {title}",
+                        "source": "energy_news",
+                        "url": url,
+                        "reliability": W.SOURCE_RELIABILITY.get("energy_news", 0.72),
+                    })
+            except Exception:
+                continue
+        return out
+
+
 class AITechNewsAPIAdapter:
     """NewsAPI mit AI/Tech-Equity-Query (nur wenn NEWSAPI_KEY gesetzt)."""
     def fetch(self):
