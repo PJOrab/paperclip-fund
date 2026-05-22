@@ -63,6 +63,16 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-129 (DE Loop): **OptionsMarketAdapter — P/C ratio, IV skew, expected move**
+  (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`, `agents/prompts.py`,
+  pushed `8f02a21`). Strategy.md #2 gap: institutional options positioning was completely dark.
+  17 liquid watchlist names (NVDA/MSFT/GOOGL/META/AMZN/AAPL/AMD/TSM/ASML/ARM/AVGO/PLTR/ORCL/NOW/CRM/SNOW/CRWD).
+  Three signals: (1) Put/Call OI ratio (<0.5 = bullish, >1.2 = bearish), (2) ATM IV skew put-call
+  (>+5pp = fear bid, <-5pp = call demand/squeeze risk), (3) expected move ±% from ATM straddle.
+  Emitted only when ≥1 signal notable — filters low-signal periods. Stable dedup key per
+  (ticker, expiry, P/C bucket). Live test: NVDA P/C 0.41 + IV skew -6.1pp (unusual call demand
+  = squeeze/momentum risk); SNOW P/C 0.40 + ±12.5% expected move (elevated uncertainty);
+  MSFT neutral → filtered. source=options_market, reliability=0.82. 7/7 tests pass.
 - 2026-05-22 — HED-129 (DE Loop): **`_telegram_alert` stdlib-only — `requests` dep removed**
   (`ingestion/run_ingest.py`, pushed `0f73556`). The Telegram alert function used `import requests`
   inside a try/except, violating the no-extra-deps principle from HED-125. If `requests` is absent
