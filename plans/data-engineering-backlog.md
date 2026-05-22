@@ -131,6 +131,8 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   HN_QUERIES 6→12: Microsoft, Google, Meta AI (Hyperscaler-Positionen nicht abgedeckt),
   Palantir, Mistral, xAI (AI-native Watchlist). Max +30 HN-Stories/Zyklus.
   Auf origin/main gepusht: `1f7f929..5d115a0`.
+- 2026-05-22 — HED-77 (DE-Loop Zyklus 7): **Yahoo Finance RSS expanded to full 26-ticker watchlist** (`ingestion/watchlist.py`).
+  `YAHOO_FINANCE_TICKERS` was hardcoded to 8 top positions; 18 watchlist names (AMD, TSM, ASML, AVGO, MU, SMCI, QCOM, MRVL, INTC, ANET, VRT, DELL, AMZN, AAPL, CRM, SNOW, CRWD, ADBE) received no per-ticker Yahoo Finance headlines. Now `YAHOO_FINANCE_TICKERS = TICKERS` (all 26). ~8s/ingest cycle at 0.3s sleep. Pushed to origin/main: `9553ee7..7999ee6`. idea "Coverage / missing tickers".
 - 2026-05-22 — HED-77 (DE-Loop Zyklus 6): **Analyst consensus differentiation + thesis conviction calibration** (`agents/prompts.py`).
   Analyst stage now returns `consensus_view` (aligned|differentiated|unclear) + `differentiation` sentence per cluster — the thesis stage was told to "prefer non-consensus ideas" but had no structured signal about what consensus IS. Now it does.
   Thesis system prompt gains a 6-point conviction calibration guide (0.1=noise → 0.9+=rare convergent signal). Past runs clustered at 0.30-0.45 with no distinguishing rationale; anchors make convictions comparable across runs and score-able in track-record.
