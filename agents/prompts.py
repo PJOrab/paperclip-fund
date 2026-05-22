@@ -746,9 +746,17 @@ def devil_user(theses: list[dict], analyses: list[dict] | None = None) -> str:
         "If present, your `strongest_counter` and `falsification` events MUST engage with at least "
         "one of them. A critique that ignores a named uncertainty is incomplete.\n"
     ) if any("_analyst_key_uncertainties" in t for t in annotated) else ""
+    exit_note = (
+        "\n\nEXIT TRIGGER REVIEW: each thesis includes an `exit_trigger` field — the PM's proposed "
+        "stop condition. Your falsification events must be at least as specific as the exit_trigger. "
+        "If the exit_trigger is vague (e.g. 'bad earnings'), flag it in `blind_spot` and propose a "
+        "sharper threshold. If the exit_trigger is already specific and credible, you may reference "
+        "it in your `falsification` list directly.\n"
+    ) if any(t.get("exit_trigger") for t in annotated) else ""
     return (
         "Theses to attack:\n\n" + json.dumps(annotated, ensure_ascii=False)
         + uncertainty_note
+        + exit_note
         + checklist_block + "\n\n"
         "Return JSON:\n"
         '{"critiques": [{"id": "matching thesis id", '
