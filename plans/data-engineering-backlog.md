@@ -150,6 +150,8 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   Earnings-Überraschungen, Regulatorik. Jeder Treffer → Paperclip Coverage-Bug-Ticket
   (assigned DE, priority=high/medium). Wired in `stage_editor()` (best-effort, non-fatal)
   → läuft automatisch nach jedem Briefing-Run. Auf origin/main gepusht: `8002b4e..813aacb`.
+- 2026-05-22 — HED-77 (DE-Loop Zyklus 11): **HN queries: semiconductor + TSMC + ASML + AMD** (`ingestion/watchlist.py`).
+  HN_QUERIES 12→16. TSMC/ASML/AMD are top-5 watchlist positions with zero prior HN coverage. HN routinely surfaces capex stories ("TSMC Arizona expansion"), export controls ("ASML EUV to China"), and competitive dynamics ("AMD MI300X inference") before mainstream press. Pushed: `062b3b0..99d0e3a`. idea "Coverage / semiconductor HN".
 - 2026-05-22 — HED-77 (DE-Loop Zyklus 10): **GitHub topics: robot-learning + embodied-ai added** (`ingestion/watchlist.py`).
   Pairs with arXiv cs.RO (Zyklus 8). GITHUB_TOPICS 6→8: `robot-learning` (sim-to-real, RL for robots — Isaac Lab, MuJoCo, Lerobot; signals NVDA Jetson/GPU demand from robotics) + `embodied-ai` (LLM + physical-action interfaces; tracks convergence of foundation models with robot control). GitHub repos lag arXiv by weeks but reveal which codebases practitioners actually adopt. Pushed: `7b18383..aedccad`. idea "Coverage / embodied AI GitHub".
 - 2026-05-22 — HED-77 (DE-Loop Zyklus 9): **NOTABLE_PRIVATE_PLAYERS expanded 35→70** (`ingestion/watchlist.py`).
