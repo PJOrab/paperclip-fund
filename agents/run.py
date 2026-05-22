@@ -262,6 +262,13 @@ def stage_editor():
         _log(f"[editor] {summary}")
     except Exception as score_err:
         _log(f"[editor] score_past_calls non-fatal error: {score_err}")
+    # Post-briefing dashboard rebuild: embed fresh track_record + sector_view immediately (best-effort)
+    try:
+        import subprocess as _sp, sys as _sys
+        _sp.run([_sys.executable, "-m", "dashboard.build"], check=True, timeout=60)
+        _log("[editor] dashboard rebuilt after briefing")
+    except Exception as build_err:
+        _log(f"[editor] dashboard rebuild non-fatal error: {build_err}")
 
 
 def stage_coverage_qc(run_id: str | None = None, open_tickets: bool = True,
