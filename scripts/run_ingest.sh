@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # AI/Tech Fund — Ingestion-Wrapper für Cron. Absolute Pfade (Cron hat minimales Env).
 set -uo pipefail
-cd /root/ai-tech-fund || exit 1
-echo "===== $(date -u +'%Y-%m-%dT%H:%M:%SZ') ingest start ====="
-/root/ai-tech-fund/venv/bin/python -m ingestion.run_ingest
+# Repo-Wurzel aus dem Skript-Pfad ableiten, statt sie hartzukodieren.
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO_DIR" || exit 1
+PYTHON="$REPO_DIR/venv/bin/python"
+[ -x "$PYTHON" ] || PYTHON="python3"
+echo "===== $(date -u +'%Y-%m-%dT%H:%M:%SZ') ingest start ($REPO_DIR) ====="
+"$PYTHON" -m ingestion.run_ingest
 rc=$?
 echo "===== $(date -u +'%Y-%m-%dT%H:%M:%SZ') ingest done (rc=$rc) ====="
 exit $rc
