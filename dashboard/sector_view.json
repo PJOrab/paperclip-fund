@@ -1,0 +1,200 @@
+{
+  "as_of": "2026-05-22 00:11 UTC",
+  "sectors": [
+    {
+      "id": "S1",
+      "name": "Compute & Semis",
+      "note": null,
+      "tickers": [
+        {
+          "ticker": "NVDA",
+          "price": 219.51,
+          "prev_close": 235.74,
+          "change_pct": -6.88
+        },
+        {
+          "ticker": "AMD",
+          "price": 449.59,
+          "prev_close": 449.7,
+          "change_pct": -0.02
+        },
+        {
+          "ticker": "TSM",
+          "price": 407.15,
+          "prev_close": 417.72,
+          "change_pct": -2.53
+        },
+        {
+          "ticker": "ASML",
+          "price": 1592.0,
+          "prev_close": 1584.51,
+          "change_pct": 0.47
+        },
+        {
+          "ticker": "AVGO",
+          "price": 414.57,
+          "prev_close": 439.79,
+          "change_pct": -5.73
+        },
+        {
+          "ticker": "MU",
+          "price": 762.1,
+          "prev_close": 776.01,
+          "change_pct": -1.79
+        },
+        {
+          "ticker": "ARM",
+          "price": 298.23,
+          "prev_close": 228.5,
+          "change_pct": 30.52
+        },
+        {
+          "ticker": "SMCI",
+          "price": 33.46,
+          "prev_close": 33.03,
+          "change_pct": 1.3
+        },
+        {
+          "ticker": "QCOM",
+          "price": 213.41,
+          "prev_close": 200.08,
+          "change_pct": 6.66
+        },
+        {
+          "ticker": "MRVL",
+          "price": 190.69,
+          "prev_close": 182.58,
+          "change_pct": 4.44
+        },
+        {
+          "ticker": "INTC",
+          "price": 118.5,
+          "prev_close": 115.93,
+          "change_pct": 2.22
+        },
+        {
+          "ticker": "ANET",
+          "price": 148.59,
+          "prev_close": 147.81,
+          "change_pct": 0.53
+        },
+        {
+          "ticker": "VRT",
+          "price": 323.4,
+          "prev_close": 376.23,
+          "change_pct": -14.04
+        },
+        {
+          "ticker": "DELL",
+          "price": 252.8,
+          "prev_close": 247.89,
+          "change_pct": 1.98
+        }
+      ]
+    },
+    {
+      "id": "S2",
+      "name": "Hyperscaler & Big Tech",
+      "note": null,
+      "tickers": [
+        {
+          "ticker": "MSFT",
+          "price": 419.09,
+          "prev_close": 409.43,
+          "change_pct": 2.36
+        },
+        {
+          "ticker": "GOOGL",
+          "price": 387.66,
+          "prev_close": 401.07,
+          "change_pct": -3.34
+        },
+        {
+          "ticker": "AMZN",
+          "price": 268.46,
+          "prev_close": 267.22,
+          "change_pct": 0.46
+        },
+        {
+          "ticker": "META",
+          "price": 607.38,
+          "prev_close": 618.43,
+          "change_pct": -1.79
+        },
+        {
+          "ticker": "AAPL",
+          "price": 304.99,
+          "prev_close": 298.21,
+          "change_pct": 2.27
+        }
+      ]
+    },
+    {
+      "id": "S3",
+      "name": "AI-Software & Apps",
+      "note": null,
+      "tickers": [
+        {
+          "ticker": "PLTR",
+          "price": 137.41,
+          "prev_close": 133.73,
+          "change_pct": 2.76
+        },
+        {
+          "ticker": "ORCL",
+          "price": 189.77,
+          "prev_close": 195.61,
+          "change_pct": -2.99
+        },
+        {
+          "ticker": "NOW",
+          "price": 99.69,
+          "prev_close": 90.5,
+          "change_pct": 10.15
+        },
+        {
+          "ticker": "CRM",
+          "price": 176.31,
+          "prev_close": 167.58,
+          "change_pct": 5.21
+        },
+        {
+          "ticker": "SNOW",
+          "price": 165.54,
+          "prev_close": 150.76,
+          "change_pct": 9.8
+        },
+        {
+          "ticker": "CRWD",
+          "price": 648.23,
+          "prev_close": 579.95,
+          "change_pct": 11.77
+        },
+        {
+          "ticker": "ADBE",
+          "price": 244.1,
+          "prev_close": 237.01,
+          "change_pct": 2.99
+        }
+      ]
+    },
+    {
+      "id": "S4",
+      "name": "Models & Foundation",
+      "note": "Out-of-universe — kein börsennotierter Pure-Play",
+      "tickers": []
+    },
+    {
+      "id": "S5",
+      "name": "Energy / Power / Infra",
+      "note": "Watchlist-Erweiterung pending Board (HED-32)",
+      "tickers": []
+    },
+    {
+      "id": "S6",
+      "name": "Robotics & Autonomy",
+      "note": "Out-of-universe — thematisch beobachtet",
+      "tickers": []
+    }
+  ]
+}

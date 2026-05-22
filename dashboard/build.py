@@ -11,6 +11,7 @@ Keine Secrets im Output: Daten werden zur Build-Zeit eingebettet.
 import argparse
 import json
 import os
+import urllib.request
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +19,25 @@ from pathlib import Path
 from ingestion.db import client
 
 OUT_DEFAULT = os.environ.get("DASHBOARD_OUT", "/var/www/html/fund/index.html")
+
+# Sektor-Taxonomie (HED-32, CIO-approved 2026-05-21). Namen sind die stehende
+# Strategist-Referenz; in-universe Ticker stammen aus ingestion.watchlist.TICKERS.
+# S4/S5/S6 sind thematisch/out-of-universe → kein Ticker → Placeholder-Kachel.
+SECTOR_TAXONOMY = [
+    {"id": "S1", "name": "Compute & Semis",
+     "tickers": ["NVDA", "AMD", "TSM", "ASML", "AVGO", "MU", "ARM", "SMCI",
+                 "QCOM", "MRVL", "INTC", "ANET", "VRT", "DELL"]},
+    {"id": "S2", "name": "Hyperscaler & Big Tech",
+     "tickers": ["MSFT", "GOOGL", "AMZN", "META", "AAPL"]},
+    {"id": "S3", "name": "AI-Software & Apps",
+     "tickers": ["PLTR", "ORCL", "NOW", "CRM", "SNOW", "CRWD", "ADBE"]},
+    {"id": "S4", "name": "Models & Foundation",
+     "tickers": [], "note": "Out-of-universe — kein börsennotierter Pure-Play"},
+    {"id": "S5", "name": "Energy / Power / Infra",
+     "tickers": [], "note": "Watchlist-Erweiterung pending Board (HED-32)"},
+    {"id": "S6", "name": "Robotics & Autonomy",
+     "tickers": [], "note": "Out-of-universe — thematisch beobachtet"},
+]
 
 
 def collect() -> dict:
@@ -44,6 +64,13 @@ def collect() -> dict:
         "last_run": runs[0] if runs else None,
         "briefing": briefing,
         "track_record": load_track_record(),
+        "sector_view": load_sector_view() or {
+            "as_of": None,
+            "sectors": [{"id": s["id"], "name": s["name"], "note": s.get("note"),
+                         "tickers": [{"ticker": t, "price": None, "change_pct": None}
+                                     for t in s["tickers"]]}
+                        for s in SECTOR_TAXONOMY],
+        },
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
 
@@ -57,6 +84,51 @@ def load_track_record() -> dict | None:
         return json.loads(p.read_text(encoding="utf-8"))
     except Exception:
         return None
+
+
+def load_sector_view() -> dict | None:
+    """Sektor-Performance-Ansicht (HED-48). Geschrieben upstream von
+    `--gen-sector-view` (Yahoo-Finance-Kurse) in sector_view.json neben diesem
+    Modul; die UI rechnet nichts neu (nur change_pct-Färbung). Fehlt/kaputt → None
+    → Kacheln ohne Kurse (Taxonomie-Fallback)."""
+    p = Path(__file__).with_name("sector_view.json")
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _yahoo_quote(ticker: str) -> dict | None:
+    """Letzter Kurs + Vortagesschluss via öffentliches Yahoo-Chart-JSON.
+    Best-effort: bei Fehler None (Kachel zeigt dann '—')."""
+    url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+           "?range=5d&interval=1d")
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            meta = json.load(r)["chart"]["result"][0]["meta"]
+        price = meta.get("regularMarketPrice")
+        prev = meta.get("chartPreviousClose") or meta.get("previousClose")
+        if price is None:
+            return None
+        change = round((price - prev) / prev * 100, 2) if prev else None
+        return {"ticker": ticker, "price": round(price, 2),
+                "prev_close": round(prev, 2) if prev else None,
+                "change_pct": change}
+    except Exception:
+        return None
+
+
+def gen_sector_view() -> dict:
+    """Baut sector_view.json: pro Sektor die in-universe Ticker + letzter
+    Yahoo-Kurs. Off-build-path (Netz!), per --gen-sector-view aufgerufen."""
+    sectors = []
+    for s in SECTOR_TAXONOMY:
+        quotes = [q for q in (_yahoo_quote(t) for t in s["tickers"]) if q]
+        sectors.append({"id": s["id"], "name": s["name"],
+                        "note": s.get("note"), "tickers": quotes})
+    return {"as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+            "sectors": sectors}
 
 
 HTML = r"""<!DOCTYPE html>
@@ -80,6 +152,7 @@ h2{font-size:var(--fs-h2);text-transform:uppercase;letter-spacing:.06em;color:va
 .sub{color:var(--mut);font-size:var(--fs-cap);margin-top:var(--s1)}
 .grid{display:grid;gap:var(--s3)}
 .cards{grid-template-columns:repeat(4,1fr)}
+.sectors{grid-template-columns:repeat(3,1fr)}
 .two-col{grid-template-columns:1fr 1fr}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:var(--s4)}
 .kpi{font-size:var(--fs-kpi);font-weight:700}
@@ -146,8 +219,22 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
 .empty .ex{color:var(--mut);max-width:46ch;margin:var(--s2) auto 0}
 .countdown{display:inline-block;margin-top:var(--s3);background:var(--panel2);border:1px solid var(--line);
   border-radius:6px;padding:4px 10px;font-size:var(--fs-cap);color:var(--mut)}
+/* sector view (HED-48) */
+.sec-tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:var(--s4)}
+.sec-head{display:flex;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3)}
+.sec-head .id{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.06em}
+.sec-head .nm{font-weight:600}
+.sec-head .ct{margin-left:auto;color:var(--mut);font-size:11px}
+.sec-row{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);
+  padding:var(--s2) 0;border-bottom:1px solid var(--line);font-size:13px}
+.sec-row:last-child{border-bottom:0}
+.sec-row .tk{font-weight:600}
+.sec-row .px{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.sec-row .ch{font-variant-numeric:tabular-nums;font-size:12px;min-width:62px;text-align:right}
+.sec-ph{color:var(--mut);font-size:13px;padding:var(--s2) 0}
 @media (max-width:760px){
   .cards{grid-template-columns:repeat(2,1fr)}
+  .sectors{grid-template-columns:1fr}
   .two-col{grid-template-columns:1fr}
   .flow{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tr-tbl{display:block}
@@ -177,6 +264,9 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
 
   <h2>Letztes Briefing</h2>
   <div id="briefing"></div>
+
+  <h2>Sektor-Ansicht <span id="secstand" class="tag"></span></h2>
+  <div class="grid sectors" id="sectorview"></div>
 
   <h2>Thesen-Track-Record <span id="trstand" class="tag"></span></h2>
   <div id="trackrecord"></div>
@@ -370,6 +460,35 @@ function calibSvg(buckets){
   }
 })();
 
+// Sektor-Ansicht (HED-48)
+(function renderSectors(){
+  const sv=D.sector_view, root=$("sectorview");
+  if(!sv || !(sv.sectors||[]).length){
+    root.innerHTML='<div class="panel muted">Sektor-Ansicht noch nicht verfügbar.</div>'; return; }
+  $("secstand").textContent = sv.as_of ? ("Kurse "+sv.as_of) : "Taxonomie (ohne Kurse)";
+  function chCell(c){
+    if(c==null) return '<span class="ch muted">—</span>';
+    const up=c>=0;
+    return `<span class="ch ${up?"move-up":"move-dn"}">${up?"+":"−"}${Math.abs(c).toFixed(1)}%</span>`;
+  }
+  root.innerHTML = sv.sectors.map(s=>{
+    const tks=s.tickers||[];
+    let body;
+    if(tks.length){
+      body = tks.map(t=>{
+        const px = t.price!=null ? t.price : '<span class="muted">—</span>';
+        return `<div class="sec-row"><span class="tk">${esc(t.ticker)}</span>
+          <span class="px">${px}</span>${chCell(t.change_pct)}</div>`;
+      }).join("");
+    } else {
+      body = `<div class="sec-ph">${esc(s.note||"Keine in-universe Ticker.")}</div>`;
+    }
+    return `<div class="sec-tile"><div class="sec-head">
+        <span class="id">${esc(s.id)}</span><span class="nm">${esc(s.name)}</span>
+        <span class="ct">${tks.length||""}</span></div>${body}</div>`;
+  }).join("");
+})();
+
 function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));}
 </script></body></html>"""
 
@@ -382,7 +501,16 @@ def main():
     ap = argparse.ArgumentParser(description="AI/Tech Fund — Dashboard-Generator")
     ap.add_argument("--stdout", action="store_true", help="HTML auf stdout statt Datei")
     ap.add_argument("--out", default=OUT_DEFAULT)
+    ap.add_argument("--gen-sector-view", action="store_true",
+                    help="sector_view.json aus Yahoo-Finance-Kursen neu bauen (Netz)")
     args = ap.parse_args()
+
+    if args.gen_sector_view:
+        p = Path(__file__).with_name("sector_view.json")
+        p.write_text(json.dumps(gen_sector_view(), ensure_ascii=False, indent=2),
+                     encoding="utf-8")
+        print(f"geschrieben: {p}")
+        return
 
     html = render(collect())
     if args.stdout:
