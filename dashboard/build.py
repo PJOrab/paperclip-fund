@@ -341,6 +341,18 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .exit-trigger{font-size:var(--fs-cap);color:var(--mut);margin-top:3px;max-width:320px;white-space:normal;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;cursor:help}
 .exit-trigger span{font-style:italic}
 .sc-line{font-size:var(--fs-cap);margin-top:2px}
+/* portfolio view */
+.pf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--s3);margin-bottom:var(--s3)}
+.pf-bar-wrap{margin-top:var(--s3)}
+.pf-bar-label{display:flex;justify-content:space-between;font-size:var(--fs-cap);color:var(--mut);margin-bottom:4px}
+.pf-bar-track{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden;margin-bottom:var(--s2)}
+.pf-bar-fill{height:100%;border-radius:4px;transition:width .3s}
+.pf-bar-long{background:var(--accent)}
+.pf-bar-short{background:#f78166}
+.pf-sec-row{display:flex;align-items:center;gap:var(--s3);font-size:var(--fs-cap);padding:3px 0}
+.pf-sec-name{flex:1;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-sec-bar{flex:0 0 80px;height:6px;background:var(--accent);border-radius:3px}
+.pf-sec-pct{width:32px;text-align:right;color:var(--mut)}
 /* conviction color ramp */
 .conv-lo{color:var(--mut)}
 .conv-mid{color:var(--txt)}
@@ -515,6 +527,7 @@ main:focus{outline:none}
   <nav class="sec-nav" aria-label="Seitenabschnitte">
     <a href="#h-briefing">Briefing</a>
     <a href="#h-trackrecord">Track-Record</a>
+    <a href="#h-portfolio">Portfolio</a>
     <a href="#h-sectorview">Sektoren</a>
   </nav>
 
@@ -528,6 +541,11 @@ main:focus{outline:none}
   <section aria-labelledby="h-trackrecord">
   <h2 id="h-trackrecord">Thesen-Track-Record <span id="trstand" class="tag"></span></h2>
   <div id="trackrecord" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:60%"></div><div class="skel skel-line" style="width:75%"></div></div></div>
+  </section>
+
+  <section aria-labelledby="h-portfolio">
+  <h2 id="h-portfolio">Portfolio-Übersicht</h2>
+  <div id="portfolioview" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:55%"></div><div class="skel skel-line" style="width:70%"></div></div></div>
   </section>
 
   <section aria-labelledby="h-sectorview">
@@ -911,6 +929,71 @@ function calibSvg(buckets){
   }
 })();
 
+// Portfolio-Übersicht: aktive Calls aus Track-Record + Sektorkonzentration
+(function renderPortfolio(){
+  const root=$("portfolioview");
+  if(!root) return;
+  const tr=D.track_record;
+  const active=(tr&&tr.theses||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  if(!active.length){
+    root.innerHTML='<div class="panel muted">Keine aktiven Calls.</div>';
+    root.setAttribute("aria-busy","false"); return;
+  }
+  // Build sector map from sector_view taxonomy
+  const SECTOR_MAP={};
+  ((D.sector_view||{}).sectors||[]).forEach(s=>{
+    (s.tickers||[]).forEach(tk=>{ SECTOR_MAP[tk.toUpperCase()]=s.id+" "+s.name; });
+  });
+  const longCalls=active.filter(t=>(t.direction||"").toLowerCase()==="long");
+  const shortCalls=active.filter(t=>(t.direction||"").toLowerCase()==="short");
+  const totalConv=active.reduce((s,t)=>s+(t.conviction||0),0);
+  const longConv=longCalls.reduce((s,t)=>s+(t.conviction||0),0);
+  const shortConv=shortCalls.reduce((s,t)=>s+(t.conviction||0),0);
+  const netPct=totalConv>0?Math.round(((longConv-shortConv)/totalConv)*100):0;
+  // Sector concentration: conviction-weighted
+  const secConv={};
+  active.forEach(t=>{
+    const tks=(t.tickers||[]);
+    if(!tks.length) return;
+    const sec=SECTOR_MAP[tks[0].toUpperCase()]||"Other";
+    secConv[sec]=(secConv[sec]||0)+(t.conviction||0);
+  });
+  const secEntries=Object.entries(secConv).sort((a,b)=>b[1]-a[1]);
+  const maxSec=secEntries[0]?secEntries[0][1]:1;
+  // Devil cautions / rejects
+  const rejects=active.filter(t=>t.devil&&t.devil.verdict==="reject").length;
+  const cautions=active.filter(t=>t.devil&&t.devil.verdict==="caution").length;
+  // KPI strip
+  const kpis=[
+    ["Aktive Calls", active.length, false],
+    ["Long / Short", `${longCalls.length} / ${shortCalls.length}`, false],
+    ["Net-Exposure", `${netPct>=0?"+":""}${netPct}%`, false],
+    ["⚖ Devil (Reject)", rejects, rejects>0],
+  ];
+  const kpiHtml=kpis.map(([k,v,warn])=>
+    `<dl class="panel kpi-dl"><dt class="muted">${k}</dt><dd class="kpi${warn?" kpi--pending":""}">${v}</dd></dl>`
+  ).join("");
+  // Net long/short bar
+  const longPct=totalConv>0?Math.round(longConv/totalConv*100):0;
+  const shortPct=100-longPct;
+  const barHtml=`<div class="panel pf-bar-wrap">
+    <div class="pf-bar-label"><span>Long ${longPct}%</span><span>Short ${shortPct}%</span></div>
+    <div class="pf-bar-track"><div class="pf-bar-fill pf-bar-long" style="width:${longPct}%"></div></div>
+    <div class="muted" style="font-size:var(--fs-cap)">${cautions} Caution · ${rejects} Reject vom Devil-Advocate</div>
+  </div>`;
+  // Sector concentration bars
+  const secBarHtml=secEntries.length?`<div class="panel">
+    <div class="muted" style="margin-bottom:var(--s3);font-size:var(--fs-cap)">Sektorkonzentration (conviction-gewichtet)</div>
+    ${secEntries.map(([sec,cv])=>`<div class="pf-sec-row">
+      <span class="pf-sec-name">${esc(sec)}</span>
+      <div class="pf-bar-track" style="flex:0 0 100px;margin:0"><div class="pf-bar-fill pf-bar-long" style="width:${Math.round(cv/maxSec*100)}%"></div></div>
+      <span class="pf-sec-pct">${Math.round(cv/totalConv*100)}%</span>
+    </div>`).join("")}
+  </div>`:"";
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 // Sektor-Ansicht (HED-48)
 (function renderSectors(){
   const sv=D.sector_view, root=$("sectorview");
@@ -979,7 +1062,7 @@ function calibSvg(buckets){
 
 function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));}
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
-["briefing","trackrecord","sectorview"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+["briefing","trackrecord","portfolioview","sectorview"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
 // Section nav: highlight the anchor pill whose section is currently most in view
 (function(){

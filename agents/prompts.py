@@ -343,6 +343,14 @@ def triage_user(items: list[dict], max_clusters: int = 12) -> str:
         "Importance 4 for squeeze setup (≥10% float + rising), 3 for elevated (5-10%), 2 for trend-only. "
         "Never import short interest alone as the primary thesis driver — always pair with a catalyst "
         "from another cluster. Short interest is context/amplifier, not the call itself. "
+        "OPTIONS MARKET: items with source 'options_market' show institutional positioning signals. "
+        "Include when notable: P/C OI ratio < 0.5 (bullish — market buying calls) or > 1.2 (bearish — "
+        "market buying puts); IV skew > +5pp (downside protection bid = fear) or < -5pp (call demand = "
+        "squeeze/momentum risk); expected move ≥ 4% (elevated uncertainty before catalyst). "
+        "Category='sentiment' (options are positioning, not news). Importance: P/C extreme + earnings "
+        "upcoming = 4; IV skew spike = 3-4; expected move elevated = 3; single mild signal = 2. "
+        "Pair with the relevant ticker's news cluster to give the positioning signal a narrative anchor. "
+        "Never treat options data alone as a thesis — it amplifies conviction from fundamental evidence. "
         "Only include genuinely market-relevant clusters. If little matters, return fewer."
     )
 
