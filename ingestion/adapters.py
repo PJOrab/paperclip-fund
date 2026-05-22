@@ -34,8 +34,9 @@ def _load_macro():
 
 def build_adapters():
     """
-    AI/Tech-Quellen-Set. Eigene Adapter aus sources_aitech.py; nur FRED bleibt
-    aus macro-agent als Rates-/Liquiditäts-Overlay (Tech ist zinssensitiv).
+    AI/Tech-Quellen-Set. Eigene Adapter aus sources_aitech.py; FRED-Makro läuft als
+    schlüsselloser Adapter (fredgraph.csv) als Rates-/Liquiditäts-Overlay (Tech ist
+    zinssensitiv) — unabhängig vom FRED_API_KEY, der oft fehlt (HED-92).
     Funktionsinterner Import vermeidet Zirkularität (sources_aitech → adapters).
     """
     m = _load_macro()
@@ -54,11 +55,10 @@ def build_adapters():
         ("BLS Macro", S.MacroBLSAdapter()),
         ("Yahoo Finance", S.YahooFinanceTickerAdapter()),
         ("Earnings Calendar", S.EarningsCalendarAdapter()),
+        ("FRED (Macro)", S.FREDMacroAdapter()),
     ]
     if getattr(m, "NEWSAPI_KEY", ""):
         adapters.append(("NewsAPI AI", S.AITechNewsAPIAdapter()))
-    if getattr(m, "FRED_API_KEY", ""):
-        adapters.append(("FRED (Macro)", m.FREDAdapter()))
     if getattr(m, "X_AUTH_TOKEN", "") and getattr(m, "X_CT0", ""):
         adapters.append(("X/AI-Tech", S.XAITechAdapter()))
     return adapters

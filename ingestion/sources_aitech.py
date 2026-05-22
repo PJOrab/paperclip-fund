@@ -1026,3 +1026,94 @@ class XAITechAdapter:
 
     def fetch(self):
         return self._inner.fetch()
+
+
+class FREDMacroAdapter:
+    """
+    FRED-Makro über den schlüssellosen fredgraph.csv-Endpunkt — kein API-Key nötig,
+    daher robust gegen ein fehlendes FRED_API_KEY (der alte macro-agent-FREDAdapter
+    gab bei leerem Key still [] zurück → komplett leeres Makro-Fenster, vgl. HED-92).
+
+    Liefert je Serie die jüngste Beobachtung plus Δ vs. vorherige. Die Kern-Serien
+    (Initial/Continued Jobless Claims, Effective Fed Funds Rate) sichern eine
+    Mindest-Makro-Abdeckung an Veröffentlichungstagen (Do = Erstanträge); jeder neue
+    Print erzeugt durch das Datum im Text einen neuen content_hash → eigene raw_items-
+    Zeile im 24h-Fenster. Ergänzt MacroFed/MacroBLS (RSS): die liefern Fed-Statements
+    und BLS-Releases, aber nicht die wöchentlichen Erstanträge (DOL/ETA) oder
+    quantitative Zins-/Spread-Niveaus. Tech ist zinssensitiv → Rates/Liquidität-Overlay.
+    """
+    BASE = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}"
+    MAX_AGE_DAYS = 14  # Tages-/Wochenserien; Continued Claims lagen ~1 Woche hinter Initial
+
+    # series_id -> (Anzeigename, "value"|"pct"|"pp"|"count")
+    SERIES = {
+        "ICSA":         ("Initial Jobless Claims", "count"),
+        "CCSA":         ("Continued Jobless Claims", "count"),
+        "DFF":          ("Effective Fed Funds Rate", "pct"),
+        "DGS10":        ("10Y Treasury Yield", "pct"),
+        "T10Y2Y":       ("10Y-2Y Yield Spread", "pp"),
+        "BAMLH0A0HYM2": ("US HY OAS Spread", "pp"),
+        "DTWEXBGS":     ("Trade-Weighted USD", "value"),
+    }
+
+    @staticmethod
+    def _fmt(kind: str, v: float) -> str:
+        if kind == "count":
+            return f"{v:,.0f}"
+        if kind == "pct":
+            return f"{v:.2f}%"
+        if kind == "pp":
+            return f"{v:+.2f}pp"
+        return f"{v:.2f}"
+
+    @staticmethod
+    def _parse_csv(text: str):
+        """fredgraph.csv → [(date_str, float)] für numerische Beobachtungen ('.' = fehlend)."""
+        out = []
+        for line in text.strip().splitlines()[1:]:  # Header 'observation_date,SID' überspringen
+            parts = line.split(",")
+            if len(parts) < 2:
+                continue
+            val = parts[1].strip()
+            if not val or val == ".":
+                continue
+            try:
+                out.append((parts[0].strip(), float(val)))
+            except ValueError:
+                continue
+        return out
+
+    def fetch(self):
+        m = _m()
+        out = []
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=self.MAX_AGE_DAYS)).date()
+        for sid, (name, kind) in self.SERIES.items():
+            try:
+                text = m.fetch_url(self.BASE.format(sid=sid), headers=UA, timeout=15)
+                if not text:
+                    continue
+                obs = self._parse_csv(text)
+                if not obs:
+                    continue
+                date_str, latest = obs[-1]
+                try:
+                    if datetime.fromisoformat(date_str).date() < cutoff:
+                        continue  # veralteter Wert (kein frischer Print) → nicht surfacen
+                except ValueError:
+                    pass
+                delta = ""
+                if len(obs) >= 2:
+                    prev = obs[-2][1]
+                    if prev != 0:
+                        delta = f" (Δ {(latest - prev) / abs(prev):+.1%} vs. {self._fmt(kind, prev)})"
+                out.append({
+                    "text": f"FRED: {name} ({sid}) = {self._fmt(kind, latest)} "
+                            f"[{date_str}]{delta}",
+                    "source": "fred_macro",
+                    "url": f"https://fred.stlouisfed.org/series/{sid}",
+                    "reliability": 0.95,
+                })
+                time.sleep(0.2)
+            except Exception:
+                continue
+        return out
