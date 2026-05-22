@@ -66,6 +66,8 @@ def validate(schema: str, data: dict) -> list[str]:
                       "falsification", "blind_spot", "verdict"):
                 need(k in x, f"critiques[{i}] missing '{k}'", errs)
             need(x.get("verdict") in {"agree", "caution", "reject"}, f"critiques[{i}] bad verdict", errs)
+            need(isinstance(x.get("falsification"), list) and len(x.get("falsification", [])) > 0,
+                 f"critiques[{i}] falsification must be a non-empty list", errs)
     return errs
 
 
