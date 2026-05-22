@@ -9,7 +9,8 @@ Jede Stufe hat eine klare Rolle und ein striktes JSON-Output-Schema
 # ---------------------------------------------------------------------------
 TRIAGE_SYSTEM = (
     "You are the triage analyst at an AI/Tech-focused equity fund. From a noisy "
-    "feed (SEC filings, insider trades, arXiv, GitHub, Hacker News, tech news, X), "
+    "feed (SEC filings, insider trades, arXiv, GitHub, Hacker News, tech news, X, "
+    "earnings calendar), "
     "select ONLY items that could move AI/Tech equities or signal a shift in the "
     "AI investment landscape. Group related items into clusters. Map to tickers "
     "where possible (NVDA, AMD, TSM, ASML, MSFT, GOOGL, AMZN, META, AVGO, etc.). "
@@ -18,8 +19,14 @@ TRIAGE_SYSTEM = (
     "launches, M&A, and regulation — are HIGH-IMPORTANCE clusters and must be "
     "surfaced, not dropped just because the company has no ticker yet. Such events "
     "reshape the competitive/AI landscape even before they trade. "
+    "EARNINGS CALENDAR: items from source 'earnings_calendar' show upcoming earnings "
+    "dates for watchlist tickers (format: '[TICKER] Earnings in N days (DATE)'). "
+    "ALWAYS include them — an imminent earnings event (≤3 days) is importance=5; "
+    "upcoming (4-14 days) is importance=4. Group earnings items with other news about "
+    "the same ticker where possible, or create a standalone 'Earnings: TICKER in N days' "
+    "cluster. Never drop earnings_calendar items — they are authoritative timing data. "
     "Be selective on noise — quality over quantity — but never filter out a "
-    "material new entrant. Output STRICT JSON only, no prose."
+    "material new entrant or an earnings event. Output STRICT JSON only, no prose."
 )
 
 
@@ -36,13 +43,16 @@ def triage_user(items: list[dict], max_clusters: int = 12) -> str:
         f"Here are {len(items)} feed items from the last hours:\n\n{feed}\n\n"
         f"Each item shows its source reliability score (rel=, higher = more trustworthy primary source). "
         f"Weight higher-reliability items more heavily when deciding importance. "
+        f"Items from source 'earnings_calendar' show upcoming earnings dates — ALWAYS include them "
+        f"(importance 5 if ≤3 days out, 4 if 4-14 days). "
         f"Select and cluster the {max_clusters} MOST material for AI/Tech equities. "
         f"Return JSON:\n"
         '{"clusters": [{"title": str, "tickers": [str], '
         '"category": "earnings|product|chips|capex|regulation|research|funding|sentiment|macro|ipo|m&a|launch|insider_trade", '
         '"why": "1 sentence why it matters for the stock(s)", '
         '"item_refs": [int], "importance": 1-5}]}\n'
-        "Use category 'ipo' for S-1/F-1/424B registrations, 'm&a' for mergers/acquisitions, "
+        "Use category 'earnings' for earnings calendar events and earnings-related news. "
+        "Use 'ipo' for S-1/F-1/424B registrations, 'm&a' for mergers/acquisitions, "
         "'insider_trade' for SEC Form 4 executive/director open-market buys and sells. "
         "tickers may be [] for a private/pre-IPO entrant — still include it if material. "
         "Only include genuinely market-relevant clusters. If little matters, return fewer."
@@ -92,6 +102,11 @@ THESIS_SYSTEM = (
     "0.5-0.6 = clear evidence from reliable sources, identifiable catalyst; "
     "0.7-0.8 = multiple independent confirming signals, differentiated from consensus, near-term catalyst; "
     "0.9+ = rare — reserve for extremely strong, convergent, time-sensitive signals. "
+    "EARNINGS TIMING RULE: if an analysis cluster includes an imminent earnings event "
+    "(≤3 days), the thesis horizon MUST be 'days' and you MUST note the earnings date "
+    "as the primary catalyst. For earnings 4-14 days out, prefer 'weeks' horizon and "
+    "name the earnings date in catalysts[]. A thesis that ignores a known imminent "
+    "earnings event is invalid — earnings are binary risk events that reset the trade. "
     "Output STRICT JSON only."
 )
 
