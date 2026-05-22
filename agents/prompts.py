@@ -27,18 +27,23 @@ def triage_user(items: list[dict], max_clusters: int = 12) -> str:
     lines = []
     for i, it in enumerate(items):
         src = it.get("source", "?")
+        rel = it.get("reliability")
+        rel_tag = f" rel={rel:.2f}" if rel is not None else ""
         txt = (it.get("text") or "")[:300]
-        lines.append(f"[{i}] ({src}) {txt}")
+        lines.append(f"[{i}] ({src}{rel_tag}) {txt}")
     feed = "\n".join(lines)
     return (
         f"Here are {len(items)} feed items from the last hours:\n\n{feed}\n\n"
+        f"Each item shows its source reliability score (rel=, higher = more trustworthy primary source). "
+        f"Weight higher-reliability items more heavily when deciding importance. "
         f"Select and cluster the {max_clusters} MOST material for AI/Tech equities. "
         f"Return JSON:\n"
         '{"clusters": [{"title": str, "tickers": [str], '
-        '"category": "earnings|product|chips|capex|regulation|research|funding|sentiment|macro|ipo|m&a|launch", '
+        '"category": "earnings|product|chips|capex|regulation|research|funding|sentiment|macro|ipo|m&a|launch|insider_trade", '
         '"why": "1 sentence why it matters for the stock(s)", '
         '"item_refs": [int], "importance": 1-5}]}\n'
-        "Use category 'ipo' for S-1/F-1/424B registrations, 'm&a' for mergers/acquisitions. "
+        "Use category 'ipo' for S-1/F-1/424B registrations, 'm&a' for mergers/acquisitions, "
+        "'insider_trade' for SEC Form 4 executive/director open-market buys and sells. "
         "tickers may be [] for a private/pre-IPO entrant — still include it if material. "
         "Only include genuinely market-relevant clusters. If little matters, return fewer."
     )
