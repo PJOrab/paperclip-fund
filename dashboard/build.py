@@ -318,6 +318,14 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-tbl .num{text-align:right}
   .tr-tbl .dlabel{display:inline-block;min-width:90px;vertical-align:top}
 }
+/* focus-visible ring: brand-consistent keyboard nav across all interactive elements (WCAG 2.4.7) */
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.wf-summary:focus-visible,.brief summary:focus-visible,.df-summary:focus-visible{
+  outline-offset:4px;border-radius:6px}
+.panel:focus-visible,.sec-tile:focus-visible{
+  outline-offset:0;border-radius:12px}
+.tkl:focus-visible{border-radius:2px}
 /* respect reduced-motion: kill the infinite spinner + all transitions (WCAG 2.3.3, vestibular safety) */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
@@ -672,3 +680,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
