@@ -554,6 +554,31 @@ THESIS_SYSTEM = (
 )
 
 
+def _load_sector_price_context() -> str:
+    """Load ticker prices + 52w range from sector_view.json for thesis context."""
+    import pathlib
+    sv_path = pathlib.Path(__file__).resolve().parent.parent / "dashboard" / "sector_view.json"
+    try:
+        import json as _json
+        sv = _json.loads(sv_path.read_text())
+        lines = []
+        for s in sv.get("sectors", []):
+            for t in s.get("tickers", []):
+                if not t.get("price"):
+                    continue
+                w52 = ""
+                if t.get("pct_of_52w_high") is not None:
+                    w52 = f" | 52w-high: ${t.get('w52_high','?')} ({t['pct_of_52w_high']:.0f}% of high) low: ${t.get('w52_low','?')}"
+                lines.append(
+                    f"{t['ticker']}: ${t['price']} (1d: {t.get('change_pct','?'):+.2f}%){w52}"
+                )
+        if not lines:
+            return ""
+        return "\nCURRENT MARKET CONTEXT (live prices from sector_view):\n" + "\n".join(lines) + "\n"
+    except Exception:
+        return ""
+
+
 def thesis_user(analyses: list[dict]) -> str:
     import json
     # Sort analyses before presenting to the thesis LLM so the highest-value signals
@@ -577,11 +602,13 @@ def thesis_user(analyses: list[dict]) -> str:
         "\n\nCONVICTION SCALE (canonical — apply to every score you assign):\n"
         + conv_scale + "\n"
     ) if conv_scale else ""
+    sector_ctx = _load_sector_price_context()
     return (
         "Analyses (sorted: differentiated first, then high-magnitude, then short-horizon — "
         "prioritize these for thesis formation):\n\n"
         + json.dumps(sorted_analyses, ensure_ascii=False)
-        + scale_block + "\n\n"
+        + scale_block
+        + sector_ctx + "\n\n"
         "SCENARIO ANALYSIS (mandatory): each thesis MUST include a \'scenarios\' object with three "
         "probability-weighted cases that sum to ~1.0. Be specific: name the trigger and a directional "
         "price target (e.g. \'$950 (+12%)\' or \'no upside, holding current levels\'). "
