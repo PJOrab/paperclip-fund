@@ -31,10 +31,27 @@ def collect() -> dict:
     runs = (c.table("ingestion_runs").select("*")
             .order("started_at", desc=True).limit(1).execute().data or [])
     briefing = None
+    briefing_history: list[dict] = []
     try:
-        b = (c.table("briefing_runs").select("*")
-             .order("created_at", desc=True).limit(1).execute().data or [])
+        b = (c.table("briefing_runs")
+             .select("id,created_at,status,theses,window_hours")
+             .order("created_at", desc=True).limit(10).execute().data or [])
         briefing = b[0] if b else None
+        for run in b:
+            theses_blob = run.get("theses") or {}
+            theses = (theses_blob.get("theses", []) if isinstance(theses_blob, dict)
+                      else theses_blob) or []
+            convictions = [t.get("conviction") for t in theses
+                           if isinstance(t.get("conviction"), (int, float))]
+            tickers = list({tk for t in theses for tk in (t.get("tickers") or [])})[:5]
+            briefing_history.append({
+                "id": run["id"][:8],
+                "date": (run.get("created_at") or "")[:16].replace("T", " "),
+                "status": run.get("status", "?"),
+                "thesis_count": len(theses),
+                "avg_conviction": round(sum(convictions) / len(convictions), 2) if convictions else None,
+                "top_tickers": tickers,
+            })
     except Exception:
         briefing = None
 
@@ -45,6 +62,7 @@ def collect() -> dict:
         "recent": recent,
         "last_run": runs[0] if runs else None,
         "briefing": briefing,
+        "briefing_history": briefing_history,
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
 
@@ -132,6 +150,9 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
   <h2>Letztes Briefing</h2>
   <div id="briefing"></div>
 
+  <h2>Briefing-Verlauf</h2>
+  <div class="panel" id="bhistory"></div>
+
   <div class="foot">AI/Tech Fund · generiert aus Supabase · keine Secrets im Browser</div>
 </div>
 <script>
@@ -216,6 +237,32 @@ else{
   $("briefing").innerHTML=html||'<div class="panel muted">Briefing vorhanden, aber leer.</div>';
 }
 function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));}
+
+// Briefing history table
+const hist = D.briefing_history||[];
+if(hist.length){
+  const rows=hist.map(h=>{
+    const pill=statusPill(h.status);
+    const conv=h.avg_conviction!=null?h.avg_conviction.toFixed(2):"—";
+    const ticks=h.top_tickers.length?h.top_tickers.join(", "):"—";
+    return `<tr style="border-bottom:1px solid var(--line)">
+      <td style="padding:6px 8px;color:var(--mut)">${esc(h.date)}</td>
+      <td style="padding:6px 8px">${pill}</td>
+      <td style="padding:6px 8px;text-align:center">${h.thesis_count}</td>
+      <td style="padding:6px 8px;text-align:center">${conv}</td>
+      <td style="padding:6px 8px;color:var(--accent)">${esc(ticks)}</td>
+    </tr>`;}).join("");
+  $("bhistory").innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="border-bottom:1px solid var(--line);color:var(--mut)">
+      <th style="padding:6px 8px;text-align:left">Datum</th>
+      <th style="padding:6px 8px;text-align:left">Status</th>
+      <th style="padding:6px 8px;text-align:center">Thesen</th>
+      <th style="padding:6px 8px;text-align:center">⌀ Conviction</th>
+      <th style="padding:6px 8px;text-align:left">Top Ticker</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+}else{
+  $("bhistory").innerHTML='<div class="muted">Noch keine Briefing-Runs.</div>';
+}
 </script></body></html>"""
 
 
