@@ -78,16 +78,34 @@ def compute_devil(theses: list[dict]) -> dict:
 
 
 def _fetch_prev_briefing() -> str | None:
-    """Return the most recent done briefing_md, or None if unavailable."""
+    """Return the briefing from ~24h ago (window: 20-36h back) for a meaningful delta.
+    Falls back to the most recent done run if no run falls in that window."""
     try:
+        now = datetime.now(timezone.utc)
+        lo = (now - timedelta(hours=36)).isoformat()
+        hi = (now - timedelta(hours=20)).isoformat()
         res = (client().table("briefing_runs")
                .select("briefing_md")
                .eq("status", "done")
                .not_.is_("briefing_md", "null")
+               .gte("created_at", lo)
+               .lte("created_at", hi)
                .order("created_at", desc=True)
                .limit(1)
                .execute())
-        return (res.data[0]["briefing_md"] or None) if res.data else None
+        if res.data:
+            return res.data[0]["briefing_md"] or None
+        # Fallback: any prior done run (at least skip the current run's triage window)
+        cutoff = (now - timedelta(hours=4)).isoformat()
+        res2 = (client().table("briefing_runs")
+                .select("briefing_md")
+                .eq("status", "done")
+                .not_.is_("briefing_md", "null")
+                .lte("created_at", cutoff)
+                .order("created_at", desc=True)
+                .limit(1)
+                .execute())
+        return (res2.data[0]["briefing_md"] or None) if res2.data else None
     except Exception:
         return None
 
