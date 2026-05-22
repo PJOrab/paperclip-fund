@@ -63,6 +63,40 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-77 (DE-Loop Zyklus 5): **Triage: reliability scores surfaced + insider_trade category** (`agents/prompts.py`).
+  `triage_user` previously stripped reliability from items → model had no signal to rank SEC filings (rel=0.95) over HN posts (rel=0.55). Now each feed line shows `(source rel=X.XX)` with instruction to weight higher-reliability sources more heavily. Simultaneously added `insider_trade` as a first-class triage category — Form 4 open-market buys/sells were previously mis-filed under `sentiment`, obscuring the insider-signal cluster from downstream stages. Zero breaking changes (additive prompt context + extended category enum). Pushed to origin/main `767c3cc..1f7f929`. idea "Pipeline robustness / Briefing clarity".
+
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 4): **GitHub-Topics erweitert + Reliability-Konsolidierung**
+  (`ingestion/watchlist.py`, `ingestion/sources_aitech.py`). GITHUB_TOPICS von 4 → 6:
+  `multimodal` (frontier model competition) + `llm-inference` (inference efficiency stack).
+  Isolation-Test: 27 Items, malformed=0; neue Top-Repos: tokenspeed (LLM inference), atlas
+  (Pure-Rust-Inferenz-Engine), vllm-awq4-qwen (vLLM-Quantisierung), OpenSearch-VL (multimodal).
+  Reliability-Konsolidierung: FundingNewsAdapter + AITechNewsAPIAdapter hatten hardcodierte
+  0.8/0.6 statt W.SOURCE_RELIABILITY.get() — Single-Source-of-Truth-Invariante gebrochen;
+  jetzt W.SOURCE_RELIABILITY.get(key, fallback), Runtime-Werte unverändert.
+  Auf origin/main gepusht: `322d9fc..767c3cc`. idea „Data quality / reliability-Konsolidierung".
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 3): **S5 Energy/Power-Adapter neu** (`ingestion/sources_aitech.py`,
+  `ingestion/watchlist.py`, `ingestion/adapters.py`). Neuer `EnergyNewsAdapter` schließt den
+  Null-Coverage-Gap in S5 Energy/Power (Sektor-Taxonomie HED-32: Power-Grid-Strain ist
+  Primärrisiko der AI-Capex-These, bis jetzt kein Adapter). Quellen (beide 200/MacroIntel-UA):
+  `datacenter_dynamics` (AI-Rechenzentrum-Infra + Hyperscaler-Stromnachfrage: OpenAI Guaranteed
+  Capacity, Oregon-Regulierer Sondertarif für Datenzentren), `utilitydive` (Stromnetz / Utility-
+  Regulierung). Isolation-Test: 30 Items, malformed=0, `source=energy_news`, `reliability=0.72`
+  (neu in SOURCE_RELIABILITY). Pattern identisch FundingNewsAdapter (per-Feed try/except).
+  Auf origin/main gepusht: `b653714..322d9fc`. Live nach Operator-Deploy-Fix (HED-34).
+  idea „More adapters / sources" (S5-Sektor).
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 2): **Funding-Coverage verbreitert**
+  (`ingestion/watchlist.py`). FUNDING_RSS_FEEDS um zwei verifizierte, key-freie
+  Runden-Quellen ergänzt: `crunchbase_news` (news.crunchbase.com/feed/ — kanonische
+  Funding-Round-Quelle, trägt exakt die per QC verpassten Rounds, z.B. „Mercury
+  Lands $200M") und `techcrunch_venture` (techcrunch.com/category/venture/feed/).
+  Live getestet: alle Feeds Status 200 mit Projekt-UA; Crunchbase liefert gelegentlich
+  transiente Cloudflare-403 (Stabilitätstest 4/4 200 → kein Hard-Block), per-Feed
+  try/except isoliert das → kein Adapter-Kill, 30-Min-Takt fängt die Runde im nächsten
+  Zyklus. FundingNewsAdapter end-to-end: malformed=0, Items normalisiert
+  {text,source,url,reliability=0.8}. techcrunch_venture überlappt korrekt via shared
+  `seen`-Dedup mit startups (kein Bug). Auf origin/main gepusht: `6011ba7..b653714`.
+  Live erst nach Operator-Deploy-Fix (HED-34). idea „More adapters / sources".
 - 2026-05-22 — CIO-Master-Loop (HED-63 Zyklus): **Designer-UX-Loop angestoßen.** Gap: DE hatte
   eine eigene fortlaufende Schleife (HED-64), Designer Felix nicht — entgegen dem Mandat
   („Designer: Dashboard-UX … richte ihm eine EIGENE fortlaufende Arbeitsschleife ein"). Child
