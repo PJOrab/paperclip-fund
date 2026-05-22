@@ -197,13 +197,22 @@ NOTABLE_PRIVATE_PLAYERS = [
 YAHOO_FINANCE_TICKERS = TICKERS
 YAHOO_FINANCE_RSS = "https://feeds.finance.yahoo.com/rss/2.0/headline?s={ticker}&region=US&lang=en-US"
 
-# Press wire feeds: official company press releases (BusinessWire, GlobeNewswire).
+# Press wire feeds: official company press releases (GlobeNewswire).
 # These carry earnings releases, product launches, partnerships, and guidance
 # updates hours before editorial coverage and before the 8-K hits SEC EDGAR.
 # AI/tech keyword filtering applied in PressWireAdapter to avoid PR noise.
+# NOTE (Zyklus 35): both prior feeds were silently dead, so PressWireAdapter
+# contributed 0 items every cycle (the per-feed try/except swallows it):
+#   (1) businesswire_tech (feed.businesswire.com/rss/home/?rss=G22) now returns a
+#       1001-byte empty stub (0 items) — BusinessWire deprecated anonymous RSS;
+#       no working public replacement found → removed (dead weight, cf. wsj_tech Zyklus 34).
+#   (2) globenewswire_tech (.../subjectcode/SC/typeofnews/PressRelease) returned
+#       HTTP 400 — "SC" is not a valid subjectcode. Replaced with the Technology
+#       *industry* feed (verified 200, 20 fresh items, 18/20 pass the AITECH filter:
+#       AMD EPYC ramp, AMD $10B Taiwan, ASML buyback, Applied Materials/Broadcom,
+#       POET $400M financing, Skyworks/Qorvo M&A).
 PRESS_WIRE_RSS_FEEDS = {
-    "businesswire_tech":    "https://feed.businesswire.com/rss/home/?rss=G22",
-    "globenewswire_tech":   "https://www.globenewswire.com/RssFeed/subjectcode/SC/typeofnews/PressRelease",
+    "globenewswire_tech":   "https://www.globenewswire.com/RssFeed/industry/9576-Technology/feedTitle/Technology",
 }
 
 SOURCE_RELIABILITY = {
