@@ -63,6 +63,10 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 17): **YahooFinanceTickerAdapter description enrichment**
+  (`ingestion/sources_aitech.py`). Yahoo Finance RSS `<description>` fields contain substantive article
+  summaries (e.g. AMD CEO Taiwan capacity ramp, IREN 5-year NVDA contract context) not just headlines.
+  Now appends via `_rss_desc` helper (200-char, total 450). Live-tested: 3/3 enriched. Pushed: `77cfce8`.
 - 2026-05-22 — HED-64 (DE-Loop Zyklus 16): **Description enrichment for FundingNews + EnergyNews adapters**
   (`ingestion/sources_aitech.py`). Both adapters were title-only while TechRSSAdapter gained descriptions
   in Zyklus 15. Extracted `_rss_text`/`_rss_desc` as module-level helpers (DRY). Now all three RSS adapter
