@@ -407,12 +407,15 @@ class TechRSSAdapter:
                     continue
                 sep = "<item>" if "<item>" in text else "<entry>"
                 for block in text.split(sep)[1:6]:
-                    t = re.search(r"<title>(.*?)</title>", block, re.DOTALL)
+                    # Match <title> OR <title type="html"> (Atom feeds use attributes)
+                    t = re.search(r"<title[^>]*>(.*?)</title>", block, re.DOTALL)
                     if not t:
                         continue
-                    title = re.sub(r"<[^>]+>", "", t.group(1))
-                    title = (title.replace("<![CDATA[", "").replace("]]>", "")
-                             .replace("&amp;", "&").replace("&#039;", "'").strip())
+                    # Strip CDATA wrapper first (before HTML-tag strip, or CDATA is
+                    # treated as one big tag and the whole title disappears).
+                    raw = t.group(1).replace("<![CDATA[", "").replace("]]>", "")
+                    title = re.sub(r"<[^>]+>", "", raw)
+                    title = (title.replace("&amp;", "&").replace("&#039;", "'").strip())
                     if not title:
                         continue
                     link = (re.search(r'<link[^>]*href="([^"]+)"', block)
