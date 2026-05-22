@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-05-22 15:10 UTC",
+  "as_of": "2026-05-22 15:28 UTC",
   "sectors": [
     {
       "id": "S1",
@@ -8,87 +8,129 @@
       "tickers": [
         {
           "ticker": "NVDA",
-          "price": 217.28,
+          "price": 218.21,
           "prev_close": 219.51,
-          "change_pct": -1.01
+          "change_pct": -0.59,
+          "w52_high": 236.54,
+          "w52_low": 129.16,
+          "pct_of_52w_high": 92.3
         },
         {
           "ticker": "AMD",
-          "price": 472.72,
+          "price": 471.5,
           "prev_close": 449.59,
-          "change_pct": 5.14
+          "change_pct": 4.87,
+          "w52_high": 481.37,
+          "w52_low": 107.67,
+          "pct_of_52w_high": 97.9
         },
         {
           "ticker": "TSM",
-          "price": 407.79,
+          "price": 406.81,
           "prev_close": 407.15,
-          "change_pct": 0.16
+          "change_pct": -0.08,
+          "w52_high": 421.97,
+          "w52_low": 190.03,
+          "pct_of_52w_high": 96.4
         },
         {
           "ticker": "ASML",
-          "price": 1627.19,
+          "price": 1628.69,
           "prev_close": 1592.0,
-          "change_pct": 2.21
+          "change_pct": 2.3,
+          "w52_high": 1638.5,
+          "w52_low": 683.48,
+          "pct_of_52w_high": 99.4
         },
         {
           "ticker": "AVGO",
-          "price": 413.95,
+          "price": 414.95,
           "prev_close": 414.57,
-          "change_pct": -0.15
+          "change_pct": 0.09,
+          "w52_high": 442.36,
+          "w52_low": 226.18,
+          "pct_of_52w_high": 93.8
         },
         {
           "ticker": "MU",
-          "price": 766.3,
+          "price": 766.51,
           "prev_close": 762.1,
-          "change_pct": 0.55
+          "change_pct": 0.58,
+          "w52_high": 818.67,
+          "w52_low": 90.93,
+          "pct_of_52w_high": 93.6
         },
         {
           "ticker": "ARM",
-          "price": 311.5,
+          "price": 308.6,
           "prev_close": 298.23,
-          "change_pct": 4.45
+          "change_pct": 3.48,
+          "w52_high": 315.0,
+          "w52_low": 100.02,
+          "pct_of_52w_high": 98.0
         },
         {
           "ticker": "SMCI",
-          "price": 35.22,
+          "price": 35.15,
           "prev_close": 33.46,
-          "change_pct": 5.26
+          "change_pct": 5.05,
+          "w52_high": 62.36,
+          "w52_low": 19.48,
+          "pct_of_52w_high": 56.4
         },
         {
           "ticker": "QCOM",
-          "price": 241.1,
+          "price": 240.72,
           "prev_close": 213.41,
-          "change_pct": 12.98
+          "change_pct": 12.8,
+          "w52_high": 247.9,
+          "w52_low": 121.99,
+          "pct_of_52w_high": 97.1
         },
         {
           "ticker": "MRVL",
-          "price": 197.07,
+          "price": 196.62,
           "prev_close": 190.69,
-          "change_pct": 3.35
+          "change_pct": 3.11,
+          "w52_high": 198.17,
+          "w52_low": 58.61,
+          "pct_of_52w_high": 99.2
         },
         {
           "ticker": "INTC",
-          "price": 121.87,
+          "price": 121.27,
           "prev_close": 118.5,
-          "change_pct": 2.84
+          "change_pct": 2.34,
+          "w52_high": 132.75,
+          "w52_low": 18.97,
+          "pct_of_52w_high": 91.4
         },
         {
           "ticker": "ANET",
-          "price": 152.99,
+          "price": 153.16,
           "prev_close": 148.59,
-          "change_pct": 2.96
+          "change_pct": 3.08,
+          "w52_high": 179.8,
+          "w52_low": 83.86,
+          "pct_of_52w_high": 85.2
         },
         {
           "ticker": "VRT",
-          "price": 330.06,
+          "price": 329.46,
           "prev_close": 323.4,
-          "change_pct": 2.06
+          "change_pct": 1.87,
+          "w52_high": 379.94,
+          "w52_low": 101.0,
+          "pct_of_52w_high": 86.7
         },
         {
           "ticker": "DELL",
-          "price": 293.29,
+          "price": 290.64,
           "prev_close": 252.8,
-          "change_pct": 16.02
+          "change_pct": 14.97,
+          "w52_high": 294.89,
+          "w52_low": 106.38,
+          "pct_of_52w_high": 98.6
         }
       ]
     },
@@ -99,33 +141,48 @@
       "tickers": [
         {
           "ticker": "MSFT",
-          "price": 418.57,
+          "price": 418.97,
           "prev_close": 419.09,
-          "change_pct": -0.12
+          "change_pct": -0.03,
+          "w52_high": 555.45,
+          "w52_low": 356.28,
+          "pct_of_52w_high": 75.4
         },
         {
           "ticker": "GOOGL",
-          "price": 388.7,
+          "price": 386.67,
           "prev_close": 387.66,
-          "change_pct": 0.27
+          "change_pct": -0.26,
+          "w52_high": 408.61,
+          "w52_low": 162.0,
+          "pct_of_52w_high": 94.6
         },
         {
           "ticker": "AMZN",
-          "price": 269.14,
+          "price": 268.73,
           "prev_close": 268.46,
-          "change_pct": 0.25
+          "change_pct": 0.1,
+          "w52_high": 278.56,
+          "w52_low": 196.0,
+          "pct_of_52w_high": 96.5
         },
         {
           "ticker": "META",
-          "price": 611.44,
+          "price": 610.11,
           "prev_close": 607.38,
-          "change_pct": 0.67
+          "change_pct": 0.45,
+          "w52_high": 796.25,
+          "w52_low": 520.26,
+          "pct_of_52w_high": 76.6
         },
         {
           "ticker": "AAPL",
-          "price": 310.95,
+          "price": 310.97,
           "prev_close": 304.99,
-          "change_pct": 1.96
+          "change_pct": 1.96,
+          "w52_high": 311.4,
+          "w52_low": 193.46,
+          "pct_of_52w_high": 99.9
         }
       ]
     },
@@ -136,45 +193,66 @@
       "tickers": [
         {
           "ticker": "PLTR",
-          "price": 136.14,
+          "price": 136.46,
           "prev_close": 137.41,
-          "change_pct": -0.93
+          "change_pct": -0.69,
+          "w52_high": 207.52,
+          "w52_low": 118.93,
+          "pct_of_52w_high": 65.8
         },
         {
           "ticker": "ORCL",
-          "price": 193.12,
+          "price": 192.8,
           "prev_close": 189.77,
-          "change_pct": 1.77
+          "change_pct": 1.6,
+          "w52_high": 345.72,
+          "w52_low": 134.57,
+          "pct_of_52w_high": 55.8
         },
         {
           "ticker": "NOW",
-          "price": 101.36,
+          "price": 101.55,
           "prev_close": 99.69,
-          "change_pct": 1.68
+          "change_pct": 1.86,
+          "w52_high": 211.48,
+          "w52_low": 81.24,
+          "pct_of_52w_high": 48.0
         },
         {
           "ticker": "CRM",
-          "price": 178.68,
+          "price": 178.71,
           "prev_close": 176.31,
-          "change_pct": 1.34
+          "change_pct": 1.36,
+          "w52_high": 280.74,
+          "w52_low": 163.52,
+          "pct_of_52w_high": 63.7
         },
         {
           "ticker": "SNOW",
-          "price": 172.18,
+          "price": 171.86,
           "prev_close": 165.54,
-          "change_pct": 4.01
+          "change_pct": 3.82,
+          "w52_high": 280.67,
+          "w52_low": 118.3,
+          "pct_of_52w_high": 61.2
         },
         {
           "ticker": "CRWD",
-          "price": 669.88,
+          "price": 670.5,
           "prev_close": 648.23,
-          "change_pct": 3.34
+          "change_pct": 3.43,
+          "w52_high": 673.23,
+          "w52_low": 342.72,
+          "pct_of_52w_high": 99.6
         },
         {
           "ticker": "ADBE",
-          "price": 243.85,
+          "price": 244.02,
           "prev_close": 244.1,
-          "change_pct": -0.1
+          "change_pct": -0.03,
+          "w52_high": 421.48,
+          "w52_low": 224.13,
+          "pct_of_52w_high": 57.9
         }
       ]
     },
@@ -191,27 +269,39 @@
       "tickers": [
         {
           "ticker": "VST",
-          "price": 155.78,
+          "price": 156.82,
           "prev_close": 149.08,
-          "change_pct": 4.49
+          "change_pct": 5.2,
+          "w52_high": 219.82,
+          "w52_low": 132.66,
+          "pct_of_52w_high": 71.3
         },
         {
           "ticker": "CEG",
-          "price": 292.93,
+          "price": 295.66,
           "prev_close": 285.83,
-          "change_pct": 2.48
+          "change_pct": 3.44,
+          "w52_high": 412.7,
+          "w52_low": 243.3,
+          "pct_of_52w_high": 71.6
         },
         {
           "ticker": "GEV",
-          "price": 1048.52,
+          "price": 1049.53,
           "prev_close": 1043.82,
-          "change_pct": 0.45
+          "change_pct": 0.55,
+          "w52_high": 1181.95,
+          "w52_low": 458.65,
+          "pct_of_52w_high": 88.8
         },
         {
           "ticker": "ETN",
-          "price": 388.33,
+          "price": 389.38,
           "prev_close": 381.51,
-          "change_pct": 1.79
+          "change_pct": 2.06,
+          "w52_high": 435.43,
+          "w52_low": 311.9,
+          "pct_of_52w_high": 89.4
         }
       ]
     },

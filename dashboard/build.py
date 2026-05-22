@@ -101,7 +101,7 @@ def load_sector_view() -> dict | None:
 
 
 def _yahoo_quote(ticker: str) -> dict | None:
-    """Letzter Kurs + Vortagesschluss via öffentliches Yahoo-Chart-JSON.
+    """Letzter Kurs + Vortagesschluss + 52-Wochen-Range via öffentliches Yahoo-Chart-JSON.
     Best-effort: bei Fehler None (Kachel zeigt dann '—').
     range=1d: chartPreviousClose = yesterday's session close → accurate 1-day change_pct.
     (range=5d used chartPreviousClose from 5 trading days ago — showed weekly not daily move.)"""
@@ -116,9 +116,21 @@ def _yahoo_quote(ticker: str) -> dict | None:
         if price is None:
             return None
         change = round((price - prev) / prev * 100, 2) if prev else None
-        return {"ticker": ticker, "price": round(price, 2),
-                "prev_close": round(prev, 2) if prev else None,
-                "change_pct": change}
+        w52_high = meta.get("fiftyTwoWeekHigh")
+        w52_low = meta.get("fiftyTwoWeekLow")
+        # pct_of_52w_high: 100% = at 52w high, lower = room to recover or weakness
+        pct_of_52w_high = (round(price / w52_high * 100, 1)
+                           if w52_high and w52_high > 0 else None)
+        result = {"ticker": ticker, "price": round(price, 2),
+                  "prev_close": round(prev, 2) if prev else None,
+                  "change_pct": change}
+        if w52_high:
+            result["w52_high"] = round(w52_high, 2)
+        if w52_low:
+            result["w52_low"] = round(w52_low, 2)
+        if pct_of_52w_high is not None:
+            result["pct_of_52w_high"] = pct_of_52w_high
+        return result
     except Exception:
         return None
 
