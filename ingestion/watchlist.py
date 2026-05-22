@@ -206,6 +206,10 @@ SOURCE_RELIABILITY = {
     # productivity. Primary economic data that drives Fed policy decisions.
     # Official government statistics: highest macro reliability.
     "bls_macro": 0.92,
+    # Analyst rating / price-target actions detected in Yahoo Finance headlines.
+    # Higher than generic yahoo_finance (0.72): analyst actions are structured
+    # investment signals (upgrade/downgrade/PT change), not general news.
+    "analyst_action": 0.85,
 }
 
 # S5 Energy/Power sector feeds — AI-capex risk thesis (power/grid strain).

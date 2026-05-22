@@ -832,6 +832,18 @@ class MacroBLSAdapter:
         return out
 
 
+# Regex to detect analyst rating/price-target actions in Yahoo Finance headlines.
+# Matched items get source="analyst_action" and higher reliability than generic news.
+_ANALYST_ACTION_RE = re.compile(
+    r"\b(upgrades?|downgrades?|raises?\s+price\s+target|lowers?\s+price\s+target|"
+    r"cuts?\s+price\s+target|initiates?\s+coverage|reinitiates?|resumes?\s+coverage|"
+    r"reiterates?|maintains?\s+(buy|sell|hold|neutral|outperform|underperform)|"
+    r"price\s+target\s+(raised|lowered|cut|increased|decreased|lifted)|"
+    r"\b(outperform|underperform|overweight|underweight|buy|sell|hold|neutral)\s+(rating|to))\b",
+    re.IGNORECASE,
+)
+
+
 class YahooFinanceTickerAdapter:
     """
     Yahoo Finance per-ticker RSS headlines for top watchlist positions.
@@ -839,6 +851,10 @@ class YahooFinanceTickerAdapter:
     product announcements) that tech-blog adapters routinely miss.
     One request per ticker with polite 0.3s sleep. Dedup by URL across tickers.
     Lookback = RSS_LOOKBACK_DAYS (default 3) to filter stale articles.
+
+    Analyst-action detection: headlines matching upgrade/downgrade/price-target
+    language are re-tagged as source="analyst_action" (reliability=0.85) so
+    triage can immediately distinguish them from generic financial news.
     """
     LOOKBACK_DAYS = getattr(W, "RSS_LOOKBACK_DAYS", 3)
 
@@ -874,14 +890,26 @@ class YahooFinanceTickerAdapter:
                         if pub and pub < cutoff:
                             continue
                     desc = _rss_desc(block, max_len=200)
-                    item_text = f"[{ticker}] {title}"
+                    # Detect analyst rating / price-target actions in the headline.
+                    # These are structurally different from general market news and
+                    # warrant a distinct source tag + reliability bump so triage
+                    # can recognize and prioritize them without pattern-matching prose.
+                    is_analyst = bool(_ANALYST_ACTION_RE.search(title))
+                    if is_analyst:
+                        src = "analyst_action"
+                        rel = W.SOURCE_RELIABILITY.get("analyst_action", 0.85)
+                        item_text = f"[Analyst · {ticker}] {title}"
+                    else:
+                        src = "yahoo_finance"
+                        rel = W.SOURCE_RELIABILITY.get("yahoo_finance", 0.72)
+                        item_text = f"[{ticker}] {title}"
                     if desc:
                         item_text = f"{item_text} — {desc}"
                     out.append({
                         "text": item_text[:450],
-                        "source": "yahoo_finance",
+                        "source": src,
                         "url": item_url,
-                        "reliability": W.SOURCE_RELIABILITY.get("yahoo_finance", 0.72),
+                        "reliability": rel,
                     })
             except Exception:
                 continue

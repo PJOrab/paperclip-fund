@@ -67,6 +67,11 @@ def triage_user(items: list[dict], max_clusters: int = 12) -> str:
         "Use category 'earnings' for earnings calendar events and earnings-related news. "
         "Use 'ipo' for S-1/F-1/424B registrations, 'm&a' for mergers/acquisitions, "
         "'insider_trade' for SEC Form 4 executive/director open-market buys and sells. "
+        "ANALYST ACTIONS: items with source 'analyst_action' are analyst upgrades, "
+        "downgrades, and price-target changes — always important (importance 3-5 depending "
+        "on firm tier and direction change). Use category 'sentiment'. Format: "
+        "'[Analyst · TICKER] Firm upgrades to Buy, PT $X'. Cluster multiple analyst "
+        "actions on the same ticker together. "
         "tickers may be [] for a private/pre-IPO entrant — still include it if material. "
         "Only include genuinely market-relevant clusters. If little matters, return fewer."
     )
