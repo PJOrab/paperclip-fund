@@ -226,7 +226,9 @@ border-radius:8px;font-size:var(--fs-h2)}
 .brief{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:20px 24px;
 max-width:var(--measure);margin-inline:0;line-height:1.75}
 .brief h1{font-size:18px;margin:0 0 var(--s3)}.brief h2{color:var(--txt);text-transform:none;letter-spacing:0;font-size:15px;margin-top:var(--s5)}
-/* lede: first paragraph elevated as abstract */
+/* briefing title line (bold-only first paragraph) styled as a heading */
+.brief-title{font-size:16px;font-weight:700;color:var(--txt);margin:0 0 var(--s3)}
+/* lede: first real prose paragraph elevated as abstract */
 .brief-lede{font-size:15px;color:var(--txt);line-height:1.65;margin:var(--s3) 0 var(--s4);
   padding-bottom:var(--s3);border-bottom:1px solid var(--line);font-weight:400}
 /* collapsible analysis body */
@@ -559,12 +561,19 @@ else{
     const raw = marked.parse(b.briefing_md);
     const tmp = document.createElement("div"); tmp.innerHTML = raw;
     const nodes = Array.from(tmp.childNodes);
-    // find first non-empty <p> as lede
-    const ledeIdx = nodes.findIndex(n=>n.nodeName==="P" && (n.textContent||"").trim().length>0);
+    // a bold-only <p> (e.g. "<b>🗞 CEO-Briefing …</b>") is the title, not the abstract
+    const isTitleP = n=>n.nodeName==="P" && n.children.length===1
+      && /^(B|STRONG)$/.test(n.children[0].nodeName)
+      && n.children[0].textContent.trim()===(n.textContent||"").trim();
+    // elevate first real prose <p> as lede; skip leading title line(s)
+    const ledeIdx = nodes.findIndex(n=>n.nodeName==="P" && (n.textContent||"").trim().length>0 && !isTitleP(n));
     let briefHtml = "";
     if(ledeIdx>=0){
-      // headings before lede (e.g. h1 title) pass through unchanged
-      for(let i=0;i<ledeIdx;i++) briefHtml+=nodes[i].outerHTML||"";
+      // title/headings before the lede pass through (title styled as a heading)
+      for(let i=0;i<ledeIdx;i++){
+        const n=nodes[i];
+        briefHtml += isTitleP(n) ? `<p class="brief-title">${n.innerHTML}</p>` : (n.outerHTML||"");
+      }
       briefHtml+=`<p class="brief-lede">${nodes[ledeIdx].innerHTML}</p>`;
       const rest=nodes.slice(ledeIdx+1).map(n=>n.outerHTML||n.textContent||"").join("");
       if(rest.trim()) briefHtml+=`<details open><summary>Vollanalyse</summary>${rest}</details>`;
