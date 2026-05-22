@@ -51,6 +51,7 @@ def build_adapters():
         ("Funding News", S.FundingNewsAdapter()),
         ("Energy/Power", S.EnergyNewsAdapter()),
         ("Fed Macro", S.MacroFedAdapter()),
+        ("BLS Macro", S.MacroBLSAdapter()),
         ("Yahoo Finance", S.YahooFinanceTickerAdapter()),
         ("Earnings Calendar", S.EarningsCalendarAdapter()),
     ]

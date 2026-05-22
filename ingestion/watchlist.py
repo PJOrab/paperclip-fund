@@ -202,6 +202,10 @@ SOURCE_RELIABILITY = {
     # Primary source for monetary policy decisions and forward guidance.
     # High reliability (official gov source) but macro — not ticker-specific.
     "fed_macro": 0.90,
+    # Bureau of Labor Statistics (BLS) economic releases — CPI, PPI, jobs,
+    # productivity. Primary economic data that drives Fed policy decisions.
+    # Official government statistics: highest macro reliability.
+    "bls_macro": 0.92,
 }
 
 # S5 Energy/Power sector feeds — AI-capex risk thesis (power/grid strain).

@@ -765,6 +765,73 @@ class MacroFedAdapter:
         return out
 
 
+class MacroBLSAdapter:
+    """
+    Bureau of Labor Statistics (BLS) economic releases — CPI, PPI, jobs reports,
+    and productivity data. These are the primary economic data points that drive
+    Fed policy decisions and thus AI capex cycles: hot CPI keeps rates high,
+    which tightens hyperscaler financing and slows data-center build-out.
+    Previously triage saw Fed signals (Zyklus 23) but not the underlying data
+    that forces Fed action.
+
+    Single official BLS RSS feed (no auth, public):
+    - bls_latest.rss: all major BLS press releases (CPI, PPI, JOLTS, payrolls, GDP)
+
+    Lookback = RSS_LOOKBACK_DAYS (3 days). Per-feed try/except isolation.
+    Source key bls_macro, reliability=0.92 (official government statistics).
+    """
+    FEEDS = {
+        "bls_releases": "https://www.bls.gov/feed/bls_latest.rss",
+    }
+    LOOKBACK_DAYS = getattr(W, "RSS_LOOKBACK_DAYS", 3)
+
+    def fetch(self):
+        m = _m()
+        out, seen = [], set()
+        cutoff = datetime.now(timezone.utc) - timedelta(days=self.LOOKBACK_DAYS)
+        for name, feed_url in self.FEEDS.items():
+            try:
+                text = m.fetch_url(feed_url, timeout=15)
+                if not text:
+                    continue
+                sep = "<item>" if "<item>" in text else "<entry>"
+                for block in text.split(sep)[1:15]:
+                    t = re.search(r"<title[^>]*>(.*?)</title>", block, re.DOTALL)
+                    if not t:
+                        continue
+                    raw = t.group(1).replace("<![CDATA[", "").replace("]]>", "")
+                    title = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+                    if not title:
+                        continue
+                    link_m = (re.search(r'<link[^>]*href="([^"]+)"', block)
+                              or re.search(r"<link>(.*?)</link>", block))
+                    url = link_m.group(1).strip() if link_m else None
+                    key = hashlib.md5((url or title).encode()).hexdigest()
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    date_m = (re.search(r"<pubDate>(.*?)</pubDate>", block, re.DOTALL)
+                              or re.search(r"<dc:date>(.*?)</dc:date>", block, re.DOTALL)
+                              or re.search(r"<updated>(.*?)</updated>", block, re.DOTALL))
+                    if date_m:
+                        pub = _parse_rss_date(date_m.group(1).strip())
+                        if pub and pub < cutoff:
+                            continue
+                    desc = _rss_desc(block)
+                    item_text = f"[BLS · macro] {title}"
+                    if desc:
+                        item_text = f"{item_text} — {desc}"
+                    out.append({
+                        "text": item_text[:350],
+                        "source": "bls_macro",
+                        "url": url,
+                        "reliability": W.SOURCE_RELIABILITY.get("bls_macro", 0.92),
+                    })
+            except Exception:
+                continue
+        return out
+
+
 class YahooFinanceTickerAdapter:
     """
     Yahoo Finance per-ticker RSS headlines for top watchlist positions.
