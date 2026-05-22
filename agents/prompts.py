@@ -292,7 +292,7 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict],
     ) if unique_earnings else ""
 
     prev_block = (
-        "YESTERDAY'S BRIEFING (use for '## Δ seit gestern' — identify what actually changed):\n"
+        "YESTERDAY'S BRIEFING (use for Δ seit gestern — identify what actually changed):\n"
         + prev_briefing[:1500] + "\n\n"
     ) if prev_briefing else ""
     return (
@@ -302,18 +302,26 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict],
         "THESES + DEVIL'S ADVOCATE (sorted: non-consensus/is_differentiated=true first, "
         "then by devil verdict):\n" + json.dumps(enriched, ensure_ascii=False) + "\n\n"
         + (f"UPCOMING EARNINGS (pre-extracted for you):\n{earnings_section}\n" if earnings_section else "")
-        + "Write the briefing with these sections (~1500-2000 Zeichen, CEO preference):\n"
-        "# CEO-Briefing AI/Tech — <Datum>\n"
-        "## Δ seit gestern (1 Satz: das eine große Thema / was sich geändert hat)\n"
-        "## Top-Calls (MAX 2-3; je: 1 Satz Empfehlung + Conviction, "
-        "⚖️ Devil's Advocate in 1 Zeile, 👉 Fazit in 1 Zeile; "
-        "prioritize is_differentiated=true calls)\n"
-        "## Beobachten (1 Zeile)\n"
+        + "Write the briefing in Telegram HTML (~1500-2000 Zeichen). Use this structure:\n"
+        "<b>🗞 CEO-Briefing AI/Tech — DD.MM.YYYY</b>\n\n"
+        "<b>Δ seit gestern</b>\n"
+        "EIN Satz: das eine große Thema / was sich geändert hat.\n\n"
+        "<b>📈 Top-Calls</b> (MAX 2-3; prioritize is_differentiated=true calls)\n\n"
+        "<b>1) TICKER — Long/Short · Conviction X,XX</b>\n"
+        "1 Satz Empfehlung + warum jetzt.\n"
+        "⚖️ <b>Gegenargument:</b> Devil's Advocate in 1 Zeile + "
+        "adjudication (→ Caution berücksichtigt / → Conviction reduziert auf X / → Devil kippt Call: gestrichen)\n"
+        "👉 <b>Fazit:</b> 1 Zeile\n\n"
+        "<b>👀 Beobachten</b>\n"
+        "• 1 Zeile\n\n"
         + (
-            "## 📅 Earnings diese Woche (kompakt: TICKER — Datum, optional 1 Zeile Erwartung; "
-            "nur wenn Earnings in ≤7 Tagen; max 4 Zeilen)\n"
+            "<b>📅 Earnings diese Woche</b> (nur wenn ≤7 Tage; max 4 Einträge)\n"
+            "• TICKER — Datum\n\n"
             if earnings_section else ""
         )
-        + "## Risiko (1 Zeile: das eine, was alle Calls gleichzeitig kippt)\n"
-        "Output ONLY the markdown."
+        + "<b>⚠️ Risiko</b>\n"
+        "• Das eine, was alle Calls kippt.\n\n"
+        "<i>↩️ Antworte auf diese Nachricht mit Feedback.</i>\n\n"
+        "Output ONLY the Telegram HTML. No Markdown headings (## / **). "
+        "Escape < > & as &lt; &gt; &amp; in body text."
     )
