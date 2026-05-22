@@ -885,14 +885,25 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
   const links=document.querySelectorAll(".sec-nav a");
   if(!links.length) return;
   const ids=Array.from(links).map(a=>a.getAttribute("href").slice(1));
-  if(!("IntersectionObserver" in window)){links[0].classList.add("sn-active");return;}
-  const io=new IntersectionObserver((entries)=>{
-    entries.forEach(e=>{
-      const a=document.querySelector(`.sec-nav a[href="#${e.target.id}"]`);
-      if(a) a.classList.toggle("sn-active",e.isIntersecting);
+  // Scroll-position recalc: the pill whose h2 most recently crossed 40% from viewport top.
+  // Replaces the old IO toggle which left multiple pills active on fast programmatic scrolls.
+  const update=()=>{
+    const cut=window.innerHeight*0.4;
+    let best=null,bestTop=-Infinity;
+    ids.forEach(id=>{
+      const el=document.getElementById(id); if(!el) return;
+      const top=el.getBoundingClientRect().top;
+      if(top<=cut&&top>bestTop){bestTop=top;best=id;}
     });
-  },{threshold:0,rootMargin:"0px 0px -60% 0px"});
-  ids.forEach(id=>{const el=document.getElementById(id);if(el)io.observe(el);});
+    links.forEach(a=>a.classList.remove("sn-active"));
+    (best?document.querySelector(`.sec-nav a[href="#${best}"]`):links[0])
+      ?.classList.add("sn-active");
+  };
+  let ticking=false;
+  window.addEventListener("scroll",()=>{
+    if(!ticking){requestAnimationFrame(()=>{update();ticking=false;});ticking=true;}
+  },{passive:true});
+  update();
 })();
 
 // Back-to-top: reveal after scrolling past the briefing fold; smooth unless reduced-motion
