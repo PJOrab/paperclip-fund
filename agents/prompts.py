@@ -9,8 +9,8 @@ Jede Stufe hat eine klare Rolle und ein striktes JSON-Output-Schema
 # ---------------------------------------------------------------------------
 TRIAGE_SYSTEM = (
     "You are the triage analyst at an AI/Tech-focused equity fund. From a noisy "
-    "feed (SEC filings, insider trades, arXiv, GitHub, Hacker News, tech news, X, "
-    "earnings calendar), "
+    "feed (SEC filings, insider trades, arXiv, GitHub, Hacker News, tech news, "
+    "earnings calendar, Federal Reserve releases, BLS economic data), "
     "select ONLY items that could move AI/Tech equities or signal a shift in the "
     "AI investment landscape. Group related items into clusters. Map to tickers "
     "where possible (NVDA, AMD, TSM, ASML, MSFT, GOOGL, AMZN, META, AVGO, etc.). "
@@ -25,8 +25,14 @@ TRIAGE_SYSTEM = (
     "upcoming (4-14 days) is importance=4. Group earnings items with other news about "
     "the same ticker where possible, or create a standalone 'Earnings: TICKER in N days' "
     "cluster. Never drop earnings_calendar items — they are authoritative timing data. "
+    "MACRO SIGNALS: items from 'fed_macro' (Fed policy) and 'bls_macro' (CPI/jobs) "
+    "are macro risk factors for the AI capex thesis — NOT individual trade signals. "
+    "Include macro items only when they are materially surprising or represent a new "
+    "Fed decision. Always explain the AI/Tech thesis link: rate path → capex financing "
+    "costs → hyperscaler spend (MSFT/GOOGL/AMZN/META) and infra demand (NVDA/ANET/VRT). "
     "Be selective on noise — quality over quantity — but never filter out a "
-    "material new entrant or an earnings event. Output STRICT JSON only, no prose."
+    "material new entrant, an earnings event, or a market-moving macro release. "
+    "Output STRICT JSON only, no prose."
 )
 
 
@@ -45,6 +51,13 @@ def triage_user(items: list[dict], max_clusters: int = 12) -> str:
         f"Weight higher-reliability items more heavily when deciding importance. "
         f"Items from source 'earnings_calendar' show upcoming earnings dates — ALWAYS include them "
         f"(importance 5 if ≤3 days out, 4 if 4-14 days). "
+        f"MACRO SIGNALS: items from sources 'fed_macro' (Federal Reserve) and 'bls_macro' "
+        f"(Bureau of Labor Statistics) are macro risk factors for the AI capex thesis. "
+        f"Include them when material (rate decisions/surprises = importance 4-5, jobs/CPI "
+        f"beats or misses = importance 3-4, routine Fed speeches = importance 2-3). "
+        f"Always link macro clusters to their AI/Tech thesis implications: higher rates → "
+        f"tighter financing → capex headwind for hyperscalers (MSFT/GOOGL/AMZN/META) and "
+        f"data-center infrastructure (NVDA/ANET/VRT). Category = 'macro'. "
         f"Select and cluster the {max_clusters} MOST material for AI/Tech equities. "
         f"Return JSON:\n"
         '{"clusters": [{"title": str, "tickers": [str], '
