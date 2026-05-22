@@ -72,6 +72,7 @@ def collect() -> dict:
                         for s in SECTOR_TAXONOMY],
         },
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        "built_at_iso": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -406,7 +407,7 @@ main:focus{outline:none}
 <script>
 const D = __DATA__;
 const $ = (id)=>document.getElementById(id);
-$("built").textContent = D.built_at;
+$("built").innerHTML = `<time datetime="${D.built_at_iso||''}">${D.built_at}</time>`;
 
 // Pipeline
 const steps = [
@@ -488,7 +489,7 @@ else{
     const ago=Date.now()-new Date(b.created_at).getTime();
     const mins=Math.round(ago/60000);
     const fresh=mins<2?"gerade eben":mins<60?`vor ${mins} Min.`:mins<1440?`vor ${Math.round(mins/60)} Std.`:`vor ${Math.round(mins/1440)} Tag${Math.round(mins/1440)===1?"":"en"}`;
-    html+=`<div class="brief-ts">Briefing · ${fresh}</div>`;
+    html+=`<div class="brief-ts">Briefing · <time datetime="${new Date(b.created_at).toISOString()}" title="${b.created_at}">${fresh}</time></div>`;
   }
   // "Heutige Calls" hero strip: compact chips before prose (Recognition>Recall, Goal-Gradient, F-pattern lede)
   // Conviction color ramp: low→mut, mid→txt, high→accent
@@ -653,7 +654,9 @@ function calibSvg(buckets){
   const sv=D.sector_view, root=$("sectorview");
   if(!sv || !(sv.sectors||[]).length){
     root.innerHTML='<div class="panel muted">Sektor-Ansicht noch nicht verfügbar.</div>'; return; }
-  $("secstand").textContent = sv.as_of ? ("Kurse "+sv.as_of) : "Taxonomie (ohne Kurse)";
+  $("secstand").innerHTML = sv.as_of
+    ? `Kurse <time datetime="${(sv.as_of_iso||sv.as_of.replace(' UTC','').replace(' ','T')+'Z')}">${sv.as_of}</time>`
+    : "Taxonomie (ohne Kurse)";
   function chCell(c){
     if(c==null) return '<span class="ch muted">—</span>';
     const up=c>=0;
