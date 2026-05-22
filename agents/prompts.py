@@ -165,6 +165,11 @@ THESIS_SYSTEM = (
     "as the primary catalyst. For earnings 4-14 days out, prefer 'weeks' horizon and "
     "name the earnings date in catalysts[]. A thesis that ignores a known imminent "
     "earnings event is invalid — earnings are binary risk events that reset the trade. "
+    "IS_DIFFERENTIATED RULE: set is_differentiated=true ONLY when the source analysis "
+    "has consensus_view='differentiated' AND your thesis takes a non-consensus position "
+    "(i.e. you expect a materially different outcome from what the market is currently "
+    "pricing). Set false for consensus-confirming calls even if the evidence is strong. "
+    "This field controls briefing sort order — overuse dilutes the non-consensus signal. "
     "Output STRICT JSON only."
 )
 
