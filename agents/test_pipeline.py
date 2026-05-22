@@ -262,12 +262,18 @@ def test_watchlist_sync() -> None:
     _wl_main()
 
 
+def test_dedup() -> None:
+    from ingestion.test_dedup import main as _dedup_main
+    _dedup_main()
+
+
 def main() -> None:
     test_parse_json()
     test_cross_check()
     test_classify_item()
     test_validate_output()
     test_watchlist_sync()
+    test_dedup()
     print("\nALL PIPELINE TESTS PASSED")
 
 
