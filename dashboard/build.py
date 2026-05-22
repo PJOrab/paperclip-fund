@@ -312,6 +312,9 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .tr-pending tbody th{font-weight:400;text-align:left}
 .tr-pending tr:last-child td,.tr-pending tr:last-child th{border-bottom:none}
 .tr-pending .sd{color:var(--mut);white-space:nowrap}
+.exit-trigger{font-size:var(--fs-cap);color:var(--mut);margin-top:3px;max-width:320px;white-space:normal;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;cursor:help}
+.exit-trigger span{font-style:italic}
+.sc-line{font-size:var(--fs-cap);margin-top:2px}
 /* conviction color ramp */
 .conv-lo{color:var(--mut)}
 .conv-mid{color:var(--txt)}
@@ -826,21 +829,48 @@ function calibSvg(buckets){
       </div>`;
     }
     // Pending-theses list: show which theses are waiting (label/ticker/direction/conviction/score-date)
+    // Build live price map from sector_view for mark-to-market on active calls
+    const _priceMap={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>{
+      (s.tickers||[]).forEach(t=>{if(t.ticker&&t.price!=null)_priceMap[t.ticker.toUpperCase()]=t.price;});
+    });
+    function _mtm(t){
+      // For single-ticker theses: compute unrealised move% vs baseline
+      const tks=(t.tickers||[]);
+      if(!tks.length||t.baseline_price==null) return "";
+      const cur=_priceMap[tks[0].toUpperCase()];
+      if(cur==null) return "";
+      const dir=(t.direction||"").toLowerCase();
+      const rawPct=((cur-t.baseline_price)/t.baseline_price)*100;
+      const pnl=dir==="short"?-rawPct:rawPct;
+      const up=pnl>=0;
+      const cls=up?"move-up":"move-dn";
+      return `<span class="${cls}" style="font-size:var(--fs-cap);font-variant-numeric:tabular-nums" title="Baseline $${t.baseline_price} → jetzt $${cur.toFixed(2)}">${up?"+":"−"}${Math.abs(pnl).toFixed(1)}%</span>`;
+    }
     const pendingTheses=(tr.theses||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
     const pendingTbl=pendingTheses.length ? (()=>{
       const rows=pendingTheses.slice().sort((x,y)=>
         (x.earliest_score_date||"").localeCompare(y.earliest_score_date||""));
       const _cc=c=>c==null?"":c>=0.6?"conv-hi":c>=0.35?"conv-mid":"conv-lo";
       const devNote=t=>t.devil&&t.devil.note?` title="⚖ ${esc(t.devil.verdict||"?")} — ${esc(t.devil.note)}" style="cursor:help"`:""
+      const exitNote=t=>t.exit_trigger?`<div class="exit-trigger" title="Exit wenn: ${esc(t.exit_trigger)}">🚪 <span>${esc(t.exit_trigger)}</span></div>`:"";
+      const scenNote=t=>{
+        const sc=t.scenarios; if(!sc) return "";
+        const fmt=(k,s)=>s?`${k} ${s.target||"?"} (P=${Math.round((s.prob||0)*100)}%)`:null;
+        const parts=[fmt("Bull",sc.bull),fmt("Base",sc.base),fmt("Bear",sc.bear)].filter(Boolean);
+        return parts.length?`<div class="sc-line muted">${parts.join(" · ")}</div>`:"";
+      };
       return `<table class="tr-pending"><caption class="tr-cap">Offene Thesen — zu früh für Wertung</caption>
-        <thead><tr><th scope="col">These</th><th scope="col">Richtung</th><th scope="col">Conv.</th><th scope="col">Wertung ab</th></tr></thead>
+        <thead><tr><th scope="col">Diese</th><th scope="col">Richtung</th><th scope="col">Conv.</th><th scope="col">Unrealis. P&amp;L</th><th scope="col">Wertung ab</th></tr></thead>
         <tbody>${rows.map(t=>`<tr${devNote(t)}>
           <th scope="row"><span class="t" style="font-weight:600">${esc(t.label||"?")}</span>
             ${(t.tickers||[]).length?" <span class='muted'>("+
               (t.tickers||[]).map(tk=>`<a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(tk)}" target="_blank" rel="noopener">${esc(tk)}</a>`).join(", ")+
-            ")</span>":""}</th>
+            ")</span>":""}
+            ${exitNote(t)}${scenNote(t)}</th>
           <td><span class="cd ${dirClass(t.direction)}">${esc(t.direction||"—")}</span></td>
           <td class="num"><span class="${_cc(t.conviction)}" style="font-variant-numeric:tabular-nums">${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></td>
+          <td class="num">${_mtm(t)||'<span class="muted">—</span>'}</td>
           <td class="sd">${esc(t.earliest_score_date||"—")}</td>
         </tr>`).join("")}</tbody></table>`;
     })() : "";
