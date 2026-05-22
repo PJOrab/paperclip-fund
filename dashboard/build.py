@@ -143,31 +143,6 @@ def collect() -> dict:
     # Sort thesis calls newest-first
     thesis_calls.sort(key=lambda x: x["date"], reverse=True)
 
-    # Track-record aggregates (proxy: devil verdict as independent opinion)
-    scored_calls = [c for c in thesis_calls if c["verdict"] in ("agree", "caution", "reject")]
-    agree_n = sum(1 for c in scored_calls if c["verdict"] == "agree")
-    caution_n = sum(1 for c in scored_calls if c["verdict"] == "caution")
-    reject_n = sum(1 for c in scored_calls if c["verdict"] == "reject")
-    # High-conviction (>=0.55) agree rate — ideally high
-    hc = [c for c in scored_calls if isinstance(c.get("conviction"), (int, float)) and c["conviction"] >= 0.55]
-    hc_agree = sum(1 for c in hc if c["verdict"] == "agree")
-    # Low-conviction (<0.55) reject+caution rate — ideally high (we were rightly cautious)
-    lc = [c for c in scored_calls if isinstance(c.get("conviction"), (int, float)) and c["conviction"] < 0.55]
-    lc_cautious = sum(1 for c in lc if c["verdict"] in ("caution", "reject"))
-    convictions = [c["conviction"] for c in thesis_calls if isinstance(c.get("conviction"), (int, float))]
-    track_record = {
-        "total_calls": len(thesis_calls),
-        "scored": len(scored_calls),
-        "agree": agree_n,
-        "caution": caution_n,
-        "reject": reject_n,
-        "agree_rate": round(agree_n / len(scored_calls) * 100) if scored_calls else None,
-        "high_conv_agree_rate": round(hc_agree / len(hc) * 100) if hc else None,
-        "low_conv_cautious_rate": round(lc_cautious / len(lc) * 100) if lc else None,
-        "avg_conviction": round(sum(convictions) / len(convictions), 2) if convictions else None,
-        "nc_pct": round(sum(1 for c in thesis_calls if c["is_differentiated"]) / len(thesis_calls) * 100) if thesis_calls else None,
-    }
-
     return {
         "total": total,
         "by_source": dict(Counter(r["source"] for r in rows).most_common()),
@@ -178,11 +153,22 @@ def collect() -> dict:
         "briefing_history": briefing_history,
         "thesis_calls": thesis_calls,
         "sector_summary": _build_sector_summary(thesis_calls),
-        "track_record": track_record,
+        "track_record": load_track_record(),
         "briefing_age_hours": briefing_age_hours,
         "last_done_briefing_at": last_done_briefing_at,
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
+
+
+def load_track_record() -> dict | None:
+    """Thesen-Track-Record (HED-29 §5). Written upstream by the scoring step
+    (HED-25) into a structured JSON next to this module; the UI never recomputes
+    scoring (only move_pct colouring). Missing/broken file -> None -> empty state."""
+    p = Path(__file__).with_name("track_record.json")
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return None
 
 
 HTML = r"""<!DOCTYPE html>
@@ -196,7 +182,7 @@ HTML = r"""<!DOCTYPE html>
 :root{--bg:#0b0f17;--panel:#141a26;--panel2:#1b2333;--line:#263248;--txt:#e6edf6;
 --mut:#8aa0bd;--accent:#4da3ff;--green:#3fb950;--red:#f85149;--amber:#d29922;
 --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;
---fs-h1:22px;--fs-h2:13px;--fs-body:14px;--fs-cap:12px;--fs-kpi:30px;
+--fs-h1:22px;--fs-h2:13px;--fs-body:14px;--fs-cap:12px;--fs-micro:11px;--fs-kpi:30px;
 --measure:72ch;--ok:#3fb950;--warn:#d29922;--err:#f85149;}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--txt);font:var(--fs-body)/1.5 -apple-system,Segoe UI,Roboto,sans-serif}
@@ -242,10 +228,49 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
 .pill--warn{background:rgba(210,153,34,.15);color:var(--warn);border:1px solid var(--warn)}
 .pill--err{background:rgba(248,81,73,.15);color:var(--err);border:1px solid var(--err)}
 .foot{color:var(--mut);font-size:var(--fs-cap);margin-top:var(--s6);text-align:center}
+/* track-record (HED-29) */
+.tr-cards{grid-template-columns:repeat(4,1fr)}
+.pill--neutral{background:rgba(138,160,189,.12);color:var(--mut);border:1px solid var(--line)}
+.tr-tbl{display:grid;grid-template-columns:auto 1.4fr auto auto 1.3fr auto auto;
+  gap:0 var(--s3);font-size:var(--fs-h2);align-items:center}
+.tr-tbl .th{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.05em;color:var(--mut);
+  padding-bottom:var(--s2);border-bottom:1px solid var(--line)}
+.tr-tbl .cell{padding:var(--s2) 0;border-bottom:1px solid var(--line)}
+.tr-tbl .num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.tr-tbl .dlabel{display:none;color:var(--mut);font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.04em}
+.tr-lbl .t{font-weight:600}.tr-lbl .tk{color:var(--mut);font-size:var(--fs-micro)}
+.move-up{color:var(--green)}.move-dn{color:var(--red)}
+.devsig{cursor:help;color:var(--mut);margin-left:6px;font-size:var(--fs-cap)}
+.calib{display:flex;gap:var(--s4);align-items:center;flex-wrap:wrap}
+.calib svg{flex:0 0 auto}
+.calib .lg{font-size:var(--fs-cap);color:var(--mut)}
+.calib .lg .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.empty{text-align:center;padding:var(--s5) var(--s4)}
+.empty .g{font-size:34px;line-height:1}
+.empty .hl{font-weight:600;margin-top:var(--s2)}
+.empty .ex{color:var(--mut);max-width:46ch;margin:var(--s2) auto 0}
+.tr-progress{margin-top:var(--s3);max-width:28ch;margin-left:auto;margin-right:auto}
+.tr-progress .tr-pb-label{display:flex;justify-content:space-between;font-size:var(--fs-cap);color:var(--mut);margin-bottom:4px}
+.tr-progress .tr-pb-track{height:6px;background:var(--panel2);border-radius:3px;border:1px solid var(--line);overflow:hidden}
+.tr-progress .tr-pb-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .3s}
+.conv-lo{color:var(--mut)}.conv-mid{color:var(--txt)}.conv-hi{color:var(--accent);font-weight:600}
+.tkl{color:inherit;text-decoration:none;font-weight:inherit}
+.tkl:hover{text-decoration:underline;text-underline-offset:2px;color:var(--accent)}
 @media (max-width:760px){
   .cards{grid-template-columns:repeat(3,1fr)}
+  .tr-cards{grid-template-columns:repeat(2,1fr)}
   .two-col{grid-template-columns:1fr}
   .flow{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tr-tbl{display:block}
+  .tr-tbl .th{display:none}
+  .tr-tbl .row{display:block;padding:var(--s3) 0;border-bottom:1px solid var(--line)}
+  .tr-tbl .cell{display:flex;justify-content:space-between;gap:var(--s3);padding:2px 0;border:0;text-align:right}
+  .tr-tbl .num{text-align:right}
+  .tr-tbl .dlabel{display:inline-block;min-width:90px;vertical-align:top}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important}
 }
 </style></head>
 <body><div class="wrap">
@@ -271,8 +296,8 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
   <h2>Briefing-Verlauf</h2>
   <div class="panel" id="bhistory"></div>
 
-  <h2>Track Record <span id="trbadge"></span></h2>
-  <div class="grid cards" id="trkpis"></div>
+  <h2>Thesen-Track-Record <span id="trstand" class="tag"></span></h2>
+  <div id="trackrecord"></div>
 
   <h2>Sektor-Übersicht</h2>
   <div class="panel" id="sectorview"></div>
@@ -402,31 +427,104 @@ if(hist.length){
   $("bhistory").innerHTML='<div class="muted">Noch keine Briefing-Runs.</div>';
 }
 
-// Track Record KPIs
-const tr = D.track_record||{};
-if(tr.total_calls){
-  const fmt=(v,sfx='%')=>v!=null?v+sfx:'—';
-  const kpiData=[
-    ["Calls gesamt", tr.total_calls, "letzten 14 Runs"],
-    ["⌀ Conviction", tr.avg_conviction!=null?tr.avg_conviction.toFixed(2):'—', "aller Thesen"],
-    ["Devil Agree-Rate", fmt(tr.agree_rate), `${tr.agree??0}/${tr.scored??0} bewertet`],
-    ["High-Conv Agree", fmt(tr.high_conv_agree_rate), "Conv ≥ 0.55 → devil agree"],
-    ["Low-Conv Cautious", fmt(tr.low_conv_cautious_rate), "Conv < 0.55 → devil caution/reject"],
-    ["Non-Consensus %", fmt(tr.nc_pct), "★ differentiated calls"],
-  ];
-  $("trkpis").style.gridTemplateColumns="repeat(3,1fr)";
-  $("trkpis").innerHTML=kpiData.map(([label,val,sub])=>`
-    <div class="panel"><div class="kpi">${val}</div>
-    <div class="muted" style="font-size:12px;margin-top:4px">${label}</div>
-    <div class="muted" style="font-size:11px">${sub}</div></div>`).join('');
-  const agree_rate=tr.agree_rate??0;
-  $("trbadge").innerHTML=agree_rate>=60
-    ?'<span class="pill pill--ok">gut kalibriert</span>'
-    :agree_rate>=40?'<span class="pill pill--warn">kalibrierung prüfen</span>'
-    :'<span class="pill pill--err">kalibrierung schwach</span>';
-}else{
-  $("trkpis").innerHTML='<div class="panel muted">Noch keine Track-Record-Daten.</div>';
+// Thesen-Track-Record (HED-29) — real-price scoring from calibration_log
+function pct(x){return x==null?"—":Math.round(x*100)+"%";}
+function convCls(c){return c==null?"":c>=0.6?"conv-hi":c>=0.35?"conv-mid":"conv-lo";}
+function verdictPill(v){
+  const map={hit:["ok","✓ Hit"],miss:["err","✗ Miss"],neutral:["neutral","Neutral"],too_early:["warn","⏳ too early"]};
+  const [k,lbl]=map[v]||["neutral",esc(v||"—")];
+  return `<span class="pill pill--${k}">${lbl}</span>`;
 }
+function moveCell(m){
+  if(m==null) return '<span class="muted">—</span>';
+  const up=m>=0, sign=up?"+":"−";
+  return `<span class="${up?"move-up":"move-dn"}">${sign}${Math.abs(m).toFixed(1)}%</span>`;
+}
+function calibSvg(buckets){
+  if(!buckets || buckets.length<3){
+    return '<div class="muted" style="font-size:13px">Zu wenige Datenpunkte für eine Kalibrierungs-Linie '+
+      '(min. 3 Conviction-Buckets nötig).</div>';
+  }
+  const W=240,H=160,p=28, X=v=>p+v*(W-2*p), Y=v=>H-p-v*(H-2*p);
+  let pts=buckets.map(bk=>{
+    const r=Math.min(8,3+(bk.n||1));
+    return `<circle cx="${X(bk.conviction).toFixed(1)}" cy="${Y(bk.observed_hit_rate).toFixed(1)}" r="${r}" `+
+      `fill="var(--accent)" fill-opacity=".8"><title>conv ${pct(bk.conviction)} · hit ${pct(bk.observed_hit_rate)} · n=${bk.n}</title></circle>`;
+  }).join("");
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Kalibrierung: Conviction vs. beobachtete Hit-Rate">
+    <line x1="${X(0)}" y1="${Y(0)}" x2="${X(1)}" y2="${Y(1)}" stroke="var(--mut)" stroke-dasharray="4 3" stroke-width="1"/>
+    <line x1="${p}" y1="${H-p}" x2="${W-p}" y2="${H-p}" stroke="var(--line)"/>
+    <line x1="${p}" y1="${p}" x2="${p}" y2="${H-p}" stroke="var(--line)"/>
+    <text x="${W/2}" y="${H-6}" fill="var(--mut)" font-size="10" text-anchor="middle">Conviction →</text>
+    <text x="10" y="${H/2}" fill="var(--mut)" font-size="10" text-anchor="middle" transform="rotate(-90 10 ${H/2})">Hit-Rate →</text>
+    ${pts}
+  </svg>
+  <div class="lg"><span class="sw" style="background:var(--accent)"></span>Conviction-Bucket<br>
+  <span class="sw" style="background:var(--mut)"></span>perfekte Kalibrierung<br>
+  <span class="muted">über Linie = unterconfident · darunter = overconfident</span></div>`;
+}
+(function renderTrackRecord(){
+  const tr=D.track_record;
+  const root=$("trackrecord");
+  if(!tr || !tr.aggregate){ root.innerHTML='<div class="panel muted">Track-Record noch nicht verfügbar.</div>'; return; }
+  const a=tr.aggregate, scored=a.scored||0;
+  $("trstand").textContent = scored+" gewertet";
+  root.innerHTML = `<div class="grid tr-cards" id="trkpi"></div><div id="trbody" style="margin-top:14px"></div>`;
+  const biasTxt = a.calibration_bias==null ? "—"
+    : (a.calibration_bias>=0?"+":"−")+Math.abs(a.calibration_bias*100).toFixed(0)+"%";
+  $("trkpi").innerHTML=[
+    ["Hit-Rate", pct(a.hit_rate)],
+    ["gewertet", scored+" / "+(a.total??"—")],
+    ["too early", a.too_early??"—"],
+    ["Kalib.-Bias", biasTxt]
+  ].map(([k,v])=>`<div class="panel"><div class="kpi">${v}</div><div class="muted">${k}</div></div>`).join("");
+  const scoredTheses=(tr.theses||[]).filter(t=>t.verdict && t.verdict!=="too_early");
+  if(scored>0 && scoredTheses.length){
+    const head=["Datum","These","Richtung","Conviction","Kurs","Move %","Verdikt"];
+    const order={miss:0,hit:1,neutral:2,too_early:3};
+    const rows=scoredTheses.slice().sort((x,y)=>
+      (order[x.verdict]-order[y.verdict])||((y.conviction||0)-(x.conviction||0)));
+    let tbl='<div class="tr-tbl">'+head.map(h=>`<div class="th">${h}</div>`).join("");
+    tbl+=rows.map(t=>{
+      const dev=t.devil?`<span class="devsig" title="⚖ Devil (${esc(t.devil.verdict||"?")}): ${esc(t.devil.note||"")}">⚖</span>`:"";
+      const kurs=t.baseline_price!=null?`${t.baseline_price}${t.current_price!=null?" → "+t.current_price:""}`:"—";
+      return `<div class="row" style="display:contents">
+        <div class="cell num"><span class="dlabel">Datum </span>${esc(t.date||"—")}</div>
+        <div class="cell tr-lbl"><span class="dlabel">These </span><span class="t">${esc(t.label||"")}</span> <span class="tk">${(t.tickers||[]).map(tk=>`<a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(tk)}" target="_blank" rel="noopener">${esc(tk)}</a>`).join(", ")}</span></div>
+        <div class="cell"><span class="dlabel">Richtung </span><span class="dir ${dirClass(t.direction)}">${esc(t.direction||"")}</span></div>
+        <div class="cell num"><span class="dlabel">Conviction </span><span class="${convCls(t.conviction)}">${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></div>
+        <div class="cell num"><span class="dlabel">Kurs </span>${esc(kurs)}</div>
+        <div class="cell num"><span class="dlabel">Move </span>${moveCell(t.move_pct)}</div>
+        <div class="cell"><span class="dlabel">Verdikt </span>${verdictPill(t.verdict)}${dev}</div>
+      </div>`;}).join("");
+    tbl+='</div>';
+    $("trbody").innerHTML=`<div class="grid two-col">
+      <div class="panel">${tbl}</div>
+      <div class="panel"><div class="muted" style="margin-bottom:8px">Conviction-Kalibrierung</div>
+        <div class="calib">${calibSvg(tr.calibration_buckets)}</div></div></div>`;
+  } else {
+    const esd=tr.earliest_score_date;
+    let cd="";
+    if(esd){
+      const days=Math.ceil((new Date(esd+"T00:00:00Z")-Date.now())/864e5);
+      const windowDays=21;
+      const elapsed=Math.max(0,Math.min(windowDays,windowDays-days));
+      const pctv=Math.round((elapsed/windowDays)*100);
+      const label=days>0?`Erste Wertung in ${days} Tag${days===1?"":"en"} (${esc(esd)})`:`Wertung fällig ab ${esc(esd)}`;
+      cd=`<div class="tr-progress">
+        <div class="tr-pb-label"><span>Reifung</span><span>${pctv}%</span></div>
+        <div class="tr-pb-track" title="${label}"><div class="tr-pb-fill" style="width:${pctv}%"></div></div>
+        <div style="margin-top:4px;font-size:var(--fs-cap);color:var(--mut);text-align:center">${label}</div>
+      </div>`;
+    }
+    $("trbody").innerHTML=`<div class="panel"><div class="empty">
+      <div class="g">⏳</div>
+      <div class="hl">Noch keine gewerteten Thesen</div>
+      <div class="ex">${a.too_early||0} offene These${(a.too_early===1)?"":"n"} — der Zeithorizont (Wochen/Quartale) ist noch nicht abgelaufen. Gewertet wird gegen reale Kurse, keine Schätzungen.</div>
+      ${cd}
+    </div></div>`;
+  }
+})();
 
 // Sector view
 const sectors = D.sector_summary||[];
