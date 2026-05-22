@@ -63,6 +63,16 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-117 (CIO Zyklus 47): **Form 4: add total dollar value to insider trade summaries**
+  (`ingestion/sources_aitech.py`). `_summarize_form4()` showed shares×VWAP but not total $.
+  A CEO buying 10,000 shares at $219 ($2.2M conviction buy) and a director buying 200 shares
+  ($44K routine nibble) looked equally significant to triage. New `_fmt_dollar()` helper
+  prepends the aggregate open-market dollar volume to the signal line:
+  "OPEN-MARKET BUY $2.2M — P open-market buy +10,000 @ $219.51; holds 50,000 after".
+  Only fires for discretionary P (buy) and S (sell) codes — grants/exercises/tax
+  withholding are unaffected. Triage can now tier insider-trade importance by magnitude
+  without arithmetic ($1M+ = importance 4; $100K-$1M = importance 3; <$100K = 2).
+  All 6 tests pass. Pushed: `17c1a35`.
 - 2026-05-22 — HED-117 (CIO Zyklus 46): **n8n: fix QC node ordering (critical regression fix)**
   (`n8n/ai_tech_briefing.workflow.json`). Zyklus-43 introduced a production bug: Editor→QC→Telegram
   sent QC JSON stdout to the CEO instead of the German briefing. Fixed: Editor→Telegram→QC so
