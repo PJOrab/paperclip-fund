@@ -562,6 +562,42 @@ THESIS_SYSTEM = (
 )
 
 
+def _load_track_record_context() -> str:
+    """Load recent hit/miss/too_early calls from track_record.json for conviction calibration.
+
+    Injects the last 10 scored calls (hit/miss + direction_correct) so the thesis LLM
+    can see patterns in what has worked recently — e.g. if the last 5 NVDA long calls
+    were hits, that supports continued conviction; if 3 AMD calls were misses, flag caution.
+    """
+    import pathlib
+    tr_path = pathlib.Path(__file__).resolve().parent.parent / "dashboard" / "track_record.json"
+    try:
+        import json as _json
+        tr = _json.loads(tr_path.read_text())
+        theses = tr.get("theses") or []
+        scored = [t for t in theses if t.get("verdict") in ("hit", "miss", "neutral")]
+        if not scored:
+            return ""
+        agg = tr.get("aggregate") or {}
+        hit_rate = agg.get("hit_rate")
+        hr_str = f"{hit_rate*100:.0f}%" if hit_rate is not None else "n/a"
+        lines = [f"PAST PERFORMANCE (last {len(scored)} scored calls — use to calibrate conviction):"]
+        lines.append(f"Overall hit rate: {hr_str} ({agg.get('scored',0)} scored, "
+                     f"{agg.get('too_early',0)} pending horizon)")
+        for t in scored[-10:]:  # last 10 scored
+            verdict_icon = "✓" if t["verdict"] == "hit" else ("✗" if t["verdict"] == "miss" else "~")
+            move = f"{t['move_pct']:+.1f}%" if t.get("move_pct") is not None else "?"
+            lines.append(
+                f"  {verdict_icon} {t.get('date','?')} | {','.join(t.get('tickers',[]))} "
+                f"{t.get('direction','?')} conv={t.get('conviction','?')} → {move} [{t['verdict']}]"
+            )
+        lines.append("NOTE: if a thesis type (ticker/direction/sector) shows consistent misses, "
+                     "lower conviction. If consistent hits, this is a validated signal.")
+        return "\n" + "\n".join(lines) + "\n"
+    except Exception:
+        return ""
+
+
 def _load_sector_price_context() -> str:
     """Load ticker prices + 52w range from sector_view.json for thesis context."""
     import pathlib
@@ -611,12 +647,14 @@ def thesis_user(analyses: list[dict]) -> str:
         + conv_scale + "\n"
     ) if conv_scale else ""
     sector_ctx = _load_sector_price_context()
+    track_ctx = _load_track_record_context()
     return (
         "Analyses (sorted: differentiated first, then high-magnitude, then short-horizon — "
         "prioritize these for thesis formation):\n\n"
         + json.dumps(sorted_analyses, ensure_ascii=False)
         + scale_block
-        + sector_ctx + "\n\n"
+        + sector_ctx
+        + track_ctx + "\n\n"
         "SCENARIO ANALYSIS (mandatory): each thesis MUST include a \'scenarios\' object with three "
         "probability-weighted cases that sum to ~1.0. Be specific: name the trigger and a directional "
         "price target (e.g. \'$950 (+12%)\' or \'no upside, holding current levels\'). "
