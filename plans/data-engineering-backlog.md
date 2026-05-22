@@ -63,6 +63,11 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 16): **Description enrichment for FundingNews + EnergyNews adapters**
+  (`ingestion/sources_aitech.py`). Both adapters were title-only while TechRSSAdapter gained descriptions
+  in Zyklus 15. Extracted `_rss_text`/`_rss_desc` as module-level helpers (DRY). Now all three RSS adapter
+  families include article summaries (150-char) so triage sees content context, not just headlines.
+  Live-tested: Crunchbase descriptions parse correctly. Pushed: `b2fd3c0`.
 - 2026-05-22 — HED-64 (DE-Loop Zyklus 15): **CNBC Tech RSS + TechRSSAdapter description enrichment**
   (`ingestion/watchlist.py`, `ingestion/sources_aitech.py`). Added CNBC Technology feed (first-mover
   on earnings reactions, analyst calls, M&A). TechRSSAdapter: extract `<description>`/`<summary>`
