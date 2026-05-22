@@ -50,9 +50,12 @@ def validate(schema: str, data: dict) -> list[str]:
         need(isinstance(data.get("theses"), list), "missing 'theses' list", errs)
         for i, x in enumerate(data.get("theses", []) or []):
             for k in ("id", "tickers", "direction", "thesis", "bull_case",
-                      "bear_case", "catalysts", "horizon", "conviction"):
+                      "bear_case", "catalysts", "horizon", "conviction",
+                      "is_differentiated"):
                 need(k in x, f"theses[{i}] missing '{k}'", errs)
             need(x.get("direction") in {"long", "short", "pair"}, f"theses[{i}] bad direction", errs)
+            need(isinstance(x.get("is_differentiated"), bool),
+                 f"theses[{i}] is_differentiated must be bool", errs)
             need(x.get("horizon") in {"days", "weeks", "quarters"}, f"theses[{i}] bad horizon", errs)
             conv = x.get("conviction")
             need(isinstance(conv, (int, float)) and 0 <= conv <= 1,
