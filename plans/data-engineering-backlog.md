@@ -63,6 +63,13 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 13): **EarningsCalendar dedup bug fix + GITHUB_PUSH_LOOKBACK_DAYS**
+  (`ingestion/sources_aitech.py`, `ingestion/watchlist.py`). EarningsCalendarAdapter used a bare
+  `finance.yahoo.com/quote/{ticker}` URL as dedup key — same key every day, so the 2nd-day
+  countdown "in 13 days" was silently deduped away by the first-day "in 14 days" item. Fix:
+  embed `earnings_date` in the URL so each (ticker, date) pair gets a unique content_hash.
+  Also: renamed dead config var `GITHUB_CREATED_LOOKBACK_DAYS` → `GITHUB_PUSH_LOOKBACK_DAYS`
+  and wired it into GitHubTrendingAdapter (was hardcoded 7d). Pushed: `30b14fe`.
 - 2026-05-22 — HED-78 (CIO-Loop Zyklus 14): **Dynamic triage cluster scaling + feed limit 400→600**
   (`agents/run.py`). 13 Adapter generieren jetzt 400+ Items/Run — hardcodierter 400-Limit und
   12-Cluster-Cap ließen Material silent fallen. Fix: limit=600, max_clusters=max(12,min(20,n//20))
