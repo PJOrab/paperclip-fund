@@ -334,6 +334,8 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict],
         "<b>🗞 CEO-Briefing AI/Tech — DD.MM.YYYY</b>\n\n"
         "<b>Δ seit gestern</b>\n"
         "EIN Satz: das eine große Thema / was sich geändert hat.\n\n"
+        "<b>📊 Makro-Kontext</b> (NUR wenn ein macro-Cluster die Top-Calls material beeinflusst)\n"
+        "1 Zeile: rate path → capex → AI-infra impact. Weglassen wenn Makro Routine/Lärm.\n\n"
         "<b>📈 Top-Calls</b> (MAX 2-3; prioritize is_differentiated=true calls)\n\n"
         "<b>1) TICKER — Long/Short · Conviction X,XX</b>\n"
         "1 Satz Empfehlung + warum jetzt.\n"
