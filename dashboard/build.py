@@ -171,6 +171,8 @@ h2{font-size:var(--fs-h2);font-weight:600;text-transform:uppercase;letter-spacin
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:var(--s4)}
 .kpi{font-size:var(--fs-kpi);font-weight:700}
 .kpi small{font-size:var(--fs-h2);color:var(--mut);font-weight:400}
+.kpi-dl{margin:0;display:flex;flex-direction:column-reverse}
+.kpi-dl dt,.kpi-dl dd{margin:0}
 /* workflow collapsible de-emphasis */
 .wf-details{margin-bottom:var(--s4)}
 .wf-summary{display:flex;align-items:center;gap:var(--s2);cursor:pointer;list-style:none;
@@ -445,7 +447,7 @@ $("kpis").innerHTML = [
   ["Quellen", Object.keys(D.by_source).length],
   ["letzter Ingest", lr.items_inserted!=null?("+"+lr.items_inserted):"—"],
   ["Briefing-Status", bstatus? statusPill(bstatus):"—"]
-].map(([k,v])=>`<div class="panel"><div class="kpi">${v}</div><div class="muted">${k}</div></div>`).join("");
+].map(([k,v])=>`<dl class="panel kpi-dl"><dt class="muted">${k}</dt><dd class="kpi">${v}</dd></dl>`).join("");
 
 // Stale-Feed-State: letzter Ingest älter als ~2h
 if(lr.started_at){
@@ -593,7 +595,7 @@ function calibSvg(buckets){
     ["gewertet", scored+" / "+(a.total??"—")],
     ["too early", a.too_early??"—"],
     ["Kalib.-Bias", biasTxt]
-  ].map(([k,v])=>`<div class="panel"><div class="kpi">${v}</div><div class="muted">${k}</div></div>`).join("");
+  ].map(([k,v])=>`<dl class="panel kpi-dl"><dt class="muted">${k}</dt><dd class="kpi">${v}</dd></dl>`).join("");
   // Body: happy-path table+chart, oder Empty/Too-Early-State
   const scoredTheses=(tr.theses||[]).filter(t=>t.verdict && t.verdict!=="too_early");
   if(scored>0 && scoredTheses.length){
@@ -717,5 +719,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
