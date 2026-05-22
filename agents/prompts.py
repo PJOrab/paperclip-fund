@@ -205,10 +205,17 @@ def triage_user(items: list[dict], max_clusters: int = 12) -> str:
             except Exception:
                 pass
         # High-reliability primary sources (SEC filings, earnings results, macro
-        # releases) extract up to 400 chars of content; preserve it for triage.
+        # releases) extract up to 400 chars. Items with [OUTLOOK:] appended (earnings
+        # 8-K / 6-K with forward guidance) get 600 chars to preserve the guidance.
         # Generic editorial/social items cap at 300 to keep the prompt lean.
         item_rel = rel if rel is not None else 0.0
-        txt = (it.get("text") or "")[:400 if item_rel >= 0.85 else 300]
+        raw_text = it.get("text") or ""
+        if "[OUTLOOK:" in raw_text:
+            txt = raw_text[:600]
+        elif item_rel >= 0.85:
+            txt = raw_text[:400]
+        else:
+            txt = raw_text[:300]
         lines.append(f"[{i}] ({src}{rel_tag}{age_tag}) {txt}")
     feed = "\n".join(lines)
     return (
