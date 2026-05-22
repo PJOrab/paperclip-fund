@@ -205,7 +205,7 @@ def run_scoring(runs: list[dict], yf, include_pending: bool = False) -> list[dic
                 current = fetch_current_price(ticker, yf)
                 scored = score_thesis(th, entry, current, horizon, conviction)
 
-                records.append({
+                rec = {
                     "run_id": rid[:8],
                     "created_at": created_at[:10],
                     "thesis_id": th_id,
@@ -215,7 +215,13 @@ def run_scoring(runs: list[dict], yf, include_pending: bool = False) -> list[dic
                     "horizon": horizon,
                     "thesis": thesis_txt,
                     **scored,
-                })
+                }
+                # Carry forward structured fields added in later prompt versions
+                if th.get("exit_trigger"):
+                    rec["exit_trigger"] = th["exit_trigger"]
+                if th.get("scenarios"):
+                    rec["scenarios"] = th["scenarios"]
+                records.append(rec)
 
     return records
 
@@ -319,7 +325,7 @@ def build_dashboard_payload(records: list[dict], runs_meta: list[dict] | None = 
         else:
             verdict = "neutral"
 
-        theses_out.append({
+        entry_out: dict = {
             "date": first["created_at"],
             "label": first["thesis"][:80],
             "tickers": list({r["ticker"] for r in recs}),
@@ -330,7 +336,13 @@ def build_dashboard_payload(records: list[dict], runs_meta: list[dict] | None = 
             "move_pct": primary.get("return_pct"),
             "verdict": verdict,
             "devil": devil_by_run_thesis.get((rid, th_id)),
-        })
+        }
+        # Forward structured fields from newer prompt versions when present
+        if first.get("exit_trigger"):
+            entry_out["exit_trigger"] = first["exit_trigger"]
+        if first.get("scenarios"):
+            entry_out["scenarios"] = first["scenarios"]
+        theses_out.append(entry_out)
 
     # Aggregate stats
     total = len(theses_out)
