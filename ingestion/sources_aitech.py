@@ -619,8 +619,12 @@ class YahooFinanceTickerAdapter:
                         pub = _parse_rss_date(date_m.group(1).strip())
                         if pub and pub < cutoff:
                             continue
+                    desc = _rss_desc(block, max_len=200)
+                    item_text = f"[{ticker}] {title}"
+                    if desc:
+                        item_text = f"{item_text} — {desc}"
                     out.append({
-                        "text": f"[{ticker}] {title}",
+                        "text": item_text[:450],
                         "source": "yahoo_finance",
                         "url": item_url,
                         "reliability": W.SOURCE_RELIABILITY.get("yahoo_finance", 0.72),
