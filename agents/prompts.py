@@ -3,6 +3,17 @@ System-Prompts & Prompt-Builder für das AI/Tech-Investment-Committee.
 Jede Stufe hat eine klare Rolle und ein striktes JSON-Output-Schema
 (Editor: Markdown). Modell-Tier je Rolle ist in run.py festgelegt.
 """
+from pathlib import Path as _Path
+
+_AGENTS_DIR = _Path(__file__).resolve().parent
+
+
+def _read_asset(relpath: str) -> str:
+    """Return file contents relative to agents/; empty string if missing."""
+    try:
+        return (_AGENTS_DIR / relpath).read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
 
 # ---------------------------------------------------------------------------
 # TRIAGE (Haiku) — siebt den Roh-Feed auf die wenigen materiellen Cluster
@@ -229,8 +240,11 @@ DEVIL_SYSTEM = (
 
 def devil_user(theses: list[dict]) -> str:
     import json
+    checklist = _read_asset("devil_checklist.md")
+    checklist_block = f"\n\nFALSIFICATION CHECKLIST (apply to every thesis before voting):\n{checklist}\n" if checklist else ""
     return (
-        "Theses to attack:\n\n" + json.dumps(theses, ensure_ascii=False) + "\n\n"
+        "Theses to attack:\n\n" + json.dumps(theses, ensure_ascii=False)
+        + checklist_block + "\n\n"
         "Return JSON:\n"
         '{"critiques": [{"id": "matching thesis id", '
         '"strongest_counter": "the single best argument against", '
@@ -324,12 +338,15 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict],
         + "\n"
     ) if unique_earnings else ""
 
+    ceo_prefs = _read_asset("ceo_preferences.md")
+    ceo_block = f"\nCEO PREFERENCES (mandatory, highest priority):\n{ceo_prefs}\n" if ceo_prefs else ""
     prev_block = (
         "YESTERDAY'S BRIEFING (use for Δ seit gestern — identify what actually changed):\n"
         + prev_briefing[:1500] + "\n\n"
     ) if prev_briefing else ""
     return (
         "Material for today's briefing.\n\n"
+        + ceo_block
         + prev_block
         + "TOP CLUSTERS:\n" + json.dumps(triage, ensure_ascii=False) + "\n\n"
         "THESES + DEVIL'S ADVOCATE (sorted: non-consensus/is_differentiated=true first, "
