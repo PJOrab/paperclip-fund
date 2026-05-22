@@ -318,6 +318,13 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-tbl .num{text-align:right}
   .tr-tbl .dlabel{display:inline-block;min-width:90px;vertical-align:top}
 }
+/* skip-to-content link: bypass plumbing/workflow chrome (WCAG 2.4.1 Bypass Blocks) */
+.skip-link{position:absolute;left:var(--s4);top:-48px;z-index:100;
+  background:var(--accent);color:#06121f;font-size:var(--fs-cap);font-weight:600;
+  padding:var(--s2) var(--s4);border-radius:0 0 8px 8px;text-decoration:none;
+  transition:top .15s}
+.skip-link:focus{top:0}
+main:focus{outline:none}
 /* focus-visible ring: brand-consistent keyboard nav across all interactive elements (WCAG 2.4.7) */
 :focus{outline:none}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
@@ -356,18 +363,21 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .brief-proc-icon{animation:none!important}
 }
 </style></head>
-<body><div class="wrap">
-  <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">
+<body>
+<a href="#main" class="skip-link">Zum Briefing springen</a>
+<div class="wrap">
+  <header style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">
     <div><h1>🤖 AI/Tech Fund — Intelligence Dashboard</h1>
     <div class="sub">Live-Feed → Agenten-Gremium → CEO-Briefing · MVP</div></div>
     <div class="sub">aktualisiert: <span id="built"></span></div>
-  </div>
+  </header>
 
   <details class="wf-details">
     <summary class="wf-summary">Workflow — Pipeline-Status</summary>
     <div class="flow-wrap"><div class="flow" id="flow"></div></div>
   </details>
 
+  <main id="main" tabindex="-1">
   <h2>Letztes Briefing</h2>
   <div id="briefing"></div>
 
@@ -376,6 +386,7 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 
   <h2>Sektor-Ansicht <span id="secstand" class="tag"></span></h2>
   <div class="grid sectors" id="sectorview"></div>
+  </main>
 
   <details class="wf-details">
     <summary class="wf-summary">Datenfeed <span id="feedstale" style="margin-left:4px"></span> — Ingest-Status</summary>
