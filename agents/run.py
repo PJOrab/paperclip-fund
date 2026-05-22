@@ -67,10 +67,15 @@ def _log(msg: str) -> None:
 # ---------------------------------------------------------------------------
 def read_recent_items(window_hours: int, limit: int = 600) -> list[dict]:
     cutoff = (datetime.now(timezone.utc) - timedelta(hours=window_hours)).isoformat()
-    return (client().table("raw_items")
+    rows = (client().table("raw_items")
             .select("source,text,url,reliability,fetched_at")
             .gte("fetched_at", cutoff).order("fetched_at", desc=True)
             .limit(limit).execute().data or [])
+    # Sort primary sources (high reliability) first so triage LLM sees them at
+    # the top of the prompt rather than buried after hundreds of editorial items.
+    # Secondary sort by fetched_at descending preserves recency within each tier.
+    rows.sort(key=lambda r: (-(r.get("reliability") or 0.0), r.get("fetched_at") or ""))
+    return rows
 
 
 def _triage_max_clusters(n_items: int) -> int:
