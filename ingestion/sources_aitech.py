@@ -701,6 +701,70 @@ class EnergyNewsAdapter:
         return out
 
 
+class MacroFedAdapter:
+    """
+    Federal Reserve macro context feed — monetary policy press releases and
+    Fed chair/governor speeches. Provides macro financing conditions that
+    directly affect AI capex thesis: rate changes alter data-center financing
+    costs and hyperscaler capex timelines. Previously zero macro data in the
+    pipeline. Two feeds (both official, no auth, SEC-compatible UA):
+    - press_monetary: FOMC rate decisions, policy statements, balance-sheet ops
+    - press_speeches: Fed chair and governor speeches (forward guidance, risk signals)
+    Lookback = RSS_LOOKBACK_DAYS (default 3 days); per-feed try/except isolation.
+    """
+    FEEDS = {
+        "fomc": "https://www.federalreserve.gov/feeds/press_monetary.xml",
+        "fed_speeches": "https://www.federalreserve.gov/feeds/press_speeches.xml",
+    }
+    LOOKBACK_DAYS = getattr(W, "RSS_LOOKBACK_DAYS", 3)
+
+    def fetch(self):
+        m = _m()
+        out, seen = [], set()
+        cutoff = datetime.now(timezone.utc) - timedelta(days=self.LOOKBACK_DAYS)
+        for name, feed_url in self.FEEDS.items():
+            try:
+                text = m.fetch_url(feed_url, timeout=15)
+                if not text:
+                    continue
+                sep = "<item>" if "<item>" in text else "<entry>"
+                for block in text.split(sep)[1:15]:
+                    t = re.search(r"<title[^>]*>(.*?)</title>", block, re.DOTALL)
+                    if not t:
+                        continue
+                    raw = t.group(1).replace("<![CDATA[", "").replace("]]>", "")
+                    title = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+                    if not title:
+                        continue
+                    link_m = (re.search(r'<link[^>]*href="([^"]+)"', block)
+                              or re.search(r"<link>(.*?)</link>", block))
+                    url = link_m.group(1).strip() if link_m else None
+                    key = hashlib.md5((url or title).encode()).hexdigest()
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    date_m = (re.search(r"<pubDate>(.*?)</pubDate>", block, re.DOTALL)
+                              or re.search(r"<dc:date>(.*?)</dc:date>", block, re.DOTALL)
+                              or re.search(r"<updated>(.*?)</updated>", block, re.DOTALL))
+                    if date_m:
+                        pub = _parse_rss_date(date_m.group(1).strip())
+                        if pub and pub < cutoff:
+                            continue
+                    desc = _rss_desc(block)
+                    item_text = f"[Fed · {name}] {title}"
+                    if desc:
+                        item_text = f"{item_text} — {desc}"
+                    out.append({
+                        "text": item_text[:350],
+                        "source": "fed_macro",
+                        "url": url,
+                        "reliability": W.SOURCE_RELIABILITY.get("fed_macro", 0.90),
+                    })
+            except Exception:
+                continue
+        return out
+
+
 class YahooFinanceTickerAdapter:
     """
     Yahoo Finance per-ticker RSS headlines for top watchlist positions.

@@ -50,6 +50,7 @@ def build_adapters():
         ("Tech RSS", S.TechRSSAdapter()),
         ("Funding News", S.FundingNewsAdapter()),
         ("Energy/Power", S.EnergyNewsAdapter()),
+        ("Fed Macro", S.MacroFedAdapter()),
         ("Yahoo Finance", S.YahooFinanceTickerAdapter()),
         ("Earnings Calendar", S.EarningsCalendarAdapter()),
     ]

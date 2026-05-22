@@ -198,6 +198,10 @@ SOURCE_RELIABILITY = {
     # Earnings dates from yfinance are authoritative forward-looking events.
     # High reliability: directly from exchange/company filings via Yahoo.
     "earnings_calendar": 0.88,
+    # Federal Reserve official press releases and governor speeches.
+    # Primary source for monetary policy decisions and forward guidance.
+    # High reliability (official gov source) but macro — not ticker-specific.
+    "fed_macro": 0.90,
 }
 
 # S5 Energy/Power sector feeds — AI-capex risk thesis (power/grid strain).
