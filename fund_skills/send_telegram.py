@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""send-telegram: send a Markdown briefing to the fund's Telegram chat.
+"""send-telegram: send a Telegram HTML briefing to the fund's Telegram chat.
 
 Usage: <briefing markdown> | python fund_skills/send_telegram.py
 Reads TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID from the fund and macro-agent .env.

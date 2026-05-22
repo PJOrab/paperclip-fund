@@ -38,7 +38,9 @@ from ingestion.watchlist import (  # noqa: E402
     X_ACCOUNTS_AITECH,
 )
 
-CFG = dotenv_values(str(Path(FUND_DIR) / ".env"), interpolate=False)
+# Merge .env file with os.environ so Paperclip-injected vars (PAPERCLIP_API_KEY,
+# PAPERCLIP_COMPANY_ID, etc.) work both in the production SSH context and locally.
+CFG = {**dotenv_values(str(Path(FUND_DIR) / ".env"), interpolate=False), **os.environ}
 
 # --- entity surface forms: ticker/canonical -> spellings seen in the wild -----
 # Coverage matching is symmetric over these forms, so "Nvidia" in a raw_item and
@@ -233,7 +235,7 @@ def analyze(run):
 
 # --- Paperclip ticketing ------------------------------------------------------
 def papi(path, payload, method="POST"):
-    api = (CFG.get("PAPERCLIP_API_BASE") or "http://127.0.0.1:3100").rstrip("/")
+    api = (CFG.get("PAPERCLIP_API_BASE") or "https://paperclip.hedgingalpha.com").rstrip("/")
     req = urllib.request.Request(
         f"{api}{path}", data=json.dumps(payload).encode(), method=method,
         headers={"Authorization": f"Bearer {CFG['PAPERCLIP_API_KEY']}",
@@ -260,7 +262,7 @@ def recent_ticketed_subjects(days=7):
 
 
 def open_tickets(result, max_tickets=5):
-    cid = CFG.get("PAPERCLIP_COMPANY_ID")
+    cid = CFG.get("PAPERCLIP_COMPANY_ID") or "f386ec58-21f8-4273-81df-1a187c82dc54"
     de = CFG.get("PAPERCLIP_DE_AGENT_ID") or "78b79ccb-7011-4753-b282-584d6136bfb6"
     if not (cid and CFG.get("PAPERCLIP_API_KEY")):
         return []

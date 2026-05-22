@@ -6,9 +6,37 @@ Ingestion-Entrypoint: führt alle Adapter aus und schreibt nach Supabase.
   python -m ingestion.run_ingest --loop --interval 20   # Endlosschleife
 """
 import argparse
+import os
 import time
+from pathlib import Path
 
 from . import adapters
+
+
+def _telegram_alert(text: str) -> None:
+    """Send a plain-text alert to Telegram. Silently no-ops if env vars missing."""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        # Try loading from .env in the fund root
+        try:
+            from dotenv import load_dotenv
+            load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+            token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+            chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+        except ImportError:
+            pass
+    if not token or not chat_id:
+        return
+    try:
+        import requests
+        requests.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json={"chat_id": chat_id, "text": text[:4096]},
+            timeout=10,
+        )
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def run_once(dry_run: bool = False) -> None:
@@ -20,6 +48,25 @@ def run_once(dry_run: bool = False) -> None:
         print(f"  [{name:>14s}] → {n:3d} items{flag}")
     print(f"  {'-'*44}")
     print(f"  Total gefetcht: {len(items)}")
+
+    # Dead-adapter health check: adapters returning 0 items without a logged error
+    # are silently dropping data. Surface them so operators notice and can investigate.
+    silent_zeros = [n for n, c in per_adapter.items() if c == 0 and n not in errors]
+    for name in silent_zeros:
+        errors[name] = "0 items fetched — possible feed outage or config change"
+    if silent_zeros:
+        print(f"  ⚠  DEAD ADAPTERS (0 items, no error): {', '.join(silent_zeros)}")
+
+    # Alert on ANY degraded adapter (errored OR silently empty). A run that loses
+    # adapters — e.g. the shared macro HTTP layer going missing, which now degrades
+    # gracefully instead of killing the run — must page loudly rather than silently
+    # shipping a thin feed into the briefing.
+    if errors:
+        detail = "\n".join(f"• {n}: {errors[n]}" for n in sorted(errors))
+        _telegram_alert(
+            f"⚠️ AI/Tech Fund — {len(errors)}/{len(per_adapter)} Adapter degraded "
+            f"({len(items)} items total)\n{detail}"
+        )
 
     if dry_run:
         for it in items[:5]:

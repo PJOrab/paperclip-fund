@@ -1,5 +1,25 @@
+# Local Claude Code / agent state
+.claude/
+
+# Secrets & env
 .env
-venv/
+*.key
+secrets/
+
+# Local DB (may contain fund/position data — never commit)
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
 __pycache__/
 *.pyc
+venv/
+.venv/
+
+# Logs
 logs/
+*.log
+
+# OS / editor
+.DS_Store

@@ -10,7 +10,8 @@ import json
 import sys
 
 CATEGORIES = {"earnings", "product", "chips", "capex", "regulation",
-              "research", "funding", "sentiment", "macro", "ipo", "m&a", "launch"}
+              "research", "funding", "sentiment", "macro", "ipo", "m&a", "launch",
+              "insider_trade"}
 
 
 def fail(errors: list[str]) -> None:
@@ -23,6 +24,75 @@ def need(cond: bool, msg: str, errs: list[str]) -> None:
         errs.append(msg)
 
 
+def validate(schema: str, data: dict) -> list[str]:
+    """Importable validator. Returns list of error strings (empty = valid)."""
+    errs: list[str] = []
+    if schema == "triage":
+        need(isinstance(data.get("clusters"), list), "missing 'clusters' list", errs)
+        for i, c in enumerate(data.get("clusters", []) or []):
+            for k in ("title", "tickers", "category", "why", "importance"):
+                need(k in c, f"clusters[{i}] missing '{k}'", errs)
+            need(c.get("category") in CATEGORIES, f"clusters[{i}] bad category", errs)
+            need(isinstance(c.get("importance"), int) and 1 <= c.get("importance", 0) <= 5,
+                 f"clusters[{i}] importance must be int 1-5", errs)
+            need(isinstance(c.get("title"), str) and c.get("title", "").strip(),
+                 f"clusters[{i}] title must be a non-empty string", errs)
+            need(isinstance(c.get("why"), str) and c.get("why", "").strip(),
+                 f"clusters[{i}] why must be a non-empty string", errs)
+            need(isinstance(c.get("tickers"), list),
+                 f"clusters[{i}] tickers must be a list", errs)
+    elif schema == "analyst":
+        need(isinstance(data.get("analyses"), list), "missing 'analyses' list", errs)
+        for i, x in enumerate(data.get("analyses", []) or []):
+            for k in ("title", "tickers", "read", "magnitude", "horizon",
+                      "key_facts", "key_uncertainty", "consensus_view", "differentiation"):
+                need(k in x, f"analyses[{i}] missing '{k}'", errs)
+            need(x.get("read") in {"bullish", "bearish", "mixed"}, f"analyses[{i}] bad read", errs)
+            need(x.get("magnitude") in {"low", "medium", "high"}, f"analyses[{i}] bad magnitude", errs)
+            need(x.get("horizon") in {"days", "weeks", "quarters"}, f"analyses[{i}] bad horizon", errs)
+            need(x.get("consensus_view") in {"aligned", "differentiated", "unclear"},
+                 f"analyses[{i}] bad consensus_view", errs)
+            need(isinstance(x.get("key_facts"), list) and len(x.get("key_facts", [])) > 0,
+                 f"analyses[{i}] key_facts must be a non-empty list", errs)
+            need(isinstance(x.get("key_uncertainty"), str) and x.get("key_uncertainty", "").strip(),
+                 f"analyses[{i}] key_uncertainty must be a non-empty string", errs)
+            need(x.get("consensus_view") != "differentiated" or
+                 (isinstance(x.get("differentiation"), str) and x.get("differentiation", "").strip()),
+                 f"analyses[{i}] differentiation must be non-empty when consensus_view='differentiated'", errs)
+    elif schema == "thesis":
+        need(isinstance(data.get("theses"), list), "missing 'theses' list", errs)
+        for i, x in enumerate(data.get("theses", []) or []):
+            for k in ("id", "tickers", "direction", "thesis", "bull_case",
+                      "bear_case", "catalysts", "horizon", "conviction",
+                      "is_differentiated"):
+                need(k in x, f"theses[{i}] missing '{k}'", errs)
+            need(x.get("direction") in {"long", "short", "pair"}, f"theses[{i}] bad direction", errs)
+            need(isinstance(x.get("is_differentiated"), bool),
+                 f"theses[{i}] is_differentiated must be bool", errs)
+            need(x.get("horizon") in {"days", "weeks", "quarters"}, f"theses[{i}] bad horizon", errs)
+            need(isinstance(x.get("catalysts"), list) and len(x.get("catalysts", [])) > 0,
+                 f"theses[{i}] catalysts must be a non-empty list", errs)
+            need(isinstance(x.get("bull_case"), list) and len(x.get("bull_case", [])) > 0,
+                 f"theses[{i}] bull_case must be a non-empty list", errs)
+            need(isinstance(x.get("bear_case"), list) and len(x.get("bear_case", [])) > 0,
+                 f"theses[{i}] bear_case must be a non-empty list", errs)
+            conv = x.get("conviction")
+            need(isinstance(conv, (int, float)) and 0 <= conv <= 1,
+                 f"theses[{i}] conviction must be 0.0-1.0", errs)
+            need(not isinstance(conv, (int, float)) or conv >= 0.40,
+                 f"theses[{i}] conviction {conv} below minimum tradeable floor 0.40", errs)
+    elif schema == "devil":
+        need(isinstance(data.get("critiques"), list), "missing 'critiques' list", errs)
+        for i, x in enumerate(data.get("critiques", []) or []):
+            for k in ("id", "strongest_counter", "already_priced_in",
+                      "falsification", "blind_spot", "verdict"):
+                need(k in x, f"critiques[{i}] missing '{k}'", errs)
+            need(x.get("verdict") in {"agree", "caution", "reject"}, f"critiques[{i}] bad verdict", errs)
+            need(isinstance(x.get("falsification"), list) and len(x.get("falsification", [])) > 0,
+                 f"critiques[{i}] falsification must be a non-empty list", errs)
+    return errs
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--schema", required=True, choices=["triage", "analyst", "thesis", "devil"])
@@ -33,44 +103,7 @@ def main() -> None:
         data = json.loads(raw)
     except Exception as e:  # noqa: BLE001
         fail([f"not valid JSON: {e}"])
-    errs: list[str] = []
-
-    if a.schema == "triage":
-        need(isinstance(data.get("clusters"), list), "missing 'clusters' list", errs)
-        for i, c in enumerate(data.get("clusters", []) or []):
-            for k in ("title", "tickers", "category", "why", "importance"):
-                need(k in c, f"clusters[{i}] missing '{k}'", errs)
-            need(c.get("category") in CATEGORIES, f"clusters[{i}] bad category", errs)
-            need(isinstance(c.get("importance"), int) and 1 <= c.get("importance", 0) <= 5,
-                 f"clusters[{i}] importance must be int 1-5", errs)
-
-    elif a.schema == "analyst":
-        need(isinstance(data.get("analyses"), list), "missing 'analyses' list", errs)
-        for i, x in enumerate(data.get("analyses", []) or []):
-            for k in ("title", "tickers", "read", "magnitude", "horizon",
-                      "key_facts", "key_uncertainty"):
-                need(k in x, f"analyses[{i}] missing '{k}'", errs)
-            need(x.get("read") in {"bullish", "bearish", "mixed"}, f"analyses[{i}] bad read", errs)
-            need(x.get("magnitude") in {"low", "medium", "high"}, f"analyses[{i}] bad magnitude", errs)
-
-    elif a.schema == "thesis":
-        need(isinstance(data.get("theses"), list), "missing 'theses' list", errs)
-        for i, x in enumerate(data.get("theses", []) or []):
-            for k in ("id", "tickers", "direction", "thesis", "bull_case",
-                      "bear_case", "catalysts", "horizon", "conviction"):
-                need(k in x, f"theses[{i}] missing '{k}'", errs)
-            need(x.get("direction") in {"long", "short", "pair"}, f"theses[{i}] bad direction", errs)
-            need(isinstance(x.get("conviction"), (int, float)) and 0 <= x.get("conviction", -1) <= 1,
-                 f"theses[{i}] conviction must be 0.0-1.0", errs)
-
-    elif a.schema == "devil":
-        need(isinstance(data.get("critiques"), list), "missing 'critiques' list", errs)
-        for i, x in enumerate(data.get("critiques", []) or []):
-            for k in ("id", "strongest_counter", "already_priced_in",
-                      "falsification", "blind_spot", "verdict"):
-                need(k in x, f"critiques[{i}] missing '{k}'", errs)
-            need(x.get("verdict") in {"agree", "caution", "reject"}, f"critiques[{i}] bad verdict", errs)
-
+    errs = validate(a.schema, data)
     if errs:
         fail(errs)
     print(json.dumps({"valid": True}))
