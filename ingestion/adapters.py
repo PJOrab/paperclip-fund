@@ -49,6 +49,7 @@ def build_adapters():
         ("GitHub", S.GitHubTrendingAdapter()),
         ("Tech RSS", S.TechRSSAdapter()),
         ("Funding News", S.FundingNewsAdapter()),
+        ("Energy/Power", S.EnergyNewsAdapter()),
     ]
     if getattr(m, "NEWSAPI_KEY", ""):
         adapters.append(("NewsAPI AI", S.AITechNewsAPIAdapter()))

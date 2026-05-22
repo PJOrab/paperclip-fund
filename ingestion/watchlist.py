@@ -120,4 +120,13 @@ SOURCE_RELIABILITY = {
     "arxiv": 0.80, "github_trending": 0.60,
     "hackernews": 0.55, "tech_news": 0.60,
     "funding_news": 0.80,
+    "energy_news": 0.72,
+}
+
+# S5 Energy/Power sector feeds — AI-capex risk thesis (power/grid strain).
+# datacenter_dynamics: AI data-center infra + power demand (OpenAI/Google/Hyperscaler).
+# utilitydive: electric grid, utility regulation, demand growth from AI data centers.
+ENERGY_RSS_FEEDS = {
+    "datacenter_dynamics": "https://www.datacenterdynamics.com/en/rss/",
+    "utilitydive":         "https://www.utilitydive.com/feeds/news/",
 }
