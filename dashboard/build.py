@@ -347,6 +347,29 @@ border-radius:8px;padding:var(--s3);margin-bottom:10px;scroll-margin-top:80px}
 .devil{margin-top:var(--s2);padding:var(--s2) 10px;background:var(--devil-bg);border:1px solid var(--devil-line);
 border-radius:8px;font-size:var(--fs-h2)}
 .devil .v{font-weight:600;text-transform:uppercase;font-size:var(--fs-micro)}
+/* thesis-card sparkline: 30-day price trend inline with heading (HED-130, ported from /srv Zyklus 71) */
+.tc-spark{display:inline-flex;align-items:center;gap:4px;vertical-align:middle;margin-left:var(--s2)}
+.tc-spark .spark{width:72px;height:22px}
+.tc-spark-chg{font-size:var(--fs-cap);font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+/* thesis-card scenario block: bull/bear/catalysts (HED-130) */
+.tc-scen{margin-top:var(--s3)}
+.tc-scen-lbl{font-size:var(--fs-micro);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.tc-bull{border-left:3px solid var(--green);padding-left:8px;margin-bottom:var(--s2)}
+.tc-bear{border-left:3px solid var(--red);padding-left:8px;margin-bottom:var(--s2)}
+.tc-cat{border-left:3px solid var(--accent);padding-left:8px}
+.tc-scen ul{margin:0;padding-left:14px;font-size:var(--fs-cap);line-height:1.5;color:var(--txt)}
+.tc-scen li{margin-bottom:2px}.tc-scen li:last-child{margin-bottom:0}
+.tc-hz{display:inline-block;font-size:var(--fs-micro);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-top:4px;color:var(--mut)}
+/* thesis-card analyst block: key_facts + key_uncertainty + read (HED-130) */
+.tc-analys{margin-top:var(--s3);border-left:3px solid var(--mut);padding-left:8px}
+.tc-analys-hd{display:flex;align-items:center;gap:var(--s2);margin-bottom:4px}
+.tc-analys-lbl{font-size:var(--fs-micro);font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+.tc-analys ul{margin:0;padding-left:14px;font-size:var(--fs-cap);line-height:1.5;color:var(--txt)}
+.tc-analys li{margin-bottom:2px}.tc-analys li:last-child{margin-bottom:0}
+.tc-ku{margin-top:var(--s2);font-size:var(--fs-cap);color:var(--amber);line-height:1.45}
+/* portfolio correlation note banner (HED-130) */
+.corr-note{background:var(--devil-bg);border:1px solid var(--devil-line);border-radius:8px;padding:var(--s2) 12px;margin-bottom:var(--s3);font-size:var(--fs-cap);line-height:1.55}
+.corr-note-lbl{font-size:var(--fs-micro);font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#c084fc;display:block;margin-bottom:2px}
 .brief{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:20px 24px;
 max-width:var(--measure);margin-inline:0;line-height:1.75}
 /* two-column briefing on wide viewports: prose left at reading measure, thesis+Devil's-Advocate cards right — fills the desktop void beside the 72ch column, surfaces counter-arguments next to the call, shortens scroll (Gestalt Common Region/Proximity, F-pattern, Goal-Gradient) */
@@ -755,6 +778,20 @@ function sparklineSvg(data,w,h){
   const cls=flat?"spark-flat":up?"spark-up":"spark-dn";
   return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline class="spark-line ${cls}" points="${pts}"/></svg>`;
 }
+// Labeled inline sparkline for thesis-card headings (HED-130, ported from /srv): trend-colored
+// polyline + endpoint dot, scaled to min/max; aria-label carries the 30d move in words.
+function sparkline(series, label){
+  const W=76,H=24,pad=2;
+  const lo=Math.min(...series),hi=Math.max(...series),span=(hi-lo)||1;
+  const n=series.length;
+  const X=i=>pad+i*((W-2*pad)/(n-1));
+  const Y=v=>H-pad-((v-lo)/span)*(H-2*pad);
+  const up=series[n-1]>=series[0];
+  const col=up?"var(--green)":"var(--red)";
+  const pts=series.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
+  const lx=X(n-1).toFixed(1),ly=Y(series[n-1]).toFixed(1);
+  return `<svg class="spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${lx}" cy="${ly}" r="2" fill="${col}"/></svg>`;
+}
 const b = D.briefing;
 if(!b){ $("briefing").innerHTML='<div class="panel muted">Noch kein Briefing. Sobald der n8n-Workflow lief, erscheint es hier.</div>'; }
 else{
@@ -858,20 +895,72 @@ else{
   }
   html+=`</div>`; // .brief-main
   if(theses.length){
-    html+='<div class="brief-aside"><h2 class="brief-aside-h2">Thesen & Devil\'s Advocate</h2>';
-    html+=theses.map((t,i)=>{
+    // Ticker→analysis map (first-ticker join) for the Faktenbasis block (HED-130, from /srv)
+    const _analyses=((b.analysis||{}).analyses)||[];
+    const _amap={};
+    _analyses.forEach(a=>(a.tickers||[]).forEach(tk=>{if(!_amap[String(tk).toUpperCase()])_amap[String(tk).toUpperCase()]=a;}));
+    const HZ_MAP={'days':'Tage','weeks':'Wochen','months':'Monate','quarters':'Quartale'};
+    // 30-day close series per ticker from sector_view, for thesis-card sparklines (HED-130)
+    const _sparkByTicker={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>(s.tickers||[]).forEach(tk=>{
+      if(tk&&tk.ticker!=null&&Array.isArray(tk.spark)&&tk.spark.length>=3)
+        _sparkByTicker[String(tk.ticker).toUpperCase()]=tk.spark;
+    }));
+    // Portfolio-level correlation note: surfaces when all calls share the same risk factor
+    const corrNote=(b.devils_advocate||{}).correlation_note;
+    let asideHtml='<div class="brief-aside"><h2 class="brief-aside-h2">Thesen & Devil\'s Advocate</h2>';
+    if(corrNote){
+      asideHtml+=`<div class="corr-note" role="note"><span class="corr-note-lbl" aria-hidden="true">⚠ Portfolio-Konzentration</span><span lang="en">${esc(corrNote)}</span></div>`;
+    }
+    asideHtml+=theses.map((t,i)=>{
       const c=cmap[t.id]||{};
+      // Analyst Faktenbasis: top-3 key_facts + read badge + key_uncertainty (HED-130)
+      const firstTk=String((t.tickers||[])[0]||"").toUpperCase();
+      const an=_amap[firstTk]||{};
+      let analysHtml="";
+      if(an.key_facts&&an.key_facts.length){
+        const readCls=an.read==="bullish"?"ok":an.read==="bearish"?"err":"warn";
+        const readLbl=an.read==="bullish"?"Bullish":an.read==="bearish"?"Bearish":"Gemischt";
+        const facts=(an.key_facts||[]).slice(0,3).map(f=>`<li lang="en">${esc(f)}</li>`).join("");
+        const ku=(an.key_uncertainty||"").replace(/\s*HED-\d+[^.]*\.?/g,"").trim();
+        const kuHtml=ku?`<div class="tc-ku"><span aria-hidden="true">⚠</span> ${esc(ku)}</div>`:"";
+        analysHtml=`<div class="tc-analys"><div class="tc-analys-hd"><span class="tc-analys-lbl">Faktenbasis</span><span class="pill pill--${readCls}" style="font-size:var(--fs-micro);padding:0 6px">${readLbl}</span></div><ul>${facts}</ul>${kuHtml}</div>`;
+      }
+      // Scenario block: bull/bear/catalysts + horizon pill (HED-130)
+      let scenHtml="";
+      const bull=(t.bull_case||[]);
+      const bear=(t.bear_case||[]);
+      const cat=(t.catalysts||[]);
+      if(bull.length||bear.length||cat.length){
+        const bullHtml=bull.length?`<div class="tc-bull"><span class="tc-scen-lbl" style="color:var(--green)">▲ Bull-Case</span><ul lang="en">${bull.map(s=>`<li>${esc(s)}</li>`).join("")}</ul></div>`:"";
+        const bearHtml=bear.length?`<div class="tc-bear"><span class="tc-scen-lbl" style="color:var(--red)">▼ Bär-Case</span><ul lang="en">${bear.map(s=>`<li>${esc(s)}</li>`).join("")}</ul></div>`:"";
+        const catHtml=cat.length?`<div class="tc-cat"><span class="tc-scen-lbl" style="color:var(--accent)">◇ Katalysatoren</span><ul lang="en">${cat.map(s=>`<li>${esc(s)}</li>`).join("")}</ul></div>`:"";
+        const hzLabel=t.horizon?HZ_MAP[t.horizon]||t.horizon:"";
+        const hzHtml=hzLabel?`<div class="tc-hz">Horizont: ${esc(hzLabel)}</div>`:"";
+        scenHtml=`<div class="tc-scen">${bullHtml}${bearHtml}${catHtml}${hzHtml}</div>`;
+      }
+      // Sparkline: 30-day price trend inline in the thesis-card heading (HED-130)
+      const tcSpark=_sparkByTicker[firstTk];
+      let tcSparkHtml="";
+      if(tcSpark&&tcSpark.length>=3){
+        const chg=((tcSpark[tcSpark.length-1]-tcSpark[0])/Math.abs(tcSpark[0]||1))*100;
+        const sign=chg>=0?"+":"−";
+        const lbl=`30 Tage ${esc(firstTk)}: ${sign}${Math.abs(chg).toFixed(1)}%`;
+        tcSparkHtml=`<div class="tc-spark">${sparkline(tcSpark,lbl)}<span class="tc-spark-chg ${chg>=0?"move-up":"move-dn"}">${sign}${Math.abs(chg).toFixed(1)}%</span></div>`;
+      }
       return `<div class="thesis" id="thesis-${i+1}" tabindex="-1"><div class="h"><span class="idx-badge" aria-label="These ${i+1}">${i+1}</span>${(t.tickers||[]).join(", ")}
         <span class="cd ${dirClass(t.direction)}">${t.direction||""}</span>
-        <span class="${t.conviction!=null?convCls(t.conviction):'muted'}" title="${t.conviction!=null?convTip(t.conviction):''}">· Conv ${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></div>
+        <span class="${t.conviction!=null?convCls(t.conviction):'muted'}" title="${t.conviction!=null?convTip(t.conviction):''}">· Conv ${t.conviction!=null?t.conviction.toFixed(2):"—"}</span>${tcSparkHtml?` ${tcSparkHtml}`:""}</div>
         <div lang="en" style="margin-top:4px">${esc(t.thesis||"")}</div>
         ${t.edge&&t.is_differentiated?`<div class="edge-line">🎯 ${esc(t.edge)}</div>`:""}
         ${t.scenarios?(()=>{const s=t.scenarios;const fmtS=(k,c)=>{if(!c)return null;const tgt=c.target?` → ${esc(c.target)}`:"";const p=c.prob!=null?` (P=${Math.round(c.prob*100)}%)`:"";return `${k}${c.trigger?" "+esc(c.trigger):""}${tgt}${p}`;};const parts=[fmtS("Bull",s.bull),fmtS("Base",s.base),fmtS("Bear",s.bear)].filter(Boolean);return parts.length?`<div class="sc-line">📐 ${parts.join(" | ")}</div>`:""})():""}
         ${t.exit_trigger?`<div class="exit-trigger">🚪 Exit: ${esc(t.exit_trigger)}</div>`:""}
+        ${analysHtml}${scenHtml}
         ${c.strongest_counter?`<div class="devil" lang="en"><span class="v">⚖️ Devil's Advocate (${c.verdict||"?"})</span><br>${esc(c.strongest_counter)}
         ${c.blind_spot?`<br><span class="muted">Blind spot: ${esc(c.blind_spot)}</span>`:""}</div>`:""}
       </div>`;}).join("");
-    html+=`</div>`; // .brief-aside
+    asideHtml+=`</div>`; // .brief-aside
+    html+=asideHtml;
   }
   html+=`</div>`; // .brief-region
   $("briefing").innerHTML=html||'<div class="panel muted">Briefing vorhanden, aber leer.</div>';
