@@ -248,6 +248,43 @@ def _extract_8k_text(html_src: str, max_chars: int = 400) -> tuple[str, str, str
         return "", "", ""
 
 
+_10Q_SECTION_RE = re.compile(
+    r"Item\s+2[\.\s]+(?:Management(?:'s|s)?\s+Discussion|Results?\s+of\s+Operations?)",
+    re.IGNORECASE,
+)
+_10K_SECTION_RE = re.compile(
+    r"Item\s+7[\.\s]+(?:Management(?:'s|s)?\s+Discussion|Results?\s+of\s+Operations?)",
+    re.IGNORECASE,
+)
+
+
+def _extract_10q_text(html_src: str, is_10k: bool = False, max_chars: int = 400) -> str:
+    """
+    Extract the MD&A section (Item 2 for 10-Q, Item 7 for 10-K) from a periodic
+    SEC filing. Returns a non-empty snippet on success, empty string on failure.
+    Falls back to first revenue/income-bearing sentence if Item header not found.
+    """
+    try:
+        txt = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", html_src)
+        txt = re.sub(r"<[^>]+>", " ", txt)
+        txt = _HTML_ENTITY_RE.sub(" ", txt)
+        txt = re.sub(r"\s+", " ", txt).strip()
+        pat = _10K_SECTION_RE if is_10k else _10Q_SECTION_RE
+        m = pat.search(txt)
+        if m:
+            return txt[m.start(): m.start() + max_chars].strip()
+        # Fallback: find first mention of revenue/income with a numeric figure
+        rev_m = re.search(
+            r"(?:revenue|net\s+income|earnings\s+per\s+share|EPS).{0,80}\$[\d,]+",
+            txt, re.IGNORECASE,
+        )
+        if rev_m:
+            return txt[rev_m.start(): rev_m.start() + max_chars].strip()
+        return ""
+    except Exception:
+        return ""
+
+
 def _edgar_form_meta(form):
     """Map a SEC form type to (source_key, human label) for normalization."""
     if form == "4":
@@ -258,6 +295,10 @@ def _edgar_form_meta(form):
     if form.startswith("SC 13G"):
         return "sec_13dg", ("Passive >5%-Beteiligung 13G/A" if form.endswith("/A")
                             else "Passive >5%-Beteiligung 13G")
+    if form == "10-Q":
+        return "sec_10q", "10-Q Quarterly Report"
+    if form == "10-K":
+        return "sec_10k", "10-K Annual Report"
     return "sec_8k", "8-K"
 
 
@@ -353,6 +394,19 @@ class EDGARAdapter:
                         time.sleep(0.15)  # SEC: max 10 req/s
                         if html_src:
                             snippet, item_num, item_type = _extract_8k_text(html_src)
+                            if snippet:
+                                detail = snippet
+                    except Exception:
+                        pass
+                if form in ("10-Q", "10-K") and acc and doc:
+                    # Extract MD&A / Results-of-Operations section (Item 2 for 10-Q,
+                    # Item 7 for 10-K) so triage sees revenue/guidance context, not just
+                    # the filing notice. Falls back to metadata desc on any error.
+                    try:
+                        html_src = m.fetch_url(doc_url, headers=UA, timeout=30)
+                        time.sleep(0.15)  # SEC: max 10 req/s
+                        if html_src:
+                            snippet = _extract_10q_text(html_src, is_10k=(form == "10-K"))
                             if snippet:
                                 detail = snippet
                     except Exception:
