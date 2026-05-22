@@ -29,6 +29,26 @@ def _check(schema: str, data: dict) -> None:
     if errs:
         _log(f"[validate/{schema}] WARNING — schema violations: {errs}")
 
+
+def _cross_check_devil_conviction(theses: list[dict], critiques: list[dict]) -> None:
+    """Warn when devil verdict contradicts thesis conviction (reject + conviction > 0.40)."""
+    verdict_map = {c["id"]: c for c in critiques if isinstance(c, dict) and "id" in c}
+    for t in theses:
+        if not isinstance(t, dict):
+            continue
+        tid = t.get("id")
+        critique = verdict_map.get(tid)
+        if not critique:
+            continue
+        verdict = critique.get("verdict")
+        conv = t.get("conviction")
+        if verdict == "reject" and isinstance(conv, (int, float)) and conv > 0.40:
+            _log(f"[validate/cross] WARNING — thesis {tid} conviction={conv} but devil=reject; "
+                 f"editor must drop or move to Beobachten (≤0.40)")
+        elif verdict == "caution" and isinstance(conv, (int, float)) and conv > 0.55:
+            _log(f"[validate/cross] WARNING — thesis {tid} conviction={conv} but devil=caution; "
+                 f"cap should be ~0.55")
+
 # Modell je Rolle — auf Wunsch alle auf Opus 4.7 ('opus' = neuestes Opus).
 MODEL = {"triage": "opus", "analyst": "opus",
          "thesis": "opus", "devil": "opus", "editor": "opus"}
@@ -129,6 +149,7 @@ def _fetch_prev_briefing() -> str | None:
 
 def compute_editor(triage: dict, theses: list[dict], critiques: list[dict],
                    prev_briefing: str | None = None) -> str:
+    _cross_check_devil_conviction(theses, critiques)
     return C.call(P.editor_user(triage, theses, critiques, prev_briefing=prev_briefing),
                   system=P.EDITOR_SYSTEM, model=MODEL["editor"]).strip()
 
