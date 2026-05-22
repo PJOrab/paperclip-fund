@@ -456,12 +456,11 @@ class FundingNewsAdapter:
                     continue
                 sep = "<item>" if "<item>" in text else "<entry>"
                 for block in text.split(sep)[1:21]:
-                    t = re.search(r"<title>(.*?)</title>", block, re.DOTALL)
+                    t = re.search(r"<title[^>]*>(.*?)</title>", block, re.DOTALL)
                     if not t:
                         continue
-                    title = re.sub(r"<[^>]+>", "", t.group(1))
-                    title = html.unescape(
-                        title.replace("<![CDATA[", "").replace("]]>", "")).strip()
+                    raw = t.group(1).replace("<![CDATA[", "").replace("]]>", "")
+                    title = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
                     if not title:
                         continue
                     link_m = (re.search(r'<link[^>]*href="([^"]+)"', block)
@@ -509,12 +508,11 @@ class EnergyNewsAdapter:
                     continue
                 sep = "<item>" if "<item>" in text else "<entry>"
                 for block in text.split(sep)[1:21]:
-                    t = re.search(r"<title>(.*?)</title>", block, re.DOTALL)
+                    t = re.search(r"<title[^>]*>(.*?)</title>", block, re.DOTALL)
                     if not t:
                         continue
-                    title = re.sub(r"<[^>]+>", "", t.group(1))
-                    title = html.unescape(
-                        title.replace("<![CDATA[", "").replace("]]>", "")).strip()
+                    raw = t.group(1).replace("<![CDATA[", "").replace("]]>", "")
+                    title = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
                     if not title:
                         continue
                     link_m = (re.search(r'<link[^>]*href="([^"]+)"', block)
