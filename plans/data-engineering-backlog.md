@@ -63,6 +63,17 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-89 (DE-Loop Zyklus 21): **8-K Item-type classification**
+  (`ingestion/sources_aitech.py`). 8-K filings appeared as "[EDGAR 8-K] NVDA..."
+  regardless of event type — triage could read "Item 2.02" but had no structured label
+  to distinguish earnings from acquisitions, exec departures, or change-of-control.
+  Added `_8K_ITEM_LABELS` dict (21 SEC Reg S-K item codes) and `_8k_item_label()`;
+  extended `_extract_8k_text()` to capture the Item number group and return
+  `(snippet, label)` tuple. EDGARAdapter now emits structured labels:
+  "[EDGAR 8-K:Earnings Results]", "[EDGAR 8-K:Acquisition/Disposal]",
+  "[EDGAR 8-K:Exec Departure/Appointment]", etc. Unknown items fall back to
+  "Material Event" — no regression. Form 4 / 13D/G paths unaffected (`item_type=""`).
+  Unit-tested: 4/4 label mappings correct. Pushed: `4a2bf3e`.
 - 2026-05-22 — HED-89 (DE-Loop Zyklus 20): **8-K primary-document text extraction**
   (`ingestion/sources_aitech.py`). EDGAR 8-K items showed only filing-metadata description ("8-K")
   — triage had no content to reason about. Added `_extract_8k_text()`: fetches the primary 8-K HTML,
