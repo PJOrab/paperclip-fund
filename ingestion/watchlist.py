@@ -128,12 +128,36 @@ AITECH_KEYWORDS = [
 # Notable private/neue Player — bei Registrierung sofort hochgestuft, auch wenn
 # der Name kein generisches Keyword trifft. Watchlist ist Untergrenze, kein Zaun.
 NOTABLE_PRIVATE_PLAYERS = [
+    # Hyperscalers / Infra
     "spacex", "openai", "anthropic", "databricks", "stripe", "xai", "x.ai",
     "scale ai", "anduril", "figure ai", "cerebras", "groq", "mistral",
     "perplexity", "canva", "discord", "epic games", "bytedance", "shein",
     "starlink", "neuralink", "waymo", "cruise", "rivian", "wiz",
     "coreweave", "lambda labs", "together ai", "cohere", "hugging face",
     "runway", "midjourney", "safe superintelligence", "thinking machines",
+    # 2024-2026 vintage — large raises / IPO-watch / M&A candidates
+    "harvey ai", "harvey",                  # legal AI, $300M+ Series D
+    "cognition ai", "cognition", "devin",   # software agents, $175M
+    "sierra ai", "sierra",                  # conversational AI agents, $175M
+    "poolside",                             # code AI, $500M Series B
+    "elevenlabs", "eleven labs",            # voice AI, $180M Series B
+    "magic", "magic dev",                   # long-context coding, $465M
+    "imbue",                                # reasoning AI, $200M
+    "writer",                               # enterprise AI, $200M
+    "glean",                                # enterprise search, $260M
+    "luma ai", "luma",                      # video/3D AI, $120M
+    "pika", "pika labs",                    # video generation, $80M
+    "suno",                                 # music AI
+    "stability ai", "stabilityai",          # image AI
+    "inflection ai", "inflection",          # acquired by Microsoft — M&A watch
+    "character ai", "character.ai",         # consumer AI, $150M
+    "h company", "h",                       # French AI lab (ex-DeepMind)
+    "mistral ai",                           # EU frontier model
+    "black forest labs",                    # FLUX image models (ex-Stability)
+    "nous research",                        # open-weights model research
+    "moonshot ai", "kimi",                  # Chinese frontier model (Asia coverage)
+    "01.ai", "zero one ai",                 # Kai-Fu Lee lab (China)
+    "stepfun",                              # Chinese multimodal AI
 ]
 
 # Default-Reliability je neuer Quellen-Kategorie (für sources-Tabelle)
