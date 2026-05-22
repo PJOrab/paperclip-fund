@@ -309,6 +309,12 @@ abbr[title]{text-decoration:none;cursor:help}
 .call-chip .cc{color:var(--mut);font-size:var(--fs-cap);cursor:help;font-variant-numeric:tabular-nums;
   border-bottom:1px dotted currentColor;border-bottom-color:rgba(125,125,125,.5)}
 .call-chip--empty{opacity:.55;border-style:dashed}
+/* call index badge — maps a hero chip to its numbered prose call + thesis card */
+.idx-badge{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--panel);
+  border:1px solid var(--line);color:var(--mut);font-size:var(--fs-micro);
+  font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.thesis .idx-badge{margin-right:6px}
 /* hover feedback on interactive cards/tiles/rows */
 .panel{transition:border-color .15s,background .15s}
 .panel:hover{border-color:var(--accent);background:var(--panel2)}
@@ -535,11 +541,11 @@ else{
   const convTip=c=>`Conviction ${c.toFixed(2)} — ${convLabel(c)}. Überzeugungsgrad der These (0–1): <0,35 niedrig · 0,35–0,6 mittel · ≥0,6 hoch.`;
   if(theses.length){
     const dirCls=d=>d==="long"?"cd-long":d==="short"?"cd-short":"cd-pair";
-    const chips=theses.map(t=>{
+    const chips=theses.map((t,i)=>{
       const tks=(t.tickers||[]).join(" · ")||"?";
       const dir=t.direction||"pair";
       const conv=t.conviction!=null?`<abbr title="Conviction">Conv</abbr> ${t.conviction.toFixed(2)}`:"";
-      return `<div class="call-chip"><span class="ck">${esc(tks)}</span>`+
+      return `<div class="call-chip"><span class="idx-badge" aria-label="Call ${i+1}">${i+1}</span><span class="ck">${esc(tks)}</span>`+
         `<span class="cd ${dirCls(dir)}">${esc(dir)}</span>`+
         (conv?`<span class="cc ${convCls(t.conviction)}" title="${esc(convTip(t.conviction))}" aria-label="${esc(convTip(t.conviction))}">${conv}</span>`:"")+
         `</div>`;
@@ -571,9 +577,9 @@ else{
   }
   if(theses.length){
     html+='<h2 style="margin-top:20px">Thesen & Devil\'s Advocate</h2>';
-    html+=theses.map(t=>{
+    html+=theses.map((t,i)=>{
       const c=cmap[t.id]||{};
-      return `<div class="thesis"><div class="h">${(t.tickers||[]).join(", ")}
+      return `<div class="thesis"><div class="h"><span class="idx-badge" aria-label="These ${i+1}">${i+1}</span>${(t.tickers||[]).join(", ")}
         <span class="dir ${dirClass(t.direction)}">${t.direction||""}</span>
         <span class="muted">· Conviction ${t.conviction??"—"}</span></div>
         <div style="margin-top:4px">${esc(t.thesis||"")}</div>
