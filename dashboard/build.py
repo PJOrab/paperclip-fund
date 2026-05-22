@@ -220,8 +220,6 @@ border-radius:6px;padding:1px 7px;font-size:var(--fs-cap);color:var(--mut)}
 .thesis{border-left:3px solid var(--accent);background:var(--panel2);
 border-radius:8px;padding:var(--s3);margin-bottom:10px}
 .thesis .h{font-weight:600}
-.dir{font-size:var(--fs-micro);padding:1px 7px;border-radius:6px;border:1px solid var(--line)}
-.long{color:var(--green)}.short{color:var(--red)}.pair{color:var(--amber)}
 .devil{margin-top:var(--s2);padding:var(--s2) 10px;background:var(--devil-bg);border:1px solid var(--devil-line);
 border-radius:8px;font-size:var(--fs-h2)}
 .devil .v{font-weight:600;text-transform:uppercase;font-size:var(--fs-micro)}
@@ -515,7 +513,7 @@ $("feed").innerHTML = (D.recent||[]).map(r=>{
   || '<div class="muted">keine Daten</div>';
 
 // Briefing
-function dirClass(d){return d==="long"?"long":d==="short"?"short":"pair";}
+function dirClass(d){return d==="long"?"cd-long":d==="short"?"cd-short":"cd-pair";}
 const b = D.briefing;
 if(!b){ $("briefing").innerHTML='<div class="panel muted">Noch kein Briefing. Sobald der n8n-Workflow lief, erscheint es hier.</div>'; }
 else{
@@ -580,7 +578,7 @@ else{
     html+=theses.map((t,i)=>{
       const c=cmap[t.id]||{};
       return `<div class="thesis"><div class="h"><span class="idx-badge" aria-label="These ${i+1}">${i+1}</span>${(t.tickers||[]).join(", ")}
-        <span class="dir ${dirClass(t.direction)}">${t.direction||""}</span>
+        <span class="cd ${dirClass(t.direction)}">${t.direction||""}</span>
         <span class="muted">· Conviction ${t.conviction??"—"}</span></div>
         <div style="margin-top:4px">${esc(t.thesis||"")}</div>
         ${c.strongest_counter?`<div class="devil"><span class="v">⚖️ Devil's Advocate (${c.verdict||"?"})</span><br>${esc(c.strongest_counter)}
@@ -655,7 +653,7 @@ function calibSvg(buckets){
       return `<tr>
         <td class="num"><span class="dlabel">Datum </span>${esc(t.date||"—")}</td>
         <th scope="row" class="tr-lbl"><span class="dlabel">These </span><span class="t">${esc(t.label||"")}</span> <span class="tk">${(t.tickers||[]).map(tk=>`<a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(tk)}" target="_blank" rel="noopener">${esc(tk)}</a>`).join(", ")}</span></th>
-        <td><span class="dlabel">Richtung </span><span class="dir ${dirClass(t.direction)}">${esc(t.direction||"")}</span></td>
+        <td><span class="dlabel">Richtung </span><span class="cd ${dirClass(t.direction)}">${esc(t.direction||"")}</span></td>
         <td class="num"><span class="dlabel">Conviction </span><span class="${convCls(t.conviction)}">${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></td>
         <td class="num"><span class="dlabel">Kurs </span>${esc(kurs)}</td>
         <td class="num"><span class="dlabel">Move </span>${moveCell(t.move_pct)}</td>
