@@ -35,6 +35,12 @@ def validate(schema: str, data: dict) -> list[str]:
             need(c.get("category") in CATEGORIES, f"clusters[{i}] bad category", errs)
             need(isinstance(c.get("importance"), int) and 1 <= c.get("importance", 0) <= 5,
                  f"clusters[{i}] importance must be int 1-5", errs)
+            need(isinstance(c.get("title"), str) and c.get("title", "").strip(),
+                 f"clusters[{i}] title must be a non-empty string", errs)
+            need(isinstance(c.get("why"), str) and c.get("why", "").strip(),
+                 f"clusters[{i}] why must be a non-empty string", errs)
+            need(isinstance(c.get("tickers"), list),
+                 f"clusters[{i}] tickers must be a list", errs)
     elif schema == "analyst":
         need(isinstance(data.get("analyses"), list), "missing 'analyses' list", errs)
         for i, x in enumerate(data.get("analyses", []) or []):

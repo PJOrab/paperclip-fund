@@ -180,6 +180,18 @@ def test_validate_output() -> None:
     errs = validate("triage", bad_imp)
     _check("triage importance > 5 caught", any("importance" in e for e in errs))
 
+    empty_title = {"clusters": [{"title": "", "tickers": [], "category": "earnings", "why": "beat estimates", "importance": 3, "item_refs": []}]}
+    errs = validate("triage", empty_title)
+    _check("triage empty title caught", any("title" in e for e in errs))
+
+    empty_why = {"clusters": [{"title": "NVDA earnings", "tickers": [], "category": "earnings", "why": "", "importance": 3, "item_refs": []}]}
+    errs = validate("triage", empty_why)
+    _check("triage empty why caught", any("why" in e for e in errs))
+
+    bad_tickers_type = {"clusters": [{"title": "NVDA", "tickers": "NVDA", "category": "earnings", "why": "beat", "importance": 3, "item_refs": []}]}
+    errs = validate("triage", bad_tickers_type)
+    _check("triage tickers non-list caught", any("tickers" in e for e in errs))
+
     # --- analyst ---
     good_analyst = {"analyses": [
         {"title": "NVDA", "tickers": ["NVDA"], "read": "bullish", "magnitude": "high",
