@@ -295,7 +295,7 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict],
         "THESES + DEVIL'S ADVOCATE (sorted: non-consensus/is_differentiated=true first, "
         "then by devil verdict):\n" + json.dumps(enriched, ensure_ascii=False) + "\n\n"
         + (f"UPCOMING EARNINGS (pre-extracted for you):\n{earnings_section}\n" if earnings_section else "")
-        + "Write the briefing with these sections (tight, ≤~1400 chars total):\n"
+        + "Write the briefing with these sections (~1500-2000 Zeichen, CEO preference):\n"
         "# CEO-Briefing AI/Tech — <Datum>\n"
         "## Δ seit gestern (1 Satz: das eine große Thema / was sich geändert hat)\n"
         "## Top-Calls (MAX 2-3; je: 1 Satz Empfehlung + Conviction, "
