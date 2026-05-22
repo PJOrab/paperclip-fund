@@ -243,6 +243,10 @@ SOURCE_RELIABILITY = {
     # Same official SEC source as sec_8k but without item-type text extraction —
     # lower than sec_8k (0.95) since we only have the filing notice, not content.
     "sec_broad_event": 0.88,
+    # FRED macro series via fredgraph.csv (no API key). Official Federal Reserve /
+    # FFIEC data — same authoritative source as fed_macro (0.90) but quantitative
+    # economic series (rates, spreads, labor) rather than qualitative policy statements.
+    "fred_macro": 0.95,
 }
 
 # S5 Energy/Power sector feeds — AI-capex risk thesis (power/grid strain).

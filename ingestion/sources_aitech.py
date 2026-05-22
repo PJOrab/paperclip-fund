@@ -1346,7 +1346,7 @@ class FREDMacroAdapter:
                             f"[{date_str}]{delta}",
                     "source": "fred_macro",
                     "url": f"https://fred.stlouisfed.org/series/{sid}",
-                    "reliability": 0.95,
+                    "reliability": W.SOURCE_RELIABILITY.get("fred_macro", 0.95),
                 })
                 time.sleep(0.2)
             except Exception:
