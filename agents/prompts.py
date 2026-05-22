@@ -216,7 +216,7 @@ def devil_user(theses: list[dict]) -> str:
         "Return JSON:\n"
         '{"critiques": [{"id": "matching thesis id", '
         '"strongest_counter": "the single best argument against", '
-        '"already_priced_in": str, "falsification": [str], '
+        '"already_priced_in": str, "falsification": ["≥1 specific observable event that would disprove the thesis"], '
         '"blind_spot": str, "verdict": "agree|caution|reject"}]}'
     )
 
