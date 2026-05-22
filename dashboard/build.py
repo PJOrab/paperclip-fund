@@ -231,6 +231,10 @@ max-width:var(--measure);margin-inline:auto;line-height:1.75}
 .empty .ex{color:var(--mut);max-width:46ch;margin:var(--s2) auto 0}
 .countdown{display:inline-block;margin-top:var(--s3);background:var(--panel2);border:1px solid var(--line);
   border-radius:6px;padding:4px 10px;font-size:var(--fs-cap);color:var(--mut)}
+.tr-progress{margin-top:var(--s3);max-width:28ch;margin-left:auto;margin-right:auto}
+.tr-progress .tr-pb-label{display:flex;justify-content:space-between;font-size:var(--fs-cap);color:var(--mut);margin-bottom:4px}
+.tr-progress .tr-pb-track{height:6px;background:var(--panel2);border-radius:3px;border:1px solid var(--line);overflow:hidden}
+.tr-progress .tr-pb-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .3s}
 /* heutige calls hero strip */
 .calls-strip{display:flex;flex-wrap:wrap;gap:var(--s2);margin-bottom:var(--s4)}
 .call-chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);
@@ -504,7 +508,16 @@ function calibSvg(buckets){
     let cd="";
     if(esd){
       const days=Math.ceil((new Date(esd+"T00:00:00Z")-Date.now())/864e5);
-      cd=`<div class="countdown">Erste Wertung ab ${esc(esd)}${days>0?" · in "+days+" Tagen":" · fällig"}</div>`;
+      // Progress affordance: infer window as 21 days; show elapsed fraction toward scoring date
+      const windowDays=21;
+      const elapsed=Math.max(0,Math.min(windowDays,windowDays-days));
+      const pct=Math.round((elapsed/windowDays)*100);
+      const label=days>0?`Erste Wertung in ${days} Tag${days===1?"":"en"} (${esc(esd)})`:`Wertung fällig ab ${esc(esd)}`;
+      cd=`<div class="tr-progress">
+        <div class="tr-pb-label"><span>Reifung</span><span>${pct}%</span></div>
+        <div class="tr-pb-track" title="${label}"><div class="tr-pb-fill" style="width:${pct}%"></div></div>
+        <div style="margin-top:4px;font-size:var(--fs-cap);color:var(--mut);text-align:center">${label}</div>
+      </div>`;
     }
     $("trbody").innerHTML=`<div class="panel"><div class="empty">
       <div class="g">⏳</div>
