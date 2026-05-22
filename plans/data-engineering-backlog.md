@@ -63,6 +63,18 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-89 (DE-Loop Zyklus 28): **Earnings-result detection in Yahoo Finance items**
+  (`ingestion/sources_aitech.py`, `ingestion/watchlist.py`, `agents/prompts.py`).
+  Actual earnings beats/misses arriving via Yahoo Finance RSS were indistinguishable
+  from generic financial news (source=yahoo_finance, rel=0.72). Added `_EARNINGS_RESULT_RE`
+  regex covering beat/miss/top/exceed/fell-short patterns, quarterly-EPS header format
+  ("Q2 EPS:"), and factual revenue/profit move patterns. Detection runs before the
+  analyst-action check (priority order: earnings_result > analyst_action > yahoo_finance).
+  Matching headlines get `source="earnings_result"`, `reliability=0.88`, and
+  `[Earnings · TICKER]` prefix. Added `earnings_result: 0.88` to `SOURCE_RELIABILITY`.
+  Added EARNINGS RESULTS blocks to both `TRIAGE_SYSTEM` and `triage_user()`:
+  always importance 4-5, category='earnings', miss=5, beat=4-5. Tested: 17/17
+  classification cases correct (11 positive, 6 negative). Pushed: `4ab548e`.
 - 2026-05-22 — HED-89 (DE-Loop Zyklus 26): **Analyst-action detection in Yahoo Finance items**
   (`ingestion/sources_aitech.py`, `ingestion/watchlist.py`, `agents/prompts.py`).
   Analyst upgrades, downgrades, and PT changes arrived as generic `yahoo_finance`
