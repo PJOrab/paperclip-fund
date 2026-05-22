@@ -18,6 +18,9 @@ from agents.score_past_calls import write_track_record
 print(write_track_record(), file=sys.stderr)
 " || echo "WARN: track-record refresh failed (non-fatal)"
     echo "===== $(date -u +'%Y-%m-%dT%H:%M:%SZ') track-record refresh done ====="
+    echo "===== $(date -u +'%Y-%m-%dT%H:%M:%SZ') sector-view refresh start ====="
+    "$PYTHON" -m dashboard.build --gen-sector-view || echo "WARN: sector-view refresh failed (non-fatal)"
+    echo "===== $(date -u +'%Y-%m-%dT%H:%M:%SZ') sector-view refresh done ====="
     echo "===== $(date -u +'%Y-%m-%dT%H:%M:%SZ') dashboard rebuild start ====="
     "$PYTHON" -m dashboard.build || echo "WARN: dashboard rebuild failed (non-fatal)"
     echo "===== $(date -u +'%Y-%m-%dT%H:%M:%SZ') dashboard rebuild done ====="
