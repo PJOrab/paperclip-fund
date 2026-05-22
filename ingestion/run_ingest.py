@@ -21,6 +21,14 @@ def run_once(dry_run: bool = False) -> None:
     print(f"  {'-'*44}")
     print(f"  Total gefetcht: {len(items)}")
 
+    # Dead-adapter health check: adapters returning 0 items without a logged error
+    # are silently dropping data. Surface them so operators notice and can investigate.
+    silent_zeros = [n for n, c in per_adapter.items() if c == 0 and n not in errors]
+    if silent_zeros:
+        print(f"  ⚠  DEAD ADAPTERS (0 items, no error): {', '.join(silent_zeros)}")
+        for name in silent_zeros:
+            errors[name] = "0 items fetched — possible feed outage or config change"
+
     if dry_run:
         for it in items[:5]:
             print(f"    · [{it['source']}] {it['text'][:90]}")
