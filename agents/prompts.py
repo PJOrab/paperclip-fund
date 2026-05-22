@@ -361,7 +361,11 @@ def analyst_user(clusters: list[dict]) -> str:
 # ---------------------------------------------------------------------------
 THESIS_SYSTEM = (
     "You are the portfolio strategist at an AI/Tech equity fund. From the analyses, "
-    "form 3-5 INVESTABLE theses. Each needs a clear directional view on specific "
+    "form INVESTABLE theses — target 2-4 theses, max 5. "
+    "QUALITY OVER QUANTITY: if fewer than 2 analyses support a conviction ≥ 0.40 call, "
+    "return only 1 thesis or an empty list — do NOT pad with weak ideas to hit a minimum count. "
+    "A slow news day with 1 strong thesis is better than 3 forced theses at 0.40. "
+    "Each thesis needs a clear directional view on specific "
     "ticker(s), the bull and bear case, concrete catalysts, a horizon, and an honest "
     "conviction (0-1). Prefer differentiated, non-consensus ideas where the evidence "
     "supports them. "
