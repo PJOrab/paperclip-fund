@@ -385,10 +385,10 @@ main:focus{outline:none}
 
   <main id="main" tabindex="-1">
   <h2>Letztes Briefing</h2>
-  <div id="briefing"></div>
+  <div id="briefing" aria-live="polite" aria-atomic="false"></div>
 
   <h2>Thesen-Track-Record <span id="trstand" class="tag"></span></h2>
-  <div id="trackrecord"></div>
+  <div id="trackrecord" aria-live="polite" aria-atomic="false"></div>
 
   <h2>Sektor-Ansicht <span id="secstand" class="tag"></span></h2>
   <div class="grid sectors" id="sectorview"></div>
