@@ -5,7 +5,8 @@ QC / Coverage-Gap-Check — run after each briefing.
 Compares raw_items ingested in the briefing window against the triage
 clusters. Items not referenced by any cluster are "uncovered". Among
 those, keyword heuristics flag "big events" (IPO/S-1, funding rounds,
-major launches, large insider trades) as coverage-bug Paperclip tickets.
+major launches, M&A, insider trades, earnings surprises, analyst rating
+changes, C-suite changes) as coverage-bug Paperclip tickets.
 
 Usage:
   python -m agents.coverage_qc [--run-id RUN_ID] [--dry-run]
@@ -56,6 +57,18 @@ BIG_EVENT_PATTERNS = [
     # Earnings surprise
     (r"\b(beats? estimates?|misses? estimates?|earnings (beat|miss)|guidance (raised|lowered))\b",
      "earnings_surprise", "medium"),
+    # Analyst rating changes — upgrades/downgrades/initiations/target changes (market-moving)
+    (r"\b(initiates coverage|initiates at|upgrades? to|downgrades? to|reiterates? (buy|sell|hold)"
+     r"|raises? (price target|pt|target price)|cuts? (price target|pt|target price)"
+     r"|increases? (price target|target)|lowers? (price target|target)"
+     r"|outperform|underperform|overweight|underweight)\b",
+     "analyst_action", "medium"),
+    # Executive departures / C-suite appointments (CEO/CTO/CFO changes are binary events)
+    (r"\b(CEO|CFO|CTO|COO|president)\b.{0,60}"
+     r"\b(resign\w*|retire\w*|depart\w*|step\w* down|appoint\w*|name\w*|hire\w*|join\w*)\b"
+     r"|\b(appoint\w*|name\w*|hire\w*)\b.{0,60}\b(CEO|CFO|CTO|COO|president)\b"
+     r"|\b(Exec Departure|Exec Appointment)\b",
+     "exec_change", "high"),
 ]
 
 _compiled = [(re.compile(pat, re.IGNORECASE), label, prio)
