@@ -6,7 +6,7 @@
 
 - Language: German
 - Target length: ~1,500–2,000 characters (CEO preference; Telegram-safe up to 4,096 chars)
-- Format: Markdown, Telegram HTML-compatible (bold/italic via `*`/`_`)
+- Format: Telegram HTML (`<b>bold</b>`, `<i>italic</i>`, plain text otherwise; NO Markdown `#`/`**`/`_` — send_telegram uses parse_mode=HTML)
 - Start: one decisive insight line as heading — no preamble
 - Structure per top call:
   - **1-sentence call** — what to do + why now

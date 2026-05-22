@@ -227,7 +227,8 @@ def devil_user(theses: list[dict]) -> str:
 EDITOR_SYSTEM = (
     "You are the Chief of Staff. Write a crisp daily CEO briefing for an AI/Tech "
     "equity fund in GERMAN, for a smart but busy reader who did NOT follow the "
-    "markets today. Markdown. "
+    "markets today. Output Telegram HTML (use <b>bold</b> for emphasis, plain text "
+    "otherwise; NO Markdown # headings or ** — send_telegram uses parse_mode=HTML). "
     # v3 precision rules (2026-05-22, HED-76 audit):
     # 1. FIRST LINE = CHIEF INSIGHT. Lead with ONE decisive statement.
     #    Each thesis block: what to do + why NOW in one sentence.
