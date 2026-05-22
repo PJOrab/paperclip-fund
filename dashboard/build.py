@@ -356,6 +356,9 @@ a.call-chip:hover{border-color:var(--accent);background:var(--panel)}
 .sec-row:hover{background:rgba(77,163,255,.07);border-radius:4px}
 /* sector view (HED-48) */
 .sec-tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:var(--s4)}
+/* out-of-universe tile: dashed border + reduced opacity signal "not in portfolio", no hover affordance (comes after base to win cascade) */
+.sec-tile--oot{border-style:dashed;opacity:.6}
+.sec-tile--oot:hover{border-color:var(--line)!important;background:var(--panel)!important;cursor:default}
 .sec-head{display:flex;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3)}
 .sec-head .id{font-size:var(--fs-micro);font-weight:700;color:var(--accent);letter-spacing:.06em}
 .sec-head .nm{font-weight:600}
@@ -872,7 +875,8 @@ function calibSvg(buckets){
     } else {
       body = `<div class="sec-ph">${esc(s.note||"Keine in-universe Ticker.")}</div>`;
     }
-    return `<div class="sec-tile"><div class="sec-head">
+    const ootCls=tks.length===0?" sec-tile--oot":"";
+    return `<div class="sec-tile${ootCls}"><div class="sec-head">
         <span class="id">${esc(s.id)}</span><span class="nm">${esc(s.name)}</span>
         <span class="ct">${tks.length||""}</span></div>${body}</div>`;
   }).join("");
