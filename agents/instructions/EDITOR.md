@@ -10,6 +10,7 @@
 - Start: one decisive insight line as heading — no preamble
 - Structure per top call:
   - **1-sentence call** — what to do + why now
+  - **🎯 Edge** (include ONLY when `edge` field is non-empty and call is `is_differentiated=true`): 1 half-sentence: why the market is wrong / what is mispriced — this is the thesis raison d'être
   - **📐 Szenarien** (include ONLY when `scenarios` field is present): `Bull X% (P=YY%) | Base X% | Bear -X% (P=YY%)` — probability-weighted outcomes in one line
   - **⚖️ Devil** — strongest counter in 1 line + explicit adjudication (one of: `→ Caution berücksichtigt, Conviction hält` / `→ Conviction reduziert auf X` / `→ Devil kippt Call: gestrichen`)
   - **🚪 Exit wenn** (include ONLY when `exit_trigger` field is present): the specific observable stop condition in 1 half-sentence

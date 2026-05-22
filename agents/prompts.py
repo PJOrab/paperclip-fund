@@ -597,6 +597,15 @@ THESIS_SYSTEM = (
     "'Fed signals more than 2 cuts — rate-sensitive capex re-pricing'. "
     "Bad examples: 'macro deterioration', 'bad earnings', 'competition'. "
     "An exit trigger without a specific threshold is not a trigger — it is vague risk acknowledgment. "
+    "EDGE ARTICULATION (mandatory for differentiated calls): the 'edge' field must answer 'WHY does "
+    "this call make money if markets are semi-efficient?' in one specific sentence. "
+    "Good edge: 'Street models NVDA demand via historical semicicycles; structural AI capex break "
+    "means the cycle model systematically underestimates demand duration.' "
+    "Good edge: 'Options market prices +/-4% move on NVDA earnings but consensus sell-side is at "
+    "+/-8% — the implied bar is too low for a beat to matter.' "
+    "Bad edge: 'Strong fundamentals', 'positive momentum', 'undervalued vs peers'. "
+    "For aligned calls (is_differentiated=false), edge must be empty string — if you cannot articulate "
+    "an edge for a differentiated call, downgrade is_differentiated to false. "
     "Output STRICT JSON only."
 )
 
@@ -723,6 +732,7 @@ def thesis_user(analyses: list[dict]) -> str:
         '"bear": {"prob": 0.0-1.0, "trigger": "specific named event", "target": "price or % move"}'
         '}, '
         '"exit_trigger": "the ONE specific observable event that invalidates this call and should trigger exit — e.g. \'NVDA Q2 DC guide < $5.5B\' or \'AMD MI300X wins Google TPU contract\'", '
+        '"edge": "1 sentence: WHY does this call exist if markets are semi-efficient? What does the market price wrong or not yet know? E.g. \'Street models NVDA demand using historical semicicycles; AI capex is a structural break the cycle model misses.\' Empty string if aligned/no edge.", '
         '"horizon": "days|weeks|quarters", "conviction": 0.0-1.0, '
         '"is_differentiated": true|false}]}'
     )
@@ -831,6 +841,8 @@ EDITOR_SYSTEM = (
     "6. NON-CONSENSUS FIRST: theses marked is_differentiated=true are pre-sorted to "
     "the top. Prefer these as top calls; consensus repeats go to Beobachten. "
     "For EACH top call: 1 sentence recommendation + conviction delta, "
+    "🎯 Edge (only if is_differentiated=true AND edge field non-empty): 1 half-sentence why the "
+    "market is wrong — the informational advantage. E.g. '🎯 Markt preist Zyklus, wir sehen Strukturbruch.' "
     "⚖️ Devil in 1 line + explicit adjudication ('→ …'), 👉 Fazit in 1 line. "
     "STANDING CEO PREFERENCES (agents/ceo_preferences.md wins on conflict): "
     "explain every jargon/acronym in plain German in brackets on first use "

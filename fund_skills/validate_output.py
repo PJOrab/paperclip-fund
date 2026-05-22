@@ -86,6 +86,11 @@ def validate(schema: str, data: dict) -> list[str]:
             if et is not None:
                 need(isinstance(et, str) and et.strip(),
                      f"theses[{i}] exit_trigger must be non-empty string when present", errs)
+            # edge: optional; when is_differentiated=True, it should be non-empty
+            edge = x.get("edge")
+            if edge is not None:
+                need(isinstance(edge, str),
+                     f"theses[{i}] edge must be a string when present", errs)
             # scenarios optional but validated when present (investment-grade output)
             sc = x.get("scenarios")
             if sc is not None:

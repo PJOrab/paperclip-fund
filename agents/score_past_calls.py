@@ -221,6 +221,8 @@ def run_scoring(runs: list[dict], yf, include_pending: bool = False) -> list[dic
                     rec["exit_trigger"] = th["exit_trigger"]
                 if th.get("scenarios"):
                     rec["scenarios"] = th["scenarios"]
+                if th.get("edge"):
+                    rec["edge"] = th["edge"]
                 records.append(rec)
 
     return records
