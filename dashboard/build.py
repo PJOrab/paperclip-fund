@@ -321,6 +321,9 @@ a.call-chip:hover{border-color:var(--accent);background:var(--panel)}
 .cd-pair{background:rgba(210,153,34,.18);color:var(--amber)}
 .call-chip .cc{color:var(--mut);font-size:var(--fs-cap);cursor:help;font-variant-numeric:tabular-nums;
   border-bottom:1px dotted currentColor;border-bottom-color:rgba(125,125,125,.5)}
+.call-chip .call-move{font-size:var(--fs-cap);font-weight:600;font-variant-numeric:tabular-nums;cursor:help;
+  padding-left:6px;margin-left:2px;border-left:1px solid var(--line)}
+.call-move.move-confirm{opacity:1}.call-move.move-against{opacity:.85}
 .call-chip--empty{opacity:.55;border-style:dashed;cursor:default}
 /* call index badge — maps a hero chip to its numbered prose call + thesis card */
 .idx-badge{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
@@ -599,16 +602,33 @@ else{
   const convTip=c=>`Conviction ${c.toFixed(2)} — ${convLabel(c)}. Überzeugungsgrad der These (0–1): <0,35 niedrig · 0,35–0,6 mittel · ≥0,6 hoch.`;
   if(theses.length){
     const dirCls=d=>d==="long"?"cd-long":d==="short"?"cd-short":"cd-pair";
+    // Day-move map (ticker→change_pct) from sector_view: ties each hero call to today's price action
+    const moveByTicker={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>(s.tickers||[]).forEach(tk=>{
+      if(tk&&tk.ticker!=null&&tk.change_pct!=null) moveByTicker[String(tk.ticker).toUpperCase()]=tk.change_pct;
+    }));
     const chips=theses.map((t,i)=>{
       const tks=(t.tickers||[]).join(" · ")||"?";
       const dir=t.direction||"pair";
       const conv=t.conviction!=null?`<abbr title="Conviction">Conv</abbr> ${t.conviction.toFixed(2)}`:"";
+      // Day-move chip element + confirm/divergence hint vs call direction
+      const mv=moveByTicker[String((t.tickers||[])[0]||"").toUpperCase()];
+      let moveHtml="", moveTipPart="";
+      if(mv!=null){
+        const up=mv>=0, sign=up?"+":"−", arrow=up?"▲":"▼";
+        const confirm=dir==="long"?up:dir==="short"?!up:null;
+        const stance=confirm===true?" — bestätigt "+dir.toUpperCase():confirm===false?" — läuft gegen "+dir.toUpperCase():"";
+        const mtip=`Tagesbewegung ${esc((t.tickers||[])[0]||"")}: ${sign}${Math.abs(mv).toFixed(1)}%${stance}`;
+        moveHtml=`<span class="call-move ${up?"move-up":"move-dn"} ${confirm===true?"move-confirm":confirm===false?"move-against":""}" title="${esc(mtip)}" aria-label="${esc(mtip)}">${arrow} ${sign}${Math.abs(mv).toFixed(1)}%</span>`;
+        moveTipPart=` · heute ${sign}${Math.abs(mv).toFixed(1)}%`;
+      }
       // Thesis-preview tooltip: first 120 chars of thesis lets CEO distinguish identical tickers
       const snip=(t.thesis||"").trim().slice(0,120)+(((t.thesis||"").trim().length>120)?"…":"");
-      const chipTip=`Call ${i+1}: ${tks} ${(dir||"").toUpperCase()}${t.conviction!=null?" · Conv "+t.conviction.toFixed(2):""}${snip?" — "+snip:""}`;
+      const chipTip=`Call ${i+1}: ${tks} ${(dir||"").toUpperCase()}${t.conviction!=null?" · Conv "+t.conviction.toFixed(2):""}${moveTipPart}${snip?" — "+snip:""}`;
       return `<a class="call-chip" href="#thesis-${i+1}" title="${esc(chipTip)}" aria-label="${esc(chipTip)} — zur These springen"><span class="idx-badge" aria-label="Call ${i+1}">${i+1}</span><span class="ck">${esc(tks)}</span>`+
         `<span class="cd ${dirCls(dir)}">${esc(dir)}</span>`+
         (conv?`<span class="cc ${convCls(t.conviction)}" title="${esc(convTip(t.conviction))}" aria-label="${esc(convTip(t.conviction))}">${conv}</span>`:"")+
+        moveHtml+
         `</a>`;
     }).join("");
     html+=`<div class="calls-strip">${chips}</div>`;
