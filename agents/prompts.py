@@ -646,6 +646,35 @@ def _load_track_record_context() -> str:
         return ""
 
 
+def _load_open_positions_context() -> str:
+    """Inject currently open (pending/too_early) positions so strategist avoids duplicates/contradictions."""
+    import pathlib
+    tr_path = pathlib.Path(__file__).resolve().parent.parent / "dashboard" / "track_record.json"
+    try:
+        import json as _json
+        tr = _json.loads(tr_path.read_text())
+        theses = tr.get("theses") or []
+        open_pos = [t for t in theses if t.get("verdict") in (None, "too_early", "pending") or
+                    t.get("verdict") not in ("hit", "miss", "neutral")]
+        if not open_pos:
+            return ""
+        lines = [f"OPEN POSITIONS ({len(open_pos)} active — do NOT duplicate; flag if contradicting):"]
+        for t in open_pos:
+            tickers = ",".join(t.get("tickers") or [])
+            direction = t.get("direction", "?")
+            conv = t.get("conviction")
+            conv_str = f"{conv:.2f}" if conv is not None else "?"
+            date = t.get("date", "?")
+            edge = t.get("edge", "")
+            edge_note = f" | edge: {edge[:60]}" if edge else ""
+            lines.append(f"  OPEN {date} | {tickers} {direction} conv={conv_str}{edge_note}")
+        lines.append("If today's analysis reinforces an open position, raise conviction in comments. "
+                     "If it contradicts, explain why in differentiation field.")
+        return "\n" + "\n".join(lines) + "\n"
+    except Exception:
+        return ""
+
+
 def _load_sector_price_context() -> str:
     """Load ticker prices + 52w range from sector_view.json for thesis context."""
     import pathlib
@@ -705,13 +734,15 @@ def thesis_user(analyses: list[dict]) -> str:
     ) if conv_scale else ""
     sector_ctx = _load_sector_price_context()
     track_ctx = _load_track_record_context()
+    open_ctx = _load_open_positions_context()
     return (
         "Analyses (sorted: differentiated first, then high-magnitude, then short-horizon — "
         "prioritize these for thesis formation):\n\n"
         + json.dumps(sorted_analyses, ensure_ascii=False)
         + scale_block
         + sector_ctx
-        + track_ctx + "\n\n"
+        + track_ctx
+        + open_ctx + "\n\n"
         "SCENARIO ANALYSIS (mandatory): each thesis MUST include a \'scenarios\' object with three "
         "probability-weighted cases that sum to ~1.0. Be specific: name the trigger and a directional "
         "price target (e.g. \'$950 (+12%)\' or \'no upside, holding current levels\'). "
