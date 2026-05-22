@@ -1383,7 +1383,30 @@ class EarningsCalendarAdapter:
                 except Exception:
                     name = ticker
 
-                text = f"[{ticker}] Earnings {when} ({earnings_date}) — {name}"
+                # Pull consensus EPS and revenue estimates from the same calendar dict.
+                # Both fields are present in yfinance ≥0.2 when estimates are available.
+                est_parts: list[str] = []
+                if isinstance(cal, dict):
+                    eps_avg = cal.get("Earnings Average")
+                    rev_avg = cal.get("Revenue Average")
+                    if eps_avg is not None:
+                        try:
+                            eps_val = float(eps_avg)
+                            est_parts.append(f"est. EPS ${eps_val:.2f}")
+                        except (TypeError, ValueError):
+                            pass
+                    if rev_avg is not None:
+                        try:
+                            rev_val = float(rev_avg)
+                            if rev_val >= 1e9:
+                                est_parts.append(f"rev ${rev_val / 1e9:.1f}B")
+                            elif rev_val >= 1e6:
+                                est_parts.append(f"rev ${rev_val / 1e6:.0f}M")
+                        except (TypeError, ValueError):
+                            pass
+
+                est_suffix = "; " + ", ".join(est_parts) if est_parts else ""
+                text = f"[{ticker}] Earnings {when} ({earnings_date}) — {name}{est_suffix}"
                 out.append({
                     "text": text,
                     "source": "earnings_calendar",
