@@ -318,6 +318,7 @@ abbr[title]{text-decoration:none;cursor:help}
 @media (max-width:760px){
   .cards{grid-template-columns:repeat(2,1fr)}
   .sectors{grid-template-columns:1fr}
+  #sectorview{min-height:320px}
   .two-col{grid-template-columns:1fr}
   .flow{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tr-tbl{display:block}
