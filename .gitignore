@@ -6,6 +6,11 @@
 *.key
 secrets/
 
+# Local DB (may contain fund/position data — never commit)
+*.db
+*.sqlite
+*.sqlite3
+
 # Python
 __pycache__/
 *.pyc
