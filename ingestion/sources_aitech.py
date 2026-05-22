@@ -163,28 +163,61 @@ def _summarize_form4(xml: str) -> str:
     return f"{signal} — " + "; ".join(parts) + holds
 
 
-_8K_ITEM_RE = re.compile(r"Item\s+\d+\.\d+", re.IGNORECASE)
+_8K_ITEM_RE = re.compile(r"Item\s+(\d+\.\d+)", re.IGNORECASE)
 _HTML_ENTITY_RE = re.compile(r"&#?\w+;")
 
+# SEC Regulation S-K Item-number → investment-relevant short label.
+# Only items with material investment implications are listed; unknown items
+# fall back to "Material Event" so triage still gets a type signal.
+_8K_ITEM_LABELS: dict[str, str] = {
+    "1.01": "Material Agreement",
+    "1.02": "Agreement Terminated",
+    "1.03": "Bankruptcy",
+    "2.01": "Acquisition/Disposal",
+    "2.02": "Earnings Results",
+    "2.03": "Debt Obligation",
+    "2.04": "Mining/Oil Trigger",
+    "2.05": "Costs Associated with Exit",
+    "2.06": "Asset Impairment",
+    "3.01": "Exchange Delisting",
+    "3.02": "Unregistered Securities",
+    "4.01": "Auditor Change",
+    "4.02": "Accounting Disagreement",
+    "5.01": "Change in Control",
+    "5.02": "Exec Departure/Appointment",
+    "5.03": "Charter/Bylaws Change",
+    "5.07": "Shareholder Vote",
+    "5.08": "Failure to Meet Listing Requirements",
+    "7.01": "Regulation FD Disclosure",
+    "8.01": "Other Material Event",
+    "9.01": "Financial Statements",
+}
 
-def _extract_8k_text(html_src: str, max_chars: int = 400) -> str:
+
+def _8k_item_label(item_num: str) -> str:
+    """Map a dotted Item number (e.g. '2.02') to a triage-friendly label."""
+    return _8K_ITEM_LABELS.get(item_num.strip(), "Material Event")
+
+
+def _extract_8k_text(html_src: str, max_chars: int = 400) -> tuple[str, str]:
     """
     Extract the first substantive Item paragraph from an 8-K HTML document.
-    Returns empty string on failure so the caller keeps the fallback notice.
+    Returns (snippet, item_label). Both are empty strings on failure so the
+    caller keeps the fallback notice.
     """
     try:
-        # drop embedded scripts and stylesheets before tag-stripping
         txt = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", html_src)
         txt = re.sub(r"<[^>]+>", " ", txt)
         txt = _HTML_ENTITY_RE.sub(" ", txt)
         txt = re.sub(r"\s+", " ", txt).strip()
         m = _8K_ITEM_RE.search(txt)
         if not m:
-            return ""
+            return "", ""
         snippet = txt[m.start(): m.start() + max_chars].strip()
-        return snippet
+        label = _8k_item_label(m.group(1))
+        return snippet, label
     except Exception:
-        return ""
+        return "", ""
 
 
 def _edgar_form_meta(form):
@@ -279,22 +312,27 @@ class EDGARAdapter:
                                 detail = f"{who} — {summary}" if who else summary
                     except Exception:
                         pass
+                item_type = ""
                 if form == "8-K" and acc and doc:
-                    # Fetch the primary 8-K HTML and extract the first Item paragraph
-                    # so triage sees substantive content, not just "8-K filed".
+                    # Fetch the primary 8-K HTML, extract the first Item paragraph,
+                    # and classify the Item type so triage immediately knows whether
+                    # this is earnings, an acquisition, an exec departure, etc.
                     # Falls back to the metadata description on any fetch/parse error.
                     try:
                         html_src = m.fetch_url(doc_url, headers=UA, timeout=20)
                         time.sleep(0.15)  # SEC: max 10 req/s
                         if html_src:
-                            snippet = _extract_8k_text(html_src)
+                            snippet, item_type = _extract_8k_text(html_src)
                             if snippet:
                                 detail = snippet
                     except Exception:
                         pass
+                # Include the 8-K item type in the label so triage can distinguish
+                # "8-K:Earnings Results" from "8-K:Acquisition/Disposal" at a glance.
+                display_label = f"{label}:{item_type}" if item_type else label
                 out.append({
                     # Accession-Nr. im Text → jede Einreichung distinkt (Dedup-Hash)
-                    "text": f"[EDGAR {label}] {tk} {title}: {detail} (filed {date_l[i]}, {acc_disp})",
+                    "text": f"[EDGAR {display_label}] {tk} {title}: {detail} (filed {date_l[i]}, {acc_disp})",
                     "source": src,
                     "url": doc_url,
                     "reliability": W.SOURCE_RELIABILITY.get(src),
