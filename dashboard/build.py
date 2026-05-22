@@ -165,6 +165,45 @@ def _yahoo_quote(ticker: str) -> dict | None:
         return None
 
 
+def _earnings_calendar() -> list[dict]:
+    """Fetch upcoming earnings dates for all watchlist tickers via yfinance.
+    Returns list of {ticker, date, days_out} sorted by date, capped at 14 days out."""
+    try:
+        import yfinance as yf
+        from datetime import date as _date
+        today = _date.today()
+        results = []
+        all_tickers = [t for s in SECTOR_TAXONOMY for t in s["tickers"]]
+        for ticker in all_tickers:
+            try:
+                info = yf.Ticker(ticker).calendar
+                if info is None:
+                    continue
+                # calendar returns dict with 'Earnings Date' as a list of timestamps
+                ed = info.get("Earnings Date") or info.get("earningsDate") or []
+                if hasattr(ed, "tolist"):
+                    ed = ed.tolist()
+                for dt in (ed[:2] if isinstance(ed, list) else []):
+                    try:
+                        if hasattr(dt, "date"):
+                            d = dt.date()
+                        else:
+                            from datetime import datetime as _dt
+                            d = _dt.fromisoformat(str(dt)[:10]).date()
+                        days_out = (d - today).days
+                        if 0 <= days_out <= 14:
+                            results.append({"ticker": ticker, "date": d.isoformat(), "days_out": days_out})
+                            break
+                    except Exception:
+                        continue
+            except Exception:
+                continue
+        results.sort(key=lambda x: x["date"])
+        return results
+    except Exception:
+        return []
+
+
 def gen_sector_view() -> dict:
     """Baut sector_view.json: pro Sektor die in-universe Ticker + letzter
     Yahoo-Kurs. Off-build-path (Netz!), per --gen-sector-view aufgerufen."""
@@ -173,8 +212,11 @@ def gen_sector_view() -> dict:
         quotes = [q for q in (_yahoo_quote(t) for t in s["tickers"]) if q]
         sectors.append({"id": s["id"], "name": s["name"],
                         "note": s.get("note"), "tickers": quotes})
+    earnings_cal = _earnings_calendar()
     return {"as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
-            "sectors": sectors}
+            "as_of_iso": datetime.now(timezone.utc).isoformat(),
+            "sectors": sectors,
+            "earnings_calendar": earnings_cal}
 
 
 HTML = r"""<!DOCTYPE html>
@@ -558,6 +600,7 @@ main:focus{outline:none}
   <section aria-labelledby="h-sectorview">
   <h2 id="h-sectorview">Sektor-Ansicht <span id="secstand" class="tag"></span></h2>
   <div class="grid sectors" id="sectorview" aria-busy="true"><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div></div>
+  <div id="earnings-cal" style="margin-top:var(--s4)"></div>
   </section>
   </main>
 
@@ -1083,6 +1126,20 @@ function calibSvg(buckets){
         <span class="id">${esc(s.id)}</span><span class="nm">${esc(s.name)}</span>
         <span class="ct">${tks.length||""}</span>${avgHtml}</div>${body}</div>`;
   }).join("");
+})();
+
+(function renderEarningsCal(){
+  const cal=((D.sector_view||{}).earnings_calendar)||[];
+  const root=$("earnings-cal");
+  if(!root||!cal.length) return;
+  const today=new Date().toISOString().slice(0,10);
+  const pills=cal.map(e=>{
+    const d=e.days_out;
+    const cls=d===0?"pill pill--err":d<=2?"pill pill--warn":"pill pill--neutral";
+    const when=d===0?"heute":d===1?"morgen":`in ${d}d`;
+    return `<span class="${cls}" style="font-size:var(--fs-cap);margin:2px"><b>${esc(e.ticker)}</b> ${when} (${esc(e.date)})</span>`;
+  }).join(" ");
+  root.innerHTML=`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px"><span style="font-size:var(--fs-cap);color:var(--mut);margin-right:4px">📅 Earnings:</span>${pills}</div>`;
 })();
 
 function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));}
