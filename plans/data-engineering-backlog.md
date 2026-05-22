@@ -121,6 +121,8 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   Earnings-Überraschungen, Regulatorik. Jeder Treffer → Paperclip Coverage-Bug-Ticket
   (assigned DE, priority=high/medium). Wired in `stage_editor()` (best-effort, non-fatal)
   → läuft automatisch nach jedem Briefing-Run. Auf origin/main gepusht: `8002b4e..813aacb`.
+- 2026-05-22 — HED-77 (DE-Loop Zyklus 8): **arXiv cs.RO (robotics) added + ARXIV_MAX 25→30** (`ingestion/watchlist.py`).
+  Embodied AI / robotics was completely dark in our arXiv feed. cs.RO covers manipulation, locomotion, sim-to-real transfer — directly relevant to NVDA Jetson edge compute, META embodied AI research, Figure AI/1X (private watchlist). ARXIV_MAX bumped to 30 to accommodate the 5th category. Pushed to origin/main: `1d28442..fb6ca5e`. idea "Coverage / arXiv robotics".
 - 2026-05-22 — HED-77 (DE-Loop Zyklus 7 / CIO): **Devil verdict rubric + thesis is_differentiated + editor v3 + non-consensus ordering** (`agents/prompts.py`).
   Thesis stage now outputs `is_differentiated: true|false` (derived from analyst's `consensus_view`) so downstream stages have a structured non-consensus signal. Devil gets a 3-verdict calibration rubric (agree/caution/reject defined with concrete thresholds; falsification must name a specific observable event, not "stock falls"). Editor gets v3 precision rules (1200 char cap, conviction delta required, devil adjudication mandatory with explicit '→' resolution, dedup rule); `editor_user` pre-sorts enriched theses non-consensus first so CEO always sees differentiated calls at the top. Pushed to origin/main: `813aacb..147957e`.
 - 2026-05-22 — HED-64 (DE-Loop Zyklus 10 / CIO): **YahooFinanceTickerAdapter** (neuer Adapter)
