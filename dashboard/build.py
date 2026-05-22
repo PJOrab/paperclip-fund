@@ -266,6 +266,7 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .conv-lo{color:var(--mut)}
 .conv-mid{color:var(--txt)}
 .conv-hi{color:var(--accent);font-weight:600}
+abbr[title]{text-decoration:none;cursor:help}
 /* ticker deep-links */
 .tkl{color:inherit;text-decoration:none;font-weight:inherit}
 .tkl:hover{text-decoration:underline;text-underline-offset:2px;color:var(--accent)}
@@ -501,7 +502,7 @@ else{
     const chips=theses.map(t=>{
       const tks=(t.tickers||[]).join(" · ")||"?";
       const dir=t.direction||"pair";
-      const conv=t.conviction!=null?`Conv ${t.conviction.toFixed(2)}`:"";
+      const conv=t.conviction!=null?`<abbr title="Conviction">Conv</abbr> ${t.conviction.toFixed(2)}`:"";
       return `<div class="call-chip"><span class="ck">${esc(tks)}</span>`+
         `<span class="cd ${dirCls(dir)}">${esc(dir)}</span>`+
         (conv?`<span class="cc ${convCls(t.conviction)}" title="${esc(convTip(t.conviction))}" aria-label="${esc(convTip(t.conviction))}">${conv}</span>`:"")+
@@ -595,7 +596,7 @@ function calibSvg(buckets){
     ["Hit-Rate", pct(a.hit_rate)],
     ["gewertet", scored+" / "+(a.total??"—")],
     ["too early", a.too_early??"—"],
-    ["Kalib.-Bias", biasTxt]
+    ['<abbr title="Kalibrierungs-Bias">Kalib.-Bias</abbr>', biasTxt]
   ].map(([k,v])=>`<dl class="panel kpi-dl"><dt class="muted">${k}</dt><dd class="kpi">${v}</dd></dl>`).join("");
   // Body: happy-path table+chart, oder Empty/Too-Early-State
   const scoredTheses=(tr.theses||[]).filter(t=>t.verdict && t.verdict!=="too_early");
