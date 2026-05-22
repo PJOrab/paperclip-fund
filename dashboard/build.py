@@ -291,9 +291,10 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .tr-progress .tr-pb-track{height:6px;background:var(--panel2);border-radius:3px;border:1px solid var(--line);overflow:hidden}
 .tr-progress .tr-pb-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .3s}
 .tr-pending{width:100%;border-collapse:collapse;margin-top:var(--s4);font-size:var(--fs-cap)}
-.tr-pending th{color:var(--mut);font-weight:500;text-align:left;padding:3px 8px 3px 0;border-bottom:1px solid var(--line);white-space:nowrap}
-.tr-pending td{padding:5px 8px 5px 0;border-bottom:1px solid var(--panel2);vertical-align:top}
-.tr-pending tr:last-child td{border-bottom:none}
+.tr-pending thead th{color:var(--mut);font-weight:500;text-align:left;padding:3px 8px 3px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+.tr-pending td,.tr-pending tbody th{padding:5px 8px 5px 0;border-bottom:1px solid var(--panel2);vertical-align:top}
+.tr-pending tbody th{font-weight:400;text-align:left}
+.tr-pending tr:last-child td,.tr-pending tr:last-child th{border-bottom:none}
 .tr-pending .sd{color:var(--mut);white-space:nowrap}
 /* conviction color ramp */
 .conv-lo{color:var(--mut)}
@@ -797,13 +798,13 @@ function calibSvg(buckets){
         (x.earliest_score_date||"").localeCompare(y.earliest_score_date||""));
       const _cc=c=>c==null?"":c>=0.6?"conv-hi":c>=0.35?"conv-mid":"conv-lo";
       const devNote=t=>t.devil&&t.devil.note?` title="⚖ ${esc(t.devil.verdict||"?")} — ${esc(t.devil.note)}" style="cursor:help"`:""
-      return `<table class="tr-pending" aria-label="Offene Thesen (zu früh für Wertung)">
-        <thead><tr><th>These</th><th>Richtung</th><th>Conv.</th><th>Wertung ab</th></tr></thead>
+      return `<table class="tr-pending"><caption class="tr-cap">Offene Thesen — zu früh für Wertung</caption>
+        <thead><tr><th scope="col">These</th><th scope="col">Richtung</th><th scope="col">Conv.</th><th scope="col">Wertung ab</th></tr></thead>
         <tbody>${rows.map(t=>`<tr${devNote(t)}>
-          <td><span class="t" style="font-weight:600">${esc(t.label||"?")}</span>
+          <th scope="row"><span class="t" style="font-weight:600">${esc(t.label||"?")}</span>
             ${(t.tickers||[]).length?" <span class='muted'>("+
               (t.tickers||[]).map(tk=>`<a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(tk)}" target="_blank" rel="noopener">${esc(tk)}</a>`).join(", ")+
-            ")</span>":""}</td>
+            ")</span>":""}</th>
           <td><span class="cd ${dirClass(t.direction)}">${esc(t.direction||"—")}</span></td>
           <td class="num"><span class="${_cc(t.conviction)}" style="font-variant-numeric:tabular-nums">${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></td>
           <td class="sd">${esc(t.earliest_score_date||"—")}</td>
