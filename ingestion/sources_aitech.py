@@ -163,8 +163,22 @@ def _summarize_form4(xml: str) -> str:
     return f"{signal} — " + "; ".join(parts) + holds
 
 
+def _edgar_form_meta(form):
+    """Map a SEC form type to (source_key, human label) for normalization."""
+    if form == "4":
+        return "sec_form4", "Insider Form 4"
+    if form.startswith("SC 13D"):
+        return "sec_13dg", ("Aktivisten-Stake 13D/A" if form.endswith("/A")
+                            else "Aktivisten-Stake 13D")
+    if form.startswith("SC 13G"):
+        return "sec_13dg", ("Passive >5%-Beteiligung 13G/A" if form.endswith("/A")
+                            else "Passive >5%-Beteiligung 13G")
+    return "sec_8k", "8-K"
+
+
 class EDGARAdapter:
-    """SEC-Pflichtmeldungen (8-K Material Events, Form 4 Insider-Trades) je Ticker."""
+    """SEC-Pflichtmeldungen: 8-K (Material Events), Form 4 (Insider-Trades),
+    SC 13D/G (>5%-Beteiligungen / Aktivisten-Stakes) je Ticker."""
     TICKERS_MAP = "https://www.sec.gov/files/company_tickers.json"
     SUBMISSIONS = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
 
@@ -216,8 +230,7 @@ class EDGARAdapter:
                 acc = acc_l[i].replace("-", "") if i < len(acc_l) else ""
                 doc = doc_l[i] if i < len(doc_l) else ""
                 desc = (desc_l[i] if i < len(desc_l) else "") or form
-                src = "sec_form4" if form == "4" else "sec_8k"
-                label = "Insider Form 4" if form == "4" else "8-K"
+                src, label = _edgar_form_meta(form)
                 acc_disp = acc_l[i] if i < len(acc_l) else ""
                 doc_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{doc}"
                 detail = desc

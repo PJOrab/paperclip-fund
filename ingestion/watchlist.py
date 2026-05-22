@@ -15,8 +15,9 @@ TICKERS = [
     "PLTR", "ORCL", "NOW", "CRM", "SNOW", "CRWD", "ADBE",
 ]
 
-# SEC EDGAR: welche Filing-Typen einsammeln (8-K = Material Events, 4 = Insider)
-EDGAR_FORMS = ["8-K", "4"]
+# SEC EDGAR: welche Filing-Typen einsammeln (8-K = Material Events, 4 = Insider,
+# SC 13D/G = >5%-Beteiligungen / Aktivisten-Stakes — Großkatalysatoren je Ticker)
+EDGAR_FORMS = ["8-K", "4", "SC 13D", "SC 13D/A", "SC 13G", "SC 13G/A"]
 # 3→5 days (Zyklus 14): SEC filings arrive Fri evening; Monday morning run
 # needs 5-day window to guarantee coverage. 3 days = Friday midnight cutoff
 # which may miss late-Friday Form 4s and 8-Ks (e.g. quarterly guidance updates).
@@ -186,6 +187,9 @@ YAHOO_FINANCE_RSS = "https://feeds.finance.yahoo.com/rss/2.0/headline?s={ticker}
 
 SOURCE_RELIABILITY = {
     "sec_8k": 0.95, "sec_form4": 0.90, "sec_registration": 0.92,
+    # SC 13D/G = beneficial-ownership filings (>5% stake / activist position).
+    # Authoritative SEC source; activist 13Ds are high-signal catalysts.
+    "sec_13dg": 0.93,
     "arxiv": 0.80, "github_trending": 0.60,
     "hackernews": 0.55, "tech_news": 0.60,
     "yahoo_finance": 0.72,
