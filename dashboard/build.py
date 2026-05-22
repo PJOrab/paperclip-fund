@@ -74,6 +74,21 @@ def collect() -> dict:
     except Exception:
         briefing = None
 
+    # Briefing freshness: find the most recent 'done' run and compute age in hours
+    briefing_age_hours: float | None = None
+    last_done_briefing_at: str | None = None
+    for run in briefing_history:
+        if run.get("status") == "done":
+            try:
+                ts_str = run["date"].replace(" ", "T") + ":00+00:00"
+                ts = datetime.fromisoformat(ts_str)
+                age_h = (datetime.now(timezone.utc) - ts).total_seconds() / 3600
+                briefing_age_hours = round(age_h, 1)
+                last_done_briefing_at = run["date"]
+            except Exception:
+                pass
+            break  # briefing_history is already newest-first
+
     # Sort thesis calls newest-first
     thesis_calls.sort(key=lambda x: x["date"], reverse=True)
 
@@ -112,6 +127,8 @@ def collect() -> dict:
         "briefing_history": briefing_history,
         "thesis_calls": thesis_calls,
         "track_record": track_record,
+        "briefing_age_hours": briefing_age_hours,
+        "last_done_briefing_at": last_done_briefing_at,
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
 
@@ -136,7 +153,7 @@ h1{font-size:var(--fs-h1);margin:0}
 h2{font-size:var(--fs-h2);text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:var(--s6) 0 var(--s3)}
 .sub{color:var(--mut);font-size:var(--fs-cap);margin-top:var(--s1)}
 .grid{display:grid;gap:var(--s3)}
-.cards{grid-template-columns:repeat(4,1fr)}
+.cards{grid-template-columns:repeat(5,1fr)}
 .two-col{grid-template-columns:1fr 1fr}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:var(--s4)}
 .kpi{font-size:var(--fs-kpi);font-weight:700}
@@ -174,7 +191,7 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
 .pill--err{background:rgba(248,81,73,.15);color:var(--err);border:1px solid var(--err)}
 .foot{color:var(--mut);font-size:var(--fs-cap);margin-top:var(--s6);text-align:center}
 @media (max-width:760px){
-  .cards{grid-template-columns:repeat(2,1fr)}
+  .cards{grid-template-columns:repeat(3,1fr)}
   .two-col{grid-template-columns:1fr}
   .flow{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
 }
@@ -238,10 +255,18 @@ function statusPill(s){
   return `<span class="pill pill--${k}">${esc(s)}</span>`;
 }
 const bstatus = (D.briefing && D.briefing.status) ? D.briefing.status : null;
+const ageH = D.briefing_age_hours;
+let briefingAgeLabel = "—";
+if(ageH != null){
+  briefingAgeLabel = ageH < 1 ? `<${Math.round(ageH*60)}min` : `${ageH.toFixed(1)}h`;
+}
+const ageClass = ageH==null?"":ageH>8?"pill--err":ageH>4?"pill--warn":"pill--ok";
+const agePill = ageH!=null ? `<span class="pill ${ageClass}">${briefingAgeLabel}</span>` : "—";
 $("kpis").innerHTML = [
   ["raw_items gesamt", D.total],
   ["Quellen", Object.keys(D.by_source).length],
   ["letzter Ingest", lr.items_inserted!=null?("+"+lr.items_inserted):"—"],
+  ["Briefing-Alter", agePill],
   ["Briefing-Status", bstatus? statusPill(bstatus):"—"]
 ].map(([k,v])=>`<div class="panel"><div class="kpi">${v}</div><div class="muted">${k}</div></div>`).join("");
 
