@@ -112,6 +112,25 @@ BIG_EVENT_PATTERNS = [
      r"|transformer\s+order|grid\s+(?:infrastructure|investment|contract|upgrade)"
      r"|electricity\s+(?:supply|contract|deal|agreement|capacity))\b",
      "energy_power_deal", "high"),
+    # Strategic partnerships and cloud/AI deals — major commercial agreements between
+    # hyperscalers, AI labs, and infrastructure providers are direct revenue/moat signals.
+    # Catches: "strategic partnership", "multi-year agreement", "cloud deal", "GPU supply agreement",
+    # "expanded partnership", "co-development agreement", "licensing deal for [model/tech]".
+    (r"\b(strategic\s+partnership|strategic\s+alliance|multi.year\s+(?:deal|agreement|contract)"
+     r"|expanded?\s+partnership|cloud\s+(?:deal|agreement|contract|partnership)"
+     r"|co.develop\w*\s+agreement|licensing\s+(?:deal|agreement)\s+(?:for|with)"
+     r"|distribution\s+(?:deal|agreement|partnership)"
+     r"|(?:GPU|compute|inference)\s+(?:supply|access|capacity)\s+(?:deal|agreement|contract)"
+     r"|(?:foundation\s+model|AI\s+model)\s+(?:partnership|licensing|deal|agreement))\b",
+     "strategic_partnership", "medium"),
+    # Layoff / restructuring — workforce reductions are cost-structure signals and often
+    # precede margin expansion or strategic pivots. "lays off X% of workforce" is material.
+    (r"\b(lays?\s+off|layoff|lay.off|workforce\s+(?:reduction|cut)|job\s+cut"
+     r"|restructuring\s+(?:plan|charge|cost)|headcount\s+(?:reduction|cut)"
+     r"|\d+\s*(?:,\d+)?\s*(?:employees?|workers?|jobs?)\s+(?:cut|laid\s+off|eliminated)"
+     r"|reduces?\s+(?:its\s+)?(?:global\s+)?(?:workforce|headcount)\s+by\s+\d)"
+     r"|\b(?:\d+%)\s+(?:of\s+(?:its\s+)?(?:global\s+)?)?(?:workforce|staff|employees?)\b",
+     "layoff_restructuring", "medium"),
 ]
 
 _compiled = [(re.compile(pat, re.IGNORECASE), label, prio)
