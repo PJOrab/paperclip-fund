@@ -154,6 +154,8 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   Earnings-Überraschungen, Regulatorik. Jeder Treffer → Paperclip Coverage-Bug-Ticket
   (assigned DE, priority=high/medium). Wired in `stage_editor()` (best-effort, non-fatal)
   → läuft automatisch nach jedem Briefing-Run. Auf origin/main gepusht: `8002b4e..813aacb`.
+- 2026-05-22 — HED-77 (DE-Loop Zyklus 14): **EDGAR lookback 3→5 days + arXiv cs.AR** (`ingestion/watchlist.py`).
+  `EDGAR_LOOKBACK_DAYS`: 3→5 — late-Friday SEC filings were potentially missed on Monday runs (3-day window could truncate at Friday midnight). `ARXIV_CATEGORIES`: added `cs.AR` (computer architecture — GPU micro-architecture, AI accelerator papers, custom ASIC design). Directly relevant to NVDA/AMD moat thesis. `ARXIV_MAX`: 30→35. Pushed: `ff249f1..457c192`. idea "Coverage / EDGAR + arXiv hardware".
 - 2026-05-22 — HED-77 (DE-Loop Zyklus 13): **Dead-adapter health check** (`ingestion/run_ingest.py`).
   Adapters returning 0 items without a logged error now emit `⚠ DEAD ADAPTERS` warning and are written into the `errors` dict → stored in `ingestion_runs` DB row. Previously a dead feed blended in with the count table; now immediately visible in run output and queryable from DB. Pushed: `63e845e..ff249f1`. idea "Data quality / silent failure detection".
 - 2026-05-22 — HED-77 (DE-Loop Zyklus 12): **HN_MIN_POINTS 80→60** (`ingestion/watchlist.py`).
