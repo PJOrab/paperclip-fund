@@ -43,6 +43,25 @@ def _m():
     return _load_macro()
 
 
+# --- RSS/Atom field extraction -----------------------------------------------
+
+def _rss_text(block: str, tag: str) -> str:
+    """Extract text content of <tag> or <tag attr="…">, strip CDATA then HTML tags."""
+    m = re.search(rf"<{tag}[^>]*>(.*?)</{tag}>", block, re.DOTALL)
+    if not m:
+        return ""
+    raw = m.group(1).replace("<![CDATA[", "").replace("]]>", "")
+    return html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+
+
+def _rss_desc(block: str, max_len: int = 150) -> str:
+    """Return article description/summary truncated to max_len chars, or empty string."""
+    desc = _rss_text(block, "description") or _rss_text(block, "summary") or _rss_text(block, "content")
+    if not desc:
+        return ""
+    return desc[:max_len - 3] + "..." if len(desc) > max_len else desc
+
+
 # --- Form 4 (Insider) XML-Parsing -------------------------------------------
 # Transaction-Code-Bedeutungen (SEC General Instruction 8). Open-Market-Käufe
 # (P) und -Verkäufe (S) sind das diskretionäre Signal; A/M/F/G sind
@@ -412,15 +431,6 @@ class GitHubTrendingAdapter:
 class TechRSSAdapter:
     """Kuratierte AI/Tech-News-RSS/Atom-Feeds (failsafe je Feed)."""
 
-    @staticmethod
-    def _rss_text(block: str, tag: str) -> str:
-        """Extract text from <tag> or <tag type="html">, strip CDATA then HTML tags."""
-        m = re.search(rf"<{tag}[^>]*>(.*?)</{tag}>", block, re.DOTALL)
-        if not m:
-            return ""
-        raw = m.group(1).replace("<![CDATA[", "").replace("]]>", "")
-        return html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
-
     def fetch(self):
         m = _m()
         out = []
@@ -430,15 +440,11 @@ class TechRSSAdapter:
                 if not text:
                     continue
                 sep = "<item>" if "<item>" in text else "<entry>"
-                for block in text.split(sep)[1:9]:  # 8 items/feed (was 5)
-                    title = self._rss_text(block, "title")
+                for block in text.split(sep)[1:9]:  # 8 items/feed
+                    title = _rss_text(block, "title")
                     if not title:
                         continue
-                    # Include article description/summary when present — gives triage
-                    # enough context to distinguish a routine update from a market-mover.
-                    desc = self._rss_text(block, "description") or self._rss_text(block, "summary")
-                    if desc and len(desc) > 150:
-                        desc = desc[:147] + "..."
+                    desc = _rss_desc(block)
                     item_text = f"[{name}] {title}"
                     if desc:
                         item_text = f"{item_text} — {desc}"
@@ -501,8 +507,12 @@ class FundingNewsAdapter:
                         pub = _parse_rss_date(date_m.group(1).strip())
                         if pub and pub < cutoff:
                             continue
+                    desc = _rss_desc(block)
+                    item_text = f"[Funding · {name}] {title}"
+                    if desc:
+                        item_text = f"{item_text} — {desc}"
                     out.append({
-                        "text": f"[Funding · {name}] {title}",
+                        "text": item_text[:400],
                         "source": "funding_news",
                         "url": url,
                         "reliability": W.SOURCE_RELIABILITY.get("funding_news", 0.80),
@@ -553,8 +563,12 @@ class EnergyNewsAdapter:
                         pub = _parse_rss_date(date_m.group(1).strip())
                         if pub and pub < cutoff:
                             continue
+                    desc = _rss_desc(block)
+                    item_text = f"[Energy · {name}] {title}"
+                    if desc:
+                        item_text = f"{item_text} — {desc}"
                     out.append({
-                        "text": f"[Energy · {name}] {title}",
+                        "text": item_text[:400],
                         "source": "energy_news",
                         "url": url,
                         "reliability": W.SOURCE_RELIABILITY.get("energy_news", 0.72),
