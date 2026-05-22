@@ -517,6 +517,12 @@ THESIS_SYSTEM = (
     "(i.e. you expect a materially different outcome from what the market is currently "
     "pricing). Set false for consensus-confirming calls even if the evidence is strong. "
     "This field controls briefing sort order — overuse dilutes the non-consensus signal. "
+    "SCENARIO ANALYSIS: every thesis must have a 'scenarios' object with bull/base/bear "
+    "probability-weighted cases (probs must sum to ~1.0). Each case needs: prob (0-1), "
+    "trigger (specific named catalyst or event), target (directional price/% outcome). "
+    "The base case should be the most likely outcome. Be specific: 'bull: prob=0.30, "
+    "Q2 DC guide >$6B → $1200 (+18%)'. Vague triggers like 'strong demand' are invalid. "
+    "A thesis without scenarios is not investment-grade — drop it rather than publish without. "
     "BULL_CASE / BEAR_CASE QUALITY: both must be NON-EMPTY lists. Each entry should be a "
     "specific factual or structural argument — not a vague label. "
     "Good bull_case examples: 'NVDA Q1 DC revenue $18.4bn beat (+7.6%) = demand acceleration', "
@@ -570,12 +576,25 @@ def thesis_user(analyses: list[dict]) -> str:
         "prioritize these for thesis formation):\n\n"
         + json.dumps(sorted_analyses, ensure_ascii=False)
         + scale_block + "\n\n"
+        "SCENARIO ANALYSIS (mandatory): each thesis MUST include a \'scenarios\' object with three "
+        "probability-weighted cases that sum to ~1.0. Be specific: name the trigger and a directional "
+        "price target (e.g. \'$950 (+12%)\' or \'no upside, holding current levels\'). "
+        "Good example: bull={\'prob\':0.30,\'trigger\':\'Q2 DC guide >$6B\',\'target\':\'$1200 (+18%)\'}, "
+        "base={\'prob\':0.50,\'trigger\':\'In-line Q2, sustained capex narrative\',\'target\':\'$1020 (+0%)\'}, "
+        "bear={\'prob\':0.20,\'trigger\':\'Hyperscaler capex pause signal\',\'target\':\'$820 (-20%)\'}. "
+        "This is the most important field for investment-grade output — a PM cannot size without scenarios. "
+        "If you cannot construct specific triggers, the thesis is not yet investment-grade: drop it.\n\n"
         "Return JSON:\n"
         '{"theses": [{"id": "short-slug", "tickers": [str], '
         '"direction": "long|short|pair", "thesis": "1-2 sentences", '
         '"bull_case": ["specific factual argument, e.g. \'NVDA Q1 DC beat +7.6% = demand acceleration\'"], '
         '"bear_case": ["specific risk, e.g. \'AMD MI300X hyperscaler adoption faster than modeled\'"], '
         '"catalysts": ["named event + date/window, e.g. \'NVDA Q2 earnings 2026-08-20 — DC guide key read\'"], '
+        '"scenarios": {'
+        '"bull": {"prob": 0.0-1.0, "trigger": "specific named event", "target": "price or % move"}, '
+        '"base": {"prob": 0.0-1.0, "trigger": "specific named event", "target": "price or % move"}, '
+        '"bear": {"prob": 0.0-1.0, "trigger": "specific named event", "target": "price or % move"}'
+        '}, '
         '"horizon": "days|weeks|quarters", "conviction": 0.0-1.0, '
         '"is_differentiated": true|false}]}'
     )
@@ -774,6 +793,8 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict],
         "<b>📈 Top-Calls</b> (MAX 2-3; prioritize is_differentiated=true calls)\n\n"
         "<b>1) TICKER — Long/Short · Conviction X,XX</b>\n"
         "1 Satz Empfehlung + warum jetzt.\n"
+        "📐 <b>Szenarien:</b> Bull X% (P=YY%) | Base X% (P=YY%) | Bear -X% (P=YY%) "
+        "[ONLY include when scenarios field is present; omit section entirely if missing]\n"
         "⚖️ <b>Gegenargument:</b> Devil's Advocate in 1 Zeile + "
         "adjudication (→ Caution berücksichtigt / → Conviction reduziert auf X / → Devil kippt Call: gestrichen)\n"
         "👉 <b>Fazit:</b> 1 Zeile\n\n"

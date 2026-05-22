@@ -76,6 +76,18 @@ def validate(schema: str, data: dict) -> list[str]:
                  f"theses[{i}] bull_case must be a non-empty list", errs)
             need(isinstance(x.get("bear_case"), list) and len(x.get("bear_case", [])) > 0,
                  f"theses[{i}] bear_case must be a non-empty list", errs)
+            # scenarios optional but validated when present (investment-grade output)
+            sc = x.get("scenarios")
+            if sc is not None:
+                need(isinstance(sc, dict), f"theses[{i}] scenarios must be a dict", errs)
+                for case in ("bull", "base", "bear"):
+                    c = sc.get(case)
+                    if c is not None:
+                        need(isinstance(c, dict), f"theses[{i}] scenarios.{case} must be dict", errs)
+                        need("prob" in c and isinstance(c.get("prob"), (int, float)) and 0 <= c["prob"] <= 1,
+                             f"theses[{i}] scenarios.{case}.prob must be 0-1 float", errs)
+                        need("trigger" in c and isinstance(c.get("trigger"), str) and c["trigger"].strip(),
+                             f"theses[{i}] scenarios.{case}.trigger must be non-empty string", errs)
             conv = x.get("conviction")
             need(isinstance(conv, (int, float)) and 0 <= conv <= 1,
                  f"theses[{i}] conviction must be 0.0-1.0", errs)
