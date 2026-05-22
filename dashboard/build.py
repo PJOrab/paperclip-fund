@@ -236,6 +236,8 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .brief-region{display:grid;grid-template-columns:var(--measure) minmax(0,1fr);gap:var(--s5);align-items:start}
   .brief-region .brief{max-width:none;width:100%}
   .brief-aside-h2{margin-top:0}
+  /* the thesis-card aside is usually far taller than the prose; pin the prose so the briefing summary stays in view while scrolling the counter-arguments, instead of leaving a dead left void (Gestalt common region, Goal-Gradient, "no dead space"). Falls back to static when the prose itself exceeds the viewport. */
+  .brief-main{position:sticky;top:var(--s4);align-self:start}
 }
 .brief h1{font-size:18px;margin:0 0 var(--s3)}.brief h2{color:var(--txt);text-transform:none;letter-spacing:0;font-size:15px;margin-top:var(--s5)}
 /* briefing title line (bold-only first paragraph) styled as a heading */
