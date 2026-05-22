@@ -338,9 +338,12 @@ ANALYST_SYSTEM = (
 
 def analyst_user(clusters: list[dict]) -> str:
     import json
+    # Sort by importance DESC so the analyst sees highest-priority clusters first
+    # and the 12-analysis cap drops the tail (lowest importance) rather than the head.
+    sorted_clusters = sorted(clusters, key=lambda c: -(c.get("importance") or 0))
     return (
         "Clusters to analyze (sorted by importance DESC — analyze in this order):\n\n"
-        + json.dumps(clusters, ensure_ascii=False) + "\n\n"
+        + json.dumps(sorted_clusters, ensure_ascii=False) + "\n\n"
         "PRIORITIZATION: Analyze every cluster, but order your output by analytical value: "
         "high-magnitude + short-horizon (days/weeks) + differentiated clusters first. "
         "If there are more than 12 clusters, return at most 12 analyses — drop the lowest-importance "
