@@ -440,6 +440,38 @@ def test_triage_user_prompt() -> None:
     print("ok: triage_user age tags correct")
 
 
+def test_guidance_extraction() -> None:
+    """_extract_8k_text must append [OUTLOOK: ...] for item 2.02 with guidance section."""
+    from ingestion.sources_aitech import _extract_guidance_snippet
+
+    # Typical NVDA-style earnings release
+    fake_html = """<html><body>
+    <p>Item 2.02 Results of Operations. NVIDIA Corporation reported Q1 FY2026 revenue of
+    $44.1 billion, up 69% year on year. Diluted EPS was $0.96.</p>
+    <p>Financial Outlook: For the second quarter of fiscal 2026, NVIDIA expects revenue of
+    approximately $45 billion, plus or minus 2 percent.</p>
+    </body></html>"""
+
+    from ingestion.sources_aitech import _extract_8k_text
+    snippet, item_num, label = _extract_8k_text(fake_html, max_chars=400)
+    _check("8k extract returns item 2.02", item_num == "2.02")
+    _check("8k extract appends OUTLOOK tag for earnings", "[OUTLOOK:" in snippet)
+    _check("8k extract guidance contains revenue figure", "$45 billion" in snippet)
+
+    # Non-earnings 8-K (item 8.01) should NOT have OUTLOOK tag
+    non_earnings = """<html><body>
+    <p>Item 8.01 Other Events. Company announces strategic partnership with XYZ Corp.</p>
+    </body></html>"""
+    s2, i2, _ = _extract_8k_text(non_earnings, max_chars=400)
+    _check("non-earnings 8-K does not get OUTLOOK tag", "[OUTLOOK:" not in s2)
+
+    # guidance_snippet returns empty when no guidance section present
+    plain = "Revenue was $10B. Net income $2B. No forward guidance here."
+    _check("_extract_guidance_snippet returns empty when absent",
+           _extract_guidance_snippet(plain) == "")
+    print("ok: guidance extraction correct")
+
+
 def main() -> None:
     test_parse_json()
     test_cross_check()
@@ -448,6 +480,7 @@ def main() -> None:
     test_watchlist_sync()
     test_dedup()
     test_triage_user_prompt()
+    test_guidance_extraction()
     print("\nALL PIPELINE TESTS PASSED")
 
 

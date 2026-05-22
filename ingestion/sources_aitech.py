@@ -242,9 +242,42 @@ def _8k_item_reliability(item_num: str) -> float | None:
     return _8K_ITEM_RELIABILITY.get(item_num.strip())
 
 
+# Guidance/Outlook section patterns — forward-looking statements in earnings press releases.
+# Triggers on common section headings found in NVDA, MSFT, META, GOOGL, AMZN earnings releases.
+_GUIDANCE_SECTION_RE = re.compile(
+    # Matches section headings only — must be at a word boundary after whitespace
+    # or start of string, and followed by ":" or end of word (section heading).
+    r"(?:(?:^|\s)(?:Financial|Business)\s+Outlook[:\s]"
+    r"|(?:^|\s)(?:First|Second|Third|Fourth|Q[1-4])\s+(?:Quarter|Fiscal)\s+20\d{2}\s+Outlook[:\s]"
+    r"|(?:^|\s)Full[\s-]Year\s+(?:20\d{2}\s+)?(?:Outlook|Guidance)[:\s]"
+    r"|(?:^|\s)(?:Outlook|Guidance)\s+for\s+(?:Q[1-4]|(?:First|Second|Third|Fourth)\s+Quarter)"
+    r"|(?:^|\s)Forward[\s-]Looking\s+(?:Statements?|Guidance)[:\s]"
+    r")",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def _extract_guidance_snippet(plain_txt: str, max_chars: int = 300) -> str:
+    """Return the first guidance/outlook paragraph from an already-stripped plain-text 8-K.
+    Used to append forward guidance to earnings press release snippets so triage sees
+    management's next-quarter revenue/EPS range, not just the headline beat/miss."""
+    m = _GUIDANCE_SECTION_RE.search(plain_txt)
+    if not m:
+        return ""
+    # Take text from the section heading forward; stop at the next section or max_chars
+    start = m.start()
+    chunk = plain_txt[start: start + max_chars + 200]
+    # Trim at common next-section boundaries (Item X.XX, another ALL-CAPS heading, Notes)
+    trim = re.search(r"\s+(?:Item\s+\d|Notes?\s+to|SIGNATURES|Safe\s+Harbor)", chunk, re.IGNORECASE)
+    chunk = chunk[:trim.start()].strip() if trim else chunk[:max_chars].strip()
+    return chunk[:max_chars]
+
+
 def _extract_8k_text(html_src: str, max_chars: int = 400) -> tuple[str, str, str]:
     """
     Extract the first substantive Item paragraph from an 8-K HTML document.
+    For earnings releases (item 2.02), also appends a forward-guidance snippet
+    when an Outlook/Guidance section is found further in the document.
     Returns (snippet, item_num, item_label). All three are empty strings on
     failure so the caller keeps the fallback notice and base reliability.
     """
@@ -259,6 +292,11 @@ def _extract_8k_text(html_src: str, max_chars: int = 400) -> tuple[str, str, str
         item_num = m.group(1)
         snippet = txt[m.start(): m.start() + max_chars].strip()
         label = _8k_item_label(item_num)
+        # For earnings releases, append forward guidance if present deeper in the document
+        if item_num == "2.02":
+            guidance = _extract_guidance_snippet(txt)
+            if guidance:
+                snippet = snippet + " [OUTLOOK: " + guidance + "]"
         return snippet, item_num, label
     except Exception:
         return "", "", ""
@@ -303,11 +341,15 @@ def _extract_6k_text(html_src: str, max_chars: int = 400) -> str:
         # Find the dateline of the embedded press release
         dl_m = _6K_DATELINE_RE.search(txt, search_start)
         if dl_m:
-            return txt[dl_m.start(): dl_m.start() + max_chars].strip()
+            snippet = txt[dl_m.start(): dl_m.start() + max_chars].strip()
+            guidance = _extract_guidance_snippet(txt[dl_m.start():])
+            return (snippet + " [OUTLOOK: " + guidance + "]") if guidance else snippet
         # Fallback: date-release format "Month Day, YYYY —"
         rl_m = _6K_RELEASE_RE.search(txt, search_start)
         if rl_m:
-            return txt[rl_m.start(): rl_m.start() + max_chars].strip()
+            snippet = txt[rl_m.start(): rl_m.start() + max_chars].strip()
+            guidance = _extract_guidance_snippet(txt[rl_m.start():])
+            return (snippet + " [OUTLOOK: " + guidance + "]") if guidance else snippet
         # Exhibit-99.1 fallback: extract the press release title from the Exhibits table.
         # Use findall and take the last match to skip "EXHIBIT 99.1 TO THIS REPORT ON FORM 6-K
         # IS INCORPORATED BY REFERENCE" inline references that appear earlier in the document.
