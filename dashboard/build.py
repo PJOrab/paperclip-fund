@@ -255,21 +255,21 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
   <h2>Workflow</h2>
   <div class="flow-wrap"><div class="flow" id="flow"></div></div>
 
+  <h2>Letztes Briefing</h2>
+  <div id="briefing"></div>
+
+  <h2>Thesen-Track-Record <span id="trstand" class="tag"></span></h2>
+  <div id="trackrecord"></div>
+
+  <h2>Sektor-Ansicht <span id="secstand" class="tag"></span></h2>
+  <div class="grid sectors" id="sectorview"></div>
+
   <h2>Datenfeed <span id="feedstale"></span></h2>
   <div class="grid cards" id="kpis"></div>
   <div class="grid two-col" style="margin-top:14px">
     <div class="panel"><div class="muted" style="margin-bottom:8px">Quellen</div><div id="sources"></div></div>
     <div class="panel"><div class="muted" style="margin-bottom:8px">Neueste Items</div><div class="feed" id="feed"></div></div>
   </div>
-
-  <h2>Letztes Briefing</h2>
-  <div id="briefing"></div>
-
-  <h2>Sektor-Ansicht <span id="secstand" class="tag"></span></h2>
-  <div class="grid sectors" id="sectorview"></div>
-
-  <h2>Thesen-Track-Record <span id="trstand" class="tag"></span></h2>
-  <div id="trackrecord"></div>
 
   <div class="foot">AI/Tech Fund · generiert aus Supabase · keine Secrets im Browser</div>
 </div>
