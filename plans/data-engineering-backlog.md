@@ -63,6 +63,13 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-89 (DE-Loop Zyklus 31): **Evidence truncation fix: 300→400 chars for high-rel items in analyst stage**
+  (`agents/run.py`). Zyklus 30 fixed triage display (triage_user) to show 400 chars for
+  items with rel>=0.85. The evidence list built in compute_triage() — passed to the
+  analyst stage — still hard-coded 300 chars for all items, meaning analyst clusters
+  received truncated 8-K snippets, earnings results, and Fed releases despite the triage
+  fix. Applied the same rel>=0.85 → 400-char logic to the evidence comprehension.
+  Tested 6/6 cases correct. Pushed: `226043f`.
 - 2026-05-22 — HED-89 (DE-Loop Zyklus 30): **Triage item text limit: 300→400 chars for high-reliability sources**
   (`agents/prompts.py`). Triage truncated all items to 300 chars regardless of source
   reliability. High-reliability primary sources (SEC 8-K at rel=0.95, earnings_result
