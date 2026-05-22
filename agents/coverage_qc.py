@@ -82,6 +82,19 @@ BIG_EVENT_PATTERNS = [
     # Catches: "[EDGAR 6-K Foreign Issuer Report]" and "[EDGAR 20-F Foreign Annual Report]"
     (r"\[EDGAR (?:6-K|20-F) Foreign",
      "foreign_filing", "high"),
+    # Share buyback / repurchase authorization — capital-allocation signal that boosts
+    # EPS and signals management confidence. "$Xbn buyback" or "repurchase program" events
+    # are filed via 8-K item 8.01 or press release and are frequently missed by triage.
+    (r"\b(share\s+repurchase|stock\s+repurchase|buyback\s+program|repurchase\s+program"
+     r"|authoriz\w+\s+(?:a\s+)?(?:new\s+)?\$[\d,.]+[BMKbmk]?\s+(?:share\s+)?(?:repurchase|buyback)"
+     r"|\$[\d,.]+\s*(?:billion|million)\s+(?:share\s+)?(?:repurchase|buyback))\b",
+     "buyback", "high"),
+    # Special / increased dividend — material return-of-capital event signaling free-cash-flow
+    # strength. Covers special dividends, dividend increases, and new dividend initiations.
+    (r"\b(special\s+dividend|declares?\s+(?:a\s+)?(?:special|quarterly|annual)\s+dividend"
+     r"|increases?\s+(?:its\s+)?(?:quarterly\s+)?dividend|dividend\s+(?:increase|raise|hike)"
+     r"|initiates?\s+(?:a\s+)?dividend|dividend\s+of\s+\$[\d,.]+\s+per\s+share)\b",
+     "dividend", "medium"),
 ]
 
 _compiled = [(re.compile(pat, re.IGNORECASE), label, prio)
