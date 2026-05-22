@@ -100,17 +100,36 @@ def load_sector_view() -> dict | None:
         return None
 
 
+def _rsi14(closes: list[float]) -> float | None:
+    """RSI-14 from a list of daily closes (need ≥15 values)."""
+    if len(closes) < 15:
+        return None
+    gains, losses = [], []
+    for i in range(1, 15):
+        d = closes[-14 + i] - closes[-14 + i - 1]
+        (gains if d >= 0 else losses).append(abs(d))
+    avg_gain = sum(gains) / 14
+    avg_loss = sum(losses) / 14
+    if avg_loss == 0:
+        return 100.0
+    rs = avg_gain / avg_loss
+    return round(100 - 100 / (1 + rs), 1)
+
+
 def _yahoo_quote(ticker: str) -> dict | None:
-    """Letzter Kurs + Vortagesschluss + 52-Wochen-Range via öffentliches Yahoo-Chart-JSON.
-    Best-effort: bei Fehler None (Kachel zeigt dann '—').
-    range=1d: chartPreviousClose = yesterday's session close → accurate 1-day change_pct.
-    (range=5d used chartPreviousClose from 5 trading days ago — showed weekly not daily move.)"""
+    """Letzter Kurs + Vortagesschluss + 52-Wochen-Range + MA30 + RSI14 via Yahoo-Chart-JSON.
+    range=3mo/interval=1d: enough closes for MA30 and RSI14; chartPreviousClose in meta
+    gives yesterday's official session close for accurate 1-day change_pct."""
     url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
-           "?range=1d&interval=1d")
+           "?range=3mo&interval=1d")
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     try:
-        with urllib.request.urlopen(req, timeout=10) as r:
-            meta = json.load(r)["chart"]["result"][0]["meta"]
+        with urllib.request.urlopen(req, timeout=15) as r:
+            body = json.load(r)
+        result0 = body["chart"]["result"][0]
+        meta = result0["meta"]
+        closes = (result0.get("indicators", {}).get("quote", [{}])[0].get("close") or [])
+        closes = [c for c in closes if c is not None]
         price = meta.get("regularMarketPrice")
         prev = meta.get("chartPreviousClose") or meta.get("previousClose")
         if price is None:
@@ -118,9 +137,11 @@ def _yahoo_quote(ticker: str) -> dict | None:
         change = round((price - prev) / prev * 100, 2) if prev else None
         w52_high = meta.get("fiftyTwoWeekHigh")
         w52_low = meta.get("fiftyTwoWeekLow")
-        # pct_of_52w_high: 100% = at 52w high, lower = room to recover or weakness
         pct_of_52w_high = (round(price / w52_high * 100, 1)
                            if w52_high and w52_high > 0 else None)
+        # MA30: simple 30-day moving average of closes
+        ma30 = round(sum(closes[-30:]) / len(closes[-30:]), 2) if len(closes) >= 30 else None
+        rsi14 = _rsi14(closes)
         result = {"ticker": ticker, "price": round(price, 2),
                   "prev_close": round(prev, 2) if prev else None,
                   "change_pct": change}
@@ -130,6 +151,11 @@ def _yahoo_quote(ticker: str) -> dict | None:
             result["w52_low"] = round(w52_low, 2)
         if pct_of_52w_high is not None:
             result["pct_of_52w_high"] = pct_of_52w_high
+        if ma30 is not None:
+            result["ma30"] = ma30
+            result["pct_vs_ma30"] = round((price - ma30) / ma30 * 100, 1)
+        if rsi14 is not None:
+            result["rsi14"] = rsi14
         return result
     except Exception:
         return None
@@ -389,6 +415,8 @@ a.call-chip:hover{border-color:var(--accent);background:var(--panel)}
 .sec-row .px{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;min-width:64px;margin-left:auto}
 .sec-row .ch{font-variant-numeric:tabular-nums;font-size:var(--fs-cap);min-width:62px;text-align:right}
 .sec-row .w52{font-size:10px;color:var(--mut);min-width:36px;text-align:right;white-space:nowrap}
+.sec-row .rsi{font-size:10px;min-width:32px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rsi-ob{color:#f78166}.rsi-os{color:#3fb950}.rsi-n{color:var(--mut)}
 .sec-ph{color:var(--mut);font-size:var(--fs-h2);padding:var(--s2) 0}
 @media (max-width:760px){
   .cards{grid-template-columns:repeat(2,1fr)}
@@ -932,7 +960,12 @@ function calibSvg(buckets){
         const w52 = t.pct_of_52w_high!=null
           ? `<span class="w52" title="52-Wochen-Hoch: $${t.w52_high!=null?t.w52_high.toFixed(0):'?'} · Tief: $${t.w52_low!=null?t.w52_low.toFixed(0):'?'}">${t.pct_of_52w_high.toFixed(0)}%↑</span>`
           : "";
-        return `<div class="sec-row">${tkHtml}<span class="px">${px}</span>${chCell(t.change_pct)}${w52}</div>`;
+        const rsiCls=t.rsi14==null?"":t.rsi14>70?"rsi-ob":t.rsi14<30?"rsi-os":"rsi-n";
+        const rsiTip=t.ma30!=null?`MA30: $${t.ma30} (${t.pct_vs_ma30>=0?"+":""}${t.pct_vs_ma30?.toFixed(1)}%) · `:"";
+        const rsi = t.rsi14!=null
+          ? `<span class="rsi ${rsiCls}" title="${rsiTip}RSI14: ${t.rsi14}${t.rsi14>70?" — overbought":t.rsi14<30?" — oversold":""}">${t.rsi14}</span>`
+          : "";
+        return `<div class="sec-row">${tkHtml}<span class="px">${px}</span>${chCell(t.change_pct)}${w52}${rsi}</div>`;
       }).join("");
     } else {
       body = `<div class="sec-ph">${esc(s.note||"Keine in-universe Ticker.")}</div>`;

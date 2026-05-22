@@ -622,8 +622,17 @@ def _load_sector_price_context() -> str:
                 w52 = ""
                 if t.get("pct_of_52w_high") is not None:
                     w52 = f" | 52w-high: ${t.get('w52_high','?')} ({t['pct_of_52w_high']:.0f}% of high) low: ${t.get('w52_low','?')}"
+                tech = ""
+                if t.get("ma30") is not None:
+                    vs = t.get("pct_vs_ma30", 0)
+                    sign = "+" if vs >= 0 else ""
+                    tech += f" | MA30: ${t['ma30']} ({sign}{vs:.1f}%)"
+                if t.get("rsi14") is not None:
+                    rsi = t["rsi14"]
+                    rsi_note = " OB" if rsi > 70 else (" OS" if rsi < 30 else "")
+                    tech += f" | RSI14: {rsi}{rsi_note}"
                 lines.append(
-                    f"{t['ticker']}: ${t['price']} (1d: {t.get('change_pct','?'):+.2f}%){w52}"
+                    f"{t['ticker']}: ${t['price']} (1d: {t.get('change_pct','?'):+.2f}%){w52}{tech}"
                 )
         if not lines:
             return ""
