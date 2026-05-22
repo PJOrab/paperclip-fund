@@ -63,6 +63,22 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-121 (DE Loop): **gitignore `*.db/*.sqlite*` + independent e2e verification of macro-fallback robustness**
+  (`.gitignore`, pushed `f15c4dd`). I independently diagnosed the same critical bug the CIO fixed in
+  `c3cdc96` (Zyklus 49b, ~7 min earlier): `_load_macro()` raised `SystemExit` (a `BaseException`) when the
+  macro-agent overlay was absent → bypassed `collect()`'s per-adapter `except Exception` and aborted the
+  WHOLE run with no output/alert. **My adapters.py/run_ingest.py fix converged byte-identical to the CIO's,
+  so the only NET new change I shipped was the `.gitignore` safeguard** (stray local `fund.db` was untracked
+  AND un-ignored → fund-data commit risk; now `*.db/*.sqlite*` ignored). Verified end-to-end on top of the
+  CIO's fix: `build_adapters()`→15 adapters (was SystemExit), `run_once(dry_run)` completes with 6 items +
+  degraded-adapter summary instead of total abort, py_compile clean.
+  ⚠ **LOOP-CONVERGENCE NOTE:** DE loop (HED-121) and CIO master loop (HED-117 Zyklus 49b) picked the SAME
+  improvement within minutes — duplicated diagnosis effort. Going forward, before building, check
+  `git log origin/main -5` for a just-shipped CIO fix on the same target.
+  📌 **NEXT-CYCLE CANDIDATE (not yet done):** when macro-agent is absent, 6 adapters (EDGAR, SEC Reg, SEC
+  Broad, arXiv, HN, GitHub) error on `m.fetch_url/fetch_json` — they depend on the macro module's shared
+  HTTP helpers. Move `fetch_url/fetch_json` into the fund repo so ingestion has NO hard macro-agent
+  dependency → fresh checkouts / CI fully runnable. MED.
 - 2026-05-22 — HED-117 (CIO Zyklus 49): **coverage_qc: buyback + dividend patterns; graceful macro fallback; better degraded-adapter alert**
   (`agents/coverage_qc.py`, `agents/prompts.py`, `ingestion/adapters.py`, `ingestion/run_ingest.py`).
   (1) Two new BIG_EVENT_PATTERNS (11→13 total): `buyback/high` catches "$50B share repurchase
