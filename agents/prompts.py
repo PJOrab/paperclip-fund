@@ -386,9 +386,15 @@ THESIS_SYSTEM = (
 
 def thesis_user(analyses: list[dict]) -> str:
     import json
+    conv_scale = _read_asset("conviction_scale.md")
+    scale_block = (
+        "\n\nCONVICTION SCALE (canonical — apply to every score you assign):\n"
+        + conv_scale + "\n"
+    ) if conv_scale else ""
     return (
         "Analyses (note consensus_view and differentiation per cluster):\n\n"
-        + json.dumps(analyses, ensure_ascii=False) + "\n\n"
+        + json.dumps(analyses, ensure_ascii=False)
+        + scale_block + "\n\n"
         "Return JSON:\n"
         '{"theses": [{"id": "short-slug", "tickers": [str], '
         '"direction": "long|short|pair", "thesis": "1-2 sentences", '
