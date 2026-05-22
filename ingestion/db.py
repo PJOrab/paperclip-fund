@@ -59,9 +59,14 @@ def ensure_sources(items: list[dict]) -> None:
          .execute())
 
 
+_UPSERT_CHUNK = 100  # Supabase PostgREST: safe batch size avoids payload/timeout limits
+
+
 def upsert_raw_items(items: list[dict]) -> int:
     """
     Upsert auf content_hash (Duplikate werden ignoriert).
+    Sendet in Chunks von _UPSERT_CHUNK Zeilen, damit große Runs (600+ Items) nicht
+    an Supabase-Payload-/Timeout-Grenzen scheitern.
     Gibt die Anzahl tatsächlich eingefügter Zeilen zurück.
     """
     if not items:
@@ -71,11 +76,15 @@ def upsert_raw_items(items: list[dict]) -> int:
     by_hash = {it["content_hash"]: it for it in items}
     rows = list(by_hash.values())
 
-    res = (
-        client()
-        .table("raw_items")
-        .upsert(rows, on_conflict="content_hash", ignore_duplicates=True)
-        .execute()
-    )
-    # Bei ignore_duplicates enthält res.data nur die wirklich neu eingefügten Zeilen
-    return len(res.data or [])
+    inserted = 0
+    db = client()
+    for i in range(0, len(rows), _UPSERT_CHUNK):
+        chunk = rows[i: i + _UPSERT_CHUNK]
+        res = (
+            db.table("raw_items")
+            .upsert(chunk, on_conflict="content_hash", ignore_duplicates=True)
+            .execute()
+        )
+        # Bei ignore_duplicates enthält res.data nur die wirklich neu eingefügten Zeilen
+        inserted += len(res.data or [])
+    return inserted
