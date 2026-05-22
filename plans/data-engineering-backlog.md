@@ -63,6 +63,15 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-129 (DE Loop): **`_telegram_alert` stdlib-only — `requests` dep removed**
+  (`ingestion/run_ingest.py`, pushed `0f73556`). The Telegram alert function used `import requests`
+  inside a try/except, violating the no-extra-deps principle from HED-125. If `requests` is absent
+  from the live venv the alert silently no-ops. Replaced with `urllib.request.Request` (stdlib) —
+  same pattern as `fetch_url`. Verified `python3 -c "from ingestion import run_ingest"` passes.
+- 2026-05-22 — HED-129 (DE Loop): **FundingNewsAdapter AI/Tech relevance filter** (`ingestion/sources_aitech.py`,
+  `1df8646` — done by prior session). Added `_FUNDING_RELEVANCE_RE` to drop off-topic consumer/lifestyle
+  items (fragrance tech, beauty booking, kids streaming) from TechCrunch Startups / VentureBeat feeds.
+  Result: 27 → 15 funding_news items per run; purely AI/Tech/Semis/cloud/energy signals pass through.
 - 2026-05-22 — HED-125 (DE Loop): **native stdlib `fetch_url`/`fetch_json` — hard macro-agent dependency removed**
   (`ingestion/adapters.py`, `ingestion/sources_aitech.py`, `ingestion/test_dedup.py`, pushed `7072a16`).
   Closes the NEXT-CYCLE CANDIDATE from HED-121: every HTTP adapter previously called `m.fetch_url`/`m.fetch_json`

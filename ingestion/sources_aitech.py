@@ -1659,3 +1659,140 @@ class ShortInterestAdapter:
             }
         except Exception:
             return None
+
+
+class OptionsMarketAdapter:
+    """
+    Options-market positioning signals for top watchlist tickers via yfinance.
+
+    Computes three non-consensus signals per ticker using the nearest weekly
+    options expiry (skipping same-day 0DTE):
+
+      1. Put/Call OI ratio — aggregate open interest across all strikes.
+         < 0.5 = notably bullish positioning; > 1.2 = notably bearish.
+      2. ATM IV skew (put IV − call IV at nearest strike to spot).
+         > 5% = put premium elevated (market buying downside protection).
+         < −5% = call premium elevated (unusual, signals call demand/squeeze risk).
+      3. Expected move ±% = ATM straddle price / spot × 100. Captures the
+         market-implied move for the expiry window regardless of direction.
+
+    Items are emitted only when at least one signal crosses a notable threshold,
+    reducing noise to signal-worthy events. Dedup key is stable per
+    (ticker, expiry, rounded_pc_ratio) so daily re-runs don't flood raw_items
+    when the options picture is unchanged.
+
+    Source: 'options_market'. Reliability 0.82 (exchange-derived via Yahoo Finance;
+    higher than editorial, lower than SEC primary source).
+    """
+
+    SOURCE = "options_market"
+    RELIABILITY = 0.82
+    # Emit only for liquid-options top positions to keep runtime ≤ 20s
+    TICKERS = [
+        "NVDA", "MSFT", "GOOGL", "META", "AMZN", "AAPL",
+        "AMD", "TSM", "ASML", "ARM", "AVGO", "PLTR",
+        "ORCL", "NOW", "CRM", "SNOW", "CRWD",
+    ]
+    # Thresholds for "notable" signals
+    PC_BULLISH = 0.50   # P/C ratio below this = notably bullish
+    PC_BEARISH = 1.20   # P/C ratio above this = notably bearish
+    IV_SKEW_HIGH = 0.05  # put IV > call IV by 5pp = elevated fear
+    IV_SKEW_LOW = -0.05  # call IV > put IV by 5pp = unusual call demand
+    EXPECTED_MOVE_HIGH = 0.04  # ±4% expected move = elevated uncertainty
+
+    def fetch(self) -> list[dict]:
+        try:
+            import yfinance as yf
+        except ImportError:
+            return []
+        out = []
+        for ticker in self.TICKERS:
+            try:
+                item = self._fetch_one(ticker, yf)
+                if item:
+                    out.append(item)
+                time.sleep(0.2)
+            except Exception:
+                pass
+        return out
+
+    def _fetch_one(self, ticker: str, yf) -> dict | None:
+        t = yf.Ticker(ticker)
+        price = getattr(t.fast_info, "last_price", None)
+        if not price or price <= 0:
+            return None
+        exps = t.options
+        if not exps:
+            return None
+
+        # Skip same-day 0DTE; prefer next weekly expiry
+        from datetime import date as _date
+        today_str = _date.today().isoformat()
+        exp = next((e for e in exps if e > today_str), exps[-1])
+
+        chain = t.option_chain(exp)
+        calls = chain.calls
+        puts = chain.puts
+        if calls.empty or puts.empty:
+            return None
+
+        # 1. Put/Call OI ratio
+        total_call_oi = int(calls["openInterest"].sum())
+        total_put_oi = int(puts["openInterest"].sum())
+        pc_ratio = total_put_oi / total_call_oi if total_call_oi > 0 else None
+
+        # 2. ATM IV skew
+        atm_call_idx = (calls["strike"] - price).abs().idxmin()
+        atm_put_idx = (puts["strike"] - price).abs().idxmin()
+        atm_call_iv = float(calls.loc[atm_call_idx, "impliedVolatility"])
+        atm_put_iv = float(puts.loc[atm_put_idx, "impliedVolatility"])
+        iv_skew = atm_put_iv - atm_call_iv  # positive = puts pricier (normal)
+
+        # 3. Expected move from ATM straddle
+        atm_call_price = float(calls.loc[atm_call_idx, "lastPrice"])
+        atm_put_price = float(puts.loc[atm_put_idx, "lastPrice"])
+        straddle = atm_call_price + atm_put_price
+        expected_move_pct = straddle / price  # as fraction
+
+        # Only emit when at least one signal is notable
+        notable = False
+        signals = []
+
+        if pc_ratio is not None:
+            if pc_ratio < self.PC_BULLISH:
+                signals.append(f"P/C OI {pc_ratio:.2f} (bullish positioning)")
+                notable = True
+            elif pc_ratio > self.PC_BEARISH:
+                signals.append(f"P/C OI {pc_ratio:.2f} (bearish positioning)")
+                notable = True
+            else:
+                signals.append(f"P/C OI {pc_ratio:.2f}")
+
+        if iv_skew > self.IV_SKEW_HIGH:
+            signals.append(f"IV skew +{iv_skew*100:.1f}pp (put premium elevated, downside protection bid)")
+            notable = True
+        elif iv_skew < self.IV_SKEW_LOW:
+            signals.append(f"IV skew {iv_skew*100:.1f}pp (call premium elevated, squeeze/momentum risk)")
+            notable = True
+        else:
+            signals.append(f"IV skew {iv_skew*100:.1f}pp")
+
+        if expected_move_pct >= self.EXPECTED_MOVE_HIGH:
+            signals.append(f"expected move ±{expected_move_pct*100:.1f}% by {exp} (elevated uncertainty)")
+            notable = True
+        else:
+            signals.append(f"expected move ±{expected_move_pct*100:.1f}% by {exp}")
+
+        if not notable:
+            return None
+
+        text = f"[{ticker}] Options: {'; '.join(signals)}"
+        # Stable dedup key: ticker + expiry + coarse P/C bucket
+        pc_bucket = f"{round(pc_ratio, 1)}" if pc_ratio else "n/a"
+        dedup_url = f"https://finance.yahoo.com/quote/{ticker}/options?exp={exp}&pc={pc_bucket}"
+        return {
+            "text": text,
+            "source": self.SOURCE,
+            "url": dedup_url,
+            "reliability": self.RELIABILITY,
+        }

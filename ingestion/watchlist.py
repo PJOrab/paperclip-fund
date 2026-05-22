@@ -307,6 +307,9 @@ SOURCE_RELIABILITY = {
     # public API, no key required. Signal quality moderate: useful for squeeze
     # setup detection and institutional de-risking reads.
     "yahoo_short_interest": 0.72,
+    # Options market data (P/C ratio, IV skew, expected move) from exchange via
+    # Yahoo Finance. Exchange-derived pricing: higher signal than editorial.
+    "options_market": 0.82,
     # Earnings dates from yfinance are authoritative forward-looking events.
     # High reliability: directly from exchange/company filings via Yahoo.
     "earnings_calendar": 0.88,
