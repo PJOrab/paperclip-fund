@@ -537,12 +537,24 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict],
         "YESTERDAY'S BRIEFING (use for Δ seit gestern — identify what actually changed):\n"
         + prev_briefing[:1500] + "\n\n"
     ) if prev_briefing else ""
+    # Strip evidence arrays from triage clusters before sending to editor —
+    # evidence was consumed upstream (triage→analyst→thesis) and bloats the prompt
+    # without adding editorial value. Editor only needs title/tickers/category/why/importance.
+    triage_slim = triage
+    if isinstance(triage, dict) and "clusters" in triage:
+        triage_slim = {
+            **triage,
+            "clusters": [
+                {k: v for k, v in cl.items() if k != "evidence"}
+                for cl in (triage.get("clusters") or [])
+            ],
+        }
     return (
         "Material for today's briefing.\n\n"
         + rules_block
         + ceo_block
         + prev_block
-        + "TOP CLUSTERS:\n" + json.dumps(triage, ensure_ascii=False) + "\n\n"
+        + "TOP CLUSTERS:\n" + json.dumps(triage_slim, ensure_ascii=False) + "\n\n"
         "THESES + DEVIL'S ADVOCATE (sorted: non-consensus/is_differentiated=true first, "
         "then by devil verdict):\n" + json.dumps(enriched, ensure_ascii=False) + "\n\n"
         + (f"UPCOMING EARNINGS (pre-extracted for you):\n{earnings_section}\n" if earnings_section else "")
