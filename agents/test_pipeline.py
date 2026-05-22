@@ -241,7 +241,29 @@ def test_classify_item() -> None:
            "launch" in labels(
                "Meta open-sources Llama 4 model weights — 400B parameters"))
 
-    print("ok: classify_item coverage_qc patterns (including capex + improved launch)")
+    # strategic_partnership (new HED-127)
+    _check("multi-year deal matches strategic_partnership",
+           "strategic_partnership" in labels(
+               "OpenAI signs multi-year agreement with Oracle for 100k GPU cluster"))
+    _check("expanded partnership matches strategic_partnership",
+           "strategic_partnership" in labels(
+               "Microsoft expands strategic partnership with Mistral AI for Azure deployment"))
+    _check("cloud deal matches strategic_partnership",
+           "strategic_partnership" in labels(
+               "Google signs cloud deal with SAP to migrate workloads to GCP"))
+
+    # layoff_restructuring (new HED-127)
+    _check("lays off matches layoff_restructuring",
+           "layoff_restructuring" in labels(
+               "Intel lays off 1,200 employees as part of restructuring plan"))
+    _check("workforce reduction matches layoff_restructuring",
+           "layoff_restructuring" in labels(
+               "Salesforce reduces its global workforce by 8% amid cost-cutting"))
+    _check("job cuts matches layoff_restructuring",
+           "layoff_restructuring" in labels(
+               "Amazon Web Services announces 1,500 job cuts in cloud division"))
+
+    print("ok: classify_item coverage_qc patterns (including capex + improved launch + partnership + layoff)")
 
 
 
