@@ -6,10 +6,13 @@ einen __main__-Guard, ist also gefahrlos importierbar) und verwenden seine
 Adapter-Klassen direkt wieder. Jeder Adapter liefert über .fetch() eine Liste
 von Dicts der Form: {"text", "source", optional "url", optional "reliability"}.
 """
+import gzip
 import hashlib
 import importlib
+import json as _json
 import re
 import sys
+import urllib.request
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -17,6 +20,48 @@ from . import config
 
 _macro = None
 _macro_missing = False
+
+# Default contact UA — SEC verlangt Kontakt, GitHub verlangt überhaupt einen UA.
+_DEFAULT_UA = {"User-Agent": "ai-tech-fund/0.1 (research; philipp.baro@gmail.com)"}
+
+
+def fetch_url(url, headers=None, timeout=20):
+    """
+    Selbstständiger HTTP-GET → decodierter Text ("" bei jedem Fehlschlag).
+
+    Bewusst stdlib-only (urllib, kein `requests`) und ohne macro-agent-Abhängigkeit,
+    damit die Ingestion auch dann läuft, wenn das optionale Makro-Overlay fehlt
+    (HED-125). Liefert "" statt zu werfen, passend zu den `if not text`-Guards in
+    den Adaptern; gzip-Antworten werden transparent dekomprimiert.
+    """
+    hdrs = dict(_DEFAULT_UA)
+    if headers:
+        hdrs.update(headers)
+    hdrs.setdefault("Accept-Encoding", "gzip")
+    req = urllib.request.Request(url, headers=hdrs)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read()
+            if (resp.headers.get("Content-Encoding") or "").lower() == "gzip":
+                try:
+                    raw = gzip.decompress(raw)
+                except Exception:
+                    pass
+            charset = resp.headers.get_content_charset() or "utf-8"
+            return raw.decode(charset, errors="replace")
+    except Exception:
+        return ""
+
+
+def fetch_json(url, headers=None, timeout=20):
+    """HTTP-GET + JSON-Parse → geparstes Objekt (None bei jedem Fehlschlag)."""
+    text = fetch_url(url, headers=headers, timeout=timeout)
+    if not text:
+        return None
+    try:
+        return _json.loads(text)
+    except Exception:
+        return None
 
 
 def _load_macro():

@@ -6,7 +6,13 @@ mehr 8-10x/Tag in raw_items dupliziert.
 
 Lauf:  python3 -m ingestion.test_dedup   (aus dem Repo-Root)
 """
-from .adapters import _canonical_url, _content_hash, _normalize_text
+from .adapters import (
+    _canonical_url,
+    _content_hash,
+    _normalize_text,
+    fetch_json,
+    fetch_url,
+)
 
 
 def _check(name, cond):
@@ -52,6 +58,13 @@ def main():
            _canonical_url("https://a.test/x#frag") == "https://a.test/x")
     _check("_normalize_text strips GitHub badge",
            _normalize_text("[GitHub ★42] foo/bar") == "foo/bar")
+
+    # 8. HTTP-Helfer sind selbstständig (keine harte macro-agent-Abhängigkeit,
+    #    HED-125) und degradieren gracefully: unerreichbarer Host -> "" / None
+    #    statt Exception, passend zu den `if not text/data`-Guards der Adapter.
+    bad = "http://127.0.0.1:1/never"  # Port 1, sofortiger Connection-Refused
+    _check("fetch_url unreachable -> '' (no raise)", fetch_url(bad, timeout=2) == "")
+    _check("fetch_json unreachable -> None (no raise)", fetch_json(bad, timeout=2) is None)
 
     print("\nALL DEDUP TESTS PASSED")
 

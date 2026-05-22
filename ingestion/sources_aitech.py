@@ -15,7 +15,7 @@ from email.utils import parsedate_to_datetime
 from urllib.parse import quote
 
 from . import watchlist as W
-from .adapters import _load_macro
+from .adapters import _load_macro, fetch_json, fetch_url
 
 
 def _parse_rss_date(s: str):
@@ -399,7 +399,7 @@ class EDGARAdapter:
         self._cik = None  # {TICKER: (cik:int, title)}
 
     def _load_cik_map(self):
-        data = _m().fetch_json(self.TICKERS_MAP, headers=UA, timeout=20)
+        data = fetch_json(self.TICKERS_MAP, headers=UA, timeout=20)
         out = {}
         if isinstance(data, dict):
             for row in data.values():
@@ -421,7 +421,7 @@ class EDGARAdapter:
             if not ent:
                 continue
             cik, title = ent
-            data = m.fetch_json(self.SUBMISSIONS.format(cik=cik), headers=UA, timeout=20)
+            data = fetch_json(self.SUBMISSIONS.format(cik=cik), headers=UA, timeout=20)
             time.sleep(0.2)  # SEC: max 10 req/s
             if not data:
                 continue
@@ -456,7 +456,7 @@ class EDGARAdapter:
                     try:
                         raw_doc = doc.rsplit("/", 1)[-1]
                         raw_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{raw_doc}"
-                        xml = m.fetch_url(raw_url, headers=UA, timeout=20)
+                        xml = fetch_url(raw_url, headers=UA, timeout=20)
                         time.sleep(0.15)  # SEC: max 10 req/s
                         if xml:
                             summary = _summarize_form4(xml)
@@ -477,7 +477,7 @@ class EDGARAdapter:
                     # boilerplate exhibit attachments (Item 9.01) or Reg-FD slides.
                     # Falls back to the metadata description on any fetch/parse error.
                     try:
-                        html_src = m.fetch_url(doc_url, headers=UA, timeout=20)
+                        html_src = fetch_url(doc_url, headers=UA, timeout=20)
                         time.sleep(0.15)  # SEC: max 10 req/s
                         if html_src:
                             snippet, item_num, item_type = _extract_8k_text(html_src)
@@ -490,7 +490,7 @@ class EDGARAdapter:
                     # Item 7 for 10-K/20-F) so triage sees revenue/guidance context.
                     # Falls back to metadata desc on any error.
                     try:
-                        html_src = m.fetch_url(doc_url, headers=UA, timeout=30)
+                        html_src = fetch_url(doc_url, headers=UA, timeout=30)
                         time.sleep(0.15)  # SEC: max 10 req/s
                         if html_src:
                             snippet = _extract_10q_text(
@@ -506,7 +506,7 @@ class EDGARAdapter:
                     # the dateline/content. For exhibit-only 6-Ks it returns "" and the
                     # filing notice (metadata) remains as the detail text.
                     try:
-                        html_src = m.fetch_url(doc_url, headers=UA, timeout=20)
+                        html_src = fetch_url(doc_url, headers=UA, timeout=20)
                         time.sleep(0.15)  # SEC: max 10 req/s
                         if html_src:
                             snippet = _extract_6k_text(html_src)
@@ -567,7 +567,7 @@ class SECRegistrationsAdapter:
         out, seen = [], set()
         for typ in W.REGISTRATION_FORMS:
             url = self.BASE.format(typ=quote(typ), count=W.REGISTRATION_COUNT)
-            xml = m.fetch_url(url, headers=self.HEADERS, timeout=20)
+            xml = fetch_url(url, headers=self.HEADERS, timeout=20)
             time.sleep(0.3)  # SEC: max 10 req/s
             if not xml:
                 continue
@@ -652,7 +652,7 @@ class SECBroadEventsAdapter:
     def fetch(self):
         m = _m()
         out, seen = [], set()
-        xml = m.fetch_url(self.BASE, headers=self.HEADERS, timeout=20)
+        xml = fetch_url(self.BASE, headers=self.HEADERS, timeout=20)
         time.sleep(0.3)
         if not xml:
             return []
@@ -695,7 +695,7 @@ class ArxivAdapter:
         url = (f"http://export.arxiv.org/api/query?search_query={q}"
                f"&start=0&max_results={W.ARXIV_MAX}"
                f"&sortBy=submittedDate&sortOrder=descending")
-        xml = _m().fetch_url(url, timeout=20)
+        xml = fetch_url(url, timeout=20)
         if not xml:
             return []
         out = []
@@ -734,7 +734,7 @@ class HackerNewsAdapter:
             url = (f"https://hn.algolia.com/api/v1/search_by_date?tags=story"
                    f"&query={quote(q)}&numericFilters=points>{W.HN_MIN_POINTS}"
                    f"&hitsPerPage=5")
-            data = m.fetch_json(url, timeout=15)
+            data = fetch_json(url, timeout=15)
             time.sleep(0.3)
             if not data:
                 continue
@@ -771,7 +771,7 @@ class GitHubTrendingAdapter:
             q = f"topic:{topic} pushed:>{since}"
             url = (f"https://api.github.com/search/repositories?q={quote(q)}"
                    f"&sort=stars&order=desc&per_page=5")
-            data = m.fetch_json(url, headers=headers, timeout=15)
+            data = fetch_json(url, headers=headers, timeout=15)
             time.sleep(2)  # Search-API: ~10 req/min unauthentifiziert
             if not data:
                 continue
@@ -809,7 +809,7 @@ class TechRSSAdapter:
         cutoff = datetime.now(timezone.utc) - timedelta(days=self.LOOKBACK_DAYS)
         for name, feed in W.TECH_RSS_FEEDS.items():
             try:
-                text = m.fetch_url(feed, timeout=15)
+                text = fetch_url(feed, timeout=15)
                 if not text:
                     continue
                 sep = "<item>" if "<item>" in text else "<entry>"
@@ -861,7 +861,7 @@ class FundingNewsAdapter:
         cutoff = datetime.now(timezone.utc) - timedelta(days=self.LOOKBACK_DAYS)
         for name, feed in W.FUNDING_RSS_FEEDS.items():
             try:
-                text = m.fetch_url(feed, timeout=15)
+                text = fetch_url(feed, timeout=15)
                 if not text:
                     continue
                 sep = "<item>" if "<item>" in text else "<entry>"
@@ -917,7 +917,7 @@ class EnergyNewsAdapter:
         cutoff = datetime.now(timezone.utc) - timedelta(days=self.LOOKBACK_DAYS)
         for name, feed in W.ENERGY_RSS_FEEDS.items():
             try:
-                text = m.fetch_url(feed, timeout=15)
+                text = fetch_url(feed, timeout=15)
                 if not text:
                     continue
                 sep = "<item>" if "<item>" in text else "<entry>"
@@ -990,7 +990,7 @@ class PressWireAdapter:
         feeds = getattr(W, "PRESS_WIRE_RSS_FEEDS", {})
         for name, feed in feeds.items():
             try:
-                text = m.fetch_url(feed, timeout=20)
+                text = fetch_url(feed, timeout=20)
                 if not text:
                     continue
                 sep = "<item>" if "<item>" in text else "<entry>"
@@ -1056,7 +1056,7 @@ class MacroFedAdapter:
         cutoff = datetime.now(timezone.utc) - timedelta(days=self.LOOKBACK_DAYS)
         for name, feed_url in self.FEEDS.items():
             try:
-                text = m.fetch_url(feed_url, timeout=15)
+                text = fetch_url(feed_url, timeout=15)
                 if not text:
                     continue
                 sep = "<item>" if "<item>" in text else "<entry>"
@@ -1123,7 +1123,7 @@ class MacroBLSAdapter:
         cutoff = datetime.now(timezone.utc) - timedelta(days=self.LOOKBACK_DAYS)
         for name, feed_url in self.FEEDS.items():
             try:
-                text = m.fetch_url(feed_url, timeout=15)
+                text = fetch_url(feed_url, timeout=15)
                 if not text:
                     continue
                 sep = "<item>" if "<item>" in text else "<entry>"
@@ -1221,7 +1221,7 @@ class YahooFinanceTickerAdapter:
         for ticker in W.YAHOO_FINANCE_TICKERS:
             try:
                 url = W.YAHOO_FINANCE_RSS.format(ticker=ticker)
-                text = m.fetch_url(url, timeout=15)
+                text = fetch_url(url, timeout=15)
                 time.sleep(0.3)
                 if not text:
                     continue
@@ -1286,7 +1286,7 @@ class AITechNewsAPIAdapter:
             return []
         url = (f"https://newsapi.org/v2/everything?q={quote(W.NEWSAPI_QUERY)}"
                f"&language=en&sortBy=publishedAt&pageSize=15&apiKey={key}")
-        data = m.fetch_json(url, timeout=15)
+        data = fetch_json(url, timeout=15)
         out = []
         if data and data.get("status") == "ok":
             for art in data.get("articles", []):
@@ -1508,7 +1508,7 @@ class FREDMacroAdapter:
         cutoff = (datetime.now(timezone.utc) - timedelta(days=self.MAX_AGE_DAYS)).date()
         for sid, (name, kind) in self.SERIES.items():
             try:
-                text = m.fetch_url(self.BASE.format(sid=sid), headers=UA, timeout=15)
+                text = fetch_url(self.BASE.format(sid=sid), headers=UA, timeout=15)
                 if not text:
                     continue
                 obs = self._parse_csv(text)
