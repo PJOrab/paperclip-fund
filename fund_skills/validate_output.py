@@ -66,6 +66,10 @@ def validate(schema: str, data: dict) -> list[str]:
             need(x.get("horizon") in {"days", "weeks", "quarters"}, f"theses[{i}] bad horizon", errs)
             need(isinstance(x.get("catalysts"), list) and len(x.get("catalysts", [])) > 0,
                  f"theses[{i}] catalysts must be a non-empty list", errs)
+            need(isinstance(x.get("bull_case"), list) and len(x.get("bull_case", [])) > 0,
+                 f"theses[{i}] bull_case must be a non-empty list", errs)
+            need(isinstance(x.get("bear_case"), list) and len(x.get("bear_case", [])) > 0,
+                 f"theses[{i}] bear_case must be a non-empty list", errs)
             conv = x.get("conviction")
             need(isinstance(conv, (int, float)) and 0 <= conv <= 1,
                  f"theses[{i}] conviction must be 0.0-1.0", errs)
