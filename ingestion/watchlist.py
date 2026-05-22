@@ -210,6 +210,10 @@ SOURCE_RELIABILITY = {
     # Higher than generic yahoo_finance (0.72): analyst actions are structured
     # investment signals (upgrade/downgrade/PT change), not general news.
     "analyst_action": 0.85,
+    # Confirmed earnings results (beats/misses) detected in Yahoo Finance headlines.
+    # Factual confirmed data — higher than analyst_action (0.85) since earnings
+    # results are reported facts, not forward-looking opinion.
+    "earnings_result": 0.88,
     # Off-watchlist 8-K material events from AI/Tech companies (SECBroadEventsAdapter).
     # Same official SEC source as sec_8k but without item-type text extraction —
     # lower than sec_8k (0.95) since we only have the filing notice, not content.

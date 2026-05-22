@@ -918,6 +918,30 @@ class MacroBLSAdapter:
         return out
 
 
+# Regex to detect actual earnings results (beats/misses/inline) in Yahoo Finance
+# headlines. These are confirmed factual outcomes (not forecasts), so reliability
+# is set higher than analyst actions. Source="earnings_result".
+_EARNINGS_RESULT_RE = re.compile(
+    r"(?:"
+    # beat/miss/top/exceed against eps, revenue, estimates etc.
+    r"\b(?:beats?|misses?|tops?|exceeded?|surpassed?|fell\s+short\s+of)\s+"
+    r"(?:eps|earnings|revenue|estimates?|expectations?|consensus)\b|"
+    # eps/earnings/revenue result verbs
+    r"\b(?:eps|earnings|revenue)\s+(?:beat|miss|in[- ]line|top|exceed|fell\s+short|surpass)\b|"
+    # "reports quarterly earnings/results" or "reports Q1-4 earnings/results"
+    r"\breports?\s+(?:quarterly\s+|q[1-4]\s+)?(?:earnings|results|eps|revenue)\b|"
+    # "Q2 EPS:" or "Q1 EPS " — the quarter+eps combo signals an earnings headline
+    r"\bq[1-4]\s+eps\b|"
+    # quarterly/q[1-4] earnings/results + outcome verb
+    r"\b(?:quarterly|q[1-4])\s+(?:earnings|results)\s+(?:beat|miss|top|exceed|disappoint|surpass)\b|"
+    # posts record/quarterly revenue/earnings
+    r"\bposts?\s+(?:record|quarterly)\s+(?:revenue|earnings|profit|loss)\b|"
+    # revenue/profit/loss rises/falls/jumps X% — factual result framing
+    r"\b(?:profit|loss|revenue)\s+(?:rises?|falls?|jumps?|drops?|soars?|slumps?)\s+\d"
+    r")",
+    re.IGNORECASE,
+)
+
 # Regex to detect analyst rating/price-target actions in Yahoo Finance headlines.
 # Matched items get source="analyst_action" and higher reliability than generic news.
 _ANALYST_ACTION_RE = re.compile(
@@ -976,12 +1000,17 @@ class YahooFinanceTickerAdapter:
                         if pub and pub < cutoff:
                             continue
                     desc = _rss_desc(block, max_len=200)
-                    # Detect analyst rating / price-target actions in the headline.
-                    # These are structurally different from general market news and
-                    # warrant a distinct source tag + reliability bump so triage
-                    # can recognize and prioritize them without pattern-matching prose.
-                    is_analyst = bool(_ANALYST_ACTION_RE.search(title))
-                    if is_analyst:
+                    # Priority order: earnings result > analyst action > generic.
+                    # Earnings results are confirmed factual data (highest signal);
+                    # analyst actions are structured investment signals (medium-high);
+                    # generic yahoo_finance items are general financial news (baseline).
+                    is_earnings = bool(_EARNINGS_RESULT_RE.search(title))
+                    is_analyst = not is_earnings and bool(_ANALYST_ACTION_RE.search(title))
+                    if is_earnings:
+                        src = "earnings_result"
+                        rel = W.SOURCE_RELIABILITY.get("earnings_result", 0.88)
+                        item_text = f"[Earnings · {ticker}] {title}"
+                    elif is_analyst:
                         src = "analyst_action"
                         rel = W.SOURCE_RELIABILITY.get("analyst_action", 0.85)
                         item_text = f"[Analyst · {ticker}] {title}"
