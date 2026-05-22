@@ -326,6 +326,29 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .panel:focus-visible,.sec-tile:focus-visible{
   outline-offset:0;border-radius:12px}
 .tkl:focus-visible{border-radius:2px}
+/* print stylesheet: CEO-friendly hard-copy of briefing (no dark bg, no hidden sections) */
+@media print{
+  :root{--bg:#fff;--panel:#f5f7fa;--panel2:#edf0f5;--line:#cdd3de;--txt:#0d1117;
+    --mut:#4a5568;--accent:#1a6abf;--green:#276749;--red:#9b1c1c;--amber:#92400e}
+  body{background:#fff;color:#0d1117}
+  .wrap{max-width:100%;padding:0}
+  /* force-open all collapsibles */
+  details{display:block}
+  details>summary{display:none}
+  .wf-details>*:not(summary),.brief>*:not(summary),.df-details>*:not(summary){display:block!important}
+  /* strip hover/transition chrome */
+  .panel:hover,.sec-tile:hover,.sec-row:hover{background:var(--panel)!important;border-color:var(--line)!important}
+  /* page-break hints */
+  h2{page-break-after:avoid}
+  .panel,.sec-tile{page-break-inside:avoid}
+  /* hide plumbing sections (workflow, datenfeed) and inline scripts */
+  .wf-details,.df-details{display:none}
+  /* reset dark-mode backgrounds */
+  .panel,.sec-tile,.step,.call-chip{background:var(--panel)!important;border-color:var(--line)!important}
+  .brief-lede{background:var(--panel)!important;border-color:var(--line)!important}
+  /* links: show href after text for print context */
+  .tkl::after{content:" (" attr(href) ")";font-size:10px;color:var(--mut)}
+}
 /* respect reduced-motion: kill the infinite spinner + all transitions (WCAG 2.3.3, vestibular safety) */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
@@ -680,4 +703,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
