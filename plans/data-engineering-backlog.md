@@ -63,6 +63,13 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-78 (CIO-Loop Zyklus 11): **Thesis track-record scorer**
+  (`agents/score_past_calls.py`, `requirements.txt`). Liest alle done `briefing_runs`,
+  extrahiert Thesen mit `direction` (long/short/pair), fetcht Entry-Preis (run.created_at)
+  und Current-Price via yfinance, berechnet: Return%, Direction-Hit-Rate, Conviction-
+  Calibration-Score. Output: JSON + Markdown-Tabelle. `yfinance>=0.2` in requirements.txt.
+  Usage: `python -m agents.score_past_calls [--days N] [--output markdown]`.
+  Auf origin/main gepusht: `fdaf54f..63a48b7`.
 - 2026-05-22 — HED-64 (DE-Loop Zyklus 11 / CIO): **GitHub-Adapter: created:>30d → pushed:>7d**
   (`ingestion/sources_aitech.py`). Vorher: nur neu erstellte Repos (letzten 30 Tage, max ~500★,
   kein Bezug zur bestehenden AI-Stack-These). Jetzt: pushed:>7d + sort=stars → aktive
