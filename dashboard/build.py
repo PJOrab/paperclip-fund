@@ -599,7 +599,11 @@ function dirClass(d){return d==="long"?"cd-long":d==="short"?"cd-short":"cd-pair
 const b = D.briefing;
 if(!b){ $("briefing").innerHTML='<div class="panel muted">Noch kein Briefing. Sobald der n8n-Workflow lief, erscheint es hier.</div>'; }
 else{
-  const theses=((b.theses||{}).theses)||[];
+  const rawTheses=((b.theses||{}).theses)||[];
+  // Deduplicate: keep only highest-conviction call per unique ticker group
+  const _bestByTicker={};
+  rawTheses.forEach(t=>{const k=(t.tickers||[]).join(',');if(!(k in _bestByTicker)||(t.conviction??-1)>(_bestByTicker[k].conviction??-1))_bestByTicker[k]=t;});
+  const theses=rawTheses.filter(t=>_bestByTicker[(t.tickers||[]).join(',')]===t);
   const crit=((b.devils_advocate||{}).critiques)||[];
   const cmap={}; crit.forEach(c=>cmap[c.id]=c);
   let html='';
