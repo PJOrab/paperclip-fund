@@ -63,6 +63,11 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-78 (CIO-Loop Zyklus 14): **Dynamic triage cluster scaling + feed limit 400→600**
+  (`agents/run.py`). 13 Adapter generieren jetzt 400+ Items/Run — hardcodierter 400-Limit und
+  12-Cluster-Cap ließen Material silent fallen. Fix: limit=600, max_clusters=max(12,min(20,n//20))
+  (≤240 Items=12cl, 300=15cl, 400=20cl). Earnings-Events konkurrieren nicht mehr um Cluster-Slots.
+  Triage-Timeout 240→300s. Auf origin/main gepusht: `cdab3ce..c7aaeb3`.
 - 2026-05-22 — HED-78 (CIO-Loop Zyklus 13): **Triage + Thesis earnings-awareness prompts**
   (`agents/prompts.py`). Triage-System-Prompt erkennt `earnings_calendar`-Items jetzt als
   immer-material: ≤3 Tage = importance=5, 4-14 Tage = importance=4, nie droppen.
