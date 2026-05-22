@@ -684,6 +684,9 @@ def _load_sector_price_context() -> str:
         sv = _json.loads(sv_path.read_text())
         lines = []
         for s in sv.get("sectors", []):
+            sector_label = s.get("id", "")  # e.g. "S1", "S2"
+            sector_name = s.get("name", "")  # e.g. "Compute", "Hyperscaler"
+            sec_tag = f" [{sector_label}-{sector_name}]" if sector_label else ""
             for t in s.get("tickers", []):
                 if not t.get("price"):
                     continue
@@ -700,7 +703,7 @@ def _load_sector_price_context() -> str:
                     rsi_note = " OB" if rsi > 70 else (" OS" if rsi < 30 else "")
                     tech += f" | RSI14: {rsi}{rsi_note}"
                 lines.append(
-                    f"{t['ticker']}: ${t['price']} (1d: {t.get('change_pct','?'):+.2f}%){w52}{tech}"
+                    f"{t['ticker']}{sec_tag}: ${t['price']} (1d: {t.get('change_pct','?'):+.2f}%){w52}{tech}"
                 )
         if not lines:
             return ""
