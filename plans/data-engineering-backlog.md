@@ -63,6 +63,23 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-102 (DE-Loop Zyklus 35): **Dead PressWire feeds fixed — GlobeNewswire restored, BusinessWire removed**
+  (`ingestion/watchlist.py`). Live reachability sweep of all RSS feeds surfaced that BOTH
+  `PRESS_WIRE_RSS_FEEDS` entries were silently dead → `PressWireAdapter` had been contributing
+  **0 items every cycle** (the per-feed try/except swallows the failure, so no error logged):
+  (1) `globenewswire_tech` (`.../subjectcode/SC/typeofnews/PressRelease`) returned **HTTP 400** —
+  "SC" is not a valid subjectcode. Replaced with the Technology *industry* feed
+  (`https://www.globenewswire.com/RssFeed/industry/9576-Technology/feedTitle/Technology`) —
+  verified status 200, 20 fresh items, **18/20 pass the AITECH filter**: AMD EPYC "Venice" ramp,
+  AMD $10B Taiwan ecosystem, ASML buyback, Applied Materials/Broadcom, POET $400M financing,
+  Skyworks/Qorvo M&A, Ambarella. (Rejected `subjectcode/22` alt: mostly Nordic managerial-
+  transaction filings — Danske Bank/ISS A/S noise.)
+  (2) `businesswire_tech` (`feed.businesswire.com/rss/home/?rss=G22`) now returns a **1001-byte
+  empty stub (0 items)** — BusinessWire deprecated anonymous RSS; probed several feed codes +
+  industry endpoints, all 0-item stubs or 403. Removed as dead weight (cf. wsj_tech Zyklus 34).
+  **Follow-up:** `crunchbase_news` (FUNDING_RSS) returns 403 (Cloudflare/UA gate) — candidate
+  for a future cycle (needs a working UA or alternative rounds source). Verified: config parses,
+  dedup tests green, live filter yield. Pushed: `c8c2502`.
 - 2026-05-22 — HED-99 (DE-Loop Zyklus 34): **Dead/broken TECH_RSS feeds fixed: wsj_tech removed, wired_ai URL corrected**
   (`ingestion/watchlist.py`). Closes the follow-up flagged in Zyklus 33. Two feeds were dead weight:
   (1) `wsj_tech` (feeds.a.dj.com/rss/RSSWSJD.xml) — verified status 200 but **frozen at 2025-01-27**
