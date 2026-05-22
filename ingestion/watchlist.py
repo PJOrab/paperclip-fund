@@ -52,7 +52,10 @@ HN_QUERIES = [
     # control, and competitive dynamics stories before they hit mainstream press.
     "semiconductor", "TSMC", "ASML", "AMD",
 ]
-HN_MIN_POINTS = 80
+# Lowered 80→60 in Zyklus 12: specific-ticker queries (TSMC, ASML, AMD) rarely
+# reach 80pts but are highly material. Triage reliability-weighting (Zyklus 5)
+# handles noise from broader capture; better to over-capture and let AI filter.
+HN_MIN_POINTS = 60
 
 # NewsAPI-Query (falls NEWSAPI_KEY gesetzt)
 NEWSAPI_QUERY = (
