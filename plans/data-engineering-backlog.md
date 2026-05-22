@@ -63,6 +63,17 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-89 (DE-Loop Zyklus 26): **Analyst-action detection in Yahoo Finance items**
+  (`ingestion/sources_aitech.py`, `ingestion/watchlist.py`, `agents/prompts.py`).
+  Analyst upgrades, downgrades, and PT changes arrived as generic `yahoo_finance`
+  items (rel=0.72) — triage had no way to distinguish them from general news. Added
+  `_ANALYST_ACTION_RE` regex covering upgrade/downgrade/raises-PT/lowers-PT/initiates-
+  coverage/reiterates/maintains/overweight/underweight patterns. In
+  `YahooFinanceTickerAdapter.fetch()`: matching headlines get `source="analyst_action"`,
+  `reliability=0.85`, and `[Analyst · TICKER]` prefix. Non-matching items unchanged.
+  Added `analyst_action` to `SOURCE_RELIABILITY`. Added ANALYST ACTIONS block to
+  `triage_user()`: importance 3-5, category='sentiment', cluster by ticker.
+  Tested: 10/10 headline classification correct. Pushed: `9a59e5a`.
 - 2026-05-22 — HED-89 (DE-Loop Zyklus 25): **Triage macro-signal guidance for Fed/BLS**
   (`agents/prompts.py`). MacroFedAdapter (Zyklus 23) and MacroBLSAdapter (Zyklus 24) ship
   Fed/BLS items into triage, but triage had no instructions for handling them — risking
