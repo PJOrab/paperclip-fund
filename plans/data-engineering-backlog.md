@@ -63,6 +63,16 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 18): **Chunked upsert_raw_items — 100 rows/batch**
+  (`ingestion/db.py`). Large runs (600+ items) sent in one HTTP call risk hitting Supabase
+  PostgREST payload/timeout limits. Split into batches of `_UPSERT_CHUNK=100` rows; inserted
+  count accumulated across chunks so callers get the correct total. No behaviour change for
+  normal runs; silently safer for large ones. Pushed: `4b5d9d0`.
+- 2026-05-22 — HED-77 (DE-Loop Zyklus 15): **Dead-adapter Telegram alert**
+  (`ingestion/run_ingest.py`). When the dead-adapter health check (Zyklus 13) detects silent-zero
+  adapters, `_telegram_alert()` now fires a Telegram notification so the operator is paged
+  without polling logs. Silently no-ops when TELEGRAM_BOT_TOKEN/CHAT_ID are absent.
+  Closes the monitoring loop opened by Zyklus 13. Pushed: `807843d`.
 - 2026-05-22 — HED-64 (DE-Loop Zyklus 17): **YahooFinanceTickerAdapter description enrichment**
   (`ingestion/sources_aitech.py`). Yahoo Finance RSS `<description>` fields contain substantive article
   summaries (e.g. AMD CEO Taiwan capacity ramp, IREN 5-year NVDA contract context) not just headlines.
