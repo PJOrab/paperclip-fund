@@ -29,8 +29,13 @@ ARXIV_MAX = 30
 GITHUB_TOPICS = [
     "llm", "generative-ai", "ai-agents", "rag",
     # Added Zyklus 4: frontier model competition + inference efficiency stack.
-    "multimodal",     # multi-modal AI (GPT-4o/Gemini/Claude-vision competitor repos)
-    "llm-inference",  # inference engines, quantization, serving (compute-cost moat)
+    "multimodal",      # multi-modal AI (GPT-4o/Gemini/Claude-vision competitor repos)
+    "llm-inference",   # inference engines, quantization, serving (compute-cost moat)
+    # Added Zyklus 10: embodied AI / robotics — pairs with arXiv cs.RO (Zyklus 8).
+    # NVDA Jetson, META robotics, Figure AI/1X private watch; GitHub repos lag arXiv
+    # by weeks but show which codebases practitioners actually use.
+    "robot-learning",  # sim-to-real transfer, RL for robots (Isaac Lab, MuJoCo wrappers)
+    "embodied-ai",     # embodied AI projects (LLM + physical action interfaces)
 ]
 GITHUB_PUSH_LOOKBACK_DAYS = 7
 
