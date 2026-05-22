@@ -707,8 +707,18 @@ def _load_sector_price_context() -> str:
                     rsi = t["rsi14"]
                     rsi_note = " OB" if rsi > 70 else (" OS" if rsi < 30 else "")
                     tech += f" | RSI14: {rsi}{rsi_note}"
+                cons = ""
+                c = t.get("consensus") or {}
+                if c.get("pt_mean"):
+                    updown = round((c["pt_mean"] - t["price"]) / t["price"] * 100, 1)
+                    sign = "+" if updown >= 0 else ""
+                    cons = (f" | Consensus PT: ${c['pt_mean']}"
+                            f" ({sign}{updown}% upside, {c.get('analyst_count','?')} analysts)"
+                            f" rec={c.get('rec','?')}")
+                    if c.get("fwd_eps"):
+                        cons += f" fwdEPS=${c['fwd_eps']}"
                 lines.append(
-                    f"{t['ticker']}{sec_tag}: ${t['price']} (1d: {t.get('change_pct','?'):+.2f}%){w52}{tech}"
+                    f"{t['ticker']}{sec_tag}: ${t['price']} (1d: {t.get('change_pct','?'):+.2f}%){w52}{tech}{cons}"
                 )
         if not lines:
             return ""

@@ -165,6 +165,33 @@ def _yahoo_quote(ticker: str) -> dict | None:
         return None
 
 
+def _consensus_estimates(ticker: str) -> dict | None:
+    """Fetch analyst consensus data via yfinance for a ticker.
+    Returns dict with targetMeanPrice, numberOfAnalystOpinions, recommendationKey,
+    forwardEps — used by analyst/thesis prompts as consensus_anchor context."""
+    try:
+        import yfinance as yf
+        info = yf.Ticker(ticker).info
+        result: dict = {}
+        if info.get("targetMeanPrice"):
+            result["pt_mean"] = round(float(info["targetMeanPrice"]), 2)
+        if info.get("targetLowPrice"):
+            result["pt_low"] = round(float(info["targetLowPrice"]), 2)
+        if info.get("targetHighPrice"):
+            result["pt_high"] = round(float(info["targetHighPrice"]), 2)
+        if info.get("numberOfAnalystOpinions"):
+            result["analyst_count"] = int(info["numberOfAnalystOpinions"])
+        if info.get("recommendationKey"):
+            result["rec"] = str(info["recommendationKey"])
+        if info.get("forwardEps"):
+            result["fwd_eps"] = round(float(info["forwardEps"]), 3)
+        if info.get("revenueGrowth"):
+            result["rev_growth_yoy"] = round(float(info["revenueGrowth"]) * 100, 1)
+        return result if result else None
+    except Exception:
+        return None
+
+
 def _earnings_calendar() -> list[dict]:
     """Fetch upcoming earnings dates for all watchlist tickers via yfinance.
     Returns list of {ticker, date, days_out} sorted by date, capped at 14 days out."""
@@ -209,9 +236,16 @@ def gen_sector_view() -> dict:
     Yahoo-Kurs. Off-build-path (Netz!), per --gen-sector-view aufgerufen."""
     sectors = []
     for s in SECTOR_TAXONOMY:
-        quotes = [q for q in (_yahoo_quote(t) for t in s["tickers"]) if q]
+        enriched = []
+        for t in s["tickers"]:
+            q = _yahoo_quote(t)
+            if q:
+                cons = _consensus_estimates(t)
+                if cons:
+                    q["consensus"] = cons
+                enriched.append(q)
         sectors.append({"id": s["id"], "name": s["name"],
-                        "note": s.get("note"), "tickers": quotes})
+                        "note": s.get("note"), "tickers": enriched})
     earnings_cal = _earnings_calendar()
     return {"as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
             "as_of_iso": datetime.now(timezone.utc).isoformat(),
