@@ -63,6 +63,12 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-78 (CIO-Loop Zyklus 13): **Triage + Thesis earnings-awareness prompts**
+  (`agents/prompts.py`). Triage-System-Prompt erkennt `earnings_calendar`-Items jetzt als
+  immer-material: ≤3 Tage = importance=5, 4-14 Tage = importance=4, nie droppen.
+  Thesis-System-Prompt erhält EARNINGS TIMING RULE: bei imminent earnings muss horizon='days'
+  und earnings date in catalysts[]. Verhindert Thesis/Horizon-Mismatch wenn Pipeline
+  Earnings-Daten im Feed hat. Auf origin/main gepusht: `7999ee6..7414830`.
 - 2026-05-22 — HED-78 (CIO-Loop Zyklus 12): **EarningsCalendarAdapter — 14-day earnings warning**
   (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`).
   Neuer Adapter fetcht Earnings-Termine für alle Watchlist-Ticker via yfinance.
