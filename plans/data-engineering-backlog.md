@@ -63,6 +63,15 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-89 (DE-Loop Zyklus 32): **The Register + Wired AI added to TECH_RSS_FEEDS**
+  (`ingestion/watchlist.py`). TECH_RSS_FEEDS covered 6 feeds (TechCrunch AI, Ars Technica,
+  The Verge AI, MIT Tech Review, WSJ Tech, CNBC Tech). Two editorial gaps remained:
+  (1) The Register — enterprise/cloud/chip-manufacturing coverage; hyperscaler capex,
+  datacenter builds, GPU/CPU competitive dynamics from the enterprise lens (NVDA/AMD/INTC/TSMC).
+  (2) Wired AI — AI policy, regulation, safety, foundation-model breakthroughs; bridges
+  MIT Tech Review (academic) and TechCrunch (startup). No new adapter code — TechRSSAdapter
+  already handles both RSS (<item>) and Atom (<entry>). Per-feed isolation preserves
+  robustness. Pushed: `1a41051`.
 - 2026-05-22 — HED-89 (DE-Loop Zyklus 31): **Evidence truncation fix: 300→400 chars for high-rel items in analyst stage**
   (`agents/run.py`). Zyklus 30 fixed triage display (triage_user) to show 400 chars for
   items with rel>=0.85. The evidence list built in compute_triage() — passed to the
