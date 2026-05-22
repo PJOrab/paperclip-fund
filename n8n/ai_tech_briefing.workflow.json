@@ -3,13 +3,23 @@
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [ { "field": "cronExpression", "expression": "30 6 * * 1-5" } ] }
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 6 * * 1-5"
+            }
+          ]
+        }
       },
       "id": "f1a00000-0000-4000-8000-000000000001",
       "name": "Schedule 06:30 Mo-Fr",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [ 240, 300 ]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
@@ -19,8 +29,16 @@
       "name": "Agent: Triage (Opus)",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
-      "position": [ 460, 300 ],
-      "credentials": { "sshPrivateKey": { "id": "REPLACE_SSH_CRED", "name": "VPS SSH" } }
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "REPLACE_SSH_CRED",
+          "name": "VPS SSH"
+        }
+      }
     },
     {
       "parameters": {
@@ -30,8 +48,16 @@
       "name": "Agent: Analyst (Opus)",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
-      "position": [ 680, 300 ],
-      "credentials": { "sshPrivateKey": { "id": "REPLACE_SSH_CRED", "name": "VPS SSH" } }
+      "position": [
+        680,
+        300
+      ],
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "REPLACE_SSH_CRED",
+          "name": "VPS SSH"
+        }
+      }
     },
     {
       "parameters": {
@@ -41,8 +67,16 @@
       "name": "Agent: These (Opus)",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
-      "position": [ 900, 300 ],
-      "credentials": { "sshPrivateKey": { "id": "REPLACE_SSH_CRED", "name": "VPS SSH" } }
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "REPLACE_SSH_CRED",
+          "name": "VPS SSH"
+        }
+      }
     },
     {
       "parameters": {
@@ -52,8 +86,16 @@
       "name": "Agent: Devil's Advocate (Opus)",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
-      "position": [ 1120, 300 ],
-      "credentials": { "sshPrivateKey": { "id": "REPLACE_SSH_CRED", "name": "VPS SSH" } }
+      "position": [
+        1120,
+        300
+      ],
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "REPLACE_SSH_CRED",
+          "name": "VPS SSH"
+        }
+      }
     },
     {
       "parameters": {
@@ -63,8 +105,16 @@
       "name": "Agent: Editor (Opus)",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
-      "position": [ 1340, 300 ],
-      "credentials": { "sshPrivateKey": { "id": "REPLACE_SSH_CRED", "name": "VPS SSH" } }
+      "position": [
+        1340,
+        300
+      ],
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "REPLACE_SSH_CRED",
+          "name": "VPS SSH"
+        }
+      }
     },
     {
       "parameters": {
@@ -76,17 +126,117 @@
       "name": "Telegram: CEO-Briefing",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [ 1560, 300 ],
-      "credentials": { "telegramApi": { "id": "REPLACE_TG_CRED", "name": "Fund Telegram Bot" } }
+      "position": [
+        1560,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_TG_CRED",
+          "name": "Fund Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "cd /root/ai-tech-fund && /root/ai-tech-fund/venv/bin/python scripts/coverage_qc.py --json --open-tickets 2>&1 || true"
+      },
+      "id": "f1a00000-0000-4000-8000-000000000008",
+      "name": "QC: Coverage-Gap-Check",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        300
+      ],
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "REPLACE_SSH_CRED",
+          "name": "VPS SSH"
+        }
+      }
     }
   ],
   "connections": {
-    "Schedule 06:30 Mo-Fr": { "main": [ [ { "node": "Agent: Triage (Opus)", "type": "main", "index": 0 } ] ] },
-    "Agent: Triage (Opus)": { "main": [ [ { "node": "Agent: Analyst (Opus)", "type": "main", "index": 0 } ] ] },
-    "Agent: Analyst (Opus)": { "main": [ [ { "node": "Agent: These (Opus)", "type": "main", "index": 0 } ] ] },
-    "Agent: These (Opus)": { "main": [ [ { "node": "Agent: Devil's Advocate (Opus)", "type": "main", "index": 0 } ] ] },
-    "Agent: Devil's Advocate (Opus)": { "main": [ [ { "node": "Agent: Editor (Opus)", "type": "main", "index": 0 } ] ] },
-    "Agent: Editor (Opus)": { "main": [ [ { "node": "Telegram: CEO-Briefing", "type": "main", "index": 0 } ] ] }
+    "Schedule 06:30 Mo-Fr": {
+      "main": [
+        [
+          {
+            "node": "Agent: Triage (Opus)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent: Triage (Opus)": {
+      "main": [
+        [
+          {
+            "node": "Agent: Analyst (Opus)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent: Analyst (Opus)": {
+      "main": [
+        [
+          {
+            "node": "Agent: These (Opus)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent: These (Opus)": {
+      "main": [
+        [
+          {
+            "node": "Agent: Devil's Advocate (Opus)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent: Devil's Advocate (Opus)": {
+      "main": [
+        [
+          {
+            "node": "Agent: Editor (Opus)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent: Editor (Opus)": {
+      "main": [
+        [
+          {
+            "node": "QC: Coverage-Gap-Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QC: Coverage-Gap-Check": {
+      "main": [
+        [
+          {
+            "node": "Telegram: CEO-Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" }
+  "settings": {
+    "executionOrder": "v1"
+  }
 }
