@@ -190,6 +190,26 @@ def test_classify_item() -> None:
     _check("routine news has no big-event match",
            classify_item("Apple store opens in new mall location next quarter") == [])
 
+    # S5 Energy/Power sector patterns (energy_power_deal — added HED-127 cycle 7)
+    _check("PPA matches energy_power_deal",
+           "energy_power_deal" in labels(
+               "Microsoft signs 20-year power purchase agreement with Constellation Energy"))
+    _check("nuclear deal matches energy_power_deal",
+           "energy_power_deal" in labels(
+               "Google signs nuclear energy deal with Vistra for 1.2GW of carbon-free power"))
+    _check("SMR matches energy_power_deal",
+           "energy_power_deal" in labels(
+               "GE Vernova partners with AWS on small modular reactor development"))
+    _check("transformer order matches energy_power_deal",
+           "energy_power_deal" in labels(
+               "Eaton reports record transformer order backlog driven by data center demand"))
+    _check("data centre power matches energy_power_deal",
+           "energy_power_deal" in labels(
+               "Meta signs 3GW data centre power agreement with grid operator"))
+    _check("grid infrastructure matches energy_power_deal",
+           "energy_power_deal" in labels(
+               "GE Vernova wins $2B grid infrastructure contract for AI build-out"))
+
 
 # ---------------------------------------------------------------------------
 # validate_output schema tests
