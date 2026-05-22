@@ -63,6 +63,16 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-106 (DE-Loop Zyklus 42): **coverage_qc: quarterly_results + foreign_filing patterns**
+  (`agents/coverage_qc.py`, `agents/test_pipeline.py`). `earnings_surprise` pattern required
+  "beats/misses estimates" language — missed TSM-style 6-K quarterly reports ("revenue of NT$839B,
+  up 41.6% YoY"). Two new BIG_EVENT_PATTERNS (9→11 total):
+  (1) `quarterly_results` (high): matches "Q1 2026 revenue/results", "reports quarterly earnings",
+  "fourth quarter results", "annual revenue" — catches plain periodic earnings reports.
+  (2) `foreign_filing` (high): matches "[EDGAR 6-K Foreign Issuer Report]" / "[EDGAR 20-F...]" — any
+  6-K or 20-F missed by triage auto-triggers a coverage-bug ticket.
+  13 new tests added (analyst_action, exec_change, quarterly_results x4, foreign_filing x3, negative).
+  All tests pass. Pushed: `37fa742`.
 - 2026-05-22 — HED-106 (DE-Loop Zyklus 41): **Smart 6-K text extraction — skip SEC header, extract press release**
   (`ingestion/sources_aitech.py`). Previous 6-K extraction fell back to first 400 chars of stripped
   HTML, which always returned SEC boilerplate (Form 6-K header, address, Exchange Act references).
