@@ -50,6 +50,7 @@ def build_adapters():
         ("Tech RSS", S.TechRSSAdapter()),
         ("Funding News", S.FundingNewsAdapter()),
         ("Energy/Power", S.EnergyNewsAdapter()),
+        ("Yahoo Finance", S.YahooFinanceTickerAdapter()),
     ]
     if getattr(m, "NEWSAPI_KEY", ""):
         adapters.append(("NewsAPI AI", S.AITechNewsAPIAdapter()))

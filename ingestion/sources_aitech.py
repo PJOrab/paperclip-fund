@@ -549,6 +549,48 @@ class EnergyNewsAdapter:
         return out
 
 
+class YahooFinanceTickerAdapter:
+    """
+    Yahoo Finance per-ticker RSS headlines for top watchlist positions.
+    Carries market-moving ticker news (earnings, analyst upgrades/downgrades,
+    product announcements) that tech-blog adapters routinely miss.
+    One request per ticker with polite 0.3s sleep. Dedup by URL across tickers.
+    """
+    def fetch(self):
+        m = _m()
+        out, seen = [], set()
+        for ticker in W.YAHOO_FINANCE_TICKERS:
+            try:
+                url = W.YAHOO_FINANCE_RSS.format(ticker=ticker)
+                text = m.fetch_url(url, timeout=15)
+                time.sleep(0.3)
+                if not text:
+                    continue
+                for block in text.split("<item>")[1:]:
+                    t = re.search(r"<title[^>]*>(.*?)</title>", block, re.DOTALL)
+                    if not t:
+                        continue
+                    raw = t.group(1).replace("<![CDATA[", "").replace("]]>", "")
+                    title = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+                    if not title:
+                        continue
+                    link_m = re.search(r"<link>(.*?)</link>", block)
+                    item_url = link_m.group(1).strip() if link_m else None
+                    key = item_url or title
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    out.append({
+                        "text": f"[{ticker}] {title}",
+                        "source": "yahoo_finance",
+                        "url": item_url,
+                        "reliability": W.SOURCE_RELIABILITY.get("yahoo_finance", 0.72),
+                    })
+            except Exception:
+                continue
+        return out
+
+
 class AITechNewsAPIAdapter:
     """NewsAPI mit AI/Tech-Equity-Query (nur wenn NEWSAPI_KEY gesetzt)."""
     def fetch(self):

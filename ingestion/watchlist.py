@@ -131,10 +131,18 @@ NOTABLE_PRIVATE_PLAYERS = [
 ]
 
 # Default-Reliability je neuer Quellen-Kategorie (für sources-Tabelle)
+# Yahoo Finance per-ticker RSS: top-priority watchlist positions only.
+# Covers market-moving ticker news (earnings, analyst calls, product events)
+# that tech blogs miss. Rate: 1 req/ticker, 0.3s sleep between tickers.
+# Tickers: the 8 highest-conviction positions across S1-S3 sectors.
+YAHOO_FINANCE_TICKERS = ["NVDA", "MSFT", "GOOGL", "META", "PLTR", "ORCL", "NOW", "ARM"]
+YAHOO_FINANCE_RSS = "https://feeds.finance.yahoo.com/rss/2.0/headline?s={ticker}&region=US&lang=en-US"
+
 SOURCE_RELIABILITY = {
     "sec_8k": 0.95, "sec_form4": 0.90, "sec_registration": 0.92,
     "arxiv": 0.80, "github_trending": 0.60,
     "hackernews": 0.55, "tech_news": 0.60,
+    "yahoo_finance": 0.72,
     "funding_news": 0.80,
     "energy_news": 0.72,
 }
