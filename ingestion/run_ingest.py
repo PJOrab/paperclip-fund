@@ -72,6 +72,38 @@ def run_once(dry_run: bool = False) -> None:
             f"({len(items)} items total)\n{detail}"
         )
 
+    # Alert immediately on high-signal items that can't wait until next briefing:
+    # S-1/IPO filings, items with [OUTLOOK:] guidance, and high-priority BIG_EVENT matches.
+    _urgent: list[dict] = []
+    try:
+        from agents.coverage_qc import classify_item as _classify
+        _HIGH_SOURCES = {"sec_registration", "earnings_result"}
+        for it in items:
+            src = it.get("source", "")
+            txt = it.get("text") or ""
+            if src in _HIGH_SOURCES:
+                _urgent.append(it)
+                continue
+            if "[OUTLOOK:" in txt:
+                _urgent.append(it)
+                continue
+            hits = _classify(txt)
+            if any(prio == "high" for _, prio in hits):
+                _urgent.append(it)
+    except Exception:
+        pass
+    if _urgent and not dry_run:
+        snippets = []
+        for it in _urgent[:5]:
+            src = it.get("source", "?")
+            tickers = ",".join(it.get("tickers") or []) or "—"
+            txt = (it.get("text") or "")[:100]
+            snippets.append(f"• [{src}] {tickers}: {txt}")
+        _telegram_alert(
+            f"🚨 AI/Tech Fund — {len(_urgent)} high-signal item(s) neu:\n"
+            + "\n".join(snippets)
+        )
+
     if dry_run:
         for it in items[:5]:
             print(f"    · [{it['source']}] {it['text'][:90]}")
