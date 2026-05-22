@@ -170,6 +170,7 @@ h2{font-size:var(--fs-h2);font-weight:600;text-transform:uppercase;letter-spacin
 .cards{grid-template-columns:repeat(4,1fr)}
 .sectors{grid-template-columns:repeat(3,1fr)}
 .two-col{grid-template-columns:1fr 1fr}
+#briefing{min-height:220px}#trackrecord{min-height:120px}#sectorview{min-height:140px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:var(--s4)}
 .kpi{font-size:var(--fs-kpi);font-weight:700;font-variant-numeric:tabular-nums}
 .kpi small{font-size:var(--fs-h2);color:var(--mut);font-weight:400}
@@ -317,6 +318,7 @@ abbr[title]{text-decoration:none;cursor:help}
 @media (max-width:760px){
   .cards{grid-template-columns:repeat(2,1fr)}
   .sectors{grid-template-columns:1fr}
+  #sectorview{min-height:320px}
   .two-col{grid-template-columns:1fr}
   .flow{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tr-tbl{display:block}
