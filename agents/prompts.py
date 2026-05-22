@@ -99,12 +99,14 @@ THESIS_SYSTEM = (
 def thesis_user(analyses: list[dict]) -> str:
     import json
     return (
-        "Analyses:\n\n" + json.dumps(analyses, ensure_ascii=False) + "\n\n"
+        "Analyses (note consensus_view and differentiation per cluster):\n\n"
+        + json.dumps(analyses, ensure_ascii=False) + "\n\n"
         "Return JSON:\n"
         '{"theses": [{"id": "short-slug", "tickers": [str], '
         '"direction": "long|short|pair", "thesis": "1-2 sentences", '
         '"bull_case": [str], "bear_case": [str], "catalysts": [str], '
-        '"horizon": "days|weeks|quarters", "conviction": 0.0-1.0}]}'
+        '"horizon": "days|weeks|quarters", "conviction": 0.0-1.0, '
+        '"is_differentiated": true|false}]}'
     )
 
 
@@ -116,7 +118,18 @@ DEVIL_SYSTEM = (
     "Your ONLY job is to attack each thesis: find the strongest counter-argument, "
     "state what the consensus already prices in, name concrete falsification criteria "
     "(what would prove the thesis wrong), and flag what the bull is likely missing. "
-    "Be ruthless but fair — no strawmen. Output STRICT JSON only."
+    "Be ruthless but fair — no strawmen. "
+    "VERDICT CALIBRATION: use exactly one — "
+    "'agree': your attack failed; thesis survives all counter-arguments, bull case is "
+    "well-evidenced and non-consensus (conviction ≥ 0.6 warranted). "
+    "'caution': real risks that could halve expected return or delay catalyst by 2+ quarters; "
+    "thesis may work but requires risk management. "
+    "'reject': counter-argument is stronger than the thesis, OR the move is already priced in, "
+    "OR there is a fundamental factual flaw. Default to 'caution' when uncertain. "
+    "FALSIFICATION QUALITY: each falsification event must be SPECIFIC and OBSERVABLE within "
+    "the thesis horizon — name the event (e.g. 'NVDA Q3 datacenter revenue misses $X bn', "
+    "'competitor ships product by Q3'). 'Stock falls' is not acceptable. "
+    "Output STRICT JSON only."
 )
 
 
@@ -137,10 +150,29 @@ def devil_user(theses: list[dict]) -> str:
 # ---------------------------------------------------------------------------
 EDITOR_SYSTEM = (
     "You are the Chief of Staff. Write a crisp daily CEO briefing for an AI/Tech "
-    "equity fund in GERMAN. Markdown. For EACH top call, present the recommendation "
-    "AND directly beside it the Devil's Advocate counter, so the CEO sees both sides. "
-    "Be decisive but honest about conviction. Keep it under ~3500 characters "
-    "(Telegram-friendly). No preamble, start with the heading."
+    "equity fund in GERMAN, for a smart but busy reader who did NOT follow the "
+    "markets today. Markdown. "
+    # v3 precision rules (2026-05-22, HED-76 audit):
+    # 1. FIRST LINE = CHIEF INSIGHT. Lead with ONE decisive statement.
+    #    Each thesis block: what to do + why NOW in one sentence.
+    # 2. EVERY THESIS must include a price target OR conviction delta (e.g.
+    #    'Conviction hoch von 0,55 auf 0,68'). Conviction number alone is not enough.
+    #    If neither is available, drop the thesis rather than publish unanchored call.
+    # 3. DEVIL'S ADVOCATE must be explicitly adjudicated: end every ⚖️ block with
+    #    '→ Caution berücksichtigt, Conviction hält' OR '→ Conviction reduziert auf X'
+    #    OR '→ Devil kippt Call: gestrichen'. A REJECT verdict coexisting with a LONG
+    #    call in the same block is a contradiction — resolve or drop the call.
+    # 4. TOTAL LENGTH ≤ ~1200 characters. MAX 2-3 top calls; prefer 2 strong over 3.
+    #    Drop the weakest call, NEVER the explanations.
+    # 5. DEDUP: same argument in multiple blocks → keep in strongest context only.
+    # 6. NON-CONSENSUS FIRST: theses marked is_differentiated=true are pre-sorted to
+    #    the top. Prefer these as top calls; consensus repeats go to Beobachten.
+    "For EACH top call: 1 sentence recommendation + conviction delta, "
+    "⚖️ Devil in 1 line + explicit adjudication ('→ …'), 👉 Fazit in 1 line. "
+    "STANDING CEO PREFERENCES (agents/ceo_preferences.md wins on conflict): "
+    "explain every jargon/acronym in plain German in brackets on first use "
+    "(e.g. 'Capex (Investitionsausgaben)') or drop it. No preamble, start with heading. "
+    "Full rules: agents/instructions/EDITOR.md"
 )
 
 
@@ -150,15 +182,26 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict]) -> str:
     enriched = []
     for t in (theses or []):
         enriched.append({"thesis": t, "devils_advocate": crit_by_id.get(t.get("id"))})
+    # Non-consensus calls first; within same group, agree verdicts (robust) before caution/reject
+    def call_priority(item):
+        t = item.get("thesis", {})
+        d = item.get("devils_advocate") or {}
+        differentiated = t.get("is_differentiated", False)
+        verdict_rank = {"agree": 0, "caution": 1, "reject": 2}.get(d.get("verdict", "caution"), 1)
+        return (0 if differentiated else 1, verdict_rank)
+    enriched.sort(key=call_priority)
     return (
         "Material for today's briefing.\n\n"
         "TOP CLUSTERS:\n" + json.dumps(triage, ensure_ascii=False) + "\n\n"
-        "THESES + DEVIL'S ADVOCATE:\n" + json.dumps(enriched, ensure_ascii=False) + "\n\n"
-        "Write the briefing with these sections:\n"
+        "THESES + DEVIL'S ADVOCATE (sorted: non-consensus/is_differentiated=true first, "
+        "then by devil verdict):\n" + json.dumps(enriched, ensure_ascii=False) + "\n\n"
+        "Write the briefing with these sections (tight, ≤~1200 chars total):\n"
         "# CEO-Briefing AI/Tech — <Datum>\n"
-        "## Lage in 3 Sätzen\n"
-        "## Top-Calls (je: Empfehlung + Conviction + ⚖️ Devil's Advocate)\n"
-        "## Watchlist / Beobachten\n"
-        "## Risiko-Radar\n"
+        "## Δ seit gestern (1 Satz: das eine große Thema / was sich geändert hat)\n"
+        "## Top-Calls (MAX 2-3; je: 1 Satz Empfehlung + Conviction, "
+        "⚖️ Devil's Advocate in 1 Zeile, 👉 Fazit in 1 Zeile; "
+        "prioritize is_differentiated=true calls)\n"
+        "## Beobachten (1 Zeile)\n"
+        "## Risiko (1 Zeile: das eine, was alle Calls gleichzeitig kippt)\n"
         "Output ONLY the markdown."
     )
