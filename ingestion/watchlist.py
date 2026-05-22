@@ -84,6 +84,14 @@ TECH_RSS_FEEDS = {
     # market-moving events (Workday beat, Anthropic/MSFT chip deal, SpaceX IPO) that
     # pure-tech blogs and WSJ lag on. Standard RSS 2.0, no CDATA in titles.
     "cnbc_tech":        "https://www.cnbc.com/id/19854910/device/rss/rss.html",
+    # The Register (Zyklus 32): enterprise/cloud/chip-manufacturing coverage missing
+    # from existing feeds. Strong on hyperscaler capex, datacenter builds, chip supply
+    # chain, and GPU/CPU competitive dynamics (NVDA/AMD/INTC/TSMC lens).
+    "theregister":      "https://www.theregister.com/headlines.atom",
+    # Wired AI (Zyklus 32): AI policy, regulation, safety, and breakthrough research —
+    # fills the gap between MIT Tech Review (academic) and TechCrunch (startup/product).
+    # Atom feed for Wired's AI tag covers foundation-model launches, AI governance.
+    "wired_ai":         "https://www.wired.com/feed/tag/artificial-intelligence/latest/rss",
 }
 
 # Allgemeines RSS-Lookback-Fenster (Tage). Wird vom FundingNewsAdapter genutzt.
