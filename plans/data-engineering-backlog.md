@@ -63,6 +63,18 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 6 / CIO): **TECH_RSS + HN_QUERIES erweitert**
+  (`ingestion/watchlist.py`). TECH_RSS_FEEDS 3→5: `mit_tech_review`
+  (technologyreview.com — research-grade AI-Tiefe + Policy) + `wsj_tech`
+  (feeds.a.dj.com/rss/RSSWSJD.xml — Financial Press, marktbewegende Ticker-News).
+  Beide 200 mit MacroIntel-UA; Adapter liefert 10 neue Items, malformed=0.
+  HN_QUERIES 6→12: Microsoft, Google, Meta AI (Hyperscaler-Positionen nicht abgedeckt),
+  Palantir, Mistral, xAI (AI-native Watchlist). Max +30 HN-Stories/Zyklus.
+  Auf origin/main gepusht: `1f7f929..5d115a0`.
+- 2026-05-22 — HED-77 (DE-Loop Zyklus 6): **Analyst consensus differentiation + thesis conviction calibration** (`agents/prompts.py`).
+  Analyst stage now returns `consensus_view` (aligned|differentiated|unclear) + `differentiation` sentence per cluster — the thesis stage was told to "prefer non-consensus ideas" but had no structured signal about what consensus IS. Now it does.
+  Thesis system prompt gains a 6-point conviction calibration guide (0.1=noise → 0.9+=rare convergent signal). Past runs clustered at 0.30-0.45 with no distinguishing rationale; anchors make convictions comparable across runs and score-able in track-record.
+  Pushed to origin/main: `5d115a0..36c9f6a`. idea "Prompts / Briefing clarity / conviction calibration".
 - 2026-05-22 — HED-77 (DE-Loop Zyklus 5): **Triage: reliability scores surfaced + insider_trade category** (`agents/prompts.py`).
   `triage_user` previously stripped reliability from items → model had no signal to rank SEC filings (rel=0.95) over HN posts (rel=0.55). Now each feed line shows `(source rel=X.XX)` with instruction to weight higher-reliability sources more heavily. Simultaneously added `insider_trade` as a first-class triage category — Form 4 open-market buys/sells were previously mis-filed under `sentiment`, obscuring the insider-signal cluster from downstream stages. Zero breaking changes (additive prompt context + extended category enum). Pushed to origin/main `767c3cc..1f7f929`. idea "Pipeline robustness / Briefing clarity".
 
