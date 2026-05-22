@@ -697,7 +697,7 @@ else{
 // Thesen-Track-Record (HED-29)
 function pct(x){return x==null?"—":Math.round(x*100)+"%";}
 function verdictPill(v){
-  const map={hit:["ok","✓ Hit"],miss:["err","✗ Miss"],neutral:["neutral","Neutral"],too_early:["warn","⏳ too early"]};
+  const map={hit:["ok","✓ Hit"],miss:["err","✗ Miss"],neutral:["neutral","Neutral"],too_early:["warn","⏳ Zu früh"]};
   const [k,lbl]=map[v]||["neutral",esc(v||"—")];
   return `<span class="pill pill--${k}">${lbl}</span>`;
 }
@@ -743,7 +743,7 @@ function calibSvg(buckets){
   $("trkpi").innerHTML=[
     ["Hit-Rate", pct(a.hit_rate), a.hit_rate==null],
     ["gewertet", scored+" / "+(a.total??"—"), false],
-    ["too early", a.too_early??"—", false],
+    ["in Reifung", a.too_early??"—", false],
     ['<abbr title="Kalibrierungs-Bias">Kalib.-Bias</abbr>', biasTxt, a.calibration_bias==null]
   ].map(([k,v,pending])=>`<dl class="panel kpi-dl"><dt class="muted">${k}</dt>`
     +`<dd class="kpi${pending?" kpi--pending":""}"${pending?` title="${pendTip}" aria-label="${k.replace(/<[^>]+>/g,"")}: noch nicht verfügbar — ${pendTip}"`:""}>${v}</dd></dl>`).join("");
