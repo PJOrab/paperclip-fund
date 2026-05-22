@@ -6,8 +6,10 @@ Ingestion-Entrypoint: führt alle Adapter aus und schreibt nach Supabase.
   python -m ingestion.run_ingest --loop --interval 20   # Endlosschleife
 """
 import argparse
+import json
 import os
 import time
+import urllib.request
 from pathlib import Path
 
 from . import adapters
@@ -29,12 +31,14 @@ def _telegram_alert(text: str) -> None:
     if not token or not chat_id:
         return
     try:
-        import requests
-        requests.post(
+        payload = json.dumps({"chat_id": chat_id, "text": text[:4096]}).encode()
+        req = urllib.request.Request(
             f"https://api.telegram.org/bot{token}/sendMessage",
-            json={"chat_id": chat_id, "text": text[:4096]},
-            timeout=10,
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
         )
+        urllib.request.urlopen(req, timeout=10)  # noqa: S310
     except Exception:  # noqa: BLE001
         pass
 
