@@ -6,9 +6,37 @@ Ingestion-Entrypoint: führt alle Adapter aus und schreibt nach Supabase.
   python -m ingestion.run_ingest --loop --interval 20   # Endlosschleife
 """
 import argparse
+import os
 import time
+from pathlib import Path
 
 from . import adapters
+
+
+def _telegram_alert(text: str) -> None:
+    """Send a plain-text alert to Telegram. Silently no-ops if env vars missing."""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        # Try loading from .env in the fund root
+        try:
+            from dotenv import load_dotenv
+            load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+            token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+            chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+        except ImportError:
+            pass
+    if not token or not chat_id:
+        return
+    try:
+        import requests
+        requests.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json={"chat_id": chat_id, "text": text[:4096]},
+            timeout=10,
+        )
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def run_once(dry_run: bool = False) -> None:
@@ -28,6 +56,11 @@ def run_once(dry_run: bool = False) -> None:
         print(f"  ⚠  DEAD ADAPTERS (0 items, no error): {', '.join(silent_zeros)}")
         for name in silent_zeros:
             errors[name] = "0 items fetched — possible feed outage or config change"
+        _telegram_alert(
+            f"⚠️ AI/Tech Fund — Dead Adapters\n"
+            f"{', '.join(silent_zeros)}\n"
+            "0 items fetched (no error). Possible feed outage or config change."
+        )
 
     if dry_run:
         for it in items[:5]:
