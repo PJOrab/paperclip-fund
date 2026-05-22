@@ -13,6 +13,8 @@ TICKERS = [
     "MSFT", "GOOGL", "AMZN", "META", "AAPL",
     # AI-Software / Apps
     "PLTR", "ORCL", "NOW", "CRM", "SNOW", "CRWD", "ADBE",
+    # Energy / Power / Infra (S5) — AI data-centre power demand plays
+    "VST", "CEG", "GEV", "ETN",
 ]
 
 # Lowercase legal-name fragments für jeden Watchlist-Ticker. EINZIGE Quelle der
@@ -49,6 +51,10 @@ WATCHLIST_NAME_FRAGMENTS = {
     "SNOW":  "snowflake",
     "CRWD":  "crowdstrike",
     "ADBE":  "adobe",
+    "VST":   "vistra",
+    "CEG":   "constellation energy",
+    "GEV":   "ge vernova",
+    "ETN":   "eaton",
 }
 
 # SEC EDGAR: welche Filing-Typen einsammeln (8-K = Material Events, 4 = Insider,

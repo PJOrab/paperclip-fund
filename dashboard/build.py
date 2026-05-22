@@ -22,7 +22,7 @@ OUT_DEFAULT = os.environ.get("DASHBOARD_OUT", "/var/www/html/fund/index.html")
 
 # Sektor-Taxonomie (HED-32, CIO-approved 2026-05-21). Namen sind die stehende
 # Strategist-Referenz; in-universe Ticker stammen aus ingestion.watchlist.TICKERS.
-# S4/S5/S6 sind thematisch/out-of-universe → kein Ticker → Placeholder-Kachel.
+# S4/S6 bleiben out-of-universe (kein börsennotierter Pure-Play). S5 jetzt aktiv.
 SECTOR_TAXONOMY = [
     {"id": "S1", "name": "Compute & Semis",
      "tickers": ["NVDA", "AMD", "TSM", "ASML", "AVGO", "MU", "ARM", "SMCI",
@@ -34,7 +34,7 @@ SECTOR_TAXONOMY = [
     {"id": "S4", "name": "Models & Foundation",
      "tickers": [], "note": "Out-of-universe — kein börsennotierter Pure-Play"},
     {"id": "S5", "name": "Energy / Power / Infra",
-     "tickers": [], "note": "Watchlist-Erweiterung pending Board (HED-32)"},
+     "tickers": ["VST", "CEG", "GEV", "ETN"]},
     {"id": "S6", "name": "Robotics & Autonomy",
      "tickers": [], "note": "Out-of-universe — thematisch beobachtet"},
 ]
