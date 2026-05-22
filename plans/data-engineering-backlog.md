@@ -63,6 +63,11 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 15): **CNBC Tech RSS + TechRSSAdapter description enrichment**
+  (`ingestion/watchlist.py`, `ingestion/sources_aitech.py`). Added CNBC Technology feed (first-mover
+  on earnings reactions, analyst calls, M&A). TechRSSAdapter: extract `<description>`/`<summary>`
+  and append to item text (150-char truncation) so triage reasons about content not just headlines.
+  Bumped per-feed item limit 5→8 (6 feeds × 8 = 48 vs 30). Unified html.unescape(). Pushed: `0e0c780`.
 - 2026-05-22 — HED-78 (CIO-Loop Zyklus 18): **Fix prev-briefing window for Δ seit gestern**
   (`agents/run.py`). Cycle 17 bug: `_fetch_prev_briefing()` was returning the most recent
   done run (~30 min ago), making the delta section trivial. Fixed to query the 20-36h window
