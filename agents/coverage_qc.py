@@ -36,9 +36,9 @@ BIG_EVENT_PATTERNS = [
     # IPO / public market debut
     (r"\b(IPO|initial public offering|S-1|goes public|direct listing|SPAC|de-SPAC)\b",
      "IPO/S-1/listing", "high"),
-    # Funding rounds
-    (r"\b(Series [A-F]|seed round|raises \$[\d,]+|funding round|valuation of \$[\d,]+B"
-     r"|unicorn|raises [£€][\d,]+)\b",
+    # Funding rounds — \$[\d,.]+[BMK]? matches $4B, $400M, $1.5B, $1,000
+    (r"\b(Series [A-F]|seed round|raises \$[\d,.]+[BMKbmk]?|funding round"
+     r"|valuation of \$[\d,.]+[BMKbmk]?|unicorn|raises [£€][\d,.]+[BMKbmk]?)\b",
      "funding", "high"),
     # Regulatory / antitrust
     (r"\b(FTC|DOJ|antitrust|SEC charges|CFPB|regulatory action|fine of \$[\d,]+)\b",

@@ -100,10 +100,66 @@ def test_cross_check() -> None:
 
 
 # ---------------------------------------------------------------------------
+# classify_item tests (coverage_qc.py big-event heuristics)
+# ---------------------------------------------------------------------------
+
+def test_classify_item() -> None:
+    from agents.coverage_qc import classify_item
+
+    def labels(text: str) -> set[str]:
+        return {label for label, _prio in classify_item(text)}
+
+    # IPO / S-1
+    _check("IPO keyword matches IPO/S-1/listing",
+           "IPO/S-1/listing" in labels("Acme Inc. files S-1 for IPO on Nasdaq"))
+    _check("direct listing matches IPO/S-1/listing",
+           "IPO/S-1/listing" in labels("Stripe announces direct listing next month"))
+
+    # Funding
+    _check("Series B matches funding",
+           "funding" in labels("Startup raises Series B of $200M at $1B valuation"))
+    _check("raises $4B matches funding",
+           "funding" in labels("Anthropic raises $4B from Google"))
+    _check("raises $400M matches funding",
+           "funding" in labels("xAI raises $400M in Series C"))
+
+    # M&A
+    _check("acquires matches M&A",
+           "M&A" in labels("Microsoft acquires Inflection AI for $650M"))
+    _check("definitive agreement matches M&A",
+           "M&A" in labels("Companies sign definitive agreement for merger"))
+
+    # Regulatory
+    _check("FTC matches regulatory",
+           "regulatory" in labels("FTC opens antitrust probe into OpenAI"))
+    _check("SEC charges matches regulatory",
+           "regulatory" in labels("SEC charges Binance with securities violations"))
+
+    # Launch (product + launch verb)
+    _check("launches model matches launch",
+           "launch" in labels("Anthropic launches Claude 4 model with new capabilities"))
+
+    # Insider trade
+    _check("Form 4 matches insider_trade",
+           "insider_trade" in labels("Form 4: CEO open market purchase of 50k shares"))
+
+    # Earnings surprise
+    _check("beats estimates matches earnings_surprise",
+           "earnings_surprise" in labels("NVDA beats estimates by 15% on data center revenue"))
+    _check("guidance raised matches earnings_surprise",
+           "earnings_surprise" in labels("Apple guidance raised for Q3 on strong iPhone sales"))
+
+    # Clean text — no matches
+    _check("routine news has no big-event match",
+           classify_item("Analyst reiterates Hold rating on AAPL") == [])
+
+
+# ---------------------------------------------------------------------------
 
 def main() -> None:
     test_parse_json()
     test_cross_check()
+    test_classify_item()
     print("\nALL PIPELINE TESTS PASSED")
 
 
