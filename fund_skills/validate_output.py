@@ -24,19 +24,10 @@ def need(cond: bool, msg: str, errs: list[str]) -> None:
         errs.append(msg)
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--schema", required=True, choices=["triage", "analyst", "thesis", "devil"])
-    ap.add_argument("--file", default="-")
-    a = ap.parse_args()
-    raw = sys.stdin.read() if a.file == "-" else open(a.file).read()
-    try:
-        data = json.loads(raw)
-    except Exception as e:  # noqa: BLE001
-        fail([f"not valid JSON: {e}"])
+def validate(schema: str, data: dict) -> list[str]:
+    """Importable validator. Returns list of error strings (empty = valid)."""
     errs: list[str] = []
-
-    if a.schema == "triage":
+    if schema == "triage":
         need(isinstance(data.get("clusters"), list), "missing 'clusters' list", errs)
         for i, c in enumerate(data.get("clusters", []) or []):
             for k in ("title", "tickers", "category", "why", "importance"):
@@ -44,8 +35,7 @@ def main() -> None:
             need(c.get("category") in CATEGORIES, f"clusters[{i}] bad category", errs)
             need(isinstance(c.get("importance"), int) and 1 <= c.get("importance", 0) <= 5,
                  f"clusters[{i}] importance must be int 1-5", errs)
-
-    elif a.schema == "analyst":
+    elif schema == "analyst":
         need(isinstance(data.get("analyses"), list), "missing 'analyses' list", errs)
         for i, x in enumerate(data.get("analyses", []) or []):
             for k in ("title", "tickers", "read", "magnitude", "horizon",
@@ -56,8 +46,7 @@ def main() -> None:
             need(x.get("horizon") in {"days", "weeks", "quarters"}, f"analyses[{i}] bad horizon", errs)
             need(x.get("consensus_view") in {"aligned", "differentiated", "unclear"},
                  f"analyses[{i}] bad consensus_view", errs)
-
-    elif a.schema == "thesis":
+    elif schema == "thesis":
         need(isinstance(data.get("theses"), list), "missing 'theses' list", errs)
         for i, x in enumerate(data.get("theses", []) or []):
             for k in ("id", "tickers", "direction", "thesis", "bull_case",
@@ -70,15 +59,27 @@ def main() -> None:
                  f"theses[{i}] conviction must be 0.0-1.0", errs)
             need(not isinstance(conv, (int, float)) or conv >= 0.40,
                  f"theses[{i}] conviction {conv} below minimum tradeable floor 0.40", errs)
-
-    elif a.schema == "devil":
+    elif schema == "devil":
         need(isinstance(data.get("critiques"), list), "missing 'critiques' list", errs)
         for i, x in enumerate(data.get("critiques", []) or []):
             for k in ("id", "strongest_counter", "already_priced_in",
                       "falsification", "blind_spot", "verdict"):
                 need(k in x, f"critiques[{i}] missing '{k}'", errs)
             need(x.get("verdict") in {"agree", "caution", "reject"}, f"critiques[{i}] bad verdict", errs)
+    return errs
 
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--schema", required=True, choices=["triage", "analyst", "thesis", "devil"])
+    ap.add_argument("--file", default="-")
+    a = ap.parse_args()
+    raw = sys.stdin.read() if a.file == "-" else open(a.file).read()
+    try:
+        data = json.loads(raw)
+    except Exception as e:  # noqa: BLE001
+        fail([f"not valid JSON: {e}"])
+    errs = validate(a.schema, data)
     if errs:
         fail(errs)
     print(json.dumps({"valid": True}))

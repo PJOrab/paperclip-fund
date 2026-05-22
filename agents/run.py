@@ -20,6 +20,14 @@ from datetime import datetime, timezone, timedelta
 from ingestion.db import client
 from . import prompts as P
 from . import claude_cli as C
+from fund_skills.validate_output import validate as _validate
+
+
+def _check(schema: str, data: dict) -> None:
+    """Log schema violations; non-fatal so the pipeline doesn't die on a single bad field."""
+    errs = _validate(schema, data)
+    if errs:
+        _log(f"[validate/{schema}] WARNING — schema violations: {errs}")
 
 # Modell je Rolle — auf Wunsch alle auf Opus 4.7 ('opus' = neuestes Opus).
 MODEL = {"triage": "opus", "analyst": "opus",
@@ -65,18 +73,24 @@ def compute_triage(rows: list[dict]) -> list[dict]:
 
 
 def compute_analyst(clusters: list[dict]) -> dict:
-    return C.call_json(P.analyst_user(clusters), system=P.ANALYST_SYSTEM,
-                       model=MODEL["analyst"])
+    out = C.call_json(P.analyst_user(clusters), system=P.ANALYST_SYSTEM,
+                      model=MODEL["analyst"])
+    _check("analyst", out)
+    return out
 
 
 def compute_thesis(analyses: list[dict]) -> dict:
-    return C.call_json(P.thesis_user(analyses), system=P.THESIS_SYSTEM,
-                       model=MODEL["thesis"])
+    out = C.call_json(P.thesis_user(analyses), system=P.THESIS_SYSTEM,
+                      model=MODEL["thesis"])
+    _check("thesis", out)
+    return out
 
 
 def compute_devil(theses: list[dict]) -> dict:
-    return C.call_json(P.devil_user(theses), system=P.DEVIL_SYSTEM,
-                       model=MODEL["devil"])
+    out = C.call_json(P.devil_user(theses), system=P.DEVIL_SYSTEM,
+                      model=MODEL["devil"])
+    _check("devil", out)
+    return out
 
 
 def _fetch_prev_briefing() -> str | None:
