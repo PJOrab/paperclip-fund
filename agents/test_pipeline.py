@@ -149,6 +149,43 @@ def test_classify_item() -> None:
     _check("guidance raised matches earnings_surprise",
            "earnings_surprise" in labels("Apple guidance raised for Q3 on strong iPhone sales"))
 
+    # analyst_action (from Zyklus 38)
+    _check("upgrades to Buy matches analyst_action",
+           "analyst_action" in labels("Goldman Sachs upgrades NVDA to Buy, raises price target to $180"))
+    _check("raises price target matches analyst_action",
+           "analyst_action" in labels("JPMorgan raises price target for MSFT to $450"))
+
+    # exec_change (from Zyklus 38)
+    _check("CEO resigns matches exec_change",
+           "exec_change" in labels("Intel CEO Pat Gelsinger resigns after disappointing earnings"))
+    _check("CFO appointed matches exec_change",
+           "exec_change" in labels("ASML appoints new CFO effective Q2 2026"))
+
+    # quarterly_results (new Zyklus 42)
+    _check("Q1 revenue matches quarterly_results",
+           "quarterly_results" in labels(
+               "TSMC Reports Q1 2026 Revenue of NT$839.25 Billion, Up 41.6% Year-Over-Year"))
+    _check("reports quarterly earnings matches quarterly_results",
+           "quarterly_results" in labels(
+               "ASML reports quarterly earnings: net sales €7.7B, EPS €18.96"))
+    _check("fourth quarter results matches quarterly_results",
+           "quarterly_results" in labels(
+               "ARM Holdings fourth quarter results: revenue $1.24B, up 34% YoY"))
+    _check("Q4 EPS matches quarterly_results",
+           "quarterly_results" in labels(
+               "[EDGAR 6-K Foreign Issuer Report] TSM: Q4 2025 EPS beat (filed 2026-01-16)"))
+
+    # foreign_filing (new Zyklus 42)
+    _check("6-K matches foreign_filing",
+           "foreign_filing" in labels(
+               "[EDGAR 6-K Foreign Issuer Report] ASML Holding N.V.: plans acquisition (filed 2026-04-23)"))
+    _check("20-F matches foreign_filing",
+           "foreign_filing" in labels(
+               "[EDGAR 20-F Foreign Annual Report] TSM Taiwan: annual revenue FY2025 (filed 2026-02-20)"))
+    _check("domestic 8-K does not match foreign_filing",
+           "foreign_filing" not in labels(
+               "[EDGAR 8-K:Earnings Results] NVDA NVIDIA Corp: Q1 results (filed 2026-05-20)"))
+
     # Clean text — no matches (analyst_action now detected; use truly routine news)
     _check("routine news has no big-event match",
            classify_item("Apple store opens in new mall location next quarter") == [])

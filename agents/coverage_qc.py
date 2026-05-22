@@ -69,6 +69,19 @@ BIG_EVENT_PATTERNS = [
      r"|\b(appoint\w*|name\w*|hire\w*)\b.{0,60}\b(CEO|CFO|CTO|COO|president)\b"
      r"|\b(Exec Departure|Exec Appointment)\b",
      "exec_change", "high"),
+    # Quarterly / annual results — catches "Q1 2026 revenue", "reports first quarter results",
+    # "annual revenue of $X". Needed because TSM/ASML 6-Ks use plain reporting language
+    # ("revenue of NT$839B, up 41.6% YoY") without "beats/misses estimates" phrasing.
+    (r"\b(Q[1-4]\s+(?:fiscal\s+)?(?:20\d{2}\s+)?(?:results?|revenue|earnings|EPS)"
+     r"|(?:first|second|third|fourth)\s+quarter\s+(?:results?|revenue|earnings|EPS|report\w*)"
+     r"|(?:annual|full.year|full.?year)\s+(?:results?|revenue|earnings)"
+     r"|reports?\s+(?:Q[1-4]|quarterly|annual)\s+(?:results?|revenue|earnings))\b",
+     "quarterly_results", "high"),
+    # Foreign issuer periodic filings (6-K / 20-F) — any item from a foreign issuer
+    # (TSM, ASML, ARM) reporting quarterly revenue or an annual filing is high-signal.
+    # Catches: "[EDGAR 6-K Foreign Issuer Report]" and "[EDGAR 20-F Foreign Annual Report]"
+    (r"\[EDGAR (?:6-K|20-F) Foreign",
+     "foreign_filing", "high"),
 ]
 
 _compiled = [(re.compile(pat, re.IGNORECASE), label, prio)
