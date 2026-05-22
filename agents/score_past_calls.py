@@ -236,13 +236,14 @@ def as_markdown(records: list[dict]) -> str:
     if scored:
         correct = [r for r in scored if r.get("direction_correct") is True]
         incorrect = [r for r in scored if r.get("direction_correct") is False]
-        hit_rate = len(correct) / len(scored) * 100 if scored else 0
-        avg_cal = sum(r.get("cal_score", 0.5) for r in scored) / len(scored)
+        directional = [r for r in scored if r.get("direction_correct") is not None]
+        hit_rate = len(correct) / len(directional) * 100 if directional else 0
+        avg_cal = sum(r.get("cal_score", 0.5) for r in directional) / len(directional) if directional else 0
         avg_ret_long = (sum(r["return_pct"] for r in scored if r["direction"] == "long" and r["return_pct"] is not None)
                         / max(1, sum(1 for r in scored if r["direction"] == "long" and r["return_pct"] is not None)))
 
-        lines.append(f"**Scored calls:** {len(scored)} | "
-                     f"**Hit rate:** {hit_rate:.0f}% ({len(correct)}/{len(scored)}) | "
+        lines.append(f"**Scored calls:** {len(scored)} ({len(directional)} directional) | "
+                     f"**Hit rate:** {hit_rate:.0f}% ({len(correct)}/{len(directional)}) | "
                      f"**Avg calibration score:** {avg_cal:.2f} | "
                      f"**Avg long return:** {avg_ret_long:+.1f}%\n")
         lines.append("")
@@ -250,7 +251,8 @@ def as_markdown(records: list[dict]) -> str:
         lines.append("| Date | Thesis | Ticker | Dir | Conv | Entry | Now | Ret% | ✓ | Cal |")
         lines.append("|------|--------|--------|-----|------|-------|-----|------|---|-----|")
         for r in sorted(scored, key=lambda x: x["created_at"]):
-            chk = "✅" if r.get("direction_correct") else "❌"
+            dc = r.get("direction_correct")
+            chk = "✅" if dc is True else ("❌" if dc is False else "—")
             entry_s = f"${r['entry_price']:.2f}" if r["entry_price"] else "—"
             cur_s = f"${r['current_price']:.2f}" if r["current_price"] else "—"
             ret_s = f"{r['return_pct']:+.1f}%" if r["return_pct"] is not None else "—"
