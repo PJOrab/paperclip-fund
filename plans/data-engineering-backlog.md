@@ -63,6 +63,14 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-89 (DE-Loop Zyklus 30): **Triage item text limit: 300→400 chars for high-reliability sources**
+  (`agents/prompts.py`). Triage truncated all items to 300 chars regardless of source
+  reliability. High-reliability primary sources (SEC 8-K at rel=0.95, earnings_result
+  at 0.88, Fed/BLS at 0.90-0.92) extract 400 chars of content and previously lost the
+  final 100 chars in triage formatting. Items with rel >= 0.85 now get 400-char limit;
+  generic editorial/social items (rel < 0.85) stay at 300. Covers 9 high-reliability
+  source types. No new inputs needed — pure quality improvement on existing pipeline.
+  Pushed: `01fc685`.
 - 2026-05-22 — HED-89 (DE-Loop Zyklus 29): **Press wire adapter (BusinessWire + GlobeNewswire)**
   (`ingestion/sources_aitech.py`, `ingestion/watchlist.py`, `ingestion/adapters.py`).
   Zero press wire coverage existed — official company press releases (earnings releases,
