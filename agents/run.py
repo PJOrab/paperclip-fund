@@ -57,8 +57,10 @@ def compute_triage(rows: list[dict]) -> list[dict]:
     clusters = out.get("clusters", []) if isinstance(out, dict) else (out or [])
     for cl in clusters:  # Belege auflösen, damit nachgelagerte Stufen Kontext haben
         refs = cl.get("item_refs", []) or []
-        cl["evidence"] = [rows[i]["text"][:300] for i in refs
-                          if isinstance(i, int) and 0 <= i < len(rows)]
+        cl["evidence"] = [
+            rows[i]["text"][:(400 if (rows[i].get("reliability") or 0.0) >= 0.85 else 300)]
+            for i in refs if isinstance(i, int) and 0 <= i < len(rows)
+        ]
     return clusters
 
 
