@@ -418,14 +418,31 @@ THESIS_SYSTEM = (
 
 def thesis_user(analyses: list[dict]) -> str:
     import json
+    # Sort analyses before presenting to the thesis LLM so the highest-value signals
+    # appear first and the cap (if the list is long) drops the weakest tail.
+    # Priority: differentiated > aligned/unclear; then magnitude high > medium > low;
+    # then horizon days > weeks > quarters (near-term catalyst = better thesis anchor).
+    _cv_rank = {"differentiated": 0, "unclear": 1, "aligned": 2}
+    _mag_rank = {"high": 0, "medium": 1, "low": 2}
+    _hor_rank = {"days": 0, "weeks": 1, "quarters": 2}
+
+    def _sort_key(a: dict) -> tuple:
+        return (
+            _cv_rank.get(a.get("consensus_view", ""), 1),
+            _mag_rank.get(a.get("magnitude", ""), 1),
+            _hor_rank.get(a.get("horizon", ""), 1),
+        )
+
+    sorted_analyses = sorted(analyses, key=_sort_key)
     conv_scale = _read_asset("conviction_scale.md")
     scale_block = (
         "\n\nCONVICTION SCALE (canonical — apply to every score you assign):\n"
         + conv_scale + "\n"
     ) if conv_scale else ""
     return (
-        "Analyses (note consensus_view and differentiation per cluster):\n\n"
-        + json.dumps(analyses, ensure_ascii=False)
+        "Analyses (sorted: differentiated first, then high-magnitude, then short-horizon — "
+        "prioritize these for thesis formation):\n\n"
+        + json.dumps(sorted_analyses, ensure_ascii=False)
         + scale_block + "\n\n"
         "Return JSON:\n"
         '{"theses": [{"id": "short-slug", "tickers": [str], '
