@@ -1659,19 +1659,46 @@ class ShortInterestAdapter:
         return out
 
     def _fetch_one(self, ticker: str) -> dict | None:
-        url = (f"https://query2.finance.yahoo.com/v10/finance/quoteSummary/{ticker}"
-               "?modules=defaultKeyStatistics")
+        # Primary: yfinance info (more reliable than direct quoteSummary API call)
+        short_pct = None
+        shares_short = None
+        prior_shares = None
         try:
-            data = fetch_json(url, headers={"User-Agent": "Mozilla/5.0"})
-            if not data:
-                return None
-            stats = (data.get("quoteSummary") or {}).get("result") or []
-            if not stats:
-                return None
-            ks = stats[0].get("defaultKeyStatistics") or {}
-            short_pct = (ks.get("shortPercentOfFloat") or {}).get("raw")
-            shares_short = (ks.get("sharesShort") or {}).get("raw")
-            prior_shares = (ks.get("sharesShortPriorMonth") or {}).get("raw")
+            import yfinance as _yf
+            info = _yf.Ticker(ticker).info
+            raw_pct = info.get("shortPercentOfFloat")
+            if raw_pct is not None:
+                short_pct = float(raw_pct)
+            raw_ss = info.get("sharesShort")
+            if raw_ss is not None:
+                shares_short = int(raw_ss)
+            raw_pr = info.get("sharesShortPriorMonth")
+            if raw_pr is not None:
+                prior_shares = int(raw_pr)
+        except Exception:
+            pass
+        # Fallback: direct quoteSummary API
+        if short_pct is None:
+            url = (f"https://query2.finance.yahoo.com/v10/finance/quoteSummary/{ticker}"
+                   "?modules=defaultKeyStatistics")
+            try:
+                data = fetch_json(url, headers={"User-Agent": "Mozilla/5.0"})
+                if data:
+                    stats = (data.get("quoteSummary") or {}).get("result") or []
+                    if stats:
+                        ks = stats[0].get("defaultKeyStatistics") or {}
+                        raw = (ks.get("shortPercentOfFloat") or {}).get("raw")
+                        if raw is not None:
+                            short_pct = float(raw)
+                        raw_ss = (ks.get("sharesShort") or {}).get("raw")
+                        if raw_ss:
+                            shares_short = int(raw_ss)
+                        raw_pr = (ks.get("sharesShortPriorMonth") or {}).get("raw")
+                        if raw_pr:
+                            prior_shares = int(raw_pr)
+            except Exception:
+                pass
+        try:
             if short_pct is None:
                 return None
             if short_pct < self.MIN_SHORT_PCT:
