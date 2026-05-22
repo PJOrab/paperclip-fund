@@ -33,7 +33,14 @@ GITHUB_TOPICS = [
 GITHUB_CREATED_LOOKBACK_DAYS = 30
 
 # Hacker News (Algolia): Begriffe + Mindest-Punktzahl (Story-Relevanz)
-HN_QUERIES = ["AI", "LLM", "OpenAI", "Nvidia", "Anthropic", "GPU"]
+# Core AI terms + major watched-ticker companies not covered by generic AI terms.
+HN_QUERIES = [
+    "AI", "LLM", "OpenAI", "Nvidia", "Anthropic", "GPU",
+    # Hyperscaler / Big Tech — major positions not in core AI query set
+    "Microsoft", "Google", "Meta AI",
+    # AI-native companies on watchlist
+    "Palantir", "Mistral", "xAI",
+]
 HN_MIN_POINTS = 80
 
 # NewsAPI-Query (falls NEWSAPI_KEY gesetzt)
@@ -46,9 +53,13 @@ NEWSAPI_QUERY = (
 
 # Stabile AI/Tech-News-RSS-Feeds (failsafe — Fehler werden gefangen)
 TECH_RSS_FEEDS = {
-    "techcrunch_ai": "https://techcrunch.com/category/artificial-intelligence/feed/",
-    "arstechnica":   "https://feeds.arstechnica.com/arstechnica/index",
-    "theverge_ai":   "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
+    "techcrunch_ai":    "https://techcrunch.com/category/artificial-intelligence/feed/",
+    "arstechnica":      "https://feeds.arstechnica.com/arstechnica/index",
+    "theverge_ai":      "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
+    # Research-grade + financial-press additions (Zyklus 5): close the gap between
+    # tech-blog coverage and serious editorial/market coverage of our tickers.
+    "mit_tech_review":  "https://www.technologyreview.com/feed/",   # depth + AI policy
+    "wsj_tech":         "https://feeds.a.dj.com/rss/RSSWSJD.xml",  # financial press, market-moving
 }
 
 # Allgemeines RSS-Lookback-Fenster (Tage). Wird vom FundingNewsAdapter genutzt.
