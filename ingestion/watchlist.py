@@ -62,6 +62,10 @@ TECH_RSS_FEEDS = {
     # tech-blog coverage and serious editorial/market coverage of our tickers.
     "mit_tech_review":  "https://www.technologyreview.com/feed/",   # depth + AI policy
     "wsj_tech":         "https://feeds.a.dj.com/rss/RSSWSJD.xml",  # financial press, market-moving
+    # CNBC Tech (Zyklus 15): first-mover on earnings reactions, analyst calls, M&A — covers
+    # market-moving events (Workday beat, Anthropic/MSFT chip deal, SpaceX IPO) that
+    # pure-tech blogs and WSJ lag on. Standard RSS 2.0, no CDATA in titles.
+    "cnbc_tech":        "https://www.cnbc.com/id/19854910/device/rss/rss.html",
 }
 
 # Allgemeines RSS-Lookback-Fenster (Tage). Wird vom FundingNewsAdapter genutzt.

@@ -411,6 +411,16 @@ class GitHubTrendingAdapter:
 
 class TechRSSAdapter:
     """Kuratierte AI/Tech-News-RSS/Atom-Feeds (failsafe je Feed)."""
+
+    @staticmethod
+    def _rss_text(block: str, tag: str) -> str:
+        """Extract text from <tag> or <tag type="html">, strip CDATA then HTML tags."""
+        m = re.search(rf"<{tag}[^>]*>(.*?)</{tag}>", block, re.DOTALL)
+        if not m:
+            return ""
+        raw = m.group(1).replace("<![CDATA[", "").replace("]]>", "")
+        return html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+
     def fetch(self):
         m = _m()
         out = []
@@ -420,22 +430,22 @@ class TechRSSAdapter:
                 if not text:
                     continue
                 sep = "<item>" if "<item>" in text else "<entry>"
-                for block in text.split(sep)[1:6]:
-                    # Match <title> OR <title type="html"> (Atom feeds use attributes)
-                    t = re.search(r"<title[^>]*>(.*?)</title>", block, re.DOTALL)
-                    if not t:
-                        continue
-                    # Strip CDATA wrapper first (before HTML-tag strip, or CDATA is
-                    # treated as one big tag and the whole title disappears).
-                    raw = t.group(1).replace("<![CDATA[", "").replace("]]>", "")
-                    title = re.sub(r"<[^>]+>", "", raw)
-                    title = (title.replace("&amp;", "&").replace("&#039;", "'").strip())
+                for block in text.split(sep)[1:9]:  # 8 items/feed (was 5)
+                    title = self._rss_text(block, "title")
                     if not title:
                         continue
+                    # Include article description/summary when present — gives triage
+                    # enough context to distinguish a routine update from a market-mover.
+                    desc = self._rss_text(block, "description") or self._rss_text(block, "summary")
+                    if desc and len(desc) > 150:
+                        desc = desc[:147] + "..."
+                    item_text = f"[{name}] {title}"
+                    if desc:
+                        item_text = f"{item_text} — {desc}"
                     link = (re.search(r'<link[^>]*href="([^"]+)"', block)
                             or re.search(r"<link>(.*?)</link>", block))
                     out.append({
-                        "text": f"[{name}] {title}",
+                        "text": item_text[:400],
                         "source": "tech_news",
                         "url": link.group(1).strip() if link else None,
                         "reliability": W.SOURCE_RELIABILITY["tech_news"],
