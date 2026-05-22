@@ -1147,7 +1147,9 @@ function calibSvg(buckets){
           ? `<span class="rsi ${rsiCls}" title="${rsiTip}RSI14: ${t.rsi14}${t.rsi14>70?" — overbought":t.rsi14<30?" — oversold":""}">${t.rsi14}</span>`
           : "";
         const spark=t.spark?sparklineSvg(t.spark,56,22):"";
-        return `<div class="sec-row">${tkHtml}<span class="px">${px}</span>${chCell(t.change_pct)}${w52}${rsi}${spark}</div>`;
+        const cons=t.consensus;
+        const pt=cons&&cons.pt_mean&&t.price?(()=>{const up=((cons.pt_mean-t.price)/t.price*100);const sign=up>=0?"+":"";const cls=up>=10?"move-up":up<=-5?"move-dn":"muted";return `<span class="${cls} w52" title="Analyst PT: $${cons.pt_mean} · ${cons.analyst_count||'?'} analysts · rec=${cons.rec||'?'}${cons.fwd_eps?" · fwdEPS=$"+cons.fwd_eps:""}">${sign}${up.toFixed(0)}%▲</span>`})():"";
+        return `<div class="sec-row">${tkHtml}<span class="px">${px}</span>${chCell(t.change_pct)}${w52}${rsi}${pt}${spark}</div>`;
       }).join("");
     } else {
       body = `<div class="sec-ph">${esc(s.note||"Keine in-universe Ticker.")}</div>`;
