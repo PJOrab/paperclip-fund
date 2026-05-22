@@ -63,6 +63,16 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-89 (DE-Loop Zyklus 22): **Per-item-type reliability for 8-K filings**
+  (`ingestion/sources_aitech.py`). All 8-K items shared reliability=0.95 regardless of
+  content quality — a boilerplate Item 9.01 (exhibit attachment) competed with Item 2.02
+  (earnings) for the same triage cluster budget. Added `_8K_ITEM_RELIABILITY` dict (16 item
+  codes) and `_8k_item_reliability()` function. Extended `_extract_8k_text()` to return
+  `(snippet, item_num, label)` 3-tuple so `item_num` is available at the call site.
+  `EDGARAdapter.fetch()` applies the per-item override when present; falls back to base
+  `sec_8k` reliability for unlisted items. Effective ranges: Earnings/Acquisition/Change-of-
+  Control → 0.97; Reg FD → 0.85; Financial Statements attachment → 0.75. Form 4 / 13D/G
+  unaffected. Unit-tested: 4/4 cases correct. Pushed: `376ae54`.
 - 2026-05-22 — HED-89 (DE-Loop Zyklus 21): **8-K Item-type classification**
   (`ingestion/sources_aitech.py`). 8-K filings appeared as "[EDGAR 8-K] NVDA..."
   regardless of event type — triage could read "Item 2.02" but had no structured label
