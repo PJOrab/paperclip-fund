@@ -407,14 +407,20 @@ main:focus{outline:none}
   </details>
 
   <main id="main" tabindex="-1">
-  <h2>Letztes Briefing</h2>
+  <section aria-labelledby="h-briefing">
+  <h2 id="h-briefing">Letztes Briefing</h2>
   <div id="briefing" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><span class="skel skel-chip"></span><span class="skel skel-chip"></span><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:84%"></div><div class="skel skel-line" style="width:88%"></div></div></div>
+  </section>
 
-  <h2>Thesen-Track-Record <span id="trstand" class="tag"></span></h2>
+  <section aria-labelledby="h-trackrecord">
+  <h2 id="h-trackrecord">Thesen-Track-Record <span id="trstand" class="tag"></span></h2>
   <div id="trackrecord" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:60%"></div><div class="skel skel-line" style="width:75%"></div></div></div>
+  </section>
 
-  <h2>Sektor-Ansicht <span id="secstand" class="tag"></span></h2>
+  <section aria-labelledby="h-sectorview">
+  <h2 id="h-sectorview">Sektor-Ansicht <span id="secstand" class="tag"></span></h2>
   <div class="grid sectors" id="sectorview" aria-busy="true"><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div></div>
+  </section>
   </main>
 
   <details class="wf-details">
