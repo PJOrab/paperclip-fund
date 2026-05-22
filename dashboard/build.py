@@ -23,7 +23,9 @@ OUT_DEFAULT = os.environ.get("DASHBOARD_OUT", "/var/www/html/fund/index.html")
 def collect() -> dict:
     c = client()
     total = c.table("raw_items").select("id", count="exact").limit(1).execute().count
-    rows = c.table("raw_items").select("source,adapter").execute().data or []
+    # Source distribution from recent 2000 items only — fetching all rows is O(N) network cost.
+    rows = (c.table("raw_items").select("source,adapter")
+            .order("fetched_at", desc=True).limit(2000).execute().data or [])
     recent = (c.table("raw_items").select("source,text,url,fetched_at")
               .order("fetched_at", desc=True).limit(25).execute().data or [])
     runs = (c.table("ingestion_runs").select("*")
