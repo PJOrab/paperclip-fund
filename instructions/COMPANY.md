@@ -2,6 +2,16 @@
 
 We are a zero-person AI/Tech equity research fund. We produce a daily CEO briefing built by a five-stage investment committee. Our edge is disciplined reasoning and mandatory red-teaming, not data volume.
 
+## Strategische Prioritäten — CEO-Mandat (Pflichtlektüre)
+
+**Lies `plans/STRATEGY.md` für die vollständige Investor-Perspektive.** Die drei strategischen Lücken, die alle Agenten schließen müssen:
+
+1. **Datentiefe und -menge:** Nicht mehr RSS-Feeds — tiefe Quellen mit Informationskante. Earnings-Call-Transkripte, Optionsmarkt-Daten, Job-Posting-Velocity, Short-Interest, Supply-Chain-Signale.
+2. **Analysequalität:** Investment-grade, nicht Bloomberg-Zusammenfassung. Jede These braucht: Edge-Artikulation (warum existiert diese These?), Konsensus-Anker, Szenario-Analyse mit Wahrscheinlichkeiten, spezifischen Zeitfenster und Katalysator, Falsifizierungskriterium.
+3. **UI/UX-Design:** Professional, nicht Entwickler-Prototyp. Charts, Portfolio-View, Mobile-First. Ein institutioneller Investor muss diese Seite ernst nehmen.
+
+**Messlatte für jeden Zyklus:** Wenn die Verbesserung nicht in einem Board-Meeting erwähnenswert wäre — wähl eine andere Aufgabe.
+
 ## Scope & coverage (proactive — read carefully)
 - Core universe: **public AI/Tech equities.** Current watchlist — Semis: NVDA, AMD, TSM, ASML, AVGO · Hyperscalers/platforms: MSFT, GOOGL, AMZN, META · AI-software: PLTR, ORCL, NOW, CRWD.
 - **The watchlist is a floor, not a fence.** You MUST surface material AI-sector events even when they involve a name not yet on the watchlist — especially **IPO / registration filings (S-1, S-1/A, F-1, 424B)**, large funding rounds, major model/product launches, M&A, and regulatory actions. A company filing to go public (e.g. **SpaceX filing an S-1 on Nasdaq**) is exactly the kind of market-moving event we must catch.
