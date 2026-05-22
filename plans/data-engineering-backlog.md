@@ -63,6 +63,20 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-89 (DE-Loop Zyklus 33): **TechRSSAdapter freshness filter (RSS_LOOKBACK_DAYS)**
+  (`ingestion/sources_aitech.py`). TechRSSAdapter was the ONLY RSS adapter with no date
+  cutoff — every other RSS family (Funding/Energy/PressWire/Fed/BLS/Yahoo) already filters
+  by `RSS_LOOKBACK_DAYS`. Without it, stale feed items were ingested every 30-min cycle as
+  "fresh" (fetched_at=now), burning triage slots. Live isolation test surfaced the concrete
+  harm: **`wsj_tech` (feeds.a.dj.com/rss/RSSWSJD.xml) is frozen at Jan-2025** and was pumping
+  8 sixteen-month-old articles into raw_items every cycle — now correctly dropped. The 6 live
+  feeds (techcrunch_ai, arstechnica, theverge_ai, mit_tech_review, cnbc_tech, theregister)
+  keep all fresh items: 48 items, malformed=0. Items without a parseable date are kept
+  (coverage > precision, identical to FundingNewsAdapter). dedup tests still green; 17 adapters
+  build. **Follow-up noted:** `wsj_tech` is a dead/frozen feed and `wired_ai`
+  (wired.com/feed/tag/artificial-intelligence/latest/rss, added Zyklus 32) fetch-fails (None) —
+  both candidates for removal/replacement in a future cycle; the lookback fix neutralizes
+  wsj_tech's stale output regardless. Pushed: `7d7f216`.
 - 2026-05-22 — HED-89 (DE-Loop Zyklus 32): **The Register + Wired AI added to TECH_RSS_FEEDS**
   (`ingestion/watchlist.py`). TECH_RSS_FEEDS covered 6 feeds (TechCrunch AI, Ars Technica,
   The Verge AI, MIT Tech Review, WSJ Tech, CNBC Tech). Two editorial gaps remained:
