@@ -17,13 +17,18 @@ TICKERS = [
 
 # SEC EDGAR: welche Filing-Typen einsammeln (8-K = Material Events, 4 = Insider)
 EDGAR_FORMS = ["8-K", "4"]
-EDGAR_LOOKBACK_DAYS = 3
+# 3→5 days (Zyklus 14): SEC filings arrive Fri evening; Monday morning run
+# needs 5-day window to guarantee coverage. 3 days = Friday midnight cutoff
+# which may miss late-Friday Form 4s and 8-Ks (e.g. quarterly guidance updates).
+EDGAR_LOOKBACK_DAYS = 5
 
 # arXiv-Kategorien (AI/ML-Forschungsfront)
-# cs.RO added (Zyklus 8): embodied AI / robotics — NVDA Jetson, META embodied
-# AI, Figure AI (private watch). Distinct investment thesis, previously dark.
-ARXIV_CATEGORIES = ["cs.AI", "cs.LG", "cs.CL", "cs.CV", "cs.RO"]
-ARXIV_MAX = 30
+# cs.RO added (Zyklus 8): embodied AI / robotics.
+# cs.AR added (Zyklus 14): computer architecture — GPU micro-architecture,
+# AI accelerator design, memory systems (FlashAttention successors, custom
+# ASIC papers). Directly relevant to NVDA/AMD/Cerebras/Groq thesis.
+ARXIV_CATEGORIES = ["cs.AI", "cs.LG", "cs.CL", "cs.CV", "cs.RO", "cs.AR"]
+ARXIV_MAX = 35
 
 # GitHub: Themen für aufkommende AI-Projekte (zuletzt erstellt, nach Stars)
 GITHUB_TOPICS = [
