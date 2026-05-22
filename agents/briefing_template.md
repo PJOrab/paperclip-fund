@@ -11,7 +11,7 @@ Feedback nie zweimal geben müssen. Die CEO-Präferenzen schlagen diese Vorlage,
 falls etwas kollidiert.
 
 ## Harte Regeln (CEO-Standing-Prefs)
-- **Länge:** ≤ ~1200 Zeichen gesamt. Ein Handy-Screen, Lesezeit < 1 Minute.
+- **Länge:** ~1500–2000 Zeichen gesamt. Ein Handy-Screen, Lesezeit < 1 Minute.
   Im Zweifel den schwächsten Call streichen — NIE die Erklärungen.
 - **Calls:** MAX 2–3 Top-Calls. Lieber 2 starke als 3 mittelmäßige.
 - **Sprache:** Lage zuerst erklären (Leser hat den Tag nicht verfolgt), dann
