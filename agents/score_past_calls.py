@@ -270,6 +270,153 @@ def as_markdown(records: list[dict]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Dashboard-compatible JSON writer
+# ---------------------------------------------------------------------------
+
+def build_dashboard_payload(records: list[dict], runs_meta: list[dict] | None = None) -> dict:
+    """Convert flat scoring records into the track_record.json structure the dashboard expects.
+
+    Dashboard schema:
+      aggregate: {hit_rate, scored, total, too_early, calibration_bias}
+      theses: [{date, label, tickers, direction, conviction, baseline_price,
+                current_price, move_pct, verdict, devil}]
+      calibration_buckets: [{label, accuracy, n}]
+      earliest_score_date: str|None
+    """
+    from collections import defaultdict
+
+    # Group records by (run_id, thesis_id) → thesis-level view
+    groups: dict[tuple, list[dict]] = defaultdict(list)
+    for r in records:
+        groups[(r["run_id"], r["thesis_id"])].append(r)
+
+    # Build devil verdict lookup from runs_meta if available
+    devil_by_run_thesis: dict[tuple, dict] = {}
+    for run in (runs_meta or []):
+        rid = run["id"][:8]
+        da = (run.get("devils_advocate") or {})
+        for c in (da.get("critiques") if isinstance(da, dict) else []) or []:
+            devil_by_run_thesis[(rid, c.get("id", ""))] = {
+                "verdict": c.get("verdict", ""),
+                "note": (c.get("strongest_counter") or "")[:120],
+            }
+
+    theses_out = []
+    for (rid, th_id), recs in groups.items():
+        # Use the first record for metadata, aggregate prices across tickers
+        first = recs[0]
+        # If any ticker is scored, use the primary ticker's data
+        scored_recs = [r for r in recs if r.get("scored")]
+        primary = scored_recs[0] if scored_recs else first
+
+        # verdict: hit/miss/neutral/too_early
+        if not primary.get("scored"):
+            verdict = "too_early"
+        elif primary.get("direction_correct") is True:
+            verdict = "hit"
+        elif primary.get("direction_correct") is False:
+            verdict = "miss"
+        else:
+            verdict = "neutral"
+
+        theses_out.append({
+            "date": first["created_at"],
+            "label": first["thesis"][:80],
+            "tickers": list({r["ticker"] for r in recs}),
+            "direction": first["direction"],
+            "conviction": first["conviction"],
+            "baseline_price": primary.get("entry_price"),
+            "current_price": primary.get("current_price"),
+            "move_pct": primary.get("return_pct"),
+            "verdict": verdict,
+            "devil": devil_by_run_thesis.get((rid, th_id)),
+        })
+
+    # Aggregate stats
+    total = len(theses_out)
+    scored = [t for t in theses_out if t["verdict"] != "too_early"]
+    too_early = total - len(scored)
+    hits = [t for t in scored if t["verdict"] == "hit"]
+    directional = [t for t in scored if t["verdict"] in ("hit", "miss")]
+    hit_rate = len(hits) / len(directional) if directional else None
+
+    # Calibration bias: mean(conviction) for hits - mean(conviction) for misses
+    hit_convs = [t["conviction"] for t in scored if t["verdict"] == "hit"]
+    miss_convs = [t["conviction"] for t in scored if t["verdict"] == "miss"]
+    cal_bias = None
+    if hit_convs and miss_convs:
+        cal_bias = round(sum(hit_convs) / len(hit_convs) - sum(miss_convs) / len(miss_convs), 3)
+
+    # Calibration buckets: group by conviction tier
+    buckets: dict[str, dict] = {
+        "0.40-0.49": {"correct": 0, "total": 0},
+        "0.50-0.59": {"correct": 0, "total": 0},
+        "0.60-0.74": {"correct": 0, "total": 0},
+        "0.75+":     {"correct": 0, "total": 0},
+    }
+    for t in directional:
+        c = t["conviction"]
+        key = ("0.40-0.49" if c < 0.50 else
+               "0.50-0.59" if c < 0.60 else
+               "0.60-0.74" if c < 0.75 else "0.75+")
+        buckets[key]["total"] += 1
+        if t["verdict"] == "hit":
+            buckets[key]["correct"] += 1
+    cal_buckets = [
+        {"label": k, "accuracy": round(v["correct"] / v["total"], 2) if v["total"] else None, "n": v["total"]}
+        for k, v in buckets.items()
+    ]
+
+    date_list = sorted({t["date"] for t in theses_out if t["date"]})
+    earliest = date_list[0] if date_list else None
+
+    return {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "aggregate": {
+            "total": total,
+            "scored": len(scored),
+            "too_early": too_early,
+            "hit_rate": round(hit_rate, 3) if hit_rate is not None else None,
+            "calibration_bias": cal_bias,
+        },
+        "theses": sorted(theses_out, key=lambda t: t.get("date") or "", reverse=True),
+        "calibration_buckets": cal_buckets,
+        "earliest_score_date": earliest,
+    }
+
+
+def write_track_record(days: int = 60, out_path: str | None = None) -> str:
+    """Score past theses and write dashboard/track_record.json. Returns summary string."""
+    yf = _get_yfinance()
+    runs = load_runs(None, days)
+    records = run_scoring(runs, yf, include_pending=False)
+
+    # Load runs again with devils_advocate for devil verdict enrichment
+    try:
+        runs_with_devil = (
+            client().table("briefing_runs")
+            .select("id,devils_advocate")
+            .eq("status", "done")
+            .not_.is_("theses", "null")
+            .order("created_at", desc=False)
+            .limit(200)
+            .execute().data or []
+        )
+    except Exception:
+        runs_with_devil = []
+
+    payload = build_dashboard_payload(records, runs_with_devil)
+
+    if out_path is None:
+        out_path = str(Path(__file__).resolve().parent.parent / "dashboard" / "track_record.json")
+    Path(out_path).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    agg = payload["aggregate"]
+    return (f"track_record written: {agg['total']} theses, {agg['scored']} scored, "
+            f"hit_rate={agg['hit_rate']}, cal_bias={agg['calibration_bias']}")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 

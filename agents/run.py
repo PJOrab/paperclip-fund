@@ -253,6 +253,13 @@ def stage_editor():
         _qc_main()
     except Exception as qc_err:
         _log(f"[editor] coverage_qc non-fatal error: {qc_err}")
+    # Post-briefing track-record update: score past theses vs price action (best-effort)
+    try:
+        from agents.score_past_calls import write_track_record as _score
+        summary = _score(days=60)
+        _log(f"[editor] {summary}")
+    except Exception as score_err:
+        _log(f"[editor] score_past_calls non-fatal error: {score_err}")
 
 
 # ---------------------------------------------------------------------------
