@@ -63,6 +63,14 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-117 (CIO Zyklus 44): **coverage_qc: fix env-var loading + API defaults for production**
+  (`fund_skills/coverage_qc.py`, `.env.example`). Two silent failures in production ticket-filing:
+  (1) `CFG = dotenv_values(...)` ignored `PAPERCLIP_API_KEY` injected via SSH env → tickets never filed.
+  Fix: `CFG = {**dotenv_values(...), **os.environ}` so runtime vars override .env.
+  (2) `PAPERCLIP_API_BASE` defaulted to `http://127.0.0.1:3100` → wrong host in any non-local run.
+  Fix: default to `https://paperclip.hedgingalpha.com`.
+  (3) `PAPERCLIP_COMPANY_ID` now has hardcoded fallback so it never silently skips ticket creation.
+  Added Paperclip vars to `.env.example`. All 6 tests pass. Pushed: `694d16a`.
 - 2026-05-22 — HED-106 (DE-Loop Zyklus 42): **coverage_qc: quarterly_results + foreign_filing patterns**
   (`agents/coverage_qc.py`, `agents/test_pipeline.py`). `earnings_surprise` pattern required
   "beats/misses estimates" language — missed TSM-style 6-K quarterly reports ("revenue of NT$839B,
