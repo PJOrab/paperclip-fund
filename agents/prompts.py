@@ -332,6 +332,15 @@ ANALYST_SYSTEM = (
     "'quarters' = structural thesis without a near-term dated catalyst (capex trend, "
     "market share shift, valuation re-rating). When in doubt use 'weeks' not 'quarters' "
     "— 'quarters' signals no near-term trading opportunity. "
+    "KEY_FACTS QUALITY: key_facts must be a NON-EMPTY list of specific, verifiable data "
+    "points drawn directly from the feed items — not inferences or opinions. Each entry "
+    "should state a hard fact: a number, a quote, a filing detail, or a concrete event. "
+    "Good examples: 'NVDA Q1 datacenter revenue $18.4bn vs $17.1bn est (+7.6% beat)', "
+    "'CEO filed Form 4 open-market purchase $2.1M at $485 on 2026-05-20', "
+    "'S-1 filed 2026-05-21; projected revenue $420M, 85% gross margin'. "
+    "Bad examples: 'strong results', 'insider buying is positive', 'company doing well'. "
+    "If the evidence is thin (e.g. sec_broad_event with only company name), write exactly "
+    "what is known: '8-K filed 2026-05-21 by [Company]; content unknown pending full filing'. "
     "Output STRICT JSON only."
 )
 
@@ -352,7 +361,8 @@ def analyst_user(clusters: list[dict]) -> str:
         "Return JSON:\n"
         '{"analyses": [{"title": str, "tickers": [str], '
         '"read": "bullish|bearish|mixed", "magnitude": "low|medium|high", '
-        '"horizon": "days|weeks|quarters", "key_facts": [str], '
+        '"horizon": "days|weeks|quarters", '
+        '"key_facts": ["specific verifiable data point from the feed, e.g. \'NVDA Q1 DC revenue $18.4bn vs $17.1bn est\'"], '
         '"key_uncertainty": str, '
         '"consensus_view": "aligned|differentiated|unclear", '
         '"differentiation": "1 sentence: where our read diverges from what the market prices in, or empty string if aligned"}]}'
@@ -393,6 +403,15 @@ THESIS_SYSTEM = (
     "(i.e. you expect a materially different outcome from what the market is currently "
     "pricing). Set false for consensus-confirming calls even if the evidence is strong. "
     "This field controls briefing sort order — overuse dilutes the non-consensus signal. "
+    "CATALYSTS QUALITY: catalysts must be a NON-EMPTY list of specific, named events that "
+    "could move the stock within the thesis horizon — not vague phrases. Each catalyst "
+    "should name the event and, when known, the date or date range. "
+    "Good examples: 'NVDA Q2 earnings 2026-08-20 — datacenter guide the key read', "
+    "'Fed rate decision 2026-06-12 — dovish pivot would re-rate growth multiples', "
+    "'S-1 IPO pricing expected Q3 2026 — competitor market cap sets GOOGL moat valuation'. "
+    "Bad examples: 'earnings', 'market reaction', 'news'. "
+    "For structural 'quarters' theses without a known date: name the threshold event "
+    "instead: 'Next hyperscaler capex guidance update (Q2 earnings season, ~Aug 2026)'. "
     "Output STRICT JSON only."
 )
 
@@ -411,7 +430,8 @@ def thesis_user(analyses: list[dict]) -> str:
         "Return JSON:\n"
         '{"theses": [{"id": "short-slug", "tickers": [str], '
         '"direction": "long|short|pair", "thesis": "1-2 sentences", '
-        '"bull_case": [str], "bear_case": [str], "catalysts": [str], '
+        '"bull_case": [str], "bear_case": [str], '
+        '"catalysts": ["named event + date/window, e.g. \'NVDA Q2 earnings 2026-08-20 — DC guide key read\'"], '
         '"horizon": "days|weeks|quarters", "conviction": 0.0-1.0, '
         '"is_differentiated": true|false}]}'
     )
