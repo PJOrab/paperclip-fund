@@ -154,6 +154,8 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   Earnings-Überraschungen, Regulatorik. Jeder Treffer → Paperclip Coverage-Bug-Ticket
   (assigned DE, priority=high/medium). Wired in `stage_editor()` (best-effort, non-fatal)
   → läuft automatisch nach jedem Briefing-Run. Auf origin/main gepusht: `8002b4e..813aacb`.
+- 2026-05-22 — HED-77 (DE-Loop Zyklus 13): **Dead-adapter health check** (`ingestion/run_ingest.py`).
+  Adapters returning 0 items without a logged error now emit `⚠ DEAD ADAPTERS` warning and are written into the `errors` dict → stored in `ingestion_runs` DB row. Previously a dead feed blended in with the count table; now immediately visible in run output and queryable from DB. Pushed: `63e845e..ff249f1`. idea "Data quality / silent failure detection".
 - 2026-05-22 — HED-77 (DE-Loop Zyklus 12): **HN_MIN_POINTS 80→60** (`ingestion/watchlist.py`).
   Semiconductor ticker queries (TSMC/ASML/AMD, added Zyklus 11) rarely hit 80pts. Material stories at 60-79pts were being dropped at source. Correct tradeoff: over-capture at ingest + triage AI filters noise (already reliability-weighted since Zyklus 5). Pushed: `99d0e3a..501139a`. idea "Data quality / HN floor tuning".
 - 2026-05-22 — HED-77 (DE-Loop Zyklus 11): **HN queries: semiconductor + TSMC + ASML + AMD** (`ingestion/watchlist.py`).
