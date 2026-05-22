@@ -70,7 +70,7 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   `--patch` Modus: smoothet watchlist.py-Scores automatisch (Formel: 0.7*actual + 0.3*cfg,
   nur wenn Δ≥0.03 und ≥5 Samples). Gibt Markdown-Tabelle mit 🔴/🟡/🟢 Kalibrierungssignal.
   Syntax OK; Live-Test braucht /root-Supabase-Keys (deploy-bridge-abhängig).
-  Auf origin/main gepusht: `4ce855b..{commit}`.
+  Auf origin/main gepusht: `4ce855b..649bb6d`.
 - 2026-05-22 — HED-64 (DE-Loop Zyklus 13): **EarningsCalendar dedup bug fix + GITHUB_PUSH_LOOKBACK_DAYS**
   (`ingestion/sources_aitech.py`, `ingestion/watchlist.py`). EarningsCalendarAdapter used a bare
   `finance.yahoo.com/quote/{ticker}` URL as dedup key — same key every day, so the 2nd-day
