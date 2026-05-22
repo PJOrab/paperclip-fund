@@ -63,6 +63,15 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-106 (DE-Loop Zyklus 41): **Smart 6-K text extraction — skip SEC header, extract press release**
+  (`ingestion/sources_aitech.py`). Previous 6-K extraction fell back to first 400 chars of stripped
+  HTML, which always returned SEC boilerplate (Form 6-K header, address, Exchange Act references).
+  New `_extract_6k_text()`: (1) finds CFO/CEO signature block to locate end of header; (2) searches
+  after header for dateline pattern (e.g. "HSINCHU, Taiwan, May 15, 2026") marking embedded press
+  release; (3) exhibit-99.1 fallback: extracts exhibit title from Exhibits table for exhibit-only 6-Ks
+  (e.g. "ASML discloses 2026 AGM results"), trimmed at SIGNATURES; (4) final fallback for long tails.
+  Live-verified on 3 real filings: TSM Vanguard sale (embedded PR) ✓, TSM Q1 financial statements
+  (exhibit description) ✓, ASML AGM results (exhibit description) ✓. All tests pass. Pushed: `cba85db`.
 - 2026-05-22 — HED-106 (DE-Loop Zyklus 40): **SEC 6-K and 20-F for foreign issuers TSM/ASML/ARM**
   (`ingestion/watchlist.py`, `ingestion/sources_aitech.py`, `agents/prompts.py`).
   TSM (Taiwan), ASML (Netherlands), and ARM (Cayman) are foreign private issuers — they file
