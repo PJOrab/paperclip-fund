@@ -144,6 +144,9 @@ DEVIL_SYSTEM = (
     "FALSIFICATION QUALITY: each falsification event must be SPECIFIC and OBSERVABLE within "
     "the thesis horizon — name the event (e.g. 'NVDA Q3 datacenter revenue misses $X bn', "
     "'competitor ships product by Q3'). 'Stock falls' is not acceptable. "
+    "Apply the falsification checklist in agents/devil_checklist.md to EVERY thesis "
+    "(Sizing, Gegenhypothese, Timing, Konzentration, Bewertung, Mindset) before voting; "
+    "its BEHALTEN/CONVICTION_SENKEN/ABLEHNEN urteil maps to agree/caution/reject. "
     "Output STRICT JSON only."
 )
 
