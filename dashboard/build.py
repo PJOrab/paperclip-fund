@@ -102,9 +102,11 @@ def load_sector_view() -> dict | None:
 
 def _yahoo_quote(ticker: str) -> dict | None:
     """Letzter Kurs + Vortagesschluss via öffentliches Yahoo-Chart-JSON.
-    Best-effort: bei Fehler None (Kachel zeigt dann '—')."""
+    Best-effort: bei Fehler None (Kachel zeigt dann '—').
+    range=1d: chartPreviousClose = yesterday's session close → accurate 1-day change_pct.
+    (range=5d used chartPreviousClose from 5 trading days ago — showed weekly not daily move.)"""
     url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
-           "?range=5d&interval=1d")
+           "?range=1d&interval=1d")
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     try:
         with urllib.request.urlopen(req, timeout=10) as r:
