@@ -1035,7 +1035,9 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict],
         "🚪 <b>Exit wenn:</b> exit_trigger in 1 Halbsatz [omit if exit_trigger not present]\n"
         "👉 <b>Fazit:</b> 1 Zeile\n\n"
         "<b>👀 Beobachten</b>\n"
-        "• 1 Zeile\n\n"
+        "• TICKER — 1 Satz warum beobachten + konkrete Bedingung/Datum wann zum Call wird "
+        "(e.g. '• NVDA — DC guide über $6B = Long-Einstieg; Q2 earnings 28.08.'). "
+        "Include theses with conviction < 0.40 here. Max 2-3 entries.\n\n"
         + (
             "<b>📅 Earnings diese Woche</b> (nur wenn ≤7 Tage; max 4 Einträge)\n"
             "• TICKER — Datum\n\n"
