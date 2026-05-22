@@ -183,6 +183,8 @@ h2{font-size:var(--fs-h2);font-weight:600;text-transform:uppercase;letter-spacin
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:var(--s4)}
 .kpi{font-size:var(--fs-kpi);font-weight:700;font-variant-numeric:tabular-nums}
 .kpi small{font-size:var(--fs-h2);color:var(--mut);font-weight:400}
+/* pending KPI: not-yet-measurable figure reads as intentional, not broken/missing data */
+.kpi--pending{color:var(--mut);font-weight:400;cursor:help}
 .kpi-dl{margin:0;display:flex;flex-direction:column-reverse}
 .kpi-dl dt,.kpi-dl dd{margin:0}
 /* workflow collapsible de-emphasis */
@@ -694,12 +696,14 @@ function calibSvg(buckets){
   $("trackrecord").innerHTML = `<div class="grid cards" id="trkpi"></div><div id="trbody" style="margin-top:14px"></div>`;
   const biasTxt = a.calibration_bias==null ? "—"
     : (a.calibration_bias>=0?"+":"−")+Math.abs(a.calibration_bias*100).toFixed(0)+"%";
+  const pendTip="Wird nach der ersten gewerteten These berechnet";
   $("trkpi").innerHTML=[
-    ["Hit-Rate", pct(a.hit_rate)],
-    ["gewertet", scored+" / "+(a.total??"—")],
-    ["too early", a.too_early??"—"],
-    ['<abbr title="Kalibrierungs-Bias">Kalib.-Bias</abbr>', biasTxt]
-  ].map(([k,v])=>`<dl class="panel kpi-dl"><dt class="muted">${k}</dt><dd class="kpi">${v}</dd></dl>`).join("");
+    ["Hit-Rate", pct(a.hit_rate), a.hit_rate==null],
+    ["gewertet", scored+" / "+(a.total??"—"), false],
+    ["too early", a.too_early??"—", false],
+    ['<abbr title="Kalibrierungs-Bias">Kalib.-Bias</abbr>', biasTxt, a.calibration_bias==null]
+  ].map(([k,v,pending])=>`<dl class="panel kpi-dl"><dt class="muted">${k}</dt>`
+    +`<dd class="kpi${pending?" kpi--pending":""}"${pending?` title="${pendTip}" aria-label="${k.replace(/<[^>]+>/g,"")}: noch nicht verfügbar — ${pendTip}"`:""}>${v}</dd></dl>`).join("");
   // Body: happy-path table+chart, oder Empty/Too-Early-State
   const scoredTheses=(tr.theses||[]).filter(t=>t.verdict && t.verdict!=="too_early");
   if(scored>0 && scoredTheses.length){
@@ -854,6 +858,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
