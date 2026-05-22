@@ -214,6 +214,23 @@ def test_validate_output() -> None:
     errs = validate("analyst", empty_key_facts)
     _check("analyst empty key_facts caught", any("key_facts" in e for e in errs))
 
+    empty_uncertainty = {"analyses": [
+        {"title": "x", "tickers": [], "read": "bullish", "magnitude": "low",
+         "horizon": "weeks", "key_facts": ["fact"], "key_uncertainty": "",
+         "consensus_view": "aligned", "differentiation": ""}
+    ]}
+    errs = validate("analyst", empty_uncertainty)
+    _check("analyst empty key_uncertainty caught", any("key_uncertainty" in e for e in errs))
+
+    empty_differentiation = {"analyses": [
+        {"title": "x", "tickers": [], "read": "bullish", "magnitude": "low",
+         "horizon": "weeks", "key_facts": ["fact"], "key_uncertainty": "risk",
+         "consensus_view": "differentiated", "differentiation": ""}  # empty when differentiated
+    ]}
+    errs = validate("analyst", empty_differentiation)
+    _check("analyst empty differentiation when consensus_view=differentiated caught",
+           any("differentiation" in e for e in errs))
+
     # --- thesis ---
     good_thesis = {"theses": [
         {"id": "nvda-long", "tickers": ["NVDA"], "direction": "long",
