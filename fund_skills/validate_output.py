@@ -49,11 +49,13 @@ def main() -> None:
         need(isinstance(data.get("analyses"), list), "missing 'analyses' list", errs)
         for i, x in enumerate(data.get("analyses", []) or []):
             for k in ("title", "tickers", "read", "magnitude", "horizon",
-                      "key_facts", "key_uncertainty"):
+                      "key_facts", "key_uncertainty", "consensus_view", "differentiation"):
                 need(k in x, f"analyses[{i}] missing '{k}'", errs)
             need(x.get("read") in {"bullish", "bearish", "mixed"}, f"analyses[{i}] bad read", errs)
             need(x.get("magnitude") in {"low", "medium", "high"}, f"analyses[{i}] bad magnitude", errs)
             need(x.get("horizon") in {"days", "weeks", "quarters"}, f"analyses[{i}] bad horizon", errs)
+            need(x.get("consensus_view") in {"aligned", "differentiated", "unclear"},
+                 f"analyses[{i}] bad consensus_view", errs)
 
     elif a.schema == "thesis":
         need(isinstance(data.get("theses"), list), "missing 'theses' list", errs)
