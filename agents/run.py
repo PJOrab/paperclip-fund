@@ -271,9 +271,12 @@ def stage_editor():
             _log(f"[editor] reliability_audit:\n{_res.stdout.strip()[:800]}")
     except Exception as rel_err:
         _log(f"[editor] reliability_audit non-fatal error: {rel_err}")
-    # Post-briefing dashboard rebuild: embed fresh track_record + sector_view immediately (best-effort)
+    # Post-briefing sector-view refresh + dashboard rebuild (best-effort)
     try:
         import subprocess as _sp, sys as _sys
+        # Refresh live sector prices (30 tickers via Yahoo Finance); capped at 90s
+        _sp.run([_sys.executable, "-m", "dashboard.build", "--gen-sector-view"],
+                timeout=90, check=False)
         _sp.run([_sys.executable, "-m", "dashboard.build"], check=True, timeout=60)
         _log("[editor] dashboard rebuilt after briefing")
     except Exception as build_err:
