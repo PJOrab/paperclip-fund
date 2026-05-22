@@ -397,6 +397,27 @@ def test_dedup() -> None:
     _dedup_main()
 
 
+def test_triage_user_prompt() -> None:
+    """triage_user() must embed age= tag and age-guidance text."""
+    from datetime import datetime, timezone, timedelta
+    from agents.prompts import triage_user
+
+    now = datetime.now(timezone.utc)
+    items = [
+        {"source": "reuters", "reliability": 0.90, "text": "NVDA beat earnings",
+         "fetched_at": (now - timedelta(hours=2)).isoformat()},
+        {"source": "techcrunch", "reliability": 0.70, "text": "Old recap article",
+         "fetched_at": (now - timedelta(hours=22)).isoformat()},
+        {"source": "unknown_src", "reliability": None, "text": "No timestamp item"},
+    ]
+    prompt = triage_user(items, max_clusters=6)
+    _check("triage_user includes age=2h for fresh item", "age=2h" in prompt)
+    _check("triage_user includes age=22h for stale item", "age=22h" in prompt)
+    _check("triage_user handles missing fetched_at gracefully", "unknown_src" in prompt)
+    _check("triage_user includes age-guidance text", "age<4h" in prompt)
+    print("ok: triage_user age tags correct")
+
+
 def main() -> None:
     test_parse_json()
     test_cross_check()
@@ -404,6 +425,7 @@ def main() -> None:
     test_validate_output()
     test_watchlist_sync()
     test_dedup()
+    test_triage_user_prompt()
     print("\nALL PIPELINE TESTS PASSED")
 
 
