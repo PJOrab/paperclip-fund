@@ -8,6 +8,7 @@ wird über stdin übergeben (umgeht ARG_MAX bei großen Datenmengen).
 import json
 import re
 import subprocess
+import time
 
 # Reine Reasoning-Calls: alle Tools deaktivieren (kein agentisches Verhalten).
 DEFAULT_DENY = "Bash Edit Write Read WebFetch WebSearch Task NotebookEdit Glob Grep"
@@ -17,9 +18,17 @@ class ClaudeError(RuntimeError):
     pass
 
 
+_RETRY_ATTEMPTS = 2
+_RETRY_SLEEP = 30  # seconds between attempts
+
+
 def call(user_prompt: str, *, system: str, model: str = "sonnet",
          timeout: int = 300, max_budget_usd: float | None = None) -> str:
-    """Feuert einen Headless-Prompt und gibt den Text der Antwort zurück."""
+    """Feuert einen Headless-Prompt und gibt den Text der Antwort zurück.
+
+    Retries once on transient failures (timeout, non-zero exit, non-JSON envelope)
+    so a brief API hiccup does not kill an entire briefing run.
+    """
     cmd = [
         "claude", "-p",
         "--model", model,
@@ -30,23 +39,37 @@ def call(user_prompt: str, *, system: str, model: str = "sonnet",
     if max_budget_usd is not None:
         cmd += ["--max-budget-usd", str(max_budget_usd)]
 
-    try:
-        proc = subprocess.run(cmd, input=user_prompt, capture_output=True,
-                              text=True, timeout=timeout)
-    except subprocess.TimeoutExpired:
-        raise ClaudeError(f"claude timed out after {timeout}s")
+    last_err: ClaudeError | None = None
+    for attempt in range(1, _RETRY_ATTEMPTS + 1):
+        try:
+            proc = subprocess.run(cmd, input=user_prompt, capture_output=True,
+                                  text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            last_err = ClaudeError(f"claude timed out after {timeout}s (attempt {attempt})")
+            if attempt < _RETRY_ATTEMPTS:
+                time.sleep(_RETRY_SLEEP)
+            continue
 
-    if proc.returncode != 0:
-        raise ClaudeError(f"claude exit {proc.returncode}: {proc.stderr[:600]}")
+        if proc.returncode != 0:
+            last_err = ClaudeError(f"claude exit {proc.returncode} (attempt {attempt}): {proc.stderr[:600]}")
+            if attempt < _RETRY_ATTEMPTS:
+                time.sleep(_RETRY_SLEEP)
+            continue
 
-    try:
-        env = json.loads(proc.stdout)
-    except json.JSONDecodeError:
-        raise ClaudeError(f"non-JSON envelope: {proc.stdout[:600]}")
+        try:
+            env = json.loads(proc.stdout)
+        except json.JSONDecodeError:
+            last_err = ClaudeError(f"non-JSON envelope (attempt {attempt}): {proc.stdout[:600]}")
+            if attempt < _RETRY_ATTEMPTS:
+                time.sleep(_RETRY_SLEEP)
+            continue
 
-    if env.get("is_error"):
-        raise ClaudeError(f"claude reported error: {str(env.get('result'))[:400]}")
-    return env.get("result", "") or ""
+        if env.get("is_error"):
+            # is_error = hard error from Claude (bad model, auth, content policy) — don't retry
+            raise ClaudeError(f"claude reported error: {str(env.get('result'))[:400]}")
+        return env.get("result", "") or ""
+
+    raise last_err  # type: ignore[misc]
 
 
 def call_json(user_prompt: str, *, system: str, model: str = "sonnet", **kw):
