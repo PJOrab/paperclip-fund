@@ -384,6 +384,39 @@ def test_validate_output() -> None:
     errs = validate("thesis", empty_bear_case)
     _check("thesis empty bear_case caught", any("bear_case" in e for e in errs))
 
+    # --- thesis: scenarios + edge + exit_trigger ---
+    good_thesis_full = {"theses": [
+        {"id": "t1", "tickers": ["NVDA"], "direction": "long", "thesis": "AI capex structural break",
+         "bull_case": ["DC guide beat"], "bear_case": ["hyperscaler pause"],
+         "catalysts": ["Q2 DC guide"], "horizon": "weeks", "conviction": 0.55,
+         "is_differentiated": True, "edge": "Street uses cycle model; AI capex is structural",
+         "exit_trigger": "NVDA Q2 DC guide < $5.5B",
+         "scenarios": {
+             "bull": {"prob": 0.30, "trigger": "Q2 DC guide >$6B", "target": "$260 (+19%)"},
+             "base": {"prob": 0.50, "trigger": "In-line Q2", "target": "$218 (0%)"},
+             "bear": {"prob": 0.20, "trigger": "Hyperscaler capex pause signal", "target": "$180 (-17%)"},
+         }}
+    ]}
+    _check("thesis with scenarios+edge+exit_trigger passes", validate("thesis", good_thesis_full) == [])
+
+    bad_scenario_target = {"theses": [
+        {"id": "t1", "tickers": ["NVDA"], "direction": "long", "thesis": "t",
+         "bull_case": ["upside"], "bear_case": ["downside"], "catalysts": ["cat"],
+         "horizon": "weeks", "conviction": 0.50, "is_differentiated": False,
+         "scenarios": {"bull": {"prob": 0.40, "trigger": "beat", "target": ""}}}  # empty target
+    ]}
+    errs = validate("thesis", bad_scenario_target)
+    _check("thesis empty scenario target caught", any("target" in e for e in errs))
+
+    bad_scenario_prob = {"theses": [
+        {"id": "t1", "tickers": ["NVDA"], "direction": "long", "thesis": "t",
+         "bull_case": ["upside"], "bear_case": ["downside"], "catalysts": ["cat"],
+         "horizon": "weeks", "conviction": 0.50, "is_differentiated": False,
+         "scenarios": {"bull": {"prob": 1.5, "trigger": "beat"}}}  # prob > 1
+    ]}
+    errs = validate("thesis", bad_scenario_prob)
+    _check("thesis scenario prob > 1 caught", any("prob" in e for e in errs))
+
     # --- devil ---
     good_devil = {"critiques": [
         {"id": "nvda-long", "strongest_counter": "macro", "already_priced_in": "no",
