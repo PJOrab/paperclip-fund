@@ -299,6 +299,11 @@ def _edgar_form_meta(form):
         return "sec_10q", "10-Q Quarterly Report"
     if form == "10-K":
         return "sec_10k", "10-K Annual Report"
+    if form in ("6-K", "6-K/A"):
+        suffix = "/A (Amended)" if form.endswith("/A") else ""
+        return "sec_6k", f"6-K Foreign Issuer Report{suffix}"
+    if form == "20-F":
+        return "sec_20f", "20-F Foreign Annual Report"
     return "sec_8k", "8-K"
 
 
@@ -398,15 +403,38 @@ class EDGARAdapter:
                                 detail = snippet
                     except Exception:
                         pass
-                if form in ("10-Q", "10-K") and acc and doc:
+                if form in ("10-Q", "10-K", "20-F") and acc and doc:
                     # Extract MD&A / Results-of-Operations section (Item 2 for 10-Q,
-                    # Item 7 for 10-K) so triage sees revenue/guidance context, not just
-                    # the filing notice. Falls back to metadata desc on any error.
+                    # Item 7 for 10-K/20-F) so triage sees revenue/guidance context.
+                    # Falls back to metadata desc on any error.
                     try:
                         html_src = m.fetch_url(doc_url, headers=UA, timeout=30)
                         time.sleep(0.15)  # SEC: max 10 req/s
                         if html_src:
-                            snippet = _extract_10q_text(html_src, is_10k=(form == "10-K"))
+                            snippet = _extract_10q_text(
+                                html_src, is_10k=(form in ("10-K", "20-F"))
+                            )
+                            if snippet:
+                                detail = snippet
+                    except Exception:
+                        pass
+                if form in ("6-K", "6-K/A") and acc and doc:
+                    # 6-K filings from foreign issuers (TSM, ASML, ARM) are HTML
+                    # press releases or quarterly summaries. Reuse 8-K text extraction
+                    # which finds the first substantive paragraph. Falls back on error.
+                    try:
+                        html_src = m.fetch_url(doc_url, headers=UA, timeout=20)
+                        time.sleep(0.15)  # SEC: max 10 req/s
+                        if html_src:
+                            snippet, _, _ = _extract_8k_text(html_src)
+                            if not snippet:
+                                # 6-Ks often lack Item headers — grab first non-trivial paragraph
+                                txt = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", html_src)
+                                txt = re.sub(r"<[^>]+>", " ", txt)
+                                txt = _HTML_ENTITY_RE.sub(" ", txt)
+                                txt = re.sub(r"\s+", " ", txt).strip()
+                                if len(txt) > 50:
+                                    snippet = txt[:400]
                             if snippet:
                                 detail = snippet
                     except Exception:
