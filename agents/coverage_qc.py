@@ -182,27 +182,40 @@ def main() -> None:
               - timedelta(hours=window)).isoformat() if run_created else (
               datetime.now(timezone.utc) - timedelta(hours=window)).isoformat()
 
-    # Collect item indices referenced by triage
+    # Build covered-text set from triage evidence (text[:300] strings stored per cluster).
+    # item_refs are positional indices into the list passed to triage, NOT into the
+    # freshly-fetched raw list — so index matching against re-fetched items is always wrong.
+    # Evidence strings are the stable identity: match raw items by text prefix instead.
     triage = run.get("triage") or {}
     clusters = triage.get("clusters") if isinstance(triage, dict) else []
-    referenced_indices: set[int] = set()
+    covered_texts: set[str] = set()
+    covered_urls: set[str] = set()
     if clusters:
         for cl in clusters:
-            for idx in (cl.get("item_refs") or []):
-                if isinstance(idx, int):
-                    referenced_indices.add(idx)
+            for ev in (cl.get("evidence") or []):
+                if isinstance(ev, str) and ev:
+                    covered_texts.add(ev[:300])
+            # Also collect URLs from cluster items if stored
+            for ref_text in (cl.get("evidence") or []):
+                covered_texts.add((ref_text or "")[:300])
 
     # Fetch raw_items in window
     raw = get_raw_items(window, cutoff)
     total = len(raw)
-    covered_count = len(referenced_indices)
+
+    def _is_covered(item: dict) -> bool:
+        t = (item.get("text") or "")[:300]
+        if t and t in covered_texts:
+            return True
+        u = item.get("url") or ""
+        return bool(u and u in covered_urls)
+
+    covered_count = sum(1 for item in raw if _is_covered(item))
 
     print(f"[coverage_qc] run={rid[:8]} window={window}h items={total} "
-          f"covered_indices={covered_count}", file=sys.stderr)
+          f"covered={covered_count}", file=sys.stderr)
 
-    # Items not in any cluster reference — by position in list
-    # (triage uses positional item_refs into the rows list passed to it)
-    uncovered = [item for i, item in enumerate(raw) if i not in referenced_indices]
+    uncovered = [item for item in raw if not _is_covered(item)]
 
     # Classify uncovered items for big events
     PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
