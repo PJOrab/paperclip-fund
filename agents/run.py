@@ -37,7 +37,7 @@ def _log(msg: str) -> None:
 # ---------------------------------------------------------------------------
 # Reine Stufen-Funktionen (keine DB) — von DB-Stufen UND pipeline genutzt
 # ---------------------------------------------------------------------------
-def read_recent_items(window_hours: int, limit: int = 400) -> list[dict]:
+def read_recent_items(window_hours: int, limit: int = 600) -> list[dict]:
     cutoff = (datetime.now(timezone.utc) - timedelta(hours=window_hours)).isoformat()
     return (client().table("raw_items")
             .select("source,text,url,reliability,fetched_at")
@@ -45,9 +45,15 @@ def read_recent_items(window_hours: int, limit: int = 400) -> list[dict]:
             .limit(limit).execute().data or [])
 
 
+def _triage_max_clusters(n_items: int) -> int:
+    """Scale cluster count with feed size: ~1 per 20 items, floor 12, cap 20."""
+    return max(12, min(20, n_items // 20))
+
+
 def compute_triage(rows: list[dict]) -> list[dict]:
-    out = C.call_json(P.triage_user(rows), system=P.TRIAGE_SYSTEM,
-                      model=MODEL["triage"], timeout=240)
+    max_cl = _triage_max_clusters(len(rows))
+    out = C.call_json(P.triage_user(rows, max_clusters=max_cl), system=P.TRIAGE_SYSTEM,
+                      model=MODEL["triage"], timeout=300)
     clusters = out.get("clusters", []) if isinstance(out, dict) else (out or [])
     for cl in clusters:  # Belege auflösen, damit nachgelagerte Stufen Kontext haben
         refs = cl.get("item_refs", []) or []
@@ -109,7 +115,7 @@ def stage_triage(window: int):
     try:
         clusters = compute_triage(rows)
         _update(rid, {"triage": {"clusters": clusters}, "status": "analyst"})
-        _log(f"[triage] run {rid}: {len(clusters)} Cluster aus {len(rows)} Items")
+        _log(f"[triage] run {rid}: {len(clusters)} Cluster aus {len(rows)} Items (max_clusters={_triage_max_clusters(len(rows))})")
         print(rid)
     except Exception as e:
         _fail(rid, "triage", e)
