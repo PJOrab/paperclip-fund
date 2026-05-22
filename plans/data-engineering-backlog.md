@@ -63,6 +63,14 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-56 (DE-Loop Zyklus 1): **Dedup-Key stabilisiert** (`ingestion/adapters.py`).
+  `content_hash` war `md5(text[:200]+source)`; HN/GitHub-Text trägt eine volatile Metrik
+  (Punkte/Stars), die jeden 30-Min-Fetch hochtickt → gleiche Story bekam jeden Zyklus einen
+  neuen Hash und re-ingestierte 8-10x/Tag (siehe feed_noise_patterns). Neu: Key = kanonische
+  URL (Fragment/Tracking-Params raus, http/https gefaltet, trailing slash weg), sonst
+  normalisierter Text (Badge `[HN Npts]`/`[GitHub ★N]` gestrippt) + source. Test
+  `ingestion/test_dedup.py` (stdlib-only) grün. Auf origin/main gepusht: `ddb5a7a..6011ba7`
+  (commit `6011ba7`). Live erst nach Operator-Deploy-Fix (HED-34). idea „Data quality / dedup-tuning".
 - 2026-05-21 — HED-25: Thesis track-record scoring (score-past-calls) shipped (Pip). idea [c].
 - 2026-05-21 — HED-26: Funding/VC-news ingestion adapter (TechCrunch + Crunchbase RSS) shipped (DE).
 - 2026-05-21 — HED-27: Coverage-QC automation post-briefing gap-check shipped (Carl). idea [b] cont.
