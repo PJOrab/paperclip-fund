@@ -163,6 +163,30 @@ def _summarize_form4(xml: str) -> str:
     return f"{signal} — " + "; ".join(parts) + holds
 
 
+_8K_ITEM_RE = re.compile(r"Item\s+\d+\.\d+", re.IGNORECASE)
+_HTML_ENTITY_RE = re.compile(r"&#?\w+;")
+
+
+def _extract_8k_text(html_src: str, max_chars: int = 400) -> str:
+    """
+    Extract the first substantive Item paragraph from an 8-K HTML document.
+    Returns empty string on failure so the caller keeps the fallback notice.
+    """
+    try:
+        # drop embedded scripts and stylesheets before tag-stripping
+        txt = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", html_src)
+        txt = re.sub(r"<[^>]+>", " ", txt)
+        txt = _HTML_ENTITY_RE.sub(" ", txt)
+        txt = re.sub(r"\s+", " ", txt).strip()
+        m = _8K_ITEM_RE.search(txt)
+        if not m:
+            return ""
+        snippet = txt[m.start(): m.start() + max_chars].strip()
+        return snippet
+    except Exception:
+        return ""
+
+
 def _edgar_form_meta(form):
     """Map a SEC form type to (source_key, human label) for normalization."""
     if form == "4":
@@ -253,6 +277,19 @@ class EDGARAdapter:
                                 role = _f4_role(xml)
                                 who = owner + (f" ({role})" if role else "")
                                 detail = f"{who} — {summary}" if who else summary
+                    except Exception:
+                        pass
+                if form == "8-K" and acc and doc:
+                    # Fetch the primary 8-K HTML and extract the first Item paragraph
+                    # so triage sees substantive content, not just "8-K filed".
+                    # Falls back to the metadata description on any fetch/parse error.
+                    try:
+                        html_src = m.fetch_url(doc_url, headers=UA, timeout=20)
+                        time.sleep(0.15)  # SEC: max 10 req/s
+                        if html_src:
+                            snippet = _extract_8k_text(html_src)
+                            if snippet:
+                                detail = snippet
                     except Exception:
                         pass
                 out.append({
