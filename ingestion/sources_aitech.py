@@ -108,6 +108,15 @@ def _fmt_px(p: float) -> str:
     return f"${p:,.2f}" if p else "$0"
 
 
+def _fmt_dollar(v: float) -> str:
+    """Format a dollar amount as $2.1M / $271K / $50 for triage readability."""
+    if v >= 1_000_000:
+        return f"${v / 1_000_000:.1f}M"
+    if v >= 1_000:
+        return f"${v / 1_000:.0f}K"
+    return f"${v:.0f}"
+
+
 def _summarize_form4(xml: str) -> str:
     """
     Verdichtet eine Form-4-Ownership-XML zu einer bull/bear-lesbaren Zeile:
@@ -160,7 +169,14 @@ def _summarize_form4(xml: str) -> str:
         parts.append(f"{code} {meaning} {dirw}{_fmt_sh(sh)} @ {_fmt_px(vwap)}")
     post_final = next((p for *_x, p in reversed(txns) if p), "")
     holds = f"; holds {_fmt_sh(float(post_final))} after" if post_final else ""
-    return f"{signal} — " + "; ".join(parts) + holds
+
+    # Prepend total dollar volume for open-market transactions (P=buy, S=sell)
+    # so triage can immediately gauge significance without arithmetic.
+    om_codes = {"P", "S"} if has_buy or has_sell else set()
+    om_vol = sum(agg[c][1] for c in om_codes if c in agg)
+    dollar_tag = f" {_fmt_dollar(om_vol)}" if om_vol > 0 else ""
+
+    return f"{signal}{dollar_tag} — " + "; ".join(parts) + holds
 
 
 _8K_ITEM_RE = re.compile(r"Item\s+(\d+\.\d+)", re.IGNORECASE)
