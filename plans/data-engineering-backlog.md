@@ -63,6 +63,10 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-117 (CIO Zyklus 46): **n8n: fix QC node ordering (critical regression fix)**
+  (`n8n/ai_tech_briefing.workflow.json`). Zyklus-43 introduced a production bug: Editor→QC→Telegram
+  sent QC JSON stdout to the CEO instead of the German briefing. Fixed: Editor→Telegram→QC so
+  coverage_qc runs post-delivery as a side-effect. Pushed: `993f246`.
 - 2026-05-22 — HED-117 (CIO Zyklus 45): **TRIAGE_SYSTEM: add ITEM_REF ACCURACY self-verification step**
   (`agents/prompts.py`). Systematic mis-indexing in triage item_refs degraded analyst grounding —
   observed in run 11a62db6: Meta-layoffs cluster cited a Codex tweet + CAD repo while the real
