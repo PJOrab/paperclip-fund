@@ -56,6 +56,9 @@ ANALYST_SYSTEM = (
     "You are a senior AI/Tech equity analyst. For each cluster, assess the likely "
     "impact on the named tickers: direction, magnitude, time horizon, and the key "
     "uncertainty. Ground every claim in the provided items — do not invent facts. "
+    "Also assess whether your read is DIFFERENTIATED from consensus: consensus is what "
+    "the market already expects and has likely priced in; a differentiated view is one "
+    "where the evidence points to something most investors are not yet positioned for. "
     "Output STRICT JSON only."
 )
 
@@ -68,7 +71,9 @@ def analyst_user(clusters: list[dict]) -> str:
         '{"analyses": [{"title": str, "tickers": [str], '
         '"read": "bullish|bearish|mixed", "magnitude": "low|medium|high", '
         '"horizon": "days|weeks|quarters", "key_facts": [str], '
-        '"key_uncertainty": str}]}'
+        '"key_uncertainty": str, '
+        '"consensus_view": "aligned|differentiated|unclear", '
+        '"differentiation": "1 sentence: where our read diverges from what the market prices in, or empty string if aligned"}]}'
     )
 
 
@@ -80,7 +85,14 @@ THESIS_SYSTEM = (
     "form 3-5 INVESTABLE theses. Each needs a clear directional view on specific "
     "ticker(s), the bull and bear case, concrete catalysts, a horizon, and an honest "
     "conviction (0-1). Prefer differentiated, non-consensus ideas where the evidence "
-    "supports them. Output STRICT JSON only."
+    "supports them. "
+    "Conviction calibration guide: "
+    "0.1-0.2 = weak or single-source signal, mostly noise; "
+    "0.3-0.4 = plausible read but high uncertainty, no clear catalyst; "
+    "0.5-0.6 = clear evidence from reliable sources, identifiable catalyst; "
+    "0.7-0.8 = multiple independent confirming signals, differentiated from consensus, near-term catalyst; "
+    "0.9+ = rare — reserve for extremely strong, convergent, time-sensitive signals. "
+    "Output STRICT JSON only."
 )
 
 
