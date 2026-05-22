@@ -643,7 +643,7 @@ else{
       const c=cmap[t.id]||{};
       return `<div class="thesis"><div class="h"><span class="idx-badge" aria-label="These ${i+1}">${i+1}</span>${(t.tickers||[]).join(", ")}
         <span class="cd ${dirClass(t.direction)}">${t.direction||""}</span>
-        <span class="muted">· Conviction ${t.conviction??"—"}</span></div>
+        <span class="${t.conviction!=null?convCls(t.conviction):'muted'}" title="${t.conviction!=null?convTip(t.conviction):''}">· Conv ${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></div>
         <div style="margin-top:4px">${esc(t.thesis||"")}</div>
         ${c.strongest_counter?`<div class="devil"><span class="v">⚖️ Devil's Advocate (${c.verdict||"?"})</span><br>${esc(c.strongest_counter)}
         ${c.blind_spot?`<br><span class="muted">Blind spot: ${esc(c.blind_spot)}</span>`:""}</div>`:""}
@@ -858,6 +858,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
