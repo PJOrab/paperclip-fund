@@ -389,7 +389,9 @@ def write_track_record(days: int = 60, out_path: str | None = None) -> str:
     """Score past theses and write dashboard/track_record.json. Returns summary string."""
     yf = _get_yfinance()
     runs = load_runs(None, days)
-    records = run_scoring(runs, yf, include_pending=False)
+    # include_pending=True: fetch current prices even for too-early theses so the
+    # dashboard shows day-1/week-1 price moves while the horizon is still running.
+    records = run_scoring(runs, yf, include_pending=True)
 
     # Load runs again with devils_advocate for devil verdict enrichment
     try:
