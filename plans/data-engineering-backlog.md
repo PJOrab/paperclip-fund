@@ -63,6 +63,11 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-78 (CIO-Loop Zyklus 16): **Earnings-diese-Woche section in CEO briefing**
+  (`agents/prompts.py` `editor_user()`). Extracts earnings_calendar evidence from triage clusters
+  (regex on `[TICKER] Earnings in N days (YYYY-MM-DD)`) and pre-populates a
+  `## 📅 Earnings diese Woche` section (≤8 entries, ≤7-day items first). Section is omitted
+  entirely when no earnings items present. Char budget raised 1200→1400. Pushed: `d8ed9bb`.
 - 2026-05-22 — HED-64 (DE-Loop Zyklus 14): **coverage_qc positional-index bug fix**
   (`agents/coverage_qc.py`). `item_refs` in triage clusters are positional indices into
   the list passed to `compute_triage()` — NOT into coverage_qc's freshly-fetched DB list
