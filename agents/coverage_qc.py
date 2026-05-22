@@ -81,8 +81,8 @@ def get_run(run_id: str | None) -> dict | None:
     return data[0] if data else None
 
 
-def get_raw_items(window_hours: int, created_after: str) -> list[dict]:
-    cutoff = created_after  # use run's created_at as window start anchor
+def get_raw_items(created_after: str) -> list[dict]:
+    cutoff = created_after
     rows = (client().table("raw_items")
             .select("id,source,text,url,fetched_at,reliability")
             .gte("fetched_at", cutoff)
@@ -200,7 +200,7 @@ def main() -> None:
                 covered_texts.add((ref_text or "")[:300])
 
     # Fetch raw_items in window
-    raw = get_raw_items(window, cutoff)
+    raw = get_raw_items(cutoff)
     total = len(raw)
 
     def _is_covered(item: dict) -> bool:
