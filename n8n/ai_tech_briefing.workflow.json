@@ -146,7 +146,7 @@
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        1450,
+        1780,
         300
       ],
       "credentials": {
@@ -217,18 +217,18 @@
       "main": [
         [
           {
-            "node": "QC: Coverage-Gap-Check",
+            "node": "Telegram: CEO-Briefing",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "QC: Coverage-Gap-Check": {
+    "Telegram: CEO-Briefing": {
       "main": [
         [
           {
-            "node": "Telegram: CEO-Briefing",
+            "node": "QC: Coverage-Gap-Check",
             "type": "main",
             "index": 0
           }
