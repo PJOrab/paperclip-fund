@@ -560,10 +560,14 @@ class YahooFinanceTickerAdapter:
     Carries market-moving ticker news (earnings, analyst upgrades/downgrades,
     product announcements) that tech-blog adapters routinely miss.
     One request per ticker with polite 0.3s sleep. Dedup by URL across tickers.
+    Lookback = RSS_LOOKBACK_DAYS (default 3) to filter stale articles.
     """
+    LOOKBACK_DAYS = getattr(W, "RSS_LOOKBACK_DAYS", 3)
+
     def fetch(self):
         m = _m()
         out, seen = [], set()
+        cutoff = datetime.now(timezone.utc) - timedelta(days=self.LOOKBACK_DAYS)
         for ticker in W.YAHOO_FINANCE_TICKERS:
             try:
                 url = W.YAHOO_FINANCE_RSS.format(ticker=ticker)
@@ -585,6 +589,12 @@ class YahooFinanceTickerAdapter:
                     if key in seen:
                         continue
                     seen.add(key)
+                    # Skip stale articles; keep undated items (Coverage > Precision)
+                    date_m = re.search(r"<pubDate>(.*?)</pubDate>", block, re.DOTALL)
+                    if date_m:
+                        pub = _parse_rss_date(date_m.group(1).strip())
+                        if pub and pub < cutoff:
+                            continue
                     out.append({
                         "text": f"[{ticker}] {title}",
                         "source": "yahoo_finance",
