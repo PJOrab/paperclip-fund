@@ -63,6 +63,20 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-125 (DE Loop): **native stdlib `fetch_url`/`fetch_json` — hard macro-agent dependency removed**
+  (`ingestion/adapters.py`, `ingestion/sources_aitech.py`, `ingestion/test_dedup.py`, pushed `7072a16`).
+  Closes the NEXT-CYCLE CANDIDATE from HED-121: every HTTP adapter previously called `m.fetch_url`/`m.fetch_json`
+  on the macro module, so when the optional overlay was absent `_m()` returned `None` → `AttributeError` per
+  adapter (caught) → near-zero items, even though the fetches are generic HTTP. Added self-contained
+  `urllib`-based `fetch_url(url, headers?, timeout)` → text ("" on fail) and `fetch_json(...)` → parsed JSON
+  (None on fail), gzip-aware, **stdlib-only on purpose** (no `requests` runtime dep added to the live venv).
+  Routed all 20 adapter HTTP calls through them via sed; macro `_m()` retained ONLY for the genuinely
+  macro-gated bits (NewsAPI key getattr @1284, X/XGraphQLAdapter @1434, SOURCE_RELIABILITY overlay).
+  **Verified macro-ABSENT (this env has no ~/macro-agent):** `collect()` → 737 items across 14 adapters,
+  0 errors (only arXiv 0 = live source HTTP 429, transient); dedup (10) + watchlist-sync (6) tests pass;
+  new offline guardrail asserts `fetch_url`/`fetch_json` return ""/None without raising on an unreachable host.
+  Note: leftover `m = _m()` in ~13 adapters is now harmless (cached None, ignored) — left in place to avoid a
+  risky bulk edit; candidate cleanup for a later cycle.
 - 2026-05-22 — HED-121 (DE Loop): **gitignore `*.db/*.sqlite*` + independent e2e verification of macro-fallback robustness**
   (`.gitignore`, pushed `f15c4dd`). I independently diagnosed the same critical bug the CIO fixed in
   `c3cdc96` (Zyklus 49b, ~7 min earlier): `_load_macro()` raised `SystemExit` (a `BaseException`) when the
@@ -75,10 +89,10 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   ⚠ **LOOP-CONVERGENCE NOTE:** DE loop (HED-121) and CIO master loop (HED-117 Zyklus 49b) picked the SAME
   improvement within minutes — duplicated diagnosis effort. Going forward, before building, check
   `git log origin/main -5` for a just-shipped CIO fix on the same target.
-  📌 **NEXT-CYCLE CANDIDATE (not yet done):** when macro-agent is absent, 6 adapters (EDGAR, SEC Reg, SEC
-  Broad, arXiv, HN, GitHub) error on `m.fetch_url/fetch_json` — they depend on the macro module's shared
-  HTTP helpers. Move `fetch_url/fetch_json` into the fund repo so ingestion has NO hard macro-agent
-  dependency → fresh checkouts / CI fully runnable. MED.
+  ✅ **NEXT-CYCLE CANDIDATE — DONE in HED-125** (native `fetch_url/fetch_json`, pushed `7072a16`).
+  📌 **NEW NEXT-CYCLE CANDIDATE (LOW):** ~13 now-dead `m = _m()` assignments remain in `sources_aitech.py`
+  (adapters that used `m` only for fetching). Harmless (cached None) but dead; remove surgically — keep the
+  live ones at NewsAPI @1284 + X adapter @1434. Low value, do only when touching those adapters anyway.
 - 2026-05-22 — HED-117 (CIO Zyklus 49): **coverage_qc: buyback + dividend patterns; graceful macro fallback; better degraded-adapter alert**
   (`agents/coverage_qc.py`, `agents/prompts.py`, `ingestion/adapters.py`, `ingestion/run_ingest.py`).
   (1) Two new BIG_EVENT_PATTERNS (11→13 total): `buyback/high` catches "$50B share repurchase
