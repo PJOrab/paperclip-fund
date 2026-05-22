@@ -191,7 +191,7 @@ def test_validate_output() -> None:
     bad_horizon = {"analyses": [
         {"title": "x", "tickers": [], "read": "bullish", "magnitude": "low",
          "horizon": "months",  # invalid
-         "key_facts": [], "key_uncertainty": "x",
+         "key_facts": ["some fact"], "key_uncertainty": "x",
          "consensus_view": "aligned", "differentiation": ""}
     ]}
     errs = validate("analyst", bad_horizon)
@@ -200,11 +200,19 @@ def test_validate_output() -> None:
     bad_read = {"analyses": [
         {"title": "x", "tickers": [], "read": "neutral",  # invalid
          "magnitude": "low", "horizon": "weeks",
-         "key_facts": [], "key_uncertainty": "x",
+         "key_facts": ["some fact"], "key_uncertainty": "x",
          "consensus_view": "aligned", "differentiation": ""}
     ]}
     errs = validate("analyst", bad_read)
     _check("analyst bad read caught", any("read" in e for e in errs))
+
+    empty_key_facts = {"analyses": [
+        {"title": "x", "tickers": [], "read": "bullish", "magnitude": "low",
+         "horizon": "weeks", "key_facts": [], "key_uncertainty": "x",
+         "consensus_view": "aligned", "differentiation": ""}
+    ]}
+    errs = validate("analyst", empty_key_facts)
+    _check("analyst empty key_facts caught", any("key_facts" in e for e in errs))
 
     # --- thesis ---
     good_thesis = {"theses": [
@@ -217,7 +225,7 @@ def test_validate_output() -> None:
 
     below_floor = {"theses": [
         {"id": "x", "tickers": [], "direction": "long", "thesis": "t",
-         "bull_case": [], "bear_case": [], "catalysts": [], "horizon": "weeks",
+         "bull_case": [], "bear_case": [], "catalysts": ["cat1"], "horizon": "weeks",
          "conviction": 0.30,  # below 0.40 floor
          "is_differentiated": False}
     ]}
@@ -226,11 +234,19 @@ def test_validate_output() -> None:
 
     non_bool_diff = {"theses": [
         {"id": "x", "tickers": [], "direction": "long", "thesis": "t",
-         "bull_case": [], "bear_case": [], "catalysts": [], "horizon": "weeks",
+         "bull_case": [], "bear_case": [], "catalysts": ["cat1"], "horizon": "weeks",
          "conviction": 0.50, "is_differentiated": "yes"}  # string, not bool
     ]}
     errs = validate("thesis", non_bool_diff)
     _check("thesis is_differentiated non-bool caught", any("is_differentiated" in e for e in errs))
+
+    empty_catalysts = {"theses": [
+        {"id": "x", "tickers": [], "direction": "long", "thesis": "t",
+         "bull_case": [], "bear_case": [], "catalysts": [], "horizon": "weeks",
+         "conviction": 0.50, "is_differentiated": False}
+    ]}
+    errs = validate("thesis", empty_catalysts)
+    _check("thesis empty catalysts caught", any("catalysts" in e for e in errs))
 
     # --- devil ---
     good_devil = {"critiques": [

@@ -46,6 +46,8 @@ def validate(schema: str, data: dict) -> list[str]:
             need(x.get("horizon") in {"days", "weeks", "quarters"}, f"analyses[{i}] bad horizon", errs)
             need(x.get("consensus_view") in {"aligned", "differentiated", "unclear"},
                  f"analyses[{i}] bad consensus_view", errs)
+            need(isinstance(x.get("key_facts"), list) and len(x.get("key_facts", [])) > 0,
+                 f"analyses[{i}] key_facts must be a non-empty list", errs)
     elif schema == "thesis":
         need(isinstance(data.get("theses"), list), "missing 'theses' list", errs)
         for i, x in enumerate(data.get("theses", []) or []):
@@ -57,6 +59,8 @@ def validate(schema: str, data: dict) -> list[str]:
             need(isinstance(x.get("is_differentiated"), bool),
                  f"theses[{i}] is_differentiated must be bool", errs)
             need(x.get("horizon") in {"days", "weeks", "quarters"}, f"theses[{i}] bad horizon", errs)
+            need(isinstance(x.get("catalysts"), list) and len(x.get("catalysts", [])) > 0,
+                 f"theses[{i}] catalysts must be a non-empty list", errs)
             conv = x.get("conviction")
             need(isinstance(conv, (int, float)) and 0 <= conv <= 1,
                  f"theses[{i}] conviction must be 0.0-1.0", errs)
