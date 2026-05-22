@@ -463,12 +463,42 @@ DEVIL_SYSTEM = (
 )
 
 
-def devil_user(theses: list[dict]) -> str:
+def devil_user(theses: list[dict], analyses: list[dict] | None = None) -> str:
     import json
+    # Build ticker → key_uncertainty lookup from analyst output so the devil
+    # can target the specific weak points the analyst already identified.
+    uncertainty_by_ticker: dict[str, list[str]] = {}
+    for a in (analyses or []):
+        ku = a.get("key_uncertainty", "")
+        if ku:
+            for tk in (a.get("tickers") or []):
+                uncertainty_by_ticker.setdefault(tk, []).append(ku)
+
+    # Annotate each thesis with the analyst uncertainties for its tickers
+    annotated: list[dict] = []
+    for t in theses:
+        entry: dict = dict(t)
+        relevant = []
+        for tk in (t.get("tickers") or []):
+            relevant.extend(uncertainty_by_ticker.get(tk, []))
+        # Deduplicate while preserving order
+        seen_u: set[str] = set()
+        unique_u = [u for u in relevant if not (u in seen_u or seen_u.add(u))]  # type: ignore[func-returns-value]
+        if unique_u:
+            entry["_analyst_key_uncertainties"] = unique_u
+        annotated.append(entry)
+
     checklist = _read_asset("devil_checklist.md")
     checklist_block = f"\n\nFALSIFICATION CHECKLIST (apply to every thesis before voting):\n{checklist}\n" if checklist else ""
+    uncertainty_note = (
+        "\n\nNOTE: Each thesis above may include `_analyst_key_uncertainties` — the specific "
+        "weak points the upstream analyst flagged. These are your highest-priority attack vectors. "
+        "If present, your `strongest_counter` and `falsification` events MUST engage with at least "
+        "one of them. A critique that ignores a named uncertainty is incomplete.\n"
+    ) if any("_analyst_key_uncertainties" in t for t in annotated) else ""
     return (
-        "Theses to attack:\n\n" + json.dumps(theses, ensure_ascii=False)
+        "Theses to attack:\n\n" + json.dumps(annotated, ensure_ascii=False)
+        + uncertainty_note
         + checklist_block + "\n\n"
         "Return JSON:\n"
         '{"critiques": [{"id": "matching thesis id", '

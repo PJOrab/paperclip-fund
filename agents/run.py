@@ -112,8 +112,8 @@ def compute_thesis(analyses: list[dict]) -> dict:
     return out
 
 
-def compute_devil(theses: list[dict]) -> dict:
-    out = C.call_json(P.devil_user(theses), system=P.DEVIL_SYSTEM,
+def compute_devil(theses: list[dict], analyses: list[dict] | None = None) -> dict:
+    out = C.call_json(P.devil_user(theses, analyses=analyses), system=P.DEVIL_SYSTEM,
                       model=MODEL["devil"])
     _check("devil", out)
     return out
@@ -223,7 +223,10 @@ def stage_thesis():
 
 def stage_devil():
     _middle_stage("devil", "editor", "devil",
-                  lambda r: {"devils_advocate": compute_devil((r.get("theses") or {}).get("theses", []))})
+                  lambda r: {"devils_advocate": compute_devil(
+                      (r.get("theses") or {}).get("theses", []),
+                      analyses=(r.get("analysis") or {}).get("analyses", []),
+                  )})
 
 
 def stage_editor():
@@ -262,7 +265,7 @@ def pipeline(window: int):
     analyses = compute_analyst(clusters);            _log(f"[pipeline] analyst ok")
     theses = compute_thesis(analyses.get('analyses', analyses)); _log(f"[pipeline] thesis ok")
     th = theses.get("theses", theses) if isinstance(theses, dict) else theses
-    critiques = compute_devil(th);                   _log(f"[pipeline] devil ok")
+    critiques = compute_devil(th, analyses=analyses.get('analyses', [])); _log(f"[pipeline] devil ok")
     cr = critiques.get("critiques", critiques) if isinstance(critiques, dict) else critiques
     prev = _fetch_prev_briefing()
     md = compute_editor({"clusters": clusters}, th, cr, prev_briefing=prev)
