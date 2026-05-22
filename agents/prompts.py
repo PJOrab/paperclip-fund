@@ -453,21 +453,21 @@ EDITOR_SYSTEM = (
     "equity fund in GERMAN, for a smart but busy reader who did NOT follow the "
     "markets today. Output Telegram HTML (use <b>bold</b> for emphasis, plain text "
     "otherwise; NO Markdown # headings or ** — send_telegram uses parse_mode=HTML). "
-    # v3 precision rules (2026-05-22, HED-76 audit):
-    # 1. FIRST LINE = CHIEF INSIGHT. Lead with ONE decisive statement.
-    #    Each thesis block: what to do + why NOW in one sentence.
-    # 2. EVERY THESIS must include a price target OR conviction delta (e.g.
-    #    'Conviction hoch von 0,55 auf 0,68'). Conviction number alone is not enough.
-    #    If neither is available, drop the thesis rather than publish unanchored call.
-    # 3. DEVIL'S ADVOCATE must be explicitly adjudicated: end every ⚖️ block with
-    #    '→ Caution berücksichtigt, Conviction hält' OR '→ Conviction reduziert auf X'
-    #    OR '→ Devil kippt Call: gestrichen'. A REJECT verdict coexisting with a LONG
-    #    call in the same block is a contradiction — resolve or drop the call.
-    # 4. TOTAL LENGTH ~1500-2000 Zeichen (CEO preference, ceo_preferences.md). MAX 2-3 top calls; prefer 2 strong over 3.
-    #    Drop the weakest call, NEVER the explanations.
-    # 5. DEDUP: same argument in multiple blocks → keep in strongest context only.
-    # 6. NON-CONSENSUS FIRST: theses marked is_differentiated=true are pre-sorted to
-    #    the top. Prefer these as top calls; consensus repeats go to Beobachten.
+    "PRECISION RULES (mandatory — apply to every briefing): "
+    "1. FIRST LINE = CHIEF INSIGHT. Lead with ONE decisive statement. "
+    "Each thesis block: what to do + why NOW in one sentence. "
+    "2. EVERY THESIS must include a price target OR conviction delta (e.g. "
+    "'Conviction hoch von 0,55 auf 0,68'). Conviction number alone is not enough. "
+    "If neither is available, drop the thesis rather than publish unanchored call. "
+    "3. DEVIL'S ADVOCATE must be explicitly adjudicated: end every ⚖️ block with "
+    "'→ Caution berücksichtigt, Conviction hält' OR '→ Conviction reduziert auf X' "
+    "OR '→ Devil kippt Call: gestrichen'. A REJECT verdict coexisting with a LONG "
+    "call in the same block is a contradiction — resolve or drop the call. "
+    "4. TOTAL LENGTH ~1500-2000 Zeichen. MAX 2-3 top calls; prefer 2 strong over 3. "
+    "Drop the weakest call, NEVER the explanations. "
+    "5. DEDUP: same argument in multiple blocks → keep in strongest context only. "
+    "6. NON-CONSENSUS FIRST: theses marked is_differentiated=true are pre-sorted to "
+    "the top. Prefer these as top calls; consensus repeats go to Beobachten. "
     "For EACH top call: 1 sentence recommendation + conviction delta, "
     "⚖️ Devil in 1 line + explicit adjudication ('→ …'), 👉 Fazit in 1 line. "
     "STANDING CEO PREFERENCES (agents/ceo_preferences.md wins on conflict): "
