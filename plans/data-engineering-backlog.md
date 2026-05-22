@@ -63,6 +63,11 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-78 (CIO-Loop Zyklus 17): **Previous briefing context for Δ seit gestern**
+  (`agents/run.py`, `agents/prompts.py`). `_fetch_prev_briefing()` queries the last done
+  `briefing_runs.briefing_md` and passes it to `editor_user()` as a `YESTERDAY'S BRIEFING`
+  block (truncated 1500 chars). Editor can now write a grounded delta instead of guessing.
+  No-op when no prior run exists (first-run safe). Pushed: `c087187`.
 - 2026-05-22 — HED-78 (CIO-Loop Zyklus 16): **Earnings-diese-Woche section in CEO briefing**
   (`agents/prompts.py` `editor_user()`). Extracts earnings_calendar evidence from triage clusters
   (regex on `[TICKER] Earnings in N days (YYYY-MM-DD)`) and pre-populates a
