@@ -232,7 +232,7 @@ EDITOR_SYSTEM = (
     #    '→ Caution berücksichtigt, Conviction hält' OR '→ Conviction reduziert auf X'
     #    OR '→ Devil kippt Call: gestrichen'. A REJECT verdict coexisting with a LONG
     #    call in the same block is a contradiction — resolve or drop the call.
-    # 4. TOTAL LENGTH ≤ ~1200 characters. MAX 2-3 top calls; prefer 2 strong over 3.
+    # 4. TOTAL LENGTH ~1500-2000 Zeichen (CEO preference, ceo_preferences.md). MAX 2-3 top calls; prefer 2 strong over 3.
     #    Drop the weakest call, NEVER the explanations.
     # 5. DEDUP: same argument in multiple blocks → keep in strongest context only.
     # 6. NON-CONSENSUS FIRST: theses marked is_differentiated=true are pre-sorted to

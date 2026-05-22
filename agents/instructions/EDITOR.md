@@ -5,7 +5,7 @@
 ## Output format
 
 - Language: German
-- Target length: ≤ 1,200 characters (Telegram-safe)
+- Target length: ~1,500–2,000 characters (CEO preference; Telegram-safe up to 4,096 chars)
 - Format: Markdown, Telegram HTML-compatible (bold/italic via `*`/`_`)
 - Start: one decisive insight line as heading — no preamble
 - Structure per top call:
