@@ -43,7 +43,8 @@ SECTOR_TAXONOMY = [
 def collect() -> dict:
     c = client()
     total = c.table("raw_items").select("id", count="exact").limit(1).execute().count
-    rows = c.table("raw_items").select("source,adapter").execute().data or []
+    rows = (c.table("raw_items").select("source,adapter")
+            .order("fetched_at", desc=True).limit(2000).execute().data or [])
     recent = (c.table("raw_items").select("source,text,url,fetched_at")
               .order("fetched_at", desc=True).limit(25).execute().data or [])
     runs = (c.table("ingestion_runs").select("*")
@@ -325,6 +326,10 @@ abbr[title]{text-decoration:none;cursor:help}
   .tr-tbl td{display:flex;justify-content:space-between;gap:var(--s3);padding:2px 0;border:0;text-align:right}
   .tr-tbl .num{text-align:right}
   .tr-tbl .dlabel{display:inline-block;min-width:90px;vertical-align:top}
+  /* sticky calls-strip: trade signals stay in view while scrolling briefing text */
+  .calls-strip{position:sticky;top:0;z-index:20;background:var(--bg);
+    padding:var(--s2) 0;margin-bottom:var(--s3);
+    border-bottom:1px solid var(--line)}
 }
 /* skip-to-content link: bypass plumbing/workflow chrome (WCAG 2.4.1 Bypass Blocks) */
 .skip-link{position:absolute;left:var(--s4);top:-48px;z-index:100;
