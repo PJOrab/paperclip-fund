@@ -234,11 +234,12 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .foot{color:var(--mut);font-size:var(--fs-cap);margin-top:var(--s6);text-align:center}
 /* track-record (HED-29) */
 .pill--neutral{background:rgba(138,160,189,.12);color:var(--mut);border:1px solid var(--line)}
-.tr-tbl{display:grid;grid-template-columns:auto 1.4fr auto auto 1.3fr auto auto;
+.tr-tbl{display:grid;grid-template-columns:auto 1.4fr auto auto 1.3fr auto auto;border-collapse:collapse;width:100%;
   gap:0 var(--s3);font-size:var(--fs-h2);align-items:center}
-.tr-tbl .th{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.05em;color:var(--mut);
+.tr-tbl thead,.tr-tbl tbody,.tr-tbl tr{display:contents}
+.tr-tbl th{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.05em;color:var(--mut);
   padding-bottom:var(--s2);border-bottom:1px solid var(--line)}
-.tr-tbl .cell{padding:var(--s2) 0;border-bottom:1px solid var(--line)}
+.tr-tbl td{padding:var(--s2) 0;border-bottom:1px solid var(--line)}
 .tr-tbl .num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
 .tr-tbl .dlabel{display:none;color:var(--mut);font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.04em}
 .tr-lbl .t{font-weight:600}.tr-lbl .tk{color:var(--mut);font-size:var(--fs-micro)}
@@ -312,9 +313,10 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .two-col{grid-template-columns:1fr}
   .flow{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tr-tbl{display:block}
-  .tr-tbl .th{display:none}
-  .tr-tbl .row{display:block;padding:var(--s3) 0;border-bottom:1px solid var(--line)}
-  .tr-tbl .cell{display:flex;justify-content:space-between;gap:var(--s3);padding:2px 0;border:0;text-align:right}
+  .tr-tbl thead{display:none}
+  .tr-tbl tbody,.tr-tbl tr{display:block}
+  .tr-tbl tr{padding:var(--s3) 0;border-bottom:1px solid var(--line)}
+  .tr-tbl td{display:flex;justify-content:space-between;gap:var(--s3);padding:2px 0;border:0;text-align:right}
   .tr-tbl .num{text-align:right}
   .tr-tbl .dlabel{display:inline-block;min-width:90px;vertical-align:top}
 }
@@ -599,20 +601,21 @@ function calibSvg(buckets){
     const order={miss:0,hit:1,neutral:2,too_early:3};
     const rows=scoredTheses.slice().sort((x,y)=>
       (order[x.verdict]-order[y.verdict])||((y.conviction||0)-(x.conviction||0)));
-    let tbl='<div class="tr-tbl">'+head.map(h=>`<div class="th">${h}</div>`).join("");
+    let tbl=`<table class="tr-tbl" aria-label="Thesen Track-Record"><thead><tr>${
+      head.map(h=>`<th scope="col">${h}</th>`).join("")}</tr></thead><tbody>`;
     tbl+=rows.map(t=>{
       const dev=t.devil?`<span class="devsig" title="⚖ Devil (${esc(t.devil.verdict||"?")}): ${esc(t.devil.note||"")}">⚖</span>`:"";
       const kurs=t.baseline_price!=null?`${t.baseline_price}${t.current_price!=null?" → "+t.current_price:""}`:"—";
-      return `<div class="row" style="display:contents">
-        <div class="cell num"><span class="dlabel">Datum </span>${esc(t.date||"—")}</div>
-        <div class="cell tr-lbl"><span class="dlabel">These </span><span class="t">${esc(t.label||"")}</span> <span class="tk">${(t.tickers||[]).map(tk=>`<a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(tk)}" target="_blank" rel="noopener">${esc(tk)}</a>`).join(", ")}</span></div>
-        <div class="cell"><span class="dlabel">Richtung </span><span class="dir ${dirClass(t.direction)}">${esc(t.direction||"")}</span></div>
-        <div class="cell num"><span class="dlabel">Conviction </span><span class="${convCls(t.conviction)}">${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></div>
-        <div class="cell num"><span class="dlabel">Kurs </span>${esc(kurs)}</div>
-        <div class="cell num"><span class="dlabel">Move </span>${moveCell(t.move_pct)}</div>
-        <div class="cell"><span class="dlabel">Verdikt </span>${verdictPill(t.verdict)}${dev}</div>
-      </div>`;}).join("");
-    tbl+='</div>';
+      return `<tr>
+        <td class="num"><span class="dlabel">Datum </span>${esc(t.date||"—")}</td>
+        <td class="tr-lbl"><span class="dlabel">These </span><span class="t">${esc(t.label||"")}</span> <span class="tk">${(t.tickers||[]).map(tk=>`<a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(tk)}" target="_blank" rel="noopener">${esc(tk)}</a>`).join(", ")}</span></td>
+        <td><span class="dlabel">Richtung </span><span class="dir ${dirClass(t.direction)}">${esc(t.direction||"")}</span></td>
+        <td class="num"><span class="dlabel">Conviction </span><span class="${convCls(t.conviction)}">${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></td>
+        <td class="num"><span class="dlabel">Kurs </span>${esc(kurs)}</td>
+        <td class="num"><span class="dlabel">Move </span>${moveCell(t.move_pct)}</td>
+        <td><span class="dlabel">Verdikt </span>${verdictPill(t.verdict)}${dev}</td>
+      </tr>`;}).join("");
+    tbl+=`</tbody></table>`;
     $("trbody").innerHTML=`<div class="grid two-col">
       <div class="panel">${tbl}</div>
       <div class="panel"><div class="muted" style="margin-bottom:8px">Conviction-Kalibrierung</div>
