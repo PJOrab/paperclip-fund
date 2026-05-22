@@ -63,6 +63,10 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-78 (CIO-Loop Zyklus 18): **Fix prev-briefing window for Δ seit gestern**
+  (`agents/run.py`). Cycle 17 bug: `_fetch_prev_briefing()` was returning the most recent
+  done run (~30 min ago), making the delta section trivial. Fixed to query the 20-36h window
+  (yesterday's briefing); falls back to any run >4h old. Pushed: `0013660`.
 - 2026-05-22 — HED-78 (CIO-Loop Zyklus 17): **Previous briefing context for Δ seit gestern**
   (`agents/run.py`, `agents/prompts.py`). `_fetch_prev_briefing()` queries the last done
   `briefing_runs.briefing_md` and passes it to `editor_user()` as a `YESTERDAY'S BRIEFING`
