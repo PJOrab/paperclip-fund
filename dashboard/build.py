@@ -32,18 +32,24 @@ def collect() -> dict:
             .order("started_at", desc=True).limit(1).execute().data or [])
     briefing = None
     briefing_history: list[dict] = []
+    thesis_calls: list[dict] = []
     try:
         b = (c.table("briefing_runs")
-             .select("id,created_at,status,theses,window_hours")
-             .order("created_at", desc=True).limit(10).execute().data or [])
+             .select("id,created_at,status,theses,devils_advocate,window_hours")
+             .order("created_at", desc=True).limit(14).execute().data or [])
         briefing = b[0] if b else None
         for run in b:
             theses_blob = run.get("theses") or {}
             theses = (theses_blob.get("theses", []) if isinstance(theses_blob, dict)
                       else theses_blob) or []
+            devil_blob = run.get("devils_advocate") or {}
+            critiques = (devil_blob.get("critiques", []) if isinstance(devil_blob, dict)
+                         else devil_blob) or []
+            crit_map = {cr.get("id"): cr for cr in critiques}
             convictions = [t.get("conviction") for t in theses
                            if isinstance(t.get("conviction"), (int, float))]
             tickers = list({tk for t in theses for tk in (t.get("tickers") or [])})[:5]
+            run_date = (run.get("created_at") or "")[:10]
             briefing_history.append({
                 "id": run["id"][:8],
                 "date": (run.get("created_at") or "")[:16].replace("T", " "),
@@ -52,8 +58,24 @@ def collect() -> dict:
                 "avg_conviction": round(sum(convictions) / len(convictions), 2) if convictions else None,
                 "top_tickers": tickers,
             })
+            for t in theses:
+                cr = crit_map.get(t.get("id")) or {}
+                thesis_calls.append({
+                    "date": run_date,
+                    "run_id": run["id"][:8],
+                    "tickers": (t.get("tickers") or [])[:3],
+                    "direction": t.get("direction", "long"),
+                    "conviction": t.get("conviction"),
+                    "horizon": t.get("horizon", "?"),
+                    "thesis": (t.get("thesis") or "")[:90],
+                    "is_differentiated": bool(t.get("is_differentiated")),
+                    "verdict": cr.get("verdict", "—"),
+                })
     except Exception:
         briefing = None
+
+    # Sort thesis calls newest-first
+    thesis_calls.sort(key=lambda x: x["date"], reverse=True)
 
     return {
         "total": total,
@@ -63,6 +85,7 @@ def collect() -> dict:
         "last_run": runs[0] if runs else None,
         "briefing": briefing,
         "briefing_history": briefing_history,
+        "thesis_calls": thesis_calls,
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
 
@@ -152,6 +175,9 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
 
   <h2>Briefing-Verlauf</h2>
   <div class="panel" id="bhistory"></div>
+
+  <h2>Thesis Calls <span id="callsbadge"></span></h2>
+  <div class="panel" id="thesiscalls"></div>
 
   <h2>Adapter Health <span id="adapterstale"></span></h2>
   <div class="panel" id="adapterhealth"></div>
@@ -265,6 +291,49 @@ if(hist.length){
     </tr></thead><tbody>${rows}</tbody></table>`;
 }else{
   $("bhistory").innerHTML='<div class="muted">Noch keine Briefing-Runs.</div>';
+}
+
+// Thesis Calls table
+const calls = D.thesis_calls||[];
+if(calls.length){
+  const diffCount = calls.filter(c=>c.is_differentiated).length;
+  $("callsbadge").innerHTML = `<span class="pill pill--ok">${calls.length} calls</span>`
+    + (diffCount?` <span class="pill pill--warn">${diffCount} non-consensus</span>`:'');
+  const verdictPill=(v)=>{
+    if(v==='agree') return '<span class="pill pill--ok">agree</span>';
+    if(v==='reject') return '<span class="pill pill--err">reject</span>';
+    if(v==='caution') return '<span class="pill pill--warn">caution</span>';
+    return `<span class="tag">${esc(v)}</span>`;
+  };
+  const dirC=(d)=>d==='long'?'long':d==='short'?'short':'pair';
+  const rows=calls.map(c=>{
+    const ticks=(c.tickers||[]).join(', ')||'—';
+    const diff=c.is_differentiated?'<span class="pill pill--warn" title="Non-consensus">★</span>':'';
+    return `<tr style="border-bottom:1px solid var(--line)">
+      <td style="padding:5px 8px;color:var(--mut);font-size:12px">${esc(c.date)}</td>
+      <td style="padding:5px 8px;color:var(--accent);font-weight:600">${esc(ticks)}</td>
+      <td style="padding:5px 8px"><span class="dir ${dirC(c.direction)}">${esc(c.direction)}</span></td>
+      <td style="padding:5px 8px;text-align:center">${c.conviction!=null?c.conviction.toFixed(2):'—'}</td>
+      <td style="padding:5px 8px">${esc(c.horizon)}</td>
+      <td style="padding:5px 8px">${verdictPill(c.verdict)}</td>
+      <td style="padding:5px 8px">${diff}</td>
+      <td style="padding:5px 8px;font-size:12px;color:var(--mut);max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.thesis)}</td>
+    </tr>`;}).join('');
+  $("thesiscalls").innerHTML=`
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="border-bottom:1px solid var(--line);color:var(--mut);font-size:11px">
+        <th style="padding:5px 8px;text-align:left">Datum</th>
+        <th style="padding:5px 8px;text-align:left">Ticker</th>
+        <th style="padding:5px 8px;text-align:left">Dir</th>
+        <th style="padding:5px 8px;text-align:center">Conv</th>
+        <th style="padding:5px 8px;text-align:left">Horizont</th>
+        <th style="padding:5px 8px;text-align:left">Devil</th>
+        <th style="padding:5px 8px;text-align:left">NC</th>
+        <th style="padding:5px 8px;text-align:left">These</th>
+      </tr></thead><tbody>${rows}</tbody>
+    </table>`;
+}else{
+  $("thesiscalls").innerHTML='<div class="muted">Noch keine Thesen in den letzten 14 Runs.</div>';
 }
 
 // Adapter Health
