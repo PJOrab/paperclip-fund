@@ -841,6 +841,44 @@ class TechRSSAdapter:
         return out
 
 
+
+# Keywords that make a funding/VC article relevant to this AI/Tech fund.
+# Match is case-insensitive against title + description combined.
+# Intentionally broad (coverage > precision): any AI, cloud, semiconductor,
+# infrastructure, or energy-for-AI signal passes; pure consumer/lifestyle/bio
+# items that match none of these terms are dropped.
+_FUNDING_RELEVANCE_RE = re.compile(
+    r"\b("
+    # AI / ML core
+    r"artificial intelligence|machine learning|deep learning|neural network|"
+    r"\bAI\b|AI[-\s]powered|AI[-\s]native|GenAI|generative AI|"
+    r"large language model|LLM|foundation model|GPT|transformer|"
+    # Cloud / infrastructure / enterprise
+    r"cloud|data center|data centre|infrastructure|enterprise software|"
+    r"developer platform|API platform|developer tool|devtool|"
+    r"SaaS|PaaS|IaaS|edge computing|distributed system|"
+    # Semiconductors / hardware
+    r"chip|GPU|semiconductor|ASIC|accelerator|silicon|wafer|fab|HBM|"
+    r"processing unit|inference chip|training chip|"
+    # Energy / power (S5 thesis)
+    r"nuclear|power grid|data center power|energy storage|clean energy|"
+    r"hyperscaler|compute|watt|megawatt|gigawatt|"
+    # Robotics / automation
+    r"robotics|autonomous|humanoid robot|automation|"
+    # Cybersecurity
+    r"cybersecurity|cyber security|endpoint security|SIEM|SOC\b|XDR|"
+    # Big-number funding (≥\$100M rounds) — large rounds are more investable
+    r"\$[1-9]\d{2}[MB]|\$\d+\.\d+[BMb]|\$[1-9]\d*B\b|"
+    # Watchlist company names (direct mentions)
+    r"NVIDIA|OpenAI|Anthropic|Google DeepMind|Microsoft|Amazon|Meta\b|Apple|"
+    r"Palantir|Oracle|ServiceNow|Salesforce|Snowflake|CrowdStrike|Adobe|"
+    r"TSMC|ASML|Broadcom|AMD|Qualcomm|Marvell|Arista|Vertiv|"
+    r"Vistra|Constellation Energy|GE Vernova|Eaton"
+    r")",
+    re.IGNORECASE,
+)
+
+
 class FundingNewsAdapter:
     """
     Dedizierter Funding/VC/IPO/Launch-Feed (RSS, kein API-Key). Schließt die
@@ -848,6 +886,9 @@ class FundingNewsAdapter:
     TechRSS-/NewsAPI-Adapter lassen runden-/launch-spezifische Meldungen
     durchfallen. Quellen: TechCrunch Startups + Funding, VentureBeat.
 
+    - Relevance filter: items must match _FUNDING_RELEVANCE_RE (AI/Tech/Semis/
+      cloud/energy keywords or big-round dollar amounts). Purely off-topic
+      consumer/lifestyle items are dropped to reduce triage noise.
     - Dedup pro Lauf via URL-Hash (mehrere Feeds überlappen).
     - Lookback W.RSS_LOOKBACK_DAYS (Fallback 3 Tage), Items ohne parsbares
       Datum werden behalten (Coverage > Präzision: lieber rein als verpassen).
@@ -888,6 +929,11 @@ class FundingNewsAdapter:
                         if pub and pub < cutoff:
                             continue
                     desc = _rss_desc(block)
+                    # Drop items with no AI/Tech relevance signal — reduces noise
+                    # in raw_items so triage doesn't waste tokens on consumer/
+                    # lifestyle rounds (fragrance tech, beauty booking, etc.).
+                    if not _FUNDING_RELEVANCE_RE.search(title + " " + (desc or "")):
+                        continue
                     item_text = f"[Funding · {name}] {title}"
                     if desc:
                         item_text = f"{item_text} — {desc}"
