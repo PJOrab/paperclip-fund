@@ -81,7 +81,10 @@ def _parse_json(text: str):
     t = text.strip()
     if t.startswith("```"):
         t = re.sub(r"^```[a-zA-Z]*\n?", "", t)
-        t = re.sub(r"\n?```$", "", t).strip()
+        # Strip closing fence and any trailing explanation text after it.
+        # Unanchored (\n?```.*) handles "```\nSome extra text" that the
+        # end-anchored form \n?```$ would miss.
+        t = re.sub(r"\n?```.*", "", t, flags=re.DOTALL).strip()
     try:
         return json.loads(t)
     except json.JSONDecodeError:
