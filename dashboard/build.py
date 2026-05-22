@@ -273,6 +273,8 @@ abbr[title]{text-decoration:none;cursor:help}
 /* briefing freshness badge */
 .brief-ts{font-size:var(--fs-micro);color:var(--mut);text-transform:uppercase;letter-spacing:.04em;
   margin-bottom:var(--s2)}
+.brief-ts--stale{color:var(--amber);font-weight:600}
+.brief-ts--stale .brief-ts-mark{margin-right:var(--s1)}
 /* briefing processing placeholder */
 .brief-processing{display:flex;align-items:center;gap:var(--s3);padding:var(--s5);
   border:1px dashed var(--line);border-radius:6px;font-size:var(--fs-body);color:var(--mut)}
@@ -490,7 +492,11 @@ else{
     const ago=Date.now()-new Date(b.created_at).getTime();
     const mins=Math.round(ago/60000);
     const fresh=mins<2?"gerade eben":mins<60?`vor ${mins} Min.`:mins<1440?`vor ${Math.round(mins/60)} Std.`:`vor ${Math.round(mins/1440)} Tag${Math.round(mins/1440)===1?"":"en"}`;
-    html+=`<div class="brief-ts">Briefing · <time datetime="${new Date(b.created_at).toISOString()}" title="${b.created_at}">${fresh}</time></div>`;
+    const stale=mins>=1560; // >26h: daily briefing missed its slot
+    const cls=stale?"brief-ts brief-ts--stale":"brief-ts";
+    const mark=stale?`<span class="brief-ts-mark" aria-hidden="true">⚠</span>`:"";
+    const lbl=stale?"Briefing veraltet":"Briefing";
+    html+=`<div class="${cls}" role="status">${mark}${lbl} · <time datetime="${new Date(b.created_at).toISOString()}" title="${b.created_at}">${fresh}</time></div>`;
   }
   // "Heutige Calls" hero strip: compact chips before prose (Recognition>Recall, Goal-Gradient, F-pattern lede)
   // Conviction color ramp: low→mut, mid→txt, high→accent
