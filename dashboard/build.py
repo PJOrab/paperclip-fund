@@ -327,7 +327,7 @@ abbr[title]{text-decoration:none;cursor:help}
   text-decoration:none;color:var(--txt);transition:border-color .12s,background .12s}
 a.call-chip:hover{border-color:var(--accent);background:var(--panel)}
 .call-chip .ck{font-weight:700;font-size:var(--fs-body)}
-.call-chip .cd{font-size:var(--fs-micro);font-weight:600;letter-spacing:.04em;padding:1px 5px;
+.cd{display:inline-block;font-size:var(--fs-micro);font-weight:600;letter-spacing:.04em;padding:1px 5px;
   border-radius:4px;text-transform:uppercase}
 .cd-long{background:rgba(63,185,80,.18);color:var(--green)}
 .cd-short{background:rgba(248,81,73,.18);color:var(--red)}
