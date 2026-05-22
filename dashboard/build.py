@@ -375,6 +375,13 @@ main:focus{outline:none}
 .panel:focus-visible,.sec-tile:focus-visible{
   outline-offset:0;border-radius:12px}
 .tkl:focus-visible{border-radius:2px}
+/* Section nav: compact in-page jump strip (Recognition>Recall, WCAG 2.4.1, landmark complement) */
+.sec-nav{display:flex;gap:var(--s2);flex-wrap:wrap;margin:var(--s3) 0 var(--s4)}
+.sec-nav a{display:inline-block;padding:3px var(--s3);border:1px solid var(--line);
+  border-radius:12px;font-size:var(--fs-cap);text-transform:uppercase;letter-spacing:.04em;
+  color:var(--mut);text-decoration:none;transition:color .15s,border-color .15s,background .15s}
+.sec-nav a:hover{color:var(--txt);border-color:var(--accent)}
+.sec-nav a.sn-active{color:var(--accent);border-color:var(--accent);background:rgba(88,166,255,.08)}
 /* print stylesheet: CEO-friendly hard-copy of briefing (no dark bg, no hidden sections) */
 @media print{
   :root{--bg:#fff;--panel:#f5f7fa;--panel2:#edf0f5;--line:#cdd3de;--txt:#0d1117;
@@ -428,6 +435,12 @@ main:focus{outline:none}
     <summary class="wf-summary">Workflow — Pipeline-Status</summary>
     <div class="flow-wrap"><div class="flow" id="flow"></div></div>
   </details>
+
+  <nav class="sec-nav" aria-label="Seitenabschnitte">
+    <a href="#h-briefing">Briefing</a>
+    <a href="#h-trackrecord">Track-Record</a>
+    <a href="#h-sectorview">Sektoren</a>
+  </nav>
 
   <main id="main" tabindex="-1">
   <noscript><div class="panel noscript-panel" role="alert"><div class="noscript-icon" aria-hidden="true">⚠</div><p class="muted">Dieses Dashboard benötigt JavaScript. Bitte aktiviere JavaScript in deinem Browser und lade die Seite neu.</p></div></noscript>
@@ -782,6 +795,21 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
 ["briefing","trackrecord","sectorview"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
+// Section nav: highlight the anchor pill whose section is currently most in view
+(function(){
+  const links=document.querySelectorAll(".sec-nav a");
+  if(!links.length) return;
+  const ids=Array.from(links).map(a=>a.getAttribute("href").slice(1));
+  if(!("IntersectionObserver" in window)){links[0].classList.add("sn-active");return;}
+  const io=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      const a=document.querySelector(`.sec-nav a[href="#${e.target.id}"]`);
+      if(a) a.classList.toggle("sn-active",e.isIntersecting);
+    });
+  },{threshold:0,rootMargin:"0px 0px -60% 0px"});
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)io.observe(el);});
+})();
+
 // Back-to-top: reveal after scrolling past the briefing fold; smooth unless reduced-motion
 (function(){
   const btn=$("totop"); if(!btn) return;
@@ -826,6 +854,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
