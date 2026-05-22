@@ -79,8 +79,9 @@ def read_recent_items(window_hours: int, limit: int = 600) -> list[dict]:
 
 
 def _triage_max_clusters(n_items: int) -> int:
-    """Scale cluster count with feed size: ~1 per 20 items, floor 12, cap 20."""
-    return max(12, min(20, n_items // 20))
+    """Scale cluster target with feed size: ~1 per 20 items, floor 6, cap 20.
+    Floor lowered to 6 so quiet days can return fewer clusters rather than padding."""
+    return max(6, min(20, n_items // 20))
 
 
 def compute_triage(rows: list[dict]) -> list[dict]:

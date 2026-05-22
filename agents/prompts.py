@@ -122,8 +122,11 @@ TRIAGE_SYSTEM = (
     "sources, or a significant regulatory development. Filter opinion, analysis-only, and "
     "stories that merely republish what a press wire or SEC filing already covered. "
     "Category by content. Importance 2-4; never 5 (primary sources earn 5). "
-    "Be selective on noise — quality over quantity — but never filter out a "
-    "material new entrant, an earnings event, or a market-moving macro release. "
+    "QUALITY OVER QUANTITY: on a slow news day, 5 sharp clusters beats 12 padded ones. "
+    "Never inflate importance or invent a cluster to hit a target count. "
+    "MANDATORY INCLUSIONS (always include regardless of count): confirmed earnings results, "
+    "SEC 8-K material events for watchlist tickers, IPO/S-1 registrations, activist 13D stakes, "
+    "earnings calendar events ≤14 days out, and any item with importance ≥ 4. "
     "Output STRICT JSON only, no prose."
 )
 
@@ -157,7 +160,11 @@ def triage_user(items: list[dict], max_clusters: int = 12) -> str:
         f"Always link macro clusters to their AI/Tech thesis implications: higher rates → "
         f"tighter financing → capex headwind for hyperscalers (MSFT/GOOGL/AMZN/META) and "
         f"data-center infrastructure (NVDA/ANET/VRT). Category = 'macro'. "
-        f"Select and cluster the {max_clusters} MOST material for AI/Tech equities. "
+        f"QUALITY OVER QUANTITY: target up to {max_clusters} clusters, but return FEWER on a quiet day — "
+        f"it is better to return 5 sharp clusters than pad to {max_clusters} with low-importance noise. "
+        f"Never include a cluster you would rate importance=1 just to hit the target count. "
+        f"Always include: earnings events, confirmed earnings beats/misses, SEC 8-K filings, "
+        f"IPO registrations, activist stakes, and any item with importance ≥ 4. "
         f"Return JSON:\n"
         '{"clusters": [{"title": str, "tickers": [str], '
         '"category": "earnings|product|chips|capex|regulation|research|funding|sentiment|macro|ipo|m&a|launch|insider_trade", '
