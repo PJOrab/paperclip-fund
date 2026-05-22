@@ -63,6 +63,7 @@ def compute_triage(rows: list[dict]) -> list[dict]:
     out = C.call_json(P.triage_user(rows, max_clusters=max_cl), system=P.TRIAGE_SYSTEM,
                       model=MODEL["triage"], timeout=300)
     clusters = out.get("clusters", []) if isinstance(out, dict) else (out or [])
+    _check("triage", {"clusters": clusters})
     for cl in clusters:  # Belege auflösen, damit nachgelagerte Stufen Kontext haben
         refs = cl.get("item_refs", []) or []
         cl["evidence"] = [
