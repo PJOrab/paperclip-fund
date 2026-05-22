@@ -103,6 +103,10 @@ def validate(schema: str, data: dict) -> list[str]:
                              f"theses[{i}] scenarios.{case}.prob must be 0-1 float", errs)
                         need("trigger" in c and isinstance(c.get("trigger"), str) and c["trigger"].strip(),
                              f"theses[{i}] scenarios.{case}.trigger must be non-empty string", errs)
+                        tgt = c.get("target")
+                        if tgt is not None:
+                            need(isinstance(tgt, str) and tgt.strip(),
+                                 f"theses[{i}] scenarios.{case}.target must be non-empty string when present", errs)
             conv = x.get("conviction")
             need(isinstance(conv, (int, float)) and 0 <= conv <= 1,
                  f"theses[{i}] conviction must be 0.0-1.0", errs)

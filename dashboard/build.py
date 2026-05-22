@@ -789,7 +789,7 @@ else{
         <span class="${t.conviction!=null?convCls(t.conviction):'muted'}" title="${t.conviction!=null?convTip(t.conviction):''}">· Conv ${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></div>
         <div lang="en" style="margin-top:4px">${esc(t.thesis||"")}</div>
         ${t.edge&&t.is_differentiated?`<div class="edge-line">🎯 ${esc(t.edge)}</div>`:""}
-        ${t.scenarios?(()=>{const s=t.scenarios;const parts=[];if(s.bull)parts.push(`Bull ${s.bull.trigger?esc(s.bull.trigger):""}${s.bull.prob!=null?" (P="+Math.round(s.bull.prob*100)+"%)":" "}`);if(s.base)parts.push(`Base ${s.base.trigger?esc(s.base.trigger):""}${s.base.prob!=null?" (P="+Math.round(s.base.prob*100)+"%)":" "}`);if(s.bear)parts.push(`Bear ${s.bear.trigger?esc(s.bear.trigger):""}${s.bear.prob!=null?" (P="+Math.round(s.bear.prob*100)+"%)":" "}`);return parts.length?`<div class="sc-line">📐 ${parts.join(" | ")}</div>`:""})():""}
+        ${t.scenarios?(()=>{const s=t.scenarios;const fmtS=(k,c)=>{if(!c)return null;const tgt=c.target?` → ${esc(c.target)}`:"";const p=c.prob!=null?` (P=${Math.round(c.prob*100)}%)`:"";return `${k}${c.trigger?" "+esc(c.trigger):""}${tgt}${p}`;};const parts=[fmtS("Bull",s.bull),fmtS("Base",s.base),fmtS("Bear",s.bear)].filter(Boolean);return parts.length?`<div class="sc-line">📐 ${parts.join(" | ")}</div>`:""})():""}
         ${t.exit_trigger?`<div class="exit-trigger">🚪 Exit: ${esc(t.exit_trigger)}</div>`:""}
         ${c.strongest_counter?`<div class="devil" lang="en"><span class="v">⚖️ Devil's Advocate (${c.verdict||"?"})</span><br>${esc(c.strongest_counter)}
         ${c.blind_spot?`<br><span class="muted">Blind spot: ${esc(c.blind_spot)}</span>`:""}</div>`:""}
@@ -923,7 +923,7 @@ function calibSvg(buckets){
       const exitNote=t=>t.exit_trigger?`<div class="exit-trigger" title="Exit wenn: ${esc(t.exit_trigger)}">🚪 <span>${esc(t.exit_trigger)}</span></div>`:"";
       const scenNote=t=>{
         const sc=t.scenarios; if(!sc) return "";
-        const fmt=(k,s)=>s?`${k} ${s.target||"?"} (P=${Math.round((s.prob||0)*100)}%)`:null;
+        const fmt=(k,s)=>{if(!s)return null;const tgt=s.target?` ${s.target}`:"";const p=`(P=${Math.round((s.prob||0)*100)}%)`;return `${k}${s.trigger?" "+esc(s.trigger):""}${tgt} ${p}`;};
         const parts=[fmt("Bull",sc.bull),fmt("Base",sc.base),fmt("Bear",sc.bear)].filter(Boolean);
         return parts.length?`<div class="sc-line muted">${parts.join(" · ")}</div>`:"";
       };
