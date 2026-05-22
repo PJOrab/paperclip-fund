@@ -201,6 +201,12 @@ AITECH_KEYWORDS = [
     "saas", "robot", "autonom", "self-driving", "quantum", "space", "satellite",
     "rocket", "launch", "cyber", "fintech", "platform", "compute", "inference",
     "foundation model", "biotech", "fusion", "battery", "lidar", "drone",
+    # S5 Energy/Power sector — AI-capex power demand thesis. Catches press releases
+    # from VST/CEG/GEV/ETN and energy infrastructure that may not mention "AI".
+    "vistra", "constellation energy", "ge vernova", "eaton corporation",
+    "nuclear", "power purchase agreement", " ppa ", "small modular reactor", " smr ",
+    "megawatt", "gigawatt", "carbon-free", "carbon free", "clean energy deal",
+    "grid infrastructure", "transformer order", "electricity contract",
 ]
 
 # Notable private/neue Player — bei Registrierung sofort hochgestuft, auch wenn
