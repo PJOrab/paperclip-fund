@@ -383,7 +383,7 @@ class GitHubTrendingAdapter:
         m = _m()
         headers = {**UA, "Accept": "application/vnd.github+json"}
         since = (datetime.now(timezone.utc).date()
-                 - timedelta(days=7)).isoformat()  # 7-day activity window
+                 - timedelta(days=getattr(W, "GITHUB_PUSH_LOOKBACK_DAYS", 7))).isoformat()
         out, seen = [], set()
         for topic in W.GITHUB_TOPICS:
             q = f"topic:{topic} pushed:>{since}"
@@ -716,7 +716,9 @@ class EarningsCalendarAdapter:
                 out.append({
                     "text": text,
                     "source": "earnings_calendar",
-                    "url": f"https://finance.yahoo.com/quote/{ticker}",
+                    # Date-scoped URL so each (ticker, date) gets a unique dedup hash.
+                    # A bare quote URL would collide across days, silencing the countdown.
+                    "url": f"https://finance.yahoo.com/quote/{ticker}?earnings_date={earnings_date}",
                     "reliability": W.SOURCE_RELIABILITY.get("earnings_calendar", 0.88),
                 })
 

@@ -30,7 +30,7 @@ GITHUB_TOPICS = [
     "multimodal",     # multi-modal AI (GPT-4o/Gemini/Claude-vision competitor repos)
     "llm-inference",  # inference engines, quantization, serving (compute-cost moat)
 ]
-GITHUB_CREATED_LOOKBACK_DAYS = 30
+GITHUB_PUSH_LOOKBACK_DAYS = 7
 
 # Hacker News (Algolia): Begriffe + Mindest-Punktzahl (Story-Relevanz)
 # Core AI terms + major watched-ticker companies not covered by generic AI terms.
