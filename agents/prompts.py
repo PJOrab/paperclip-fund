@@ -186,22 +186,37 @@ TRIAGE_SYSTEM = (
 
 
 def triage_user(items: list[dict], max_clusters: int = 12) -> str:
+    from datetime import datetime, timezone
+    _now = datetime.now(timezone.utc)
     lines = []
     for i, it in enumerate(items):
         src = it.get("source", "?")
         rel = it.get("reliability")
         rel_tag = f" rel={rel:.2f}" if rel is not None else ""
+        # Compute item age in hours so the triage LLM can distinguish breaking
+        # news (<1h) from stale items (20h+) and weight recency accordingly.
+        age_tag = ""
+        fetched = it.get("fetched_at")
+        if fetched:
+            try:
+                ft = datetime.fromisoformat(fetched.replace("Z", "+00:00"))
+                age_h = (_now - ft).total_seconds() / 3600
+                age_tag = f" age={age_h:.0f}h"
+            except Exception:
+                pass
         # High-reliability primary sources (SEC filings, earnings results, macro
         # releases) extract up to 400 chars of content; preserve it for triage.
         # Generic editorial/social items cap at 300 to keep the prompt lean.
         item_rel = rel if rel is not None else 0.0
         txt = (it.get("text") or "")[:400 if item_rel >= 0.85 else 300]
-        lines.append(f"[{i}] ({src}{rel_tag}) {txt}")
+        lines.append(f"[{i}] ({src}{rel_tag}{age_tag}) {txt}")
     feed = "\n".join(lines)
     return (
         f"Here are {len(items)} feed items from the last hours:\n\n{feed}\n\n"
-        f"Each item shows its source reliability score (rel=, higher = more trustworthy primary source). "
-        f"Weight higher-reliability items more heavily when deciding importance. "
+        f"Each item shows source reliability (rel=, higher = more trustworthy) and age in hours (age=). "
+        f"Weight higher-reliability items more heavily; prefer fresh items (age<4h) for breaking news. "
+        f"Stale items (age>18h) may still be relevant for slow-moving thesis development but should not "
+        f"appear as the primary evidence for an importance-5 cluster. "
         f"Items from source 'earnings_calendar' show upcoming earnings dates with consensus estimates "
         f"when available (format: '[TICKER] Earnings in N days (DATE) — Company; est. EPS $X.XX, rev $X.XB'). "
         f"ALWAYS include them (importance 5 if ≤3 days out, 4 if 4-14 days). "
