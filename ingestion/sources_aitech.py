@@ -1277,7 +1277,8 @@ class FREDMacroAdapter:
     BASE = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}"
     MAX_AGE_DAYS = 14  # Tages-/Wochenserien; Continued Claims lagen ~1 Woche hinter Initial
 
-    # series_id -> (Anzeigename, "value"|"pct"|"pp"|"count")
+    # series_id -> (Anzeigename, "value"|"pct"|"pp"|"count"|"index")
+    # "index" = display as integer with comma-separator (equity/equity-volatility levels)
     SERIES = {
         "ICSA":         ("Initial Jobless Claims", "count"),
         "CCSA":         ("Continued Jobless Claims", "count"),
@@ -1286,6 +1287,10 @@ class FREDMacroAdapter:
         "T10Y2Y":       ("10Y-2Y Yield Spread", "pp"),
         "BAMLH0A0HYM2": ("US HY OAS Spread", "pp"),
         "DTWEXBGS":     ("Trade-Weighted USD", "value"),
+        # Market risk-regime / equity-context overlay (daily, key AI/Tech signals)
+        "VIXCLS":       ("CBOE VIX (Market Volatility)", "value"),
+        "SP500":        ("S&P 500", "index"),
+        "NASDAQCOM":    ("NASDAQ Composite", "index"),
     }
 
     @staticmethod
@@ -1296,6 +1301,8 @@ class FREDMacroAdapter:
             return f"{v:.2f}%"
         if kind == "pp":
             return f"{v:+.2f}pp"
+        if kind == "index":
+            return f"{v:,.2f}"
         return f"{v:.2f}"
 
     @staticmethod
