@@ -188,6 +188,23 @@ NOTABLE_PRIVATE_PLAYERS = [
     "moonshot ai", "kimi",                  # Chinese frontier model (Asia coverage)
     "01.ai", "zero one ai",                 # Kai-Fu Lee lab (China)
     "stepfun",                              # Chinese multimodal AI
+    "deepseek",                             # Chinese lab — R1 caused Jan 2026 Nasdaq selloff
+    "tenstorrent",                          # AI chip startup (Jim Keller)
+    "sambanova", "samba nova",              # enterprise AI inference
+    "lightmatter",                          # photonic AI chips
+    "etched",                               # ASIC transformer chip startup
+    "groq",                                 # inference chip (LPU), cloud API
+    "cerebras",                             # wafer-scale AI chip, filed IPO 2024
+    "d-matrix",                             # in-memory compute AI inference
+    "dario amodei", "amanda askell",        # Anthropic executives (M&A/funding signal)
+    "poolside",                             # code generation AI, $500M+ raise
+    "imbue",                                # reasoning AI (already listed above — dedup ok)
+    "lambda labs", "lambda",                # GPU cloud (H100/A100 on-demand)
+    "coreweave",                            # GPU cloud — IPO March 2025
+    "scale ai",                             # data labeling + RLHF, $1B+
+    "together ai", "together",              # open-source model hosting + inference
+    "modal",                                # serverless GPU compute
+    "replicate",                            # ML model hosting
 ]
 
 # Default-Reliability je neuer Quellen-Kategorie (für sources-Tabelle)
