@@ -186,6 +186,18 @@ def test_classify_item() -> None:
            "foreign_filing" not in labels(
                "[EDGAR 8-K:Earnings Results] NVDA NVIDIA Corp: Q1 results (filed 2026-05-20)"))
 
+    # Buyback patterns (added HED-117 cycle 49)
+    _check("share repurchase matches buyback",
+           "buyback" in labels("Apple authorizes new $90 billion share repurchase program"))
+    _check("stock buyback program matches buyback",
+           "buyback" in labels("Microsoft board approves $60B stock repurchase program"))
+
+    # Dividend patterns (added HED-117 cycle 49)
+    _check("special dividend matches dividend",
+           "dividend" in labels("NVDA declares special dividend of $0.10 per share"))
+    _check("dividend increase matches dividend",
+           "dividend" in labels("Broadcom increases its quarterly dividend by 14%"))
+
     # Clean text — no matches (analyst_action now detected; use truly routine news)
     _check("routine news has no big-event match",
            classify_item("Apple store opens in new mall location next quarter") == [])
