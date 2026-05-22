@@ -43,6 +43,107 @@ def _m():
     return _load_macro()
 
 
+# --- Form 4 (Insider) XML-Parsing -------------------------------------------
+# Transaction-Code-Bedeutungen (SEC General Instruction 8). Open-Market-Käufe
+# (P) und -Verkäufe (S) sind das diskretionäre Signal; A/M/F/G sind
+# Comp/Routine und für bull/bear-Lesbarkeit klar abzugrenzen.
+_F4_CODE_MEANING = {
+    "P": "open-market buy", "S": "open-market sale", "A": "grant/award",
+    "M": "option exercise", "F": "tax-withholding", "G": "gift",
+    "C": "conversion", "X": "option exercise", "D": "disposition to issuer",
+    "V": "voluntary report", "J": "other acq/disp",
+}
+_F4_TXN_RE = re.compile(r"<nonDerivativeTransaction>(.*?)</nonDerivativeTransaction>", re.DOTALL)
+_F4_OWNER_RE = re.compile(r"<rptOwnerName>(.*?)</rptOwnerName>", re.DOTALL)
+_F4_CODE_RE = re.compile(r"<transactionCode>([^<]*)</transactionCode>")
+
+
+def _f4_val(block: str, outer: str) -> str:
+    """Extrahiert <outer>…<value>X</value>… aus einem Form-4-Block."""
+    m = re.search(rf"<{outer}>\s*<value>([^<]*)</value>", block, re.DOTALL)
+    return m.group(1).strip() if m else ""
+
+
+def _f4_role(xml: str) -> str:
+    rel = re.search(r"<reportingOwnerRelationship>(.*?)</reportingOwnerRelationship>", xml, re.DOTALL)
+    if not rel:
+        return ""
+    blk = rel.group(1)
+    roles = []
+    if re.search(r"<isDirector>\s*(1|true)\s*</isDirector>", blk, re.I):
+        roles.append("director")
+    if re.search(r"<isOfficer>\s*(1|true)\s*</isOfficer>", blk, re.I):
+        title = (re.search(r"<officerTitle>(.*?)</officerTitle>", blk, re.DOTALL) or [None, ""])
+        t = html.unescape(title.group(1).strip()) if hasattr(title, "group") else ""
+        roles.append(f"officer: {t}" if t else "officer")
+    if re.search(r"<isTenPercentOwner>\s*(1|true)\s*</isTenPercentOwner>", blk, re.I):
+        roles.append("10% owner")
+    return ", ".join(roles)
+
+
+def _fmt_sh(n: float) -> str:
+    return f"{int(round(n)):,}"
+
+
+def _fmt_px(p: float) -> str:
+    return f"${p:,.2f}" if p else "$0"
+
+
+def _summarize_form4(xml: str) -> str:
+    """
+    Verdichtet eine Form-4-Ownership-XML zu einer bull/bear-lesbaren Zeile:
+    Richtung (BUY/SELL/MIXED/routine), Shares, Preis je Code, Holdings danach.
+    Gibt '' zurück, wenn keine nonDerivative-Transaktion gefunden wird.
+    """
+    txns = []
+    for blk in _F4_TXN_RE.findall(xml):
+        cm = _F4_CODE_RE.search(blk)
+        code = cm.group(1).strip() if cm else ""
+        try:
+            shares = float(_f4_val(blk, "transactionShares") or 0)
+        except ValueError:
+            shares = 0.0
+        try:
+            price = float(_f4_val(blk, "transactionPricePerShare") or 0)
+        except ValueError:
+            price = 0.0
+        ad = _f4_val(blk, "transactionAcquiredDisposedCode")
+        post = _f4_val(blk, "sharesOwnedFollowingTransaction")
+        txns.append((code, shares, price, ad, post))
+    if not txns:
+        return ""
+
+    has_buy = any(c == "P" for c, *_ in txns)
+    has_sell = any(c == "S" for c, *_ in txns)
+    if has_buy and not has_sell:
+        signal = "OPEN-MARKET BUY"
+    elif has_sell and not has_buy:
+        signal = "OPEN-MARKET SALE"
+    elif has_buy and has_sell:
+        signal = "MIXED open-market"
+    else:
+        signal = "routine (grant/exercise/tax)"
+
+    # Pro Code aggregieren: Shares (Summe) und Volumen-gewichteter Preis.
+    agg = {}  # code -> [shares, dollar_vol, ad]
+    for code, shares, price, ad, _post in txns:
+        a = agg.setdefault(code, [0.0, 0.0, ad])
+        a[0] += shares
+        a[1] += shares * price
+        if ad:
+            a[2] = ad
+    parts = []
+    for code in sorted(agg):
+        sh, dvol, ad = agg[code]
+        meaning = _F4_CODE_MEANING.get(code, code or "?")
+        vwap = (dvol / sh) if sh else 0.0
+        dirw = "+" if ad == "A" else ("-" if ad == "D" else "")
+        parts.append(f"{code} {meaning} {dirw}{_fmt_sh(sh)} @ {_fmt_px(vwap)}")
+    post_final = next((p for *_x, p in reversed(txns) if p), "")
+    holds = f"; holds {_fmt_sh(float(post_final))} after" if post_final else ""
+    return f"{signal} — " + "; ".join(parts) + holds
+
+
 class EDGARAdapter:
     """SEC-Pflichtmeldungen (8-K Material Events, Form 4 Insider-Trades) je Ticker."""
     TICKERS_MAP = "https://www.sec.gov/files/company_tickers.json"
@@ -99,11 +200,34 @@ class EDGARAdapter:
                 src = "sec_form4" if form == "4" else "sec_8k"
                 label = "Insider Form 4" if form == "4" else "8-K"
                 acc_disp = acc_l[i] if i < len(acc_l) else ""
+                doc_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{doc}"
+                detail = desc
+                if form == "4" and acc and doc:
+                    # Roh-Ownership-XML liegt unter demselben Pfad ohne den
+                    # xslF345XNN/-Render-Prefix. Anreichern um Richtung/Größe/Preis,
+                    # damit Insider-Cluster bull/bear-lesbar werden. Schlägt der
+                    # Fetch/Parse fehl, bleibt die Notice-Zeile erhalten (ein
+                    # einzelnes Filing darf den Run nie kippen).
+                    try:
+                        raw_doc = doc.rsplit("/", 1)[-1]
+                        raw_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{raw_doc}"
+                        xml = m.fetch_url(raw_url, headers=UA, timeout=20)
+                        time.sleep(0.15)  # SEC: max 10 req/s
+                        if xml:
+                            summary = _summarize_form4(xml)
+                            if summary:
+                                owner_m = _F4_OWNER_RE.search(xml)
+                                owner = html.unescape(owner_m.group(1).strip()) if owner_m else ""
+                                role = _f4_role(xml)
+                                who = owner + (f" ({role})" if role else "")
+                                detail = f"{who} — {summary}" if who else summary
+                    except Exception:
+                        pass
                 out.append({
                     # Accession-Nr. im Text → jede Einreichung distinkt (Dedup-Hash)
-                    "text": f"[EDGAR {label}] {tk} {title}: {desc} (filed {date_l[i]}, {acc_disp})",
+                    "text": f"[EDGAR {label}] {tk} {title}: {detail} (filed {date_l[i]}, {acc_disp})",
                     "source": src,
-                    "url": f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{doc}",
+                    "url": doc_url,
                     "reliability": W.SOURCE_RELIABILITY.get(src),
                 })
         return out
