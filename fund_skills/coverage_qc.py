@@ -114,12 +114,52 @@ NOT_LAUNCH_RE = re.compile(
     r"\b(earnings|webinar|conference call|dividend|fiscal|quarter|release date"
     r"|annual meeting|investor (?:day|relations)|10-?[kq]\b)\b", re.IGNORECASE)
 
+# Funding floor (USD millions): per HED-72 only rounds/valuations >= $100M count
+# as a "big event". A round we cannot size (no parseable amount) is kept rather
+# than dropped, so coverage stays conservative.
+MIN_FUNDING_M = 100.0
+_AMT_PARSE_RE = re.compile(
+    r"\$\s?(\d[\d.,]*)\s*(billion|bn|million|mn|thousand|b|m|k)?\b", re.IGNORECASE)
+
+
+def max_amount_m(text):
+    """Largest dollar amount in `text`, normalized to USD millions. Returns None
+    if no amount can be confidently sized. Suffix-less figures only count when
+    they are large enough to be unambiguous raw-dollar amounts (>= $1M)."""
+    best = None
+    for m in _AMT_PARSE_RE.finditer(text):
+        raw = m.group(1).rstrip(".,").replace(",", "")
+        if not raw or raw in (".",):
+            continue
+        try:
+            num = float(raw)
+        except ValueError:
+            continue
+        suffix = (m.group(2) or "").lower()
+        if suffix in ("billion", "bn", "b"):
+            val = num * 1000.0
+        elif suffix in ("million", "mn", "m"):
+            val = num
+        elif suffix in ("thousand", "k"):
+            val = num / 1000.0
+        elif num >= 1_000_000:  # bare large number -> treat as raw dollars
+            val = num / 1_000_000.0
+        else:
+            continue  # un-suffixed small number: not confidently a $ magnitude
+        if best is None or val > best:
+            best = val
+    return best
+
 
 def detect_event(text):
     """Return event type ('ipo_s1' | 'funding' | 'launch') or None."""
     if IPO_RE.search(text):
         return "ipo_s1"
     if any(rx.search(text) for rx in FUND_RES):
+        amt = max_amount_m(text)
+        # Drop only when we can size the round AND it is below the floor.
+        if amt is not None and amt < MIN_FUNDING_M:
+            return None
         return "funding"
     if (LAUNCH_RE.search(text) and LAUNCH_OBJ_RE.search(text)
             and not NOT_LAUNCH_RE.search(text)):

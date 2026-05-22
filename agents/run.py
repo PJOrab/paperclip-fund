@@ -14,6 +14,7 @@ Zum Testen ohne briefing_runs-Tabelle:
   python -m agents.run pipeline    # alle 5 Stufen in-memory, druckt Briefing
 """
 import argparse
+import json
 import sys
 from datetime import datetime, timezone, timedelta
 
@@ -263,6 +264,39 @@ def stage_editor():
         _log(f"[editor] score_past_calls non-fatal error: {score_err}")
 
 
+def stage_coverage_qc(run_id: str | None = None, open_tickets: bool = True,
+                      max_tickets: int = 5):
+    """Post-briefing QC: detect big events missed by the delivered briefing.
+
+    Finds the latest done run (or a specific run_id), runs coverage_qc.analyze(),
+    optionally opens Paperclip Coverage-Bug issues for each gap, and persists results
+    to the coverage_qc table. Prints a summary line to stdout so n8n can log it.
+    """
+    import fund_skills.coverage_qc as qc  # local import: optional dependency
+
+    t = client().table("briefing_runs")
+    if run_id:
+        data = t.select("*").eq("id", run_id).limit(1).execute().data
+    else:
+        data = t.select("*").eq("status", "done").order("created_at", desc=True).limit(1).execute().data
+    if not data:
+        _log("[coverage_qc] no done briefing run found"); return
+
+    run = data[0]
+    _log(f"[coverage_qc] analyzing run {run['id']}")
+    result = qc.analyze(run)
+    tickets = qc.open_tickets(result, max_tickets) if open_tickets else []
+    qc.persist(result, tickets)
+
+    gap_count = len(result["gaps"])
+    ticket_count = sum(1 for tk in tickets if tk.get("issue"))
+    summary = (f"Coverage-QC run {str(run['id'])[:8]}: "
+               f"{result['items_scanned']} items, {result['big_events']} big events, "
+               f"{gap_count} gaps, {ticket_count} tickets filed")
+    _log(f"[coverage_qc] {summary}")
+    print(summary)
+
+
 # ---------------------------------------------------------------------------
 # In-Memory-Pipeline (Test ohne briefing_runs-Tabelle)
 # ---------------------------------------------------------------------------
@@ -283,16 +317,23 @@ def pipeline(window: int):
 def main():
     ap = argparse.ArgumentParser(description="AI/Tech Fund — Agenten-Pipeline")
     ap.add_argument("stage", choices=["triage", "analyst", "thesis", "devil",
-                                       "editor", "pipeline"])
+                                       "editor", "coverage_qc", "pipeline"])
     ap.add_argument("--window", type=int, default=24, help="Zeitfenster in Stunden (triage/pipeline)")
+    ap.add_argument("--run-id", help="briefing_runs ID (coverage_qc only)")
+    ap.add_argument("--no-tickets", action="store_true", help="skip Paperclip ticket creation (coverage_qc)")
+    ap.add_argument("--max-tickets", type=int, default=5)
     args = ap.parse_args()
 
-    if args.stage == "triage":    stage_triage(args.window)
-    elif args.stage == "analyst": stage_analyst()
-    elif args.stage == "thesis":  stage_thesis()
-    elif args.stage == "devil":   stage_devil()
-    elif args.stage == "editor":  stage_editor()
-    elif args.stage == "pipeline": pipeline(args.window)
+    if args.stage == "triage":       stage_triage(args.window)
+    elif args.stage == "analyst":    stage_analyst()
+    elif args.stage == "thesis":     stage_thesis()
+    elif args.stage == "devil":      stage_devil()
+    elif args.stage == "editor":     stage_editor()
+    elif args.stage == "coverage_qc":
+        stage_coverage_qc(run_id=getattr(args, "run_id", None),
+                          open_tickets=not getattr(args, "no_tickets", False),
+                          max_tickets=getattr(args, "max_tickets", 5))
+    elif args.stage == "pipeline":   pipeline(args.window)
 
 
 if __name__ == "__main__":
