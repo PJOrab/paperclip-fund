@@ -63,6 +63,17 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-106 (DE-Loop Zyklus 40): **SEC 6-K and 20-F for foreign issuers TSM/ASML/ARM**
+  (`ingestion/watchlist.py`, `ingestion/sources_aitech.py`, `agents/prompts.py`).
+  TSM (Taiwan), ASML (Netherlands), and ARM (Cayman) are foreign private issuers — they file
+  6-K (material events + quarterly results, equivalent to 8-K) and 20-F (annual report,
+  equivalent to 10-K). All three were completely dark in the EDGAR adapter. Live SEC check
+  confirmed active recent filings: TSM 6-Ks on 2026-05-15/2026-05-12, ARM 2026-05-06,
+  ASML 2026-04-23. Changes: (1) "6-K", "6-K/A", "20-F" added to EDGAR_FORMS; (2) sec_6k
+  (rel=0.93) and sec_20f (rel=0.96) in SOURCE_RELIABILITY; (3) _edgar_form_meta() mappings;
+  (4) text extraction: 20-F uses _extract_10q_text(is_10k=True); 6-K uses _extract_8k_text()
+  + paragraph fallback; (5) TRIAGE_SYSTEM + triage_user() guidance (ALWAYS include, importance 4-5).
+  All tests pass. Pushed: `3c8c80a`.
 - 2026-05-22 — HED-106 (DE-Loop Zyklus 39): **SEC 10-Q and 10-K added to EDGAR adapter**
   (`ingestion/watchlist.py`, `ingestion/sources_aitech.py`, `agents/prompts.py`).
   10-Q (quarterly) and 10-K (annual) earnings filings were completely dark in the pipeline —
