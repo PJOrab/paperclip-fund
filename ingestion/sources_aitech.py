@@ -199,11 +199,38 @@ def _8k_item_label(item_num: str) -> str:
     return _8K_ITEM_LABELS.get(item_num.strip(), "Material Event")
 
 
-def _extract_8k_text(html_src: str, max_chars: int = 400) -> tuple[str, str]:
+# Per-item-type reliability overrides. All unlisted items inherit the base
+# sec_8k reliability from SOURCE_RELIABILITY (currently 0.95). Items that
+# are nearly always boilerplate or low-content get a lower score so triage
+# deprioritises them relative to high-signal earnings/acquisition 8-Ks.
+_8K_ITEM_RELIABILITY: dict[str, float] = {
+    "2.01": 0.97,   # Acquisition/Disposal — high-certainty, binary event
+    "2.02": 0.97,   # Earnings Results — definitive, market-moving
+    "5.01": 0.97,   # Change in Control
+    "1.01": 0.96,   # Material Agreement — usually substantive
+    "4.02": 0.96,   # Accounting Disagreement — rare, very serious
+    "1.03": 0.96,   # Bankruptcy
+    "3.01": 0.95,   # Exchange Delisting
+    "5.02": 0.94,   # Exec Departure/Appointment — signal, but sometimes routine
+    "4.01": 0.93,   # Auditor Change
+    "5.07": 0.92,   # Shareholder Vote
+    "2.03": 0.91,   # Debt Obligation
+    "8.01": 0.90,   # Other Material Event — catch-all, quality varies
+    "7.01": 0.85,   # Regulation FD — often a conference slide deck
+    "9.01": 0.75,   # Financial Statements / Exhibits — attachment notice, not content
+}
+
+
+def _8k_item_reliability(item_num: str) -> float | None:
+    """Return a per-item-type reliability override, or None to use the base value."""
+    return _8K_ITEM_RELIABILITY.get(item_num.strip())
+
+
+def _extract_8k_text(html_src: str, max_chars: int = 400) -> tuple[str, str, str]:
     """
     Extract the first substantive Item paragraph from an 8-K HTML document.
-    Returns (snippet, item_label). Both are empty strings on failure so the
-    caller keeps the fallback notice.
+    Returns (snippet, item_num, item_label). All three are empty strings on
+    failure so the caller keeps the fallback notice and base reliability.
     """
     try:
         txt = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", html_src)
@@ -212,12 +239,13 @@ def _extract_8k_text(html_src: str, max_chars: int = 400) -> tuple[str, str]:
         txt = re.sub(r"\s+", " ", txt).strip()
         m = _8K_ITEM_RE.search(txt)
         if not m:
-            return "", ""
+            return "", "", ""
+        item_num = m.group(1)
         snippet = txt[m.start(): m.start() + max_chars].strip()
-        label = _8k_item_label(m.group(1))
-        return snippet, label
+        label = _8k_item_label(item_num)
+        return snippet, item_num, label
     except Exception:
-        return "", ""
+        return "", "", ""
 
 
 def _edgar_form_meta(form):
@@ -312,17 +340,19 @@ class EDGARAdapter:
                                 detail = f"{who} — {summary}" if who else summary
                     except Exception:
                         pass
+                item_num = ""
                 item_type = ""
                 if form == "8-K" and acc and doc:
                     # Fetch the primary 8-K HTML, extract the first Item paragraph,
-                    # and classify the Item type so triage immediately knows whether
-                    # this is earnings, an acquisition, an exec departure, etc.
+                    # classify the Item type, and determine a per-item reliability
+                    # override so triage ranks earnings/acquisition 8-Ks above
+                    # boilerplate exhibit attachments (Item 9.01) or Reg-FD slides.
                     # Falls back to the metadata description on any fetch/parse error.
                     try:
                         html_src = m.fetch_url(doc_url, headers=UA, timeout=20)
                         time.sleep(0.15)  # SEC: max 10 req/s
                         if html_src:
-                            snippet, item_type = _extract_8k_text(html_src)
+                            snippet, item_num, item_type = _extract_8k_text(html_src)
                             if snippet:
                                 detail = snippet
                     except Exception:
@@ -330,12 +360,17 @@ class EDGARAdapter:
                 # Include the 8-K item type in the label so triage can distinguish
                 # "8-K:Earnings Results" from "8-K:Acquisition/Disposal" at a glance.
                 display_label = f"{label}:{item_type}" if item_type else label
+                # Apply per-item-type reliability override when available; fall back
+                # to the source-level default (sec_8k=0.95, form4=0.90, etc.).
+                base_rel = W.SOURCE_RELIABILITY.get(src)
+                rel_override = _8k_item_reliability(item_num) if item_num else None
+                reliability = rel_override if rel_override is not None else base_rel
                 out.append({
                     # Accession-Nr. im Text → jede Einreichung distinkt (Dedup-Hash)
                     "text": f"[EDGAR {display_label}] {tk} {title}: {detail} (filed {date_l[i]}, {acc_disp})",
                     "source": src,
                     "url": doc_url,
-                    "reliability": W.SOURCE_RELIABILITY.get(src),
+                    "reliability": reliability,
                 })
         return out
 
