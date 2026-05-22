@@ -294,6 +294,10 @@ abbr[title]{text-decoration:none;cursor:help}
 /* build-staleness: header timestamp goes amber when the dashboard itself hasn't rebuilt (deploy-bridge stall) */
 .built--stale{color:var(--amber);font-weight:600}
 .built--stale .build-stale-mark{margin-right:var(--s1)}
+/* noscript fallback: amber-bordered panel visible only when JS is disabled */
+.noscript-panel{border-color:var(--amber);max-width:var(--measure);
+  margin:var(--s5) 0;text-align:center;padding:var(--s5)}
+.noscript-icon{font-size:24px;margin-bottom:var(--s2)}
 /* briefing processing placeholder */
 .brief-processing{display:flex;align-items:center;gap:var(--s3);padding:var(--s5);
   border:1px dashed var(--line);border-radius:6px;font-size:var(--fs-body);color:var(--mut)}
@@ -416,6 +420,7 @@ main:focus{outline:none}
   </details>
 
   <main id="main" tabindex="-1">
+  <noscript><div class="panel noscript-panel" role="alert"><div class="noscript-icon" aria-hidden="true">⚠</div><p class="muted">Dieses Dashboard benötigt JavaScript. Bitte aktiviere JavaScript in deinem Browser und lade die Seite neu.</p></div></noscript>
   <section aria-labelledby="h-briefing">
   <h2 id="h-briefing">Letztes Briefing</h2>
   <div id="briefing" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><span class="skel skel-chip"></span><span class="skel skel-chip"></span><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:84%"></div><div class="skel skel-line" style="width:88%"></div></div></div>
@@ -798,6 +803,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
