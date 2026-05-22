@@ -210,6 +210,10 @@ SOURCE_RELIABILITY = {
     # Higher than generic yahoo_finance (0.72): analyst actions are structured
     # investment signals (upgrade/downgrade/PT change), not general news.
     "analyst_action": 0.85,
+    # Off-watchlist 8-K material events from AI/Tech companies (SECBroadEventsAdapter).
+    # Same official SEC source as sec_8k but without item-type text extraction —
+    # lower than sec_8k (0.95) since we only have the filing notice, not content.
+    "sec_broad_event": 0.88,
 }
 
 # S5 Energy/Power sector feeds — AI-capex risk thesis (power/grid strain).

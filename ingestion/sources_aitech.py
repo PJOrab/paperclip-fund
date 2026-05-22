@@ -448,6 +448,92 @@ class SECRegistrationsAdapter:
         return out
 
 
+class SECBroadEventsAdapter:
+    """
+    Off-watchlist 8-K material events — discovers AI/Tech events from companies
+    NOT on our 26-ticker watchlist using the same SEC atom-feed as
+    SECRegistrationsAdapter (which only covers S-1/F-1 IPO filings).
+
+    Gap closed: an AI startup acquisition, major partnership, change of control,
+    or CEO departure at a notable private player (e.g. xAI, Cohere, Scale AI)
+    that files an 8-K is completely invisible to EDGARAdapter (watchlist-only).
+    This adapter pulls the SEC current-8-K atom feed and passes AI/Tech company
+    names through the same _is_aitech() + NOTABLE_PRIVATE_PLAYERS filter.
+
+    Limits count=80 (broad sweep) and skips companies already on TICKERS to
+    avoid duplicating EDGARAdapter items (which are richer: include text + type).
+    """
+    BASE = ("https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent"
+            "&type=8-K&output=atom&count=80")
+    HEADERS = {"User-Agent": "HedgingAlphaFund research philipp.baro@gmail.com"}
+
+    _ENTRY_RE = re.compile(r"<entry>(.*?)</entry>", re.DOTALL)
+    _TITLE_RE = re.compile(r"<title>(.*?)</title>", re.DOTALL)
+    _HREF_RE = re.compile(r'<link[^>]*href="([^"]+)"')
+    _ACC_RE = re.compile(r"accession-number=([0-9-]+)")
+    _FILED_RE = re.compile(r"Filed:.*?(\d{4}-\d{2}-\d{2})")
+
+    # Company-name fragments (lowercase) for the 26 watchlist tickers.
+    # SEC atom feed uses full legal names; ticker-symbol matching misses them.
+    _WATCHLIST_NAMES = frozenset([
+        "nvidia", "advanced micro", "taiwan semiconductor", "asml",
+        "broadcom", "micron", "arm hold", "super micro", "qualcomm",
+        "marvell", "intel corp", "arista", "vertiv", "dell tech",
+        "microsoft", "alphabet", "amazon", "meta platform", "apple",
+        "palantir", "oracle", "servicenow", "salesforce", "snowflake",
+        "crowdstrike", "adobe",
+    ])
+
+    def _is_aitech(self, name: str) -> bool:
+        low = f" {name.lower()} "
+        if any(p in low for p in W.NOTABLE_PRIVATE_PLAYERS):
+            return True
+        return any(k in low for k in W.AITECH_KEYWORDS)
+
+    def _is_watchlist(self, name: str) -> bool:
+        """Skip companies already covered by EDGARAdapter (richer data)."""
+        low = name.lower()
+        return any(frag in low for frag in self._WATCHLIST_NAMES)
+
+    def fetch(self):
+        m = _m()
+        out, seen = [], set()
+        xml = m.fetch_url(self.BASE, headers=self.HEADERS, timeout=20)
+        time.sleep(0.3)
+        if not xml:
+            return []
+        for block in self._ENTRY_RE.findall(xml):
+            t = self._TITLE_RE.search(block)
+            if not t:
+                continue
+            title = re.sub(r"\s+", " ", t.group(1)).strip()
+            acc_m = self._ACC_RE.search(block)
+            acc = acc_m.group(1) if acc_m else ""
+            if not acc or acc in seen:
+                continue
+            # Title format: "8-K - Company Name (0001234567) (Filer)"
+            company = title.split(" - ", 1)[1] if " - " in title else title
+            company = re.sub(r"\s*\(\d{6,}\)\s*\(.*?\)\s*$", "", company).strip()
+            if not company:
+                continue
+            if not self._is_aitech(company):
+                continue
+            if self._is_watchlist(company):
+                continue  # EDGARAdapter already provides richer item for these
+            seen.add(acc)
+            href = self._HREF_RE.search(block)
+            filed = self._FILED_RE.search(block)
+            filed_s = filed.group(1) if filed else ""
+            out.append({
+                "text": (f"[SEC 8-K · off-watchlist AI/TECH] {company} — Material Event "
+                         f"(filed {filed_s}, {acc})"),
+                "source": "sec_broad_event",
+                "url": href.group(1).strip() if href else None,
+                "reliability": W.SOURCE_RELIABILITY.get("sec_broad_event", 0.88),
+            })
+        return out
+
+
 class ArxivAdapter:
     """Neueste AI/ML-Paper (Forschungsfront) via arXiv-API."""
     def fetch(self):
