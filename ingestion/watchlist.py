@@ -15,6 +15,42 @@ TICKERS = [
     "PLTR", "ORCL", "NOW", "CRM", "SNOW", "CRWD", "ADBE",
 ]
 
+# Lowercase legal-name fragments für jeden Watchlist-Ticker. EINZIGE Quelle der
+# Wahrheit für SEC-Firmennamen-Matching (SEC-Atom-Feeds führen volle Rechtsnamen,
+# keine Ticker). SECBroadEventsAdapter nutzt diese Menge, um Watchlist-Firmen aus
+# dem Off-Watchlist-8-K-Sweep auszuschließen — sonst dupliziert deren 8-K den
+# (reicheren) EDGARAdapter-Eintrag. Schlüssel MÜSSEN exakt TICKERS spiegeln
+# (siehe test_watchlist_sync.py — ein neuer Ticker ohne Fragment lässt den Test
+# rot werden statt still Duplikate zu erzeugen).
+WATCHLIST_NAME_FRAGMENTS = {
+    "NVDA":  "nvidia",
+    "AMD":   "advanced micro",
+    "TSM":   "taiwan semiconductor",
+    "ASML":  "asml",
+    "AVGO":  "broadcom",
+    "MU":    "micron",
+    "ARM":   "arm hold",
+    "SMCI":  "super micro",
+    "QCOM":  "qualcomm",
+    "MRVL":  "marvell",
+    "INTC":  "intel corp",
+    "ANET":  "arista",
+    "VRT":   "vertiv",
+    "DELL":  "dell tech",
+    "MSFT":  "microsoft",
+    "GOOGL": "alphabet",
+    "AMZN":  "amazon",
+    "META":  "meta platform",
+    "AAPL":  "apple",
+    "PLTR":  "palantir",
+    "ORCL":  "oracle",
+    "NOW":   "servicenow",
+    "CRM":   "salesforce",
+    "SNOW":  "snowflake",
+    "CRWD":  "crowdstrike",
+    "ADBE":  "adobe",
+}
+
 # SEC EDGAR: welche Filing-Typen einsammeln (8-K = Material Events, 4 = Insider,
 # SC 13D/G = >5%-Beteiligungen / Aktivisten-Stakes — Großkatalysatoren je Ticker)
 EDGAR_FORMS = ["8-K", "4", "SC 13D", "SC 13D/A", "SC 13G", "SC 13G/A"]

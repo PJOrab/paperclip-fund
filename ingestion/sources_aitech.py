@@ -473,16 +473,13 @@ class SECBroadEventsAdapter:
     _ACC_RE = re.compile(r"accession-number=([0-9-]+)")
     _FILED_RE = re.compile(r"Filed:.*?(\d{4}-\d{2}-\d{2})")
 
-    # Company-name fragments (lowercase) for the 26 watchlist tickers.
+    # Company-name fragments (lowercase) for the watchlist tickers, derived from
+    # the single source of truth in watchlist.py (W.WATCHLIST_NAME_FRAGMENTS).
     # SEC atom feed uses full legal names; ticker-symbol matching misses them.
-    _WATCHLIST_NAMES = frozenset([
-        "nvidia", "advanced micro", "taiwan semiconductor", "asml",
-        "broadcom", "micron", "arm hold", "super micro", "qualcomm",
-        "marvell", "intel corp", "arista", "vertiv", "dell tech",
-        "microsoft", "alphabet", "amazon", "meta platform", "apple",
-        "palantir", "oracle", "servicenow", "salesforce", "snowflake",
-        "crowdstrike", "adobe",
-    ])
+    # Keeping this derived (not a hardcoded copy) means a newly added ticker
+    # cannot silently leak its 8-K into this off-watchlist sweep as a duplicate
+    # of the richer EDGARAdapter item — the sync is enforced by test_watchlist_sync.
+    _WATCHLIST_NAMES = frozenset(W.WATCHLIST_NAME_FRAGMENTS.values())
 
     def _is_aitech(self, name: str) -> bool:
         low = f" {name.lower()} "
