@@ -63,6 +63,16 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-89 (DE-Loop Zyklus 23): **Federal Reserve macro adapter**
+  (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`).
+  Zero macro context in pipeline. Fed rate decisions directly affect AI capex thesis:
+  higher rates raise data-center financing costs and tighten hyperscaler capex budgets.
+  New `MacroFedAdapter` fetches two official Fed RSS feeds: `press_monetary.xml` (FOMC
+  rate decisions, policy statements) and `press_speeches.xml` (Fed chair / governor
+  speeches, forward guidance). Pattern identical to `EnergyNewsAdapter` (per-feed
+  try/except isolation, RSS_LOOKBACK_DAYS=3). Source key `fed_macro`, reliability=0.90
+  (official primary source). Registered as "Fed Macro" between Energy/Power and Yahoo
+  Finance. Syntax verified + unit-tested. Pushed: `8e4c805`.
 - 2026-05-22 — HED-89 (DE-Loop Zyklus 22): **Per-item-type reliability for 8-K filings**
   (`ingestion/sources_aitech.py`). All 8-K items shared reliability=0.95 regardless of
   content quality — a boilerplate Item 9.01 (exhibit attachment) competed with Item 2.02
