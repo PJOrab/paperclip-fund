@@ -835,10 +835,18 @@ def devil_user(theses: list[dict], analyses: list[dict] | None = None) -> str:
         "sharper threshold. If the exit_trigger is already specific and credible, you may reference "
         "it in your `falsification` list directly.\n"
     ) if any(t.get("exit_trigger") for t in annotated) else ""
+    edge_note = (
+        "\n\nEDGE ATTACK (highest priority for differentiated calls): theses with `is_differentiated=true` "
+        "include an `edge` field — the PM's claim about WHY the market is wrong. This claim is the thesis "
+        "raison d'être. Your `strongest_counter` MUST directly attack it: is the market actually efficient "
+        "here? Is the 'mispricing' already correcting? Is the edge claim circular or unfalsifiable? "
+        "A critique that doesn't engage with the `edge` claim on a differentiated call is incomplete.\n"
+    ) if any(t.get("is_differentiated") and t.get("edge") for t in annotated) else ""
     return (
         "Theses to attack:\n\n" + json.dumps(annotated, ensure_ascii=False)
         + uncertainty_note
         + exit_note
+        + edge_note
         + checklist_block + "\n\n"
         "Return JSON:\n"
         '{"critiques": [{"id": "matching thesis id", '
