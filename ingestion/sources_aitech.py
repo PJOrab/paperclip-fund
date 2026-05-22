@@ -787,6 +787,81 @@ class EnergyNewsAdapter:
         return out
 
 
+class PressWireAdapter:
+    """
+    Official company press releases from BusinessWire and GlobeNewswire.
+    Press wires carry earnings releases, product launches, partnership
+    announcements, and guidance updates hours before editorial coverage
+    and before the 8-K lands on SEC EDGAR.
+
+    Filters to AI/tech-relevant items using AITECH_KEYWORDS + NOTABLE_PRIVATE_PLAYERS
+    so broad sector feeds don't flood triage with irrelevant PRs.
+    Dedup by URL across feeds. Lookback = RSS_LOOKBACK_DAYS (default 3).
+    Per-feed try/except — one dead wire never kills the adapter.
+    """
+    LOOKBACK_DAYS = getattr(W, "RSS_LOOKBACK_DAYS", 3)
+    # Lowercase keyword set for fast title+desc matching
+    _AITECH_KW = frozenset(kw.lower() for kw in W.AITECH_KEYWORDS)
+    _NOTABLE_KW = frozenset(n.lower() for n in W.NOTABLE_PRIVATE_PLAYERS)
+
+    def _is_aitech(self, title: str, desc: str) -> bool:
+        low = (title + " " + desc).lower()
+        if any(kw in low for kw in self._AITECH_KW):
+            return True
+        if any(n in low for n in self._NOTABLE_KW):
+            return True
+        return False
+
+    def fetch(self):
+        m = _m()
+        out, seen = [], set()
+        cutoff = datetime.now(timezone.utc) - timedelta(days=self.LOOKBACK_DAYS)
+        feeds = getattr(W, "PRESS_WIRE_RSS_FEEDS", {})
+        for name, feed in feeds.items():
+            try:
+                text = m.fetch_url(feed, timeout=20)
+                if not text:
+                    continue
+                sep = "<item>" if "<item>" in text else "<entry>"
+                for block in text.split(sep)[1:40]:
+                    t = re.search(r"<title[^>]*>(.*?)</title>", block, re.DOTALL)
+                    if not t:
+                        continue
+                    raw = t.group(1).replace("<![CDATA[", "").replace("]]>", "")
+                    title = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+                    if not title:
+                        continue
+                    link_m = (re.search(r'<link[^>]*href="([^"]+)"', block)
+                              or re.search(r"<link>(.*?)</link>", block))
+                    url = link_m.group(1).strip() if link_m else None
+                    key = hashlib.md5((url or title).encode()).hexdigest()
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    date_m = (re.search(r"<pubDate>(.*?)</pubDate>", block, re.DOTALL)
+                              or re.search(r"<updated>(.*?)</updated>", block, re.DOTALL)
+                              or re.search(r"<published>(.*?)</published>", block, re.DOTALL))
+                    if date_m:
+                        pub = _parse_rss_date(date_m.group(1).strip())
+                        if pub and pub < cutoff:
+                            continue
+                    desc = _rss_desc(block, max_len=200)
+                    if not self._is_aitech(title, desc or ""):
+                        continue
+                    item_text = f"[PressWire · {name}] {title}"
+                    if desc:
+                        item_text = f"{item_text} — {desc}"
+                    out.append({
+                        "text": item_text[:450],
+                        "source": "press_wire",
+                        "url": url,
+                        "reliability": W.SOURCE_RELIABILITY.get("press_wire", 0.78),
+                    })
+            except Exception:
+                continue
+        return out
+
+
 class MacroFedAdapter:
     """
     Federal Reserve macro context feed — monetary policy press releases and

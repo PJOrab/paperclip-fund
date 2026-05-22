@@ -185,6 +185,15 @@ NOTABLE_PRIVATE_PLAYERS = [
 YAHOO_FINANCE_TICKERS = TICKERS
 YAHOO_FINANCE_RSS = "https://feeds.finance.yahoo.com/rss/2.0/headline?s={ticker}&region=US&lang=en-US"
 
+# Press wire feeds: official company press releases (BusinessWire, GlobeNewswire).
+# These carry earnings releases, product launches, partnerships, and guidance
+# updates hours before editorial coverage and before the 8-K hits SEC EDGAR.
+# AI/tech keyword filtering applied in PressWireAdapter to avoid PR noise.
+PRESS_WIRE_RSS_FEEDS = {
+    "businesswire_tech":    "https://feed.businesswire.com/rss/home/?rss=G22",
+    "globenewswire_tech":   "https://www.globenewswire.com/RssFeed/subjectcode/SC/typeofnews/PressRelease",
+}
+
 SOURCE_RELIABILITY = {
     "sec_8k": 0.95, "sec_form4": 0.90, "sec_registration": 0.92,
     # SC 13D/G = beneficial-ownership filings (>5% stake / activist position).
@@ -214,6 +223,10 @@ SOURCE_RELIABILITY = {
     # Factual confirmed data — higher than analyst_action (0.85) since earnings
     # results are reported facts, not forward-looking opinion.
     "earnings_result": 0.88,
+    # Official company press releases from BusinessWire / GlobeNewswire.
+    # Primary source (company-authored) but unverified/unedited — higher than
+    # editorial tech news (0.60) but below SEC filings.
+    "press_wire": 0.78,
     # Off-watchlist 8-K material events from AI/Tech companies (SECBroadEventsAdapter).
     # Same official SEC source as sec_8k but without item-type text extraction —
     # lower than sec_8k (0.95) since we only have the filing notice, not content.
