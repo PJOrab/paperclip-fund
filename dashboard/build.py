@@ -19,6 +19,57 @@ from ingestion.db import client
 
 OUT_DEFAULT = os.environ.get("DASHBOARD_OUT", "/var/www/html/fund/index.html")
 
+# Static ticker→sector mapping aligned with the 6-sector taxonomy (sector_taxonomy.md)
+TICKER_SECTOR: dict[str, str] = {
+    # S1 Semiconductors & Hardware
+    "NVDA": "S1 Semis/HW", "AMD": "S1 Semis/HW", "TSM": "S1 Semis/HW",
+    "ASML": "S1 Semis/HW", "AVGO": "S1 Semis/HW", "MU": "S1 Semis/HW",
+    "ARM": "S1 Semis/HW", "SMCI": "S1 Semis/HW", "QCOM": "S1 Semis/HW",
+    "MRVL": "S1 Semis/HW", "INTC": "S1 Semis/HW",
+    # S2 Infrastructure & Networking
+    "ANET": "S2 Infra/Net", "VRT": "S2 Infra/Net", "DELL": "S2 Infra/Net",
+    # S3 Hyperscalers & Big Tech
+    "MSFT": "S3 Hyperscaler", "GOOGL": "S3 Hyperscaler", "AMZN": "S3 Hyperscaler",
+    "META": "S3 Hyperscaler", "AAPL": "S3 Hyperscaler",
+    # S4 AI Software & Applications
+    "PLTR": "S4 AI-Software", "ORCL": "S4 AI-Software", "NOW": "S4 AI-Software",
+    "CRM": "S4 AI-Software", "SNOW": "S4 AI-Software", "CRWD": "S4 AI-Software",
+    "ADBE": "S4 AI-Software",
+}
+
+
+def _build_sector_summary(thesis_calls: list[dict]) -> list[dict]:
+    """Aggregate thesis calls by sector: call count, avg conviction, long/short split."""
+    from collections import defaultdict
+    buckets: dict[str, dict] = defaultdict(lambda: {"calls": 0, "long": 0, "short": 0,
+                                                      "convictions": [], "tickers": set()})
+    for call in thesis_calls:
+        for tk in (call.get("tickers") or []):
+            sector = TICKER_SECTOR.get(tk, "Other")
+            b = buckets[sector]
+            b["calls"] += 1
+            b["tickers"].add(tk)
+            if call.get("direction") == "long":
+                b["long"] += 1
+            elif call.get("direction") == "short":
+                b["short"] += 1
+            conv = call.get("conviction")
+            if isinstance(conv, (int, float)):
+                b["convictions"].append(conv)
+    result = []
+    for sector, b in sorted(buckets.items()):
+        avg_conv = round(sum(b["convictions"]) / len(b["convictions"]), 2) if b["convictions"] else None
+        result.append({
+            "sector": sector,
+            "calls": b["calls"],
+            "long": b["long"],
+            "short": b["short"],
+            "avg_conviction": avg_conv,
+            "tickers": sorted(b["tickers"]),
+        })
+    result.sort(key=lambda x: -x["calls"])
+    return result
+
 
 def collect() -> dict:
     c = client()
@@ -126,6 +177,7 @@ def collect() -> dict:
         "briefing": briefing,
         "briefing_history": briefing_history,
         "thesis_calls": thesis_calls,
+        "sector_summary": _build_sector_summary(thesis_calls),
         "track_record": track_record,
         "briefing_age_hours": briefing_age_hours,
         "last_done_briefing_at": last_done_briefing_at,
@@ -221,6 +273,9 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
 
   <h2>Track Record <span id="trbadge"></span></h2>
   <div class="grid cards" id="trkpis"></div>
+
+  <h2>Sektor-Übersicht</h2>
+  <div class="panel" id="sectorview"></div>
 
   <h2>Thesis Calls <span id="callsbadge"></span></h2>
   <div class="panel" id="thesiscalls"></div>
@@ -371,6 +426,42 @@ if(tr.total_calls){
     :'<span class="pill pill--err">kalibrierung schwach</span>';
 }else{
   $("trkpis").innerHTML='<div class="panel muted">Noch keine Track-Record-Daten.</div>';
+}
+
+// Sector view
+const sectors = D.sector_summary||[];
+if(sectors.length){
+  const maxCalls = Math.max(1,...sectors.map(s=>s.calls));
+  const rows = sectors.map(s=>{
+    const pct = Math.max(4, Math.round(s.calls/maxCalls*100));
+    const conv = s.avg_conviction!=null?s.avg_conviction.toFixed(2):'—';
+    const ticks = (s.tickers||[]).slice(0,5).join(', ');
+    const ls = s.long||0, ss = s.short||0;
+    const lsPill = ls>0?`<span class="pill pill--ok">${ls}L</span> `:'';
+    const ssPill = ss>0?`<span class="pill pill--err">${ss}S</span> `:'';
+    return `<tr style="border-bottom:1px solid var(--line)">
+      <td style="padding:5px 8px;font-size:13px;white-space:nowrap">${esc(s.sector)}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:600">${s.calls}</td>
+      <td style="padding:5px 8px">${lsPill}${ssPill}</td>
+      <td style="padding:5px 8px;text-align:center">${conv}</td>
+      <td style="padding:5px 8px;width:30%;min-width:80px">
+        <div class="bar"><span style="width:${pct}%"></span></div></td>
+      <td style="padding:5px 8px;font-size:11px;color:var(--mut)">${esc(ticks)}</td>
+    </tr>`;}).join('');
+  $("sectorview").innerHTML=`
+    <div style="font-size:12px;color:var(--mut);margin-bottom:8px">Aus den letzten 14 Briefing-Runs · nach Sektor aggregiert</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="border-bottom:1px solid var(--line);color:var(--mut);font-size:11px">
+        <th style="padding:5px 8px;text-align:left">Sektor</th>
+        <th style="padding:5px 8px;text-align:center">Calls</th>
+        <th style="padding:5px 8px;text-align:left">L/S</th>
+        <th style="padding:5px 8px;text-align:center">⌀ Conv</th>
+        <th style="padding:5px 8px;text-align:left">Anteil</th>
+        <th style="padding:5px 8px;text-align:left">Ticker</th>
+      </tr></thead><tbody>${rows}</tbody>
+    </table>`;
+}else{
+  $("sectorview").innerHTML='<div class="muted">Noch keine Sector-Daten.</div>';
 }
 
 // Thesis Calls table
