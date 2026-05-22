@@ -10,4 +10,9 @@ echo "===== $(date -u +'%Y-%m-%dT%H:%M:%SZ') ingest start ($REPO_DIR) ====="
 "$PYTHON" -m ingestion.run_ingest
 rc=$?
 echo "===== $(date -u +'%Y-%m-%dT%H:%M:%SZ') ingest done (rc=$rc) ====="
+if [ "$rc" -eq 0 ]; then
+    echo "===== $(date -u +'%Y-%m-%dT%H:%M:%SZ') dashboard rebuild start ====="
+    "$PYTHON" -m dashboard.build || echo "WARN: dashboard rebuild failed (non-fatal)"
+    echo "===== $(date -u +'%Y-%m-%dT%H:%M:%SZ') dashboard rebuild done ====="
+fi
 exit $rc
