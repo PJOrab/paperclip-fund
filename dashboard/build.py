@@ -291,6 +291,9 @@ abbr[title]{text-decoration:none;cursor:help}
   margin-bottom:var(--s2)}
 .brief-ts--stale{color:var(--amber);font-weight:600}
 .brief-ts--stale .brief-ts-mark{margin-right:var(--s1)}
+/* build-staleness: header timestamp goes amber when the dashboard itself hasn't rebuilt (deploy-bridge stall) */
+.built--stale{color:var(--amber);font-weight:600}
+.built--stale .build-stale-mark{margin-right:var(--s1)}
 /* briefing processing placeholder */
 .brief-processing{display:flex;align-items:center;gap:var(--s3);padding:var(--s5);
   border:1px dashed var(--line);border-radius:6px;font-size:var(--fs-body);color:var(--mut)}
@@ -404,7 +407,7 @@ main:focus{outline:none}
   <header style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">
     <div><h1>🤖 AI/Tech Fund — Intelligence Dashboard</h1>
     <div class="sub">Live-Feed → Agenten-Gremium → CEO-Briefing · MVP</div></div>
-    <div class="sub">aktualisiert: <span id="built"></span></div>
+    <div class="sub" id="builtwrap">aktualisiert: <span id="built"></span></div>
   </header>
 
   <details class="wf-details">
@@ -446,7 +449,25 @@ main:focus{outline:none}
 <script>
 const D = __DATA__;
 const $ = (id)=>document.getElementById(id);
-$("built").innerHTML = `<time datetime="${D.built_at_iso||''}">${D.built_at}</time>`;
+// Build-Freshness: flag the page itself as stale if the generator hasn't rebuilt in >24h
+// (catches a stalled deploy bridge — the CEO sees data may be outdated, Nielsen #1 / preattentive ⚠)
+(function(){
+  const el=$("built");
+  let html=`<time datetime="${D.built_at_iso||''}">${D.built_at}</time>`;
+  if(D.built_at_iso){
+    const age=Date.now()-new Date(D.built_at_iso).getTime();
+    if(age>24*3600*1000){
+      const days=Math.max(1,Math.round(age/864e5));
+      html=`<span class="build-stale-mark" aria-hidden="true">⚠</span>`+
+        `<time datetime="${D.built_at_iso}">${D.built_at}</time>`+
+        ` · veraltet (vor ${days} Tag${days===1?"":"en"})`;
+      const wrap=$("builtwrap");
+      wrap.classList.add("built--stale");
+      wrap.setAttribute("role","status");
+    }
+  }
+  el.innerHTML=html;
+})();
 
 // Pipeline
 const steps = [
@@ -777,6 +798,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
