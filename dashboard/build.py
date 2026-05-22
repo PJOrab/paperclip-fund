@@ -171,7 +171,7 @@ h2{font-size:var(--fs-h2);font-weight:600;text-transform:uppercase;letter-spacin
 .sectors{grid-template-columns:repeat(3,1fr)}
 .two-col{grid-template-columns:1fr 1fr}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:var(--s4)}
-.kpi{font-size:var(--fs-kpi);font-weight:700}
+.kpi{font-size:var(--fs-kpi);font-weight:700;font-variant-numeric:tabular-nums}
 .kpi small{font-size:var(--fs-h2);color:var(--mut);font-weight:400}
 .kpi-dl{margin:0;display:flex;flex-direction:column-reverse}
 .kpi-dl dt,.kpi-dl dd{margin:0}
@@ -291,7 +291,7 @@ abbr[title]{text-decoration:none;cursor:help}
 .cd-long{background:rgba(63,185,80,.18);color:var(--green)}
 .cd-short{background:rgba(248,81,73,.18);color:var(--red)}
 .cd-pair{background:rgba(210,153,34,.18);color:var(--amber)}
-.call-chip .cc{color:var(--mut);font-size:var(--fs-cap);cursor:help;
+.call-chip .cc{color:var(--mut);font-size:var(--fs-cap);cursor:help;font-variant-numeric:tabular-nums;
   border-bottom:1px dotted currentColor;border-bottom-color:rgba(125,125,125,.5)}
 .call-chip--empty{opacity:.55;border-style:dashed}
 /* hover feedback on interactive cards/tiles/rows */
