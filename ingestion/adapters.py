@@ -8,8 +8,10 @@ von Dicts der Form: {"text", "source", optional "url", optional "reliability"}.
 """
 import hashlib
 import importlib
+import re
 import sys
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from . import config
 
@@ -57,8 +59,58 @@ def build_adapters():
     return adapters
 
 
-def _content_hash(text: str, source: str) -> str:
-    return hashlib.md5(f"{text[:200]}{source}".encode()).hexdigest()
+# Volatile metric badges that change every fetch cycle for the SAME story
+# (HN points climb, GitHub stars climb) and are baked into the item text. If
+# they enter the dedup hash, one story re-ingests 8-10x/day as its score ticks
+# up (observed noise pattern). Strip them so the dedup key stays stable.
+_VOLATILE_BADGE_RE = re.compile(r"^\[(?:HN\s+\d+\s*pts|GitHub\s+★\s*\d+)\]\s*", re.I)
+_WS_RE = re.compile(r"\s+")
+
+# Query params that carry no content identity (campaign/click tracking).
+_TRACKING_PARAM_KEYS = {
+    "fbclid", "gclid", "ref", "ref_src", "ref_url", "cmpid",
+    "mc_cid", "mc_eid", "igshid", "spm",
+}
+
+
+def _canonical_url(url: str) -> str:
+    """
+    Canonicalize a URL into a stable identity: drop fragment, lowercase
+    scheme+host, fold http/https together, strip a trailing slash, and remove
+    tracking query params (utm_*, fbclid, …). Same article via different feeds
+    or with different tracking tails collapses to one dedup key.
+    """
+    try:
+        parts = urlsplit(url.strip())
+    except Exception:
+        return url.strip()
+    if not parts.netloc:
+        return url.strip()
+    scheme = "https" if parts.scheme.lower() in ("http", "https", "") else parts.scheme.lower()
+    netloc = parts.netloc.lower()
+    path = parts.path.rstrip("/")
+    kept = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True)
+            if not k.lower().startswith("utm_") and k.lower() not in _TRACKING_PARAM_KEYS]
+    return urlunsplit((scheme, netloc, path, urlencode(kept), ""))
+
+
+def _normalize_text(text: str) -> str:
+    """Strip volatile metric badges, collapse whitespace, lowercase, cap length."""
+    t = _VOLATILE_BADGE_RE.sub("", text or "")
+    return _WS_RE.sub(" ", t).strip().lower()[:200]
+
+
+def _content_hash(text: str, source: str, url: str | None = None) -> str:
+    """
+    Stable dedup key for raw_items. Prefer the canonical URL (the strongest
+    cross-fetch identity); fall back to normalized text + source when no URL
+    is present. Keying on URL (not the raw point/star-laden text) is what
+    stops the per-cycle re-ingestion of the same HN/GitHub story.
+    """
+    canon = _canonical_url(url) if url else ""
+    if canon:
+        return hashlib.md5(canon.encode()).hexdigest()
+    return hashlib.md5(f"{_normalize_text(text)}{source}".encode()).hexdigest()
 
 
 def _source_reliability(m, source: str):
@@ -87,7 +139,7 @@ def collect():
                     continue
                 source = it.get("source") or "unknown"
                 items.append({
-                    "content_hash": _content_hash(text, source),
+                    "content_hash": _content_hash(text, source, it.get("url")),
                     "adapter": name,
                     "source": source,
                     "text": text,
