@@ -1582,3 +1582,80 @@ class FREDMacroAdapter:
             except Exception:
                 continue
         return out
+
+
+class ShortInterestAdapter:
+    """
+    Short-interest data for watchlist tickers via Yahoo Finance quoteSummary API.
+
+    Emits items only when short interest is notable (>3% of float) or has moved
+    significantly vs prior month (>20% change in shares short). This surfaces
+    squeeze-setup conditions and institutional de-risking signals that don't
+    appear in news feeds.
+
+    Source: 'yahoo_short_interest'. Updated bi-weekly on Yahoo (settlement-date
+    lag), so daily runs will re-ingest the same data — dedup via content_hash
+    keyed on ticker + sharesShort value keeps raw_items clean.
+
+    Reliability 0.75: derived from public Yahoo Finance (best-effort, no API key).
+    """
+
+    SOURCE = "yahoo_short_interest"
+    # Only emit when short % of float exceeds this threshold
+    MIN_SHORT_PCT = 0.03
+    # Only emit when month-over-month change in shares short exceeds this
+    MIN_CHANGE_PCT = 0.20
+    RELIABILITY = 0.75
+
+    def fetch(self) -> list[dict]:
+        out = []
+        for ticker in W.TICKERS:
+            item = self._fetch_one(ticker)
+            if item:
+                out.append(item)
+            time.sleep(0.15)  # gentle rate-limit: ~30 tickers × 150ms ≈ 4.5s total
+        return out
+
+    def _fetch_one(self, ticker: str) -> dict | None:
+        url = (f"https://query2.finance.yahoo.com/v10/finance/quoteSummary/{ticker}"
+               "?modules=defaultKeyStatistics")
+        try:
+            data = fetch_json(url, headers={"User-Agent": "Mozilla/5.0"})
+            if not data:
+                return None
+            stats = (data.get("quoteSummary") or {}).get("result") or []
+            if not stats:
+                return None
+            ks = stats[0].get("defaultKeyStatistics") or {}
+            short_pct = (ks.get("shortPercentOfFloat") or {}).get("raw")
+            shares_short = (ks.get("sharesShort") or {}).get("raw")
+            prior_shares = (ks.get("sharesShortPriorMonth") or {}).get("raw")
+            if short_pct is None:
+                return None
+            if short_pct < self.MIN_SHORT_PCT:
+                return None
+            change_str = ""
+            change_direction = ""
+            if prior_shares and shares_short and prior_shares > 0:
+                change_pct = (shares_short - prior_shares) / prior_shares
+                if abs(change_pct) >= self.MIN_CHANGE_PCT:
+                    direction = "↑" if change_pct > 0 else "↓"
+                    change_direction = "up" if change_pct > 0 else "down"
+                    change_str = f", {direction}{abs(change_pct)*100:.0f}% vs prior month"
+            elif short_pct < self.MIN_SHORT_PCT:
+                return None
+            squeeze_note = ""
+            if short_pct >= 0.10 and change_direction == "up":
+                squeeze_note = " — elevated short + rising = squeeze-setup risk"
+            elif short_pct >= 0.08:
+                squeeze_note = " — elevated short interest = potential squeeze setup on positive catalyst"
+            text = (f"[{ticker}] Short interest: {short_pct*100:.1f}% of float"
+                    f"{change_str}{squeeze_note}")
+            return {
+                "text": text,
+                "source": self.SOURCE,
+                "url": f"https://finance.yahoo.com/quote/{ticker}",
+                "reliability": self.RELIABILITY,
+            }
+        except Exception:
+            return None

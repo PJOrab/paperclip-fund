@@ -335,6 +335,14 @@ def triage_user(items: list[dict], max_clusters: int = 12) -> str:
         "a product launch with concrete specs, an M&A rumor with named sources, or a significant "
         "regulatory development. Filter opinion and republished primary-source content. "
         "Category by content, importance 2-4 (never 5 — primary sources earn 5). "
+        "SHORT INTEREST: items with source 'yahoo_short_interest' show each ticker's short interest "
+        "as % of float and month-over-month change. Include when: (a) short interest ≥8% of float "
+        "(elevated = squeeze-setup risk on any positive catalyst) OR (b) short interest rose ≥20% "
+        "month-over-month (new institutional bet against the stock — bearish signal). "
+        "Category='insider_trade' (positioning signal), tickers=[named ticker]. "
+        "Importance 4 for squeeze setup (≥10% float + rising), 3 for elevated (5-10%), 2 for trend-only. "
+        "Never import short interest alone as the primary thesis driver — always pair with a catalyst "
+        "from another cluster. Short interest is context/amplifier, not the call itself. "
         "Only include genuinely market-relevant clusters. If little matters, return fewer."
     )
 

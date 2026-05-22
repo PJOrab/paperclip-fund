@@ -303,6 +303,10 @@ SOURCE_RELIABILITY = {
     "yahoo_finance": 0.72,
     "funding_news": 0.80,
     "energy_news": 0.72,
+    # Short interest from Yahoo Finance quoteSummary. Bi-weekly settlement lag,
+    # public API, no key required. Signal quality moderate: useful for squeeze
+    # setup detection and institutional de-risking reads.
+    "yahoo_short_interest": 0.72,
     # Earnings dates from yfinance are authoritative forward-looking events.
     # High reliability: directly from exchange/company filings via Yahoo.
     "earnings_calendar": 0.88,
