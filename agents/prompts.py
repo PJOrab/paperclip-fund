@@ -122,6 +122,14 @@ ANALYST_SYSTEM = (
     "(4) Is this contrarian vs. street consensus, or piling on? "
     "Differentiated = contrarian upgrade on a consensus short, or downgrade where street is still bullish. "
     "Do not treat a PT raise after an earnings beat as differentiated. "
+    "HORIZON CALIBRATION: use exactly one of 'days', 'weeks', 'quarters'. "
+    "'days' = price-moving catalyst within 1-7 days (imminent earnings ≤3d, "
+    "Fed decision tomorrow, product launch today). "
+    "'weeks' = catalyst 1-4 weeks out (earnings 4-14d, regulatory decision expected "
+    "this month, product launch window open). "
+    "'quarters' = structural thesis without a near-term dated catalyst (capex trend, "
+    "market share shift, valuation re-rating). When in doubt use 'weeks' not 'quarters' "
+    "— 'quarters' signals no near-term trading opportunity. "
     "Output STRICT JSON only."
 )
 
