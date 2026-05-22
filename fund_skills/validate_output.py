@@ -81,6 +81,11 @@ def validate(schema: str, data: dict) -> list[str]:
                  f"theses[{i}] bull_case must be a non-empty list", errs)
             need(isinstance(x.get("bear_case"), list) and len(x.get("bear_case", [])) > 0,
                  f"theses[{i}] bear_case must be a non-empty list", errs)
+            # exit_trigger: optional but must be non-empty string when present
+            et = x.get("exit_trigger")
+            if et is not None:
+                need(isinstance(et, str) and et.strip(),
+                     f"theses[{i}] exit_trigger must be non-empty string when present", errs)
             # scenarios optional but validated when present (investment-grade output)
             sc = x.get("scenarios")
             if sc is not None:

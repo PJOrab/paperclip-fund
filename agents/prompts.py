@@ -558,6 +558,13 @@ THESIS_SYSTEM = (
     "Bad examples: 'earnings', 'market reaction', 'news'. "
     "For structural 'quarters' theses without a known date: name the threshold event "
     "instead: 'Next hyperscaler capex guidance update (Q2 earnings season, ~Aug 2026)'. "
+    "EXIT TRIGGER (mandatory): every thesis must specify the single observable event that "
+    "invalidates the call — the specific data point or event a PM would watch as a stop-loss. "
+    "Good examples: 'NVDA Q2 DC guide < $5.5B (below my model)', "
+    "'AMD announces wins 3+ hyperscaler MI300X contracts in Q2 (NVDA moat broken)', "
+    "'Fed signals more than 2 cuts — rate-sensitive capex re-pricing'. "
+    "Bad examples: 'macro deterioration', 'bad earnings', 'competition'. "
+    "An exit trigger without a specific threshold is not a trigger — it is vague risk acknowledgment. "
     "Output STRICT JSON only."
 )
 
@@ -674,6 +681,7 @@ def thesis_user(analyses: list[dict]) -> str:
         '"base": {"prob": 0.0-1.0, "trigger": "specific named event", "target": "price or % move"}, '
         '"bear": {"prob": 0.0-1.0, "trigger": "specific named event", "target": "price or % move"}'
         '}, '
+        '"exit_trigger": "the ONE specific observable event that invalidates this call and should trigger exit — e.g. \'NVDA Q2 DC guide < $5.5B\' or \'AMD MI300X wins Google TPU contract\'", '
         '"horizon": "days|weeks|quarters", "conviction": 0.0-1.0, '
         '"is_differentiated": true|false}]}'
     )
@@ -876,6 +884,7 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict],
         "[ONLY include when scenarios field is present; omit section entirely if missing]\n"
         "⚖️ <b>Gegenargument:</b> Devil's Advocate in 1 Zeile + "
         "adjudication (→ Caution berücksichtigt / → Conviction reduziert auf X / → Devil kippt Call: gestrichen)\n"
+        "🚪 <b>Exit wenn:</b> exit_trigger in 1 Halbsatz [omit if exit_trigger not present]\n"
         "👉 <b>Fazit:</b> 1 Zeile\n\n"
         "<b>👀 Beobachten</b>\n"
         "• 1 Zeile\n\n"
