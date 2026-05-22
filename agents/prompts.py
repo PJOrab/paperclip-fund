@@ -275,13 +275,28 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict],
     enriched.sort(key=call_priority)
 
     # Extract earnings_calendar items from triage evidence for the Earnings section
+    # Matches all three formats from EarningsCalendarAdapter:
+    #   "[NVDA] Earnings in 3 days (2026-05-28)"
+    #   "[MSFT] Earnings TOMORROW (2026-05-22)"
+    #   "[GOOGL] Earnings today! (2026-05-22)"
     earnings_lines: list[str] = []
-    _earnings_pat = re.compile(r"\[([A-Z]+)\] Earnings in (\d+) days? \((\d{4}-\d{2}-\d{2})\)")
+    _earnings_pat = re.compile(
+        r"\[([A-Z]+)\] Earnings (in (\d+) days?|TOMORROW|today!) \((\d{4}-\d{2}-\d{2})\)"
+    )
     for cl in (triage.get("clusters", []) if isinstance(triage, dict) else []):
         for ev in (cl.get("evidence") or []):
             m = _earnings_pat.search(ev)
             if m:
-                earnings_lines.append(f"{m.group(1)} — {m.group(3)} (in {m.group(2)}d)")
+                ticker = m.group(1)
+                date_str = m.group(4)
+                days_word = m.group(2)
+                if m.group(3):  # "in X days"
+                    label = f"in {m.group(3)}d"
+                elif "TOMORROW" in days_word:
+                    label = "morgen"
+                else:
+                    label = "heute"
+                earnings_lines.append(f"{ticker} — {date_str} ({label})")
     # Deduplicate, sort by date
     seen: set[str] = set()
     unique_earnings: list[str] = []
