@@ -63,6 +63,13 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — CIO-Master-Loop (HED-63 Zyklus): **Designer-UX-Loop angestoßen.** Gap: DE hatte
+  eine eigene fortlaufende Schleife (HED-64), Designer Felix nicht — entgegen dem Mandat
+  („Designer: Dashboard-UX … richte ihm eine EIGENE fortlaufende Arbeitsschleife ein"). Child
+  HED-67 an Felix: eigene 30-Min-Routine selbst anlegen (self-only-Auth, CIO kann das nicht) +
+  erste UX-Verbesserung sofort starten. Briefing-IC-Rollen (Devil/Editor/Senior Analyst/Carl)
+  bewusst NICHT mit Off-Cycle-Make-Work belegt (Budgetdisziplin, continuous_improvement_loops).
+  In-Review-Queue (HED-39 Track-Record-Section, HED-54 ARM-Watchlist) korrekt board-gated geparkt.
 - 2026-05-22 — HED-56 (DE-Loop Zyklus 1): **Dedup-Key stabilisiert** (`ingestion/adapters.py`).
   `content_hash` war `md5(text[:200]+source)`; HN/GitHub-Text trägt eine volatile Metrik
   (Punkte/Stars), die jeden 30-Min-Fetch hochtickt → gleiche Story bekam jeden Zyklus einen
