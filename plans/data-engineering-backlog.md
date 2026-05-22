@@ -63,6 +63,33 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-106 (DE-Loop Zyklus 39): **SEC 10-Q and 10-K added to EDGAR adapter**
+  (`ingestion/watchlist.py`, `ingestion/sources_aitech.py`, `agents/prompts.py`).
+  10-Q (quarterly) and 10-K (annual) earnings filings were completely dark in the pipeline —
+  EDGAR_FORMS only covered 8-K, Form 4, and 13D/G. These are the highest-signal periodic SEC docs:
+  when a watchlist company files its 10-Q, the MD&A section contains official revenue/EPS figures
+  and any guidance revision. Added: (1) "10-Q"/"10-K" to EDGAR_FORMS; (2) `sec_10q`/`sec_10k` to
+  SOURCE_RELIABILITY at 0.97 (highest in pipeline); (3) `_extract_10q_text()` with Item-2/Item-7
+  MD&A regex + revenue-mention fallback; (4) `_edgar_form_meta()` mappings; (5) text extraction
+  wired into EDGARAdapter.fetch() (try/except isolated, 30s timeout); (6) 10-Q/10-K triage guidance
+  in both TRIAGE_SYSTEM and triage_user() (importance 5, category=earnings, always include).
+  TRIAGE_SYSTEM importance rubric also updated to mention 10-Q/10-K at importance 4-5.
+  Verified: form meta, extraction (Item2/Item7/fallback), dedup+sync tests pass. Pushed: `b6dd3b6`.
+- 2026-05-22 — HED-106 (DE-Loop Zyklus 38): **coverage_qc: analyst_action + exec_change patterns**
+  (`agents/coverage_qc.py`). Added 2 new event types to BIG_EVENT_PATTERNS (was 7, now 9):
+  (1) `analyst_action` (medium): upgrades/downgrades/initiations/target raises/cuts — matches Yahoo Finance
+  RSS upgrade language e.g. "Goldman Sachs initiates NVDA at Buy", "raises price target for GOOGL".
+  (2) `exec_change` (high): CEO/CFO/CTO/COO departures and appointments — matches 8-K 5.02 items
+  ("Exec Departure/Appointment") + press-release text e.g. "Satya Nadella appointed CEO".
+  Both are market-moving events with zero prior coverage-gap detection. 12/12 pattern tests pass.
+  Pushed: `b230a09`.
+- 2026-05-22 — HED-106 (DE-Loop Zyklus 37): **FRED macro overlay: VIX + SP500 + NASDAQ added**
+  (`ingestion/sources_aitech.py`). Added VIXCLS (CBOE VIX), SP500, NASDAQCOM to `FREDMacroAdapter.SERIES`.
+  All three are daily series (free via fredgraph.csv, no API key), fresh within 24h.
+  VIX gives analyst a live risk-regime signal (>20=elevated fear, >30=crisis onset); SP500/NASDAQ give
+  market-context for AI/Tech thesis positioning (momentum, risk-on/off). Added "index" format kind
+  (comma-sep float) for equity index levels. Live test: VIX=17.44 (Δ-3.4%), SP500=7,445.72 (Δ+0.2%),
+  NASDAQ=26,293.10 (Δ+0.1%). FRED adapter now covers 10 macro series (was 7). Pushed: `74f0ee7`.
 - 2026-05-22 — HED-104 (DE-Loop Zyklus 36): **Single source of truth for SEC watchlist-name filter + sync guardrail**
   (`ingestion/watchlist.py`, `ingestion/sources_aitech.py`, `ingestion/test_watchlist_sync.py`). First ran a
   live reachability+freshness sweep of ALL 15 RSS feeds (TECH/FUNDING/PRESS_WIRE/ENERGY) — every one is
