@@ -16,17 +16,31 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from . import config
 
 _macro = None
+_macro_missing = False
 
 
 def _load_macro():
-    """Importiert das macro-agent main.py einmalig als Modul."""
-    global _macro
+    """
+    Importiert das (optionale) macro-agent main.py einmalig als Modul.
+
+    Das Makro-Modul liefert nur noch ein Overlay: optionale NewsAPI/X-Keys und
+    die SOURCE_RELIABILITY-Map. Fehlt das Verzeichnis, läuft die Ingestion ohne
+    dieses Overlay weiter (NewsAPI/X werden mangels Keys übersprungen,
+    reliability fällt auf None zurück) statt mit SystemExit den GESAMTEN Lauf zu
+    killen — eine fehlende optionale Quelle darf den Run nie abbrechen.
+    """
+    global _macro, _macro_missing
     if _macro is not None:
         return _macro
+    if _macro_missing:
+        return None
     macro_dir = Path(config.MACRO_AGENT_DIR)
     if not (macro_dir / "main.py").exists():
-        raise SystemExit(f"macro-agent main.py nicht gefunden unter {macro_dir} "
-                         f"(setze MACRO_AGENT_DIR in .env)")
+        _macro_missing = True
+        print(f"⚠  macro-agent main.py nicht gefunden unter {macro_dir} — "
+              f"Ingestion läuft ohne Makro-Overlay weiter "
+              f"(setze MACRO_AGENT_DIR in .env)")
+        return None
     sys.path.insert(0, str(macro_dir))
     _macro = importlib.import_module("main")
     return _macro
@@ -121,7 +135,9 @@ def _content_hash(text: str, source: str, url: str | None = None) -> str:
 
 
 def _source_reliability(m, source: str):
-    return m.SOURCE_RELIABILITY.get(source)
+    if m is None:
+        return None
+    return getattr(m, "SOURCE_RELIABILITY", {}).get(source)
 
 
 def collect():

@@ -52,14 +52,20 @@ def run_once(dry_run: bool = False) -> None:
     # Dead-adapter health check: adapters returning 0 items without a logged error
     # are silently dropping data. Surface them so operators notice and can investigate.
     silent_zeros = [n for n, c in per_adapter.items() if c == 0 and n not in errors]
+    for name in silent_zeros:
+        errors[name] = "0 items fetched — possible feed outage or config change"
     if silent_zeros:
         print(f"  ⚠  DEAD ADAPTERS (0 items, no error): {', '.join(silent_zeros)}")
-        for name in silent_zeros:
-            errors[name] = "0 items fetched — possible feed outage or config change"
+
+    # Alert on ANY degraded adapter (errored OR silently empty). A run that loses
+    # adapters — e.g. the shared macro HTTP layer going missing, which now degrades
+    # gracefully instead of killing the run — must page loudly rather than silently
+    # shipping a thin feed into the briefing.
+    if errors:
+        detail = "\n".join(f"• {n}: {errors[n]}" for n in sorted(errors))
         _telegram_alert(
-            f"⚠️ AI/Tech Fund — Dead Adapters\n"
-            f"{', '.join(silent_zeros)}\n"
-            "0 items fetched (no error). Possible feed outage or config change."
+            f"⚠️ AI/Tech Fund — {len(errors)}/{len(per_adapter)} Adapter degraded "
+            f"({len(items)} items total)\n{detail}"
         )
 
     if dry_run:
