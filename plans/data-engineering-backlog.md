@@ -63,6 +63,16 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-89 (DE-Loop Zyklus 20): **8-K primary-document text extraction**
+  (`ingestion/sources_aitech.py`). EDGAR 8-K items showed only filing-metadata description ("8-K")
+  — triage had no content to reason about. Added `_extract_8k_text()`: fetches the primary 8-K HTML,
+  strips scripts/styles/tags/entities, finds the first `Item \d+\.\d+` paragraph, returns ≤400 chars.
+  Wired into `EDGARAdapter.fetch()` for `form=="8-K"` analogously to the Form 4 XML enrichment
+  (try/except wrapped — any failure falls back to metadata description, adapter isolation intact).
+  Live-tested on NVDA Q1-2026 earnings 8-K (filed 2026-05-20, SEC 200, compliant UA):
+  "Item 2.02 Results of Operations... NVIDIA issued a press release announcing its results for the
+  quarter ended April 26, 2026…" Pushed: `58d862f`.
+  idea "Briefing clarity / 8-K content".
 - 2026-05-22 — HED-89 (DE-Loop Zyklus 19): **SC 13D/13G beneficial-ownership filings in EDGAR**
   (`ingestion/watchlist.py`, `ingestion/sources_aitech.py`). EDGARAdapter only captured 8-K + Form 4.
   Activist stakes (SC 13D) and >5% ownership changes (SC 13G/A) are high-signal catalysts for
