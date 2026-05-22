@@ -63,6 +63,14 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-78 (CIO-Loop Zyklus 15): **Per-source reliability audit script**
+  (`agents/reliability_audit.py`). Berechnet echte Triage-Inclusion-Rates aus briefing_runs DB:
+  wie oft macht jede Quelle's Items es in einen Triage-Cluster? Vergleicht mit konfigurierten
+  SOURCE_RELIABILITY-Scores. Findet Quellen die rel=0.80 haben aber kaum geclustert werden.
+  `--patch` Modus: smoothet watchlist.py-Scores automatisch (Formel: 0.7*actual + 0.3*cfg,
+  nur wenn Δ≥0.03 und ≥5 Samples). Gibt Markdown-Tabelle mit 🔴/🟡/🟢 Kalibrierungssignal.
+  Syntax OK; Live-Test braucht /root-Supabase-Keys (deploy-bridge-abhängig).
+  Auf origin/main gepusht: `4ce855b..{commit}`.
 - 2026-05-22 — HED-64 (DE-Loop Zyklus 13): **EarningsCalendar dedup bug fix + GITHUB_PUSH_LOOKBACK_DAYS**
   (`ingestion/sources_aitech.py`, `ingestion/watchlist.py`). EarningsCalendarAdapter used a bare
   `finance.yahoo.com/quote/{ticker}` URL as dedup key — same key every day, so the 2nd-day
