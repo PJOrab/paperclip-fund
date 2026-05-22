@@ -35,7 +35,7 @@ def collect() -> dict:
     thesis_calls: list[dict] = []
     try:
         b = (c.table("briefing_runs")
-             .select("id,created_at,status,theses,devils_advocate,window_hours")
+             .select("id,created_at,status,theses,devils_advocate,window_hours,briefing_md")
              .order("created_at", desc=True).limit(14).execute().data or [])
         briefing = b[0] if b else None
         for run in b:
