@@ -153,6 +153,9 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
   <h2>Briefing-Verlauf</h2>
   <div class="panel" id="bhistory"></div>
 
+  <h2>Adapter Health <span id="adapterstale"></span></h2>
+  <div class="panel" id="adapterhealth"></div>
+
   <div class="foot">AI/Tech Fund · generiert aus Supabase · keine Secrets im Browser</div>
 </div>
 <script>
@@ -262,6 +265,44 @@ if(hist.length){
     </tr></thead><tbody>${rows}</tbody></table>`;
 }else{
   $("bhistory").innerHTML='<div class="muted">Noch keine Briefing-Runs.</div>';
+}
+
+// Adapter Health
+const pa = (lr.per_adapter)||{};
+const errs = (lr.errors)||{};
+const adapterNames = Object.keys(pa);
+if(adapterNames.length){
+  const runTime = lr.started_at ? new Date(lr.started_at).toISOString().replace("T"," ").slice(0,16)+" UTC" : "—";
+  const dead = adapterNames.filter(n=>pa[n]===0 && !errs[n]);
+  if(dead.length){ $("adapterstale").innerHTML='<span class="pill pill--warn">'+dead.length+' tot</span>'; }
+  const maxItems = Math.max(1,...adapterNames.map(n=>pa[n]||0));
+  const rows = adapterNames.map(n=>{
+    const cnt = pa[n]||0;
+    const err = errs[n]||null;
+    let pill, bar;
+    if(err){ pill='<span class="pill pill--err">error</span>'; bar='var(--err)'; }
+    else if(cnt===0){ pill='<span class="pill pill--warn">0 items</span>'; bar='var(--warn)'; }
+    else { pill='<span class="pill pill--ok">'+cnt+'</span>'; bar='var(--accent)'; }
+    const pct = Math.max(2, Math.round(cnt/maxItems*100));
+    return `<tr style="border-bottom:1px solid var(--line)">
+      <td style="padding:5px 8px;font-size:13px">${esc(n)}</td>
+      <td style="padding:5px 8px">${pill}</td>
+      <td style="padding:5px 8px;width:35%;min-width:100px">
+        <div class="bar"><span style="width:${pct}%;background:${bar}"></span></div></td>
+      <td style="padding:5px 8px;font-size:11px;color:var(--mut);max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${err?esc(err.slice(0,120)):""}</td>
+    </tr>`;}).join("");
+  $("adapterhealth").innerHTML=`
+    <div style="font-size:12px;color:var(--mut);margin-bottom:8px">Letzter Lauf: ${esc(runTime)} · ${adapterNames.length} Adapter · ${lr.items_fetched??0} fetched · +${lr.items_inserted??0} neu</div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="border-bottom:1px solid var(--line);color:var(--mut);font-size:11px">
+        <th style="padding:5px 8px;text-align:left">Adapter</th>
+        <th style="padding:5px 8px;text-align:left">Items</th>
+        <th style="padding:5px 8px;text-align:left">Anteil</th>
+        <th style="padding:5px 8px;text-align:left">Fehler</th>
+      </tr></thead><tbody>${rows}</tbody>
+    </table>`;
+}else{
+  $("adapterhealth").innerHTML='<div class="muted">Noch kein Ingestion-Lauf.</div>';
 }
 </script></body></html>"""
 
