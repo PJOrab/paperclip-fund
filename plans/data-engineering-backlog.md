@@ -63,6 +63,17 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-89 (DE-Loop Zyklus 19): **SC 13D/13G beneficial-ownership filings in EDGAR**
+  (`ingestion/watchlist.py`, `ingestion/sources_aitech.py`). EDGARAdapter only captured 8-K + Form 4.
+  Activist stakes (SC 13D) and >5% ownership changes (SC 13G/A) are high-signal catalysts for
+  watchlist names — completely dark before. Added the four 13D/G form types to `EDGAR_FORMS` and
+  generalized the form→(source,label) mapping into new module-level `_edgar_form_meta()` so 13D/G get
+  source `sec_13dg` (reliability 0.93, new in SOURCE_RELIABILITY) + proper labels
+  ("Aktivisten-Stake 13D" / "Passive >5%-Beteiligung 13G") instead of being mislabeled "8-K".
+  Live-tested against SEC (200, compliant UA): real 13G/A filings for NVDA/AMD/TSM/ASML parse and
+  normalize correctly; current 5-day window had none (rare filings) but the path is verified. The
+  Form-4 ownership-XML enrichment only fires for form=="4", so 13D/G skip it safely. Pushed: `a6b5fd0`.
+  idea "Data quality / SEC coverage — activist & >5% stakes".
 - 2026-05-22 — HED-64 (DE-Loop Zyklus 18): **Chunked upsert_raw_items — 100 rows/batch**
   (`ingestion/db.py`). Large runs (600+ items) sent in one HTTP call risk hitting Supabase
   PostgREST payload/timeout limits. Split into batches of `_UPSERT_CHUNK=100` rows; inserted
