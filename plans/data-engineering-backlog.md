@@ -63,6 +63,8 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-77 (DE-Loop Zyklus 7 / CIO): **Devil verdict rubric + thesis is_differentiated + editor v3 + non-consensus ordering** (`agents/prompts.py`).
+  Thesis stage now outputs `is_differentiated: true|false` (derived from analyst's `consensus_view`) so downstream stages have a structured non-consensus signal. Devil gets a 3-verdict calibration rubric (agree/caution/reject defined with concrete thresholds; falsification must name a specific observable event, not "stock falls"). Editor gets v3 precision rules (1200 char cap, conviction delta required, devil adjudication mandatory with explicit '→' resolution, dedup rule); `editor_user` pre-sorts enriched theses non-consensus first so CEO always sees differentiated calls at the top. Pushed to origin/main: `813aacb..147957e`.
 - 2026-05-22 — HED-64 (DE-Loop Zyklus 10 / CIO): **YahooFinanceTickerAdapter** (neuer Adapter)
   (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`).
   Yahoo Finance per-Ticker-RSS für 8 Top-Positionen: NVDA/MSFT/GOOGL/META/PLTR/ORCL/NOW/ARM.
