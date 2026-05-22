@@ -155,11 +155,113 @@ def test_classify_item() -> None:
 
 
 # ---------------------------------------------------------------------------
+# validate_output schema tests
+# ---------------------------------------------------------------------------
+
+def test_validate_output() -> None:
+    from fund_skills.validate_output import validate
+
+    # --- triage ---
+    good_triage = {"clusters": [
+        {"title": "NVDA earnings", "tickers": ["NVDA"], "category": "earnings",
+         "why": "beat estimates", "importance": 5, "item_refs": [0]}
+    ]}
+    _check("triage valid cluster passes", validate("triage", good_triage) == [])
+
+    missing_field = {"clusters": [{"title": "x", "tickers": [], "category": "earnings", "why": "y"}]}
+    errs = validate("triage", missing_field)
+    _check("triage missing importance caught", any("importance" in e for e in errs))
+
+    bad_cat = {"clusters": [{"title": "x", "tickers": [], "category": "BADCAT", "why": "y", "importance": 3}]}
+    errs = validate("triage", bad_cat)
+    _check("triage bad category caught", any("category" in e for e in errs))
+
+    bad_imp = {"clusters": [{"title": "x", "tickers": [], "category": "earnings", "why": "y", "importance": 6}]}
+    errs = validate("triage", bad_imp)
+    _check("triage importance > 5 caught", any("importance" in e for e in errs))
+
+    # --- analyst ---
+    good_analyst = {"analyses": [
+        {"title": "NVDA", "tickers": ["NVDA"], "read": "bullish", "magnitude": "high",
+         "horizon": "days", "key_facts": ["beat"], "key_uncertainty": "macro",
+         "consensus_view": "differentiated", "differentiation": "non-consensus"}
+    ]}
+    _check("analyst valid analysis passes", validate("analyst", good_analyst) == [])
+
+    bad_horizon = {"analyses": [
+        {"title": "x", "tickers": [], "read": "bullish", "magnitude": "low",
+         "horizon": "months",  # invalid
+         "key_facts": [], "key_uncertainty": "x",
+         "consensus_view": "aligned", "differentiation": ""}
+    ]}
+    errs = validate("analyst", bad_horizon)
+    _check("analyst bad horizon caught", any("horizon" in e for e in errs))
+
+    bad_read = {"analyses": [
+        {"title": "x", "tickers": [], "read": "neutral",  # invalid
+         "magnitude": "low", "horizon": "weeks",
+         "key_facts": [], "key_uncertainty": "x",
+         "consensus_view": "aligned", "differentiation": ""}
+    ]}
+    errs = validate("analyst", bad_read)
+    _check("analyst bad read caught", any("read" in e for e in errs))
+
+    # --- thesis ---
+    good_thesis = {"theses": [
+        {"id": "nvda-long", "tickers": ["NVDA"], "direction": "long",
+         "thesis": "NVDA dominates", "bull_case": ["capex"], "bear_case": ["macro"],
+         "catalysts": ["earnings Q3"], "horizon": "weeks",
+         "conviction": 0.55, "is_differentiated": True}
+    ]}
+    _check("thesis valid passes", validate("thesis", good_thesis) == [])
+
+    below_floor = {"theses": [
+        {"id": "x", "tickers": [], "direction": "long", "thesis": "t",
+         "bull_case": [], "bear_case": [], "catalysts": [], "horizon": "weeks",
+         "conviction": 0.30,  # below 0.40 floor
+         "is_differentiated": False}
+    ]}
+    errs = validate("thesis", below_floor)
+    _check("thesis conviction below floor caught", any("0.40" in e or "floor" in e for e in errs))
+
+    non_bool_diff = {"theses": [
+        {"id": "x", "tickers": [], "direction": "long", "thesis": "t",
+         "bull_case": [], "bear_case": [], "catalysts": [], "horizon": "weeks",
+         "conviction": 0.50, "is_differentiated": "yes"}  # string, not bool
+    ]}
+    errs = validate("thesis", non_bool_diff)
+    _check("thesis is_differentiated non-bool caught", any("is_differentiated" in e for e in errs))
+
+    # --- devil ---
+    good_devil = {"critiques": [
+        {"id": "nvda-long", "strongest_counter": "macro", "already_priced_in": "no",
+         "falsification": ["Q3 DC revenue misses $28bn"], "blind_spot": "china", "verdict": "caution"}
+    ]}
+    _check("devil valid critique passes", validate("devil", good_devil) == [])
+
+    empty_falsification = {"critiques": [
+        {"id": "x", "strongest_counter": "s", "already_priced_in": "n",
+         "falsification": [],  # empty list
+         "blind_spot": "b", "verdict": "agree"}
+    ]}
+    errs = validate("devil", empty_falsification)
+    _check("devil empty falsification caught", any("falsification" in e for e in errs))
+
+    bad_verdict = {"critiques": [
+        {"id": "x", "strongest_counter": "s", "already_priced_in": "n",
+         "falsification": ["event X"], "blind_spot": "b", "verdict": "maybe"}  # invalid
+    ]}
+    errs = validate("devil", bad_verdict)
+    _check("devil bad verdict caught", any("verdict" in e for e in errs))
+
+
+# ---------------------------------------------------------------------------
 
 def main() -> None:
     test_parse_json()
     test_cross_check()
     test_classify_item()
+    test_validate_output()
     print("\nALL PIPELINE TESTS PASSED")
 
 
