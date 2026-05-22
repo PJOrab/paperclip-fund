@@ -63,6 +63,14 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-78 (CIO-Loop Zyklus 12): **EarningsCalendarAdapter — 14-day earnings warning**
+  (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`).
+  Neuer Adapter fetcht Earnings-Termine für alle Watchlist-Ticker via yfinance.
+  Generiert Early-Warning-Items: `[TICKER] Earnings in N days (YYYY-MM-DD) — Company`.
+  Live-Test: 6 Events (AVGO/MRVL/DELL/CRM/SNOW/CRWD, alle im 14-Tage-Fenster).
+  Reliability=0.88 (Quelle: Exchange/Filing-Daten via Yahoo). Schließt kritische Lücke:
+  Triage/Thesis hatten kein Bewusstsein für Earnings-Timing → Thesis-Horizon-Mismatch.
+  Auf origin/main gepusht: `b76fbbe..61d3740`.
 - 2026-05-22 — HED-64 (DE-Loop Zyklus 12 / CIO): **YahooFinanceTickerAdapter: pubDate-Filter**
   (`ingestion/sources_aitech.py`). Fehlender Date-Guard: veraltete RSS-Artikel wurden als
   "current" ingestiert. Fix: RSS_LOOKBACK_DAYS (3 Tage) Lookback identisch FundingNewsAdapter
