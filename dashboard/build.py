@@ -654,6 +654,16 @@ else{
   } else {
     html+=`<div class="calls-strip"><div class="call-chip call-chip--empty"><span class="cc">Kein aktiver Call heute</span></div></div>`;
   }
+  // Dynamic tab title: lead with the top-conviction call so a pinned/bookmarked tab surfaces the live signal
+  // (Recognition>Recall, Information Scent in the tab strip). Client-side only — static og/social meta stays generic.
+  if(theses.length){
+    const topCall=theses.reduce((a,c)=>((c.conviction==null?-1:c.conviction)>(a.conviction==null?-1:a.conviction)?c:a));
+    const ttks=(topCall.tickers||[]).join(" · ")||"?";
+    const tdir=(topCall.direction||"").toUpperCase();
+    document.title=`${ttks}${tdir?" "+tdir:""} · AI/Tech Fund`;
+  } else {
+    document.title="Kein aktiver Call · AI/Tech Fund";
+  }
   html+=`<div class="brief-region"><div class="brief-main">`;
   if(!b.briefing_md){
     html+=`<div class="panel brief-processing"><span class="brief-proc-icon" aria-hidden="true">⏳</span><span class="muted">Briefing wird verarbeitet…</span></div>`;
@@ -956,6 +966,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
