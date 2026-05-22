@@ -77,8 +77,24 @@ def compute_devil(theses: list[dict]) -> dict:
                        model=MODEL["devil"])
 
 
-def compute_editor(triage: dict, theses: list[dict], critiques: list[dict]) -> str:
-    return C.call(P.editor_user(triage, theses, critiques),
+def _fetch_prev_briefing() -> str | None:
+    """Return the most recent done briefing_md, or None if unavailable."""
+    try:
+        res = (client().table("briefing_runs")
+               .select("briefing_md")
+               .eq("status", "done")
+               .not_.is_("briefing_md", "null")
+               .order("created_at", desc=True)
+               .limit(1)
+               .execute())
+        return (res.data[0]["briefing_md"] or None) if res.data else None
+    except Exception:
+        return None
+
+
+def compute_editor(triage: dict, theses: list[dict], critiques: list[dict],
+                   prev_briefing: str | None = None) -> str:
+    return C.call(P.editor_user(triage, theses, critiques, prev_briefing=prev_briefing),
                   system=P.EDITOR_SYSTEM, model=MODEL["editor"]).strip()
 
 
@@ -155,9 +171,11 @@ def stage_editor():
         _log("[editor] keine briefing_runs-Zeile mit status=editor"); return
     rid = run["id"]
     try:
+        prev = _fetch_prev_briefing()
         md = compute_editor(run.get("triage") or {},
                             (run.get("theses") or {}).get("theses", []),
-                            (run.get("devils_advocate") or {}).get("critiques", []))
+                            (run.get("devils_advocate") or {}).get("critiques", []),
+                            prev_briefing=prev)
         _update(rid, {"briefing_md": md, "status": "done"})
         _log(f"[editor] run {rid} → done")
         print(md)  # stdout → n8n Telegram-Node
@@ -185,7 +203,8 @@ def pipeline(window: int):
     th = theses.get("theses", theses) if isinstance(theses, dict) else theses
     critiques = compute_devil(th);                   _log(f"[pipeline] devil ok")
     cr = critiques.get("critiques", critiques) if isinstance(critiques, dict) else critiques
-    md = compute_editor({"clusters": clusters}, th, cr)
+    prev = _fetch_prev_briefing()
+    md = compute_editor({"clusters": clusters}, th, cr, prev_briefing=prev)
     print(md)
 
 

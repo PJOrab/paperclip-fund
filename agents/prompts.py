@@ -191,7 +191,8 @@ EDITOR_SYSTEM = (
 )
 
 
-def editor_user(triage: dict, theses: list[dict], critiques: list[dict]) -> str:
+def editor_user(triage: dict, theses: list[dict], critiques: list[dict],
+                prev_briefing: str | None = None) -> str:
     import json, re
     crit_by_id = {c.get("id"): c for c in (critiques or [])}
     enriched = []
@@ -228,9 +229,14 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict]) -> str:
         + "\n"
     ) if unique_earnings else ""
 
+    prev_block = (
+        "YESTERDAY'S BRIEFING (use for '## Δ seit gestern' — identify what actually changed):\n"
+        + prev_briefing[:1500] + "\n\n"
+    ) if prev_briefing else ""
     return (
         "Material for today's briefing.\n\n"
-        "TOP CLUSTERS:\n" + json.dumps(triage, ensure_ascii=False) + "\n\n"
+        + prev_block
+        + "TOP CLUSTERS:\n" + json.dumps(triage, ensure_ascii=False) + "\n\n"
         "THESES + DEVIL'S ADVOCATE (sorted: non-consensus/is_differentiated=true first, "
         "then by devil verdict):\n" + json.dumps(enriched, ensure_ascii=False) + "\n\n"
         + (f"UPCOMING EARNINGS (pre-extracted for you):\n{earnings_section}\n" if earnings_section else "")
