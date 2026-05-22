@@ -253,7 +253,10 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .tr-tbl thead,.tr-tbl tbody,.tr-tbl tr{display:contents}
 .tr-tbl th{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.05em;color:var(--mut);
   padding-bottom:var(--s2);border-bottom:1px solid var(--line)}
-.tr-tbl td{padding:var(--s2) 0;border-bottom:1px solid var(--line)}
+.tr-tbl td,.tr-tbl tbody th{padding:var(--s2) 0;border-bottom:1px solid var(--line)}
+.tr-tbl tbody th{font-weight:inherit;text-align:left;text-transform:none;letter-spacing:0;color:inherit}
+/* screen-reader-only caption: semantic label without duplicating the visible h2 */
+.tr-cap{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 .tr-tbl .num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
 .tr-tbl .dlabel{display:none;color:var(--mut);font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.04em}
 .tr-lbl .t{font-weight:600}.tr-lbl .tk{color:var(--mut);font-size:var(--fs-micro)}
@@ -334,7 +337,7 @@ abbr[title]{text-decoration:none;cursor:help}
   .tr-tbl thead{display:none}
   .tr-tbl tbody,.tr-tbl tr{display:block}
   .tr-tbl tr{padding:var(--s3) 0;border-bottom:1px solid var(--line)}
-  .tr-tbl td{display:flex;justify-content:space-between;gap:var(--s3);padding:2px 0;border:0;text-align:right}
+  .tr-tbl td,.tr-tbl tbody th{display:flex;justify-content:space-between;gap:var(--s3);padding:2px 0;border:0;text-align:right}
   .tr-tbl .num{text-align:right}
   .tr-tbl .dlabel{display:inline-block;min-width:90px;vertical-align:top}
   /* sticky calls-strip: trade signals stay in view while scrolling briefing text */
@@ -627,14 +630,14 @@ function calibSvg(buckets){
     const order={miss:0,hit:1,neutral:2,too_early:3};
     const rows=scoredTheses.slice().sort((x,y)=>
       (order[x.verdict]-order[y.verdict])||((y.conviction||0)-(x.conviction||0)));
-    let tbl=`<table class="tr-tbl" aria-label="Thesen Track-Record"><thead><tr>${
+    let tbl=`<table class="tr-tbl"><caption class="tr-cap">Thesen Track-Record</caption><thead><tr>${
       head.map(h=>`<th scope="col">${h}</th>`).join("")}</tr></thead><tbody>`;
     tbl+=rows.map(t=>{
       const dev=t.devil?`<span class="devsig" title="⚖ Devil (${esc(t.devil.verdict||"?")}): ${esc(t.devil.note||"")}">⚖</span>`:"";
       const kurs=t.baseline_price!=null?`${t.baseline_price}${t.current_price!=null?" → "+t.current_price:""}`:"—";
       return `<tr>
         <td class="num"><span class="dlabel">Datum </span>${esc(t.date||"—")}</td>
-        <td class="tr-lbl"><span class="dlabel">These </span><span class="t">${esc(t.label||"")}</span> <span class="tk">${(t.tickers||[]).map(tk=>`<a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(tk)}" target="_blank" rel="noopener">${esc(tk)}</a>`).join(", ")}</span></td>
+        <th scope="row" class="tr-lbl"><span class="dlabel">These </span><span class="t">${esc(t.label||"")}</span> <span class="tk">${(t.tickers||[]).map(tk=>`<a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(tk)}" target="_blank" rel="noopener">${esc(tk)}</a>`).join(", ")}</span></th>
         <td><span class="dlabel">Richtung </span><span class="dir ${dirClass(t.direction)}">${esc(t.direction||"")}</span></td>
         <td class="num"><span class="dlabel">Conviction </span><span class="${convCls(t.conviction)}">${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></td>
         <td class="num"><span class="dlabel">Kurs </span>${esc(kurs)}</td>
