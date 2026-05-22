@@ -373,15 +373,20 @@ class HackerNewsAdapter:
 
 
 class GitHubTrendingAdapter:
-    """Aufkommende AI-Repos: zuletzt erstellt, nach Stars (GitHub Search-API)."""
+    """
+    Active AI-Repos: recently-pushed high-star repos per topic (GitHub Search-API).
+    Switched from created:>30d to pushed:>7d so we capture development activity on
+    established projects (vLLM, llama.cpp, SGLang, etc.) — more actionable for the
+    AI-compute thesis than newly-created repos with few stars.
+    """
     def fetch(self):
         m = _m()
         headers = {**UA, "Accept": "application/vnd.github+json"}
         since = (datetime.now(timezone.utc).date()
-                 - timedelta(days=W.GITHUB_CREATED_LOOKBACK_DAYS)).isoformat()
+                 - timedelta(days=7)).isoformat()  # 7-day activity window
         out, seen = [], set()
         for topic in W.GITHUB_TOPICS:
-            q = f"topic:{topic} created:>{since}"
+            q = f"topic:{topic} pushed:>{since}"
             url = (f"https://api.github.com/search/repositories?q={quote(q)}"
                    f"&sort=stars&order=desc&per_page=5")
             data = m.fetch_json(url, headers=headers, timeout=15)
