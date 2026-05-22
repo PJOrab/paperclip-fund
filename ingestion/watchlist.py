@@ -47,6 +47,10 @@ HN_QUERIES = [
     "Microsoft", "Google", "Meta AI",
     # AI-native companies on watchlist
     "Palantir", "Mistral", "xAI",
+    # Semiconductors / Hardware (Zyklus 11) — TSMC, ASML, AMD are top positions
+    # but had zero HN coverage; these terms catch capex, supply chain, export
+    # control, and competitive dynamics stories before they hit mainstream press.
+    "semiconductor", "TSMC", "ASML", "AMD",
 ]
 HN_MIN_POINTS = 80
 
