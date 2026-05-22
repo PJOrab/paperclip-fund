@@ -524,9 +524,17 @@ function calibSvg(buckets){
   function chCell(c){
     if(c==null) return '<span class="ch muted">—</span>';
     const up=c>=0;
-    return `<span class="ch ${up?"move-up":"move-dn"}">${up?"+":"−"}${Math.abs(c).toFixed(1)}%</span>`;
+    const arrow=up?"▲":"▼";
+    return `<span class="ch ${up?"move-up":"move-dn"}" aria-label="${up?"steigt":"fällt"} ${Math.abs(c).toFixed(1)} Prozent">${arrow} ${up?"+":"−"}${Math.abs(c).toFixed(1)}%</span>`;
   }
-  root.innerHTML = sv.sectors.map(s=>{
+  // Sort: sectors with price data first, sorted by max absolute move (most volatile first)
+  const sorted=(sv.sectors||[]).slice().sort((a,b)=>{
+    const maxAbs=s=>Math.max(...(s.tickers||[]).map(t=>t.change_pct!=null?Math.abs(t.change_pct):0),0);
+    const hasTk=s=>(s.tickers||[]).length>0;
+    if(hasTk(a)!==hasTk(b)) return hasTk(b)-hasTk(a);
+    return maxAbs(b)-maxAbs(a);
+  });
+  root.innerHTML = sorted.map(s=>{
     const tks=s.tickers||[];
     let body;
     if(tks.length){
