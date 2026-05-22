@@ -95,6 +95,17 @@ BIG_EVENT_PATTERNS = [
      r"|increases?\s+(?:its\s+)?(?:quarterly\s+)?dividend|dividend\s+(?:increase|raise|hike)"
      r"|initiates?\s+(?:a\s+)?dividend|dividend\s+of\s+\$[\d,.]+\s+per\s+share)\b",
      "dividend", "medium"),
+    # Power / energy deals — S5 sector (VST, CEG, GEV, ETN). PPAs and nuclear capacity
+    # announcements are direct AI-infrastructure revenue events (hyperscaler power contracts).
+    # Grid/transformer orders (ETN, GEV) are capex-cycle signals for the AI build-out.
+    (r"\b(power\s+purchase\s+agreement|PPA|offtake\s+agreement"
+     r"|nuclear\s+(?:power|plant|reactor|capacity|energy|deal|agreement|restart|extension)"
+     r"|data\s+cent(?:er|re)\s+power|clean\s+energy\s+(?:deal|agreement|contract)"
+     r"|carbon.free\s+energy|24/7\s+(?:clean|carbon.free)\s+energy"
+     r"|SMR|small\s+modular\s+reactor"
+     r"|transformer\s+order|grid\s+(?:infrastructure|investment|contract|upgrade)"
+     r"|electricity\s+(?:supply|contract|deal|agreement|capacity))\b",
+     "energy_power_deal", "high"),
 ]
 
 _compiled = [(re.compile(pat, re.IGNORECASE), label, prio)
