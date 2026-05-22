@@ -160,6 +160,7 @@ HTML = r"""<!DOCTYPE html>
 --measure:72ch;--ok:#3fb950;--warn:#d29922;--err:#f85149;
 --devil-bg:#1a1320;--devil-line:#3a2540;}
 *{box-sizing:border-box}
+html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--txt);font:var(--fs-body)/1.5 -apple-system,Segoe UI,Roboto,sans-serif}
 .wrap{max-width:1180px;margin:0 auto;padding:var(--s5)}
 h1{font-size:var(--fs-h1);margin:0}
@@ -220,7 +221,8 @@ border-radius:6px;padding:1px 7px;font-size:var(--fs-cap);color:var(--mut)}
 .feed .it a{color:var(--accent);text-decoration:none}
 .feed .s{color:var(--mut);font-size:var(--fs-micro);text-transform:uppercase}
 .thesis{border-left:3px solid var(--accent);background:var(--panel2);
-border-radius:8px;padding:var(--s3);margin-bottom:10px}
+border-radius:8px;padding:var(--s3);margin-bottom:10px;scroll-margin-top:80px}
+.thesis:target{outline:2px solid var(--accent);outline-offset:2px}
 .thesis .h{font-weight:600}
 .devil{margin-top:var(--s2);padding:var(--s2) 10px;background:var(--devil-bg);border:1px solid var(--devil-line);
 border-radius:8px;font-size:var(--fs-h2)}
@@ -307,8 +309,10 @@ abbr[title]{text-decoration:none;cursor:help}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* heutige calls hero strip */
 .calls-strip{display:flex;flex-wrap:wrap;gap:var(--s2);margin-bottom:var(--s4)}
-.call-chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);cursor:help;
-  border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:var(--fs-h2);white-space:nowrap}
+.call-chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);cursor:pointer;
+  border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:var(--fs-h2);white-space:nowrap;
+  text-decoration:none;color:var(--txt);transition:border-color .12s,background .12s}
+a.call-chip:hover{border-color:var(--accent);background:var(--panel)}
 .call-chip .ck{font-weight:700;font-size:var(--fs-body)}
 .call-chip .cd{font-size:var(--fs-micro);font-weight:600;letter-spacing:.04em;padding:1px 5px;
   border-radius:4px;text-transform:uppercase}
@@ -341,7 +345,7 @@ abbr[title]{text-decoration:none;cursor:help}
   padding:var(--s2) 0;border-bottom:1px solid var(--line);font-size:var(--fs-h2)}
 .sec-row:last-child{border-bottom:0}
 .sec-row .tk{font-weight:600}
-.sec-row .px{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.sec-row .px{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;min-width:64px;margin-left:auto}
 .sec-row .ch{font-variant-numeric:tabular-nums;font-size:var(--fs-cap);min-width:62px;text-align:right}
 .sec-ph{color:var(--mut);font-size:var(--fs-h2);padding:var(--s2) 0}
 @media (max-width:760px){
@@ -600,10 +604,10 @@ else{
       // Thesis-preview tooltip: first 120 chars of thesis lets CEO distinguish identical tickers
       const snip=(t.thesis||"").trim().slice(0,120)+(((t.thesis||"").trim().length>120)?"…":"");
       const chipTip=`Call ${i+1}: ${tks} ${(dir||"").toUpperCase()}${t.conviction!=null?" · Conv "+t.conviction.toFixed(2):""}${snip?" — "+snip:""}`;
-      return `<div class="call-chip" tabindex="0" title="${esc(chipTip)}" aria-label="${esc(chipTip)}"><span class="idx-badge" aria-label="Call ${i+1}">${i+1}</span><span class="ck">${esc(tks)}</span>`+
+      return `<a class="call-chip" href="#thesis-${i+1}" title="${esc(chipTip)}" aria-label="${esc(chipTip)} — zur These springen"><span class="idx-badge" aria-label="Call ${i+1}">${i+1}</span><span class="ck">${esc(tks)}</span>`+
         `<span class="cd ${dirCls(dir)}">${esc(dir)}</span>`+
         (conv?`<span class="cc ${convCls(t.conviction)}" title="${esc(convTip(t.conviction))}" aria-label="${esc(convTip(t.conviction))}">${conv}</span>`:"")+
-        `</div>`;
+        `</a>`;
     }).join("");
     html+=`<div class="calls-strip">${chips}</div>`;
   } else {
@@ -641,7 +645,7 @@ else{
     html+='<h2 style="margin-top:20px">Thesen & Devil\'s Advocate</h2>';
     html+=theses.map((t,i)=>{
       const c=cmap[t.id]||{};
-      return `<div class="thesis"><div class="h"><span class="idx-badge" aria-label="These ${i+1}">${i+1}</span>${(t.tickers||[]).join(", ")}
+      return `<div class="thesis" id="thesis-${i+1}" tabindex="-1"><div class="h"><span class="idx-badge" aria-label="These ${i+1}">${i+1}</span>${(t.tickers||[]).join(", ")}
         <span class="cd ${dirClass(t.direction)}">${t.direction||""}</span>
         <span class="${t.conviction!=null?convCls(t.conviction):'muted'}" title="${t.conviction!=null?convTip(t.conviction):''}">· Conv ${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></div>
         <div style="margin-top:4px">${esc(t.thesis||"")}</div>
@@ -766,23 +770,23 @@ function calibSvg(buckets){
     : "Taxonomie (ohne Kurse)";
   function chCell(c){
     if(c==null) return '<span class="ch muted">—</span>';
+    if(Math.abs(c)<0.05) return '<span class="ch muted" aria-label="unverändert">0.0%</span>';
     const up=c>=0;
     const arrow=up?"▲":"▼";
     return `<span class="ch ${up?"move-up":"move-dn"}" aria-label="${up?"steigt":"fällt"} ${Math.abs(c).toFixed(1)} Prozent">${arrow} ${up?"+":"−"}${Math.abs(c).toFixed(1)}%</span>`;
   }
-  // Sort: sectors with price data first, sorted by max absolute move (most volatile first)
+  // Stable order: populated tiles first, then placeholders; both by numeric s.id ascending (S1→S6)
   const sorted=(sv.sectors||[]).slice().sort((a,b)=>{
-    const maxAbs=s=>Math.max(...(s.tickers||[]).map(t=>t.change_pct!=null?Math.abs(t.change_pct):0),0);
     const hasTk=s=>(s.tickers||[]).length>0;
     if(hasTk(a)!==hasTk(b)) return hasTk(b)-hasTk(a);
-    return maxAbs(b)-maxAbs(a);
+    return String(a.id).localeCompare(String(b.id), undefined, {numeric:true});
   });
   root.innerHTML = sorted.map(s=>{
     const tks=s.tickers||[];
     let body;
     if(tks.length){
       body = tks.map(t=>{
-        const px = t.price!=null ? t.price : '<span class="muted">—</span>';
+        const px = t.price!=null ? t.price.toFixed(2) : '<span class="muted">—</span>';
         return `<div class="sec-row"><a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(t.ticker)}" target="_blank" rel="noopener">${esc(t.ticker)}</a>
           <span class="px">${px}</span>${chCell(t.change_pct)}</div>`;
       }).join("");
