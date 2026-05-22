@@ -149,9 +149,9 @@ def test_classify_item() -> None:
     _check("guidance raised matches earnings_surprise",
            "earnings_surprise" in labels("Apple guidance raised for Q3 on strong iPhone sales"))
 
-    # Clean text — no matches
+    # Clean text — no matches (analyst_action now detected; use truly routine news)
     _check("routine news has no big-event match",
-           classify_item("Analyst reiterates Hold rating on AAPL") == [])
+           classify_item("Apple store opens in new mall location next quarter") == [])
 
 
 # ---------------------------------------------------------------------------
