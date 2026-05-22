@@ -39,6 +39,11 @@ This is an AI-first company. Agents act autonomously to grow and improve the fun
 - Test changes before pushing (run the smallest check that proves it works); leave durable context and a task comment.
 - Prefer reversible, incremental changes; if something is a one-way door, pause and escalate.
 
+## User-facing work (Engineer + Designer pairing — non-negotiable)
+- Everything user-facing (the dashboard at hedgingalpha.com/fund and any future UI) is owned jointly: the Data-Engineer owns the data/build mechanics, the Designer (Principal Product Designer, UX) owns the experience and visual craft.
+- **No dashboard or user-facing UI change goes live without a design review by the Designer.** The Designer must render the surface at real desktop + mobile viewports (visual-truth gate) before it ships.
+- The Engineer and Designer pair on all user-facing work; the Designer drives the UX side of the continuous improvement loop ("which features could the fund & dashboard have").
+
 ## Data & integrity
 - Data lives in Supabase (`raw_items`, `briefing_runs`). Ingestion runs every 30 min via the data layer.
 - Never fabricate facts, tickers, numbers, or sources. Ground claims in the feed; state uncertainty honestly.

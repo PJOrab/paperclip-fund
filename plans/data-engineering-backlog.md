@@ -63,6 +63,32 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 10 / CIO): **YahooFinanceTickerAdapter** (neuer Adapter)
+  (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`).
+  Yahoo Finance per-Ticker-RSS für 8 Top-Positionen: NVDA/MSFT/GOOGL/META/PLTR/ORCL/NOW/ARM.
+  Schließt Lücke: Tech-Blogs verpassen Analyst-Ratings, Earnings-Previews, Position-Events.
+  Reliability=0.72. 138 Items / 8 Ticker, malformed=0. Auf origin/main: `9555de8..8002b4e`.
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 9 / CIO): **arXiv Abstract-Extraktion + ARXIV_MAX 15→25**
+  (`ingestion/sources_aitech.py`, `ingestion/watchlist.py`). ArxivAdapter speicherte nur
+  Titel — Triage/Analyst hatten keinen Inhalt zum Reasoning. Jetzt: `<summary>`-Tag (arXiv
+  Atom Standard) extrahiert, auf 250 Chars truncated: `[arXiv] {title} — {abstract}`.
+  Gleichzeitig ARXIV_MAX 15→25 (+10 Paper/Zyklus, reliability=0.80 = höchste Non-SEC-Quelle).
+  arXiv API war rate-limited (429) beim Test — Format aus arXiv Atom Spec verifiziert.
+  Auf origin/main gepusht: `fcc44e6..9555de8`.
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 8 / CIO): **CDATA-Bug in Funding + Energy Adaptern gefixt**
+  (`ingestion/sources_aitech.py`). Gleicher Root Cause wie Zyklus 7 (TechRSSAdapter):
+  `re.sub` behandelt `<![CDATA[...]]>` als HTML-Tag vor der CDATA-Strip → Titel leer →
+  Item gedropped. TechCrunch hat 158 CDATA/Fetch, Crunchbase 122 — Bug war aktiv.
+  Fix in FundingNewsAdapter + EnergyNewsAdapter: CDATA zuerst strippen, dann HTML-Strip;
+  Regex zu `<title[^>]*>`. Isolation: 32 Funding / 30 Energy Items, malformed=0.
+  Auf origin/main gepusht: `c0d9a71..fcc44e6`.
+- 2026-05-22 — HED-64 (DE-Loop Zyklus 7 / CIO): **TechRSSAdapter CDATA-Bug gefixt**
+  (`ingestion/sources_aitech.py`). theverge_ai lieferte 0 Items (silent drop).
+  Root cause: `re.sub(r"<[^>]+>", "", ...)` behandelte `<![CDATA[...]]>` als HTML-Tag
+  → ganzer Titel entfernt → leer → Item übersprungen. Fix: CDATA vor HTML-Strip entfernen +
+  Regex `<title>` → `<title[^>]*>` für Atom `type="html"`-Attribute.
+  Vor Fix: 20 Items / 4 Feeds. Nach Fix: 25 Items / 5 Feeds, malformed=0.
+  Auf origin/main gepusht: `36c9f6a..c0d9a71`.
 - 2026-05-22 — HED-64 (DE-Loop Zyklus 6 / CIO): **TECH_RSS + HN_QUERIES erweitert**
   (`ingestion/watchlist.py`). TECH_RSS_FEEDS 3→5: `mit_tech_review`
   (technologyreview.com — research-grade AI-Tiefe + Policy) + `wsj_tech`

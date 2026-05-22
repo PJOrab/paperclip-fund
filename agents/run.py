@@ -157,6 +157,14 @@ def stage_editor():
         print(md)  # stdout → n8n Telegram-Node
     except Exception as e:
         _fail(rid, "editor", e)
+    # Post-briefing QC: flag missed big events as coverage-bug tickets (best-effort)
+    try:
+        from agents.coverage_qc import main as _qc_main
+        import sys as _sys
+        _sys.argv = ["coverage_qc", "--run-id", rid]
+        _qc_main()
+    except Exception as qc_err:
+        _log(f"[editor] coverage_qc non-fatal error: {qc_err}")
 
 
 # ---------------------------------------------------------------------------
