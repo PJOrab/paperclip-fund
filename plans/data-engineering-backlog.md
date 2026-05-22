@@ -63,6 +63,15 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-22 — HED-89 (DE-Loop Zyklus 25): **Triage macro-signal guidance for Fed/BLS**
+  (`agents/prompts.py`). MacroFedAdapter (Zyklus 23) and MacroBLSAdapter (Zyklus 24) ship
+  Fed/BLS items into triage, but triage had no instructions for handling them — risking
+  drop or generic clustering without thesis links. Added MACRO SIGNALS block to both
+  `TRIAGE_SYSTEM` and `triage_user()`: fed_macro/bls_macro items = thesis risk factors
+  (not trade signals); importance tiering (rate decision = 4-5, CPI/jobs = 3-4, routine
+  speech = 2-3); required AI/Tech link (rate path → capex → MSFT/GOOGL/AMZN/META spend,
+  NVDA/ANET/VRT demand). Parallel to how earnings_calendar has special handling.
+  Pushed: `15fa04c`.
 - 2026-05-22 — HED-89 (DE-Loop Zyklus 24): **BLS macro adapter**
   (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`).
   Triage had Fed policy signals (Zyklus 23) but not the underlying economic data
