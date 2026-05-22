@@ -933,6 +933,22 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
     const m=$("main"); if(m) m.focus({preventScroll:true});
   });
 })();
+
+// Visibility-aware auto-reload: when CEO returns to a pinned tab, reload if build data is >30 min stale.
+// The pipeline overwrites the static HTML on every ingest cycle — location.reload() fetches the freshest build.
+// Also fires a passive interval as fallback for long-idle tabs (uses Page Visibility API to skip background reloads).
+(function(){
+  const THRESHOLD_MS=30*60*1000; // 30 min — matches ingest cadence
+  const builtAt=D.built_at_iso?new Date(D.built_at_iso).getTime():null;
+  if(!builtAt) return; // no build timestamp → skip
+  function maybeReload(){
+    if(document.hidden) return; // don't reload while tab is in background
+    if(Date.now()-builtAt>THRESHOLD_MS) location.reload();
+  }
+  document.addEventListener("visibilitychange", maybeReload);
+  // Passive fallback: check every 5 min so a foreground-but-idle tab also refreshes eventually
+  setInterval(maybeReload, 5*60*1000);
+})();
 </script></body></html>"""
 
 
@@ -966,6 +982,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
