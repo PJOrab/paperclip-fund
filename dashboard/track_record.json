@@ -1,0 +1,73 @@
+{
+  "aggregate": {
+    "hit_rate": null,
+    "scored": 0,
+    "total": 4,
+    "too_early": 4,
+    "calibration_bias": null
+  },
+  "earliest_score_date": "2026-06-04",
+  "calibration_buckets": [],
+  "theses": [
+    {
+      "run_id": "11a62db6",
+      "date": "2026-05-21",
+      "label": "NVDA — print & floor",
+      "tickers": ["NVDA"],
+      "direction": "long",
+      "conviction": 0.68,
+      "horizon": "weeks",
+      "baseline_price": 219.45,
+      "current_price": null,
+      "move_pct": null,
+      "verdict": "too_early",
+      "earliest_score_date": "2026-06-04",
+      "devil": { "verdict": "caution", "note": "sell-the-news vs extreme bar; $80B buyback = no better use of cash; China export overhang on $91B guide" }
+    },
+    {
+      "run_id": "11a62db6",
+      "date": "2026-05-21",
+      "label": "Picks & shovels — TSM/AVGO",
+      "tickers": ["TSM", "AVGO"],
+      "direction": "long",
+      "conviction": 0.48,
+      "horizon": "quarters",
+      "baseline_price": 401.62,
+      "current_price": null,
+      "move_pct": null,
+      "verdict": "too_early",
+      "earliest_score_date": "2026-08-21",
+      "devil": { "verdict": "caution", "note": "read-through inferred, no TSM/AVGO datapoint in feed; correlated with T1, not independent" }
+    },
+    {
+      "run_id": "11a62db6",
+      "date": "2026-05-21",
+      "label": "META — cost reset",
+      "tickers": ["META"],
+      "direction": "long",
+      "conviction": 0.50,
+      "horizon": "quarters",
+      "baseline_price": 611.0,
+      "current_price": null,
+      "move_pct": null,
+      "verdict": "too_early",
+      "earliest_score_date": "2026-08-21",
+      "devil": { "verdict": "reject", "note": "8k cut immaterial vs capex; one-time lever, no compounding; zero revenue catalyst" }
+    },
+    {
+      "run_id": "11a62db6",
+      "date": "2026-05-21",
+      "label": "GOOGL — agentic commerce",
+      "tickers": ["GOOGL"],
+      "direction": "long",
+      "conviction": 0.45,
+      "horizon": "quarters",
+      "baseline_price": 387.39,
+      "current_price": null,
+      "move_pct": null,
+      "verdict": "too_early",
+      "earliest_score_date": "2026-08-21",
+      "devil": { "verdict": "caution", "note": "zero monetization data; cannibalization risk — agentic shopping disintermediates paid-search auction at lower take-rate" }
+    }
+  ]
+}

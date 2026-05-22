@@ -43,8 +43,20 @@ def collect() -> dict:
         "recent": recent,
         "last_run": runs[0] if runs else None,
         "briefing": briefing,
+        "track_record": load_track_record(),
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
+
+
+def load_track_record() -> dict | None:
+    """Thesen-Track-Record (HED-29 §5). Written upstream by the scoring step
+    (HED-25) into a structured JSON next to this module; the UI never recomputes
+    scoring (only move_pct colouring). Missing/broken file -> None -> empty state."""
+    p = Path(__file__).with_name("track_record.json")
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return None
 
 
 HTML = r"""<!DOCTYPE html>
@@ -104,10 +116,38 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
 .pill--warn{background:rgba(210,153,34,.15);color:var(--warn);border:1px solid var(--warn)}
 .pill--err{background:rgba(248,81,73,.15);color:var(--err);border:1px solid var(--err)}
 .foot{color:var(--mut);font-size:var(--fs-cap);margin-top:var(--s6);text-align:center}
+/* track-record (HED-29) */
+.pill--neutral{background:rgba(138,160,189,.12);color:var(--mut);border:1px solid var(--line)}
+.tr-tbl{display:grid;grid-template-columns:auto 1.4fr auto auto 1.3fr auto auto;
+  gap:0 var(--s3);font-size:13px;align-items:center}
+.tr-tbl .th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);
+  padding-bottom:var(--s2);border-bottom:1px solid var(--line)}
+.tr-tbl .cell{padding:var(--s2) 0;border-bottom:1px solid var(--line)}
+.tr-tbl .num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.tr-tbl .dlabel{display:none;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.tr-lbl .t{font-weight:600}.tr-lbl .tk{color:var(--mut);font-size:11px}
+.move-up{color:var(--green)}.move-dn{color:var(--red)}
+.devsig{cursor:help;color:var(--mut);margin-left:6px;font-size:12px}
+.calib{display:flex;gap:var(--s4);align-items:center;flex-wrap:wrap}
+.calib svg{flex:0 0 auto}
+.calib .lg{font-size:var(--fs-cap);color:var(--mut)}
+.calib .lg .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.empty{text-align:center;padding:var(--s5) var(--s4)}
+.empty .g{font-size:34px;line-height:1}
+.empty .hl{font-weight:600;margin-top:var(--s2)}
+.empty .ex{color:var(--mut);max-width:46ch;margin:var(--s2) auto 0}
+.countdown{display:inline-block;margin-top:var(--s3);background:var(--panel2);border:1px solid var(--line);
+  border-radius:6px;padding:4px 10px;font-size:var(--fs-cap);color:var(--mut)}
 @media (max-width:760px){
   .cards{grid-template-columns:repeat(2,1fr)}
   .two-col{grid-template-columns:1fr}
   .flow{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tr-tbl{display:block}
+  .tr-tbl .th{display:none}
+  .tr-tbl .row{display:block;padding:var(--s3) 0;border-bottom:1px solid var(--line)}
+  .tr-tbl .cell{display:flex;justify-content:space-between;gap:var(--s3);padding:2px 0;border:0;text-align:right}
+  .tr-tbl .num{text-align:right}
+  .tr-tbl .dlabel{display:inline}
 }
 </style></head>
 <body><div class="wrap">
@@ -129,6 +169,9 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
 
   <h2>Letztes Briefing</h2>
   <div id="briefing"></div>
+
+  <h2>Thesen-Track-Record <span id="trstand" class="tag"></span></h2>
+  <div id="trackrecord"></div>
 
   <div class="foot">AI/Tech Fund · generiert aus Supabase · keine Secrets im Browser</div>
 </div>
@@ -213,6 +256,99 @@ else{
   }
   $("briefing").innerHTML=html||'<div class="panel muted">Briefing vorhanden, aber leer.</div>';
 }
+// Thesen-Track-Record (HED-29)
+function pct(x){return x==null?"—":Math.round(x*100)+"%";}
+function verdictPill(v){
+  const map={hit:["ok","Hit"],miss:["err","Miss"],neutral:["neutral","Neutral"],too_early:["warn","⏳ too early"]};
+  const [k,lbl]=map[v]||["neutral",esc(v||"—")];
+  return `<span class="pill pill--${k}">${lbl}</span>`;
+}
+function moveCell(m){
+  if(m==null) return '<span class="muted">—</span>';
+  const up=m>=0, sign=up?"+":"−";
+  return `<span class="${up?"move-up":"move-dn"}">${sign}${Math.abs(m).toFixed(1)}%</span>`;
+}
+function calibSvg(buckets){
+  if(!buckets || buckets.length<3){
+    return '<div class="muted" style="font-size:13px">Zu wenige Datenpunkte für eine Kalibrierungs-Linie '+
+      '(min. 3 Conviction-Buckets nötig).</div>';
+  }
+  const W=240,H=160,p=28, X=v=>p+v*(W-2*p), Y=v=>H-p-v*(H-2*p);
+  let pts=buckets.map(b=>{
+    const r=Math.min(8,3+(b.n||1));
+    return `<circle cx="${X(b.conviction).toFixed(1)}" cy="${Y(b.observed_hit_rate).toFixed(1)}" r="${r}" `+
+      `fill="var(--accent)" fill-opacity=".8"><title>conv ${pct(b.conviction)} · hit ${pct(b.observed_hit_rate)} · n=${b.n}</title></circle>`;
+  }).join("");
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Kalibrierung: Conviction vs. beobachtete Hit-Rate">
+    <line x1="${X(0)}" y1="${Y(0)}" x2="${X(1)}" y2="${Y(1)}" stroke="var(--mut)" stroke-dasharray="4 3" stroke-width="1"/>
+    <line x1="${p}" y1="${H-p}" x2="${W-p}" y2="${H-p}" stroke="var(--line)"/>
+    <line x1="${p}" y1="${p}" x2="${p}" y2="${H-p}" stroke="var(--line)"/>
+    <text x="${W/2}" y="${H-6}" fill="var(--mut)" font-size="10" text-anchor="middle">Conviction →</text>
+    <text x="10" y="${H/2}" fill="var(--mut)" font-size="10" text-anchor="middle" transform="rotate(-90 10 ${H/2})">Hit-Rate →</text>
+    ${pts}
+  </svg>
+  <div class="lg"><span class="sw" style="background:var(--accent)"></span>Conviction-Bucket<br>
+  <span class="sw" style="background:var(--mut)"></span>perfekte Kalibrierung<br>
+  <span class="muted">über Linie = unterconfident · darunter = overconfident</span></div>`;
+}
+(function renderTrackRecord(){
+  const tr=D.track_record;
+  const root=$("trackrecord");
+  if(!tr || !tr.aggregate){ root.innerHTML='<div class="panel muted">Track-Record noch nicht verfügbar.</div>'; return; }
+  const a=tr.aggregate, scored=a.scored||0;
+  $("trstand").textContent = scored+" gewertet";
+  // KPI-Strip
+  $("trackrecord").innerHTML = `<div class="grid cards" id="trkpi"></div><div id="trbody" style="margin-top:14px"></div>`;
+  const biasTxt = a.calibration_bias==null ? "—"
+    : (a.calibration_bias>=0?"+":"−")+Math.abs(a.calibration_bias*100).toFixed(0)+"%";
+  $("trkpi").innerHTML=[
+    ["Hit-Rate", pct(a.hit_rate)],
+    ["gewertet", scored+" / "+(a.total??"—")],
+    ["too early", a.too_early??"—"],
+    ["Kalib.-Bias", biasTxt]
+  ].map(([k,v])=>`<div class="panel"><div class="kpi">${v}</div><div class="muted">${k}</div></div>`).join("");
+  // Body: happy-path table+chart, oder Empty/Too-Early-State
+  const scoredTheses=(tr.theses||[]).filter(t=>t.verdict && t.verdict!=="too_early");
+  if(scored>0 && scoredTheses.length){
+    const head=["Datum","These","Richtung","Conviction","Kurs","Move %","Verdikt"];
+    const order={miss:0,hit:1,neutral:2,too_early:3};
+    const rows=scoredTheses.slice().sort((x,y)=>
+      (order[x.verdict]-order[y.verdict])||((y.conviction||0)-(x.conviction||0)));
+    let tbl='<div class="tr-tbl">'+head.map(h=>`<div class="th">${h}</div>`).join("");
+    tbl+=rows.map(t=>{
+      const dev=t.devil?`<span class="devsig" title="⚖ Devil (${esc(t.devil.verdict||"?")}): ${esc(t.devil.note||"")}">⚖</span>`:"";
+      const kurs=t.baseline_price!=null?`${t.baseline_price}${t.current_price!=null?" → "+t.current_price:""}`:"—";
+      return `<div class="row" style="display:contents">
+        <div class="cell num"><span class="dlabel">Datum </span>${esc(t.date||"—")}</div>
+        <div class="cell tr-lbl"><span class="dlabel">These </span><span class="t">${esc(t.label||"")}</span> <span class="tk">${esc((t.tickers||[]).join(", "))}</span></div>
+        <div class="cell"><span class="dlabel">Richtung </span><span class="dir ${dirClass(t.direction)}">${esc(t.direction||"")}</span></div>
+        <div class="cell num"><span class="dlabel">Conviction </span>${t.conviction!=null?t.conviction.toFixed(2):"—"}</div>
+        <div class="cell num"><span class="dlabel">Kurs </span>${esc(kurs)}</div>
+        <div class="cell num"><span class="dlabel">Move </span>${moveCell(t.move_pct)}</div>
+        <div class="cell"><span class="dlabel">Verdikt </span>${verdictPill(t.verdict)}${dev}</div>
+      </div>`;}).join("");
+    tbl+='</div>';
+    $("trbody").innerHTML=`<div class="grid two-col">
+      <div class="panel">${tbl}</div>
+      <div class="panel"><div class="muted" style="margin-bottom:8px">Conviction-Kalibrierung</div>
+        <div class="calib">${calibSvg(tr.calibration_buckets)}</div></div></div>`;
+  } else {
+    // Empty / Too-Early-State (geht zuerst live)
+    const esd=tr.earliest_score_date;
+    let cd="";
+    if(esd){
+      const days=Math.ceil((new Date(esd+"T00:00:00Z")-Date.now())/864e5);
+      cd=`<div class="countdown">Erste Wertung ab ${esc(esd)}${days>0?" · in "+days+" Tagen":" · fällig"}</div>`;
+    }
+    $("trbody").innerHTML=`<div class="panel"><div class="empty">
+      <div class="g">⏳</div>
+      <div class="hl">Noch keine gewerteten Thesen</div>
+      <div class="ex">${a.too_early||0} offene These${(a.too_early===1)?"":"n"} — der Zeithorizont (Wochen/Quartale) ist noch nicht abgelaufen. Gewertet wird gegen reale Kurse, keine Schätzungen.</div>
+      ${cd}
+    </div></div>`;
+  }
+})();
+
 function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));}
 </script></body></html>"""
 
