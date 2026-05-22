@@ -456,7 +456,7 @@ main:focus{outline:none}
 <a href="#main" class="skip-link">Zum Briefing springen</a>
 <div class="wrap">
   <header style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">
-    <div><h1>🤖 AI/Tech Fund — Intelligence Dashboard</h1>
+    <div><h1><span aria-hidden="true">🤖</span> AI/Tech Fund — Intelligence Dashboard</h1>
     <div class="sub">Live-Feed → Agenten-Gremium → CEO-Briefing · MVP</div></div>
     <div class="sub" id="builtwrap">aktualisiert: <span id="built"></span></div>
   </header>
@@ -559,7 +559,7 @@ function statusPill(s){
   const map={done:"ok",completed:"ok",running:"warn",queued:"warn",pending:"warn",error:"err",failed:"err"};
   const k=map[(s||"").toLowerCase()]||"warn";
   const icon={ok:"✓",warn:"⚠",err:"✗"}[k]||"";
-  return `<span class="pill pill--${k}">${icon} ${esc(s)}</span>`;
+  return `<span class="pill pill--${k}">${icon?`<span aria-hidden="true">${icon}</span> `:""}${esc(s)}</span>`;
 }
 const bstatus = (D.briefing && D.briefing.status) ? D.briefing.status : null;
 $("kpis").innerHTML = [
@@ -656,7 +656,7 @@ else{
   }
   html+=`<div class="brief-region"><div class="brief-main">`;
   if(!b.briefing_md){
-    html+=`<div class="panel brief-processing"><span class="brief-proc-icon">⏳</span><span class="muted">Briefing wird verarbeitet…</span></div>`;
+    html+=`<div class="panel brief-processing"><span class="brief-proc-icon" aria-hidden="true">⏳</span><span class="muted">Briefing wird verarbeitet…</span></div>`;
   } else if(b.briefing_md){
     // Progressive Disclosure: elevate lede (first <p>) + collapse dense analysis body
     const raw = marked.parse(b.briefing_md);
@@ -703,9 +703,9 @@ else{
 // Thesen-Track-Record (HED-29)
 function pct(x){return x==null?"—":Math.round(x*100)+"%";}
 function verdictPill(v){
-  const map={hit:["ok","✓ Hit"],miss:["err","✗ Miss"],neutral:["neutral","Neutral"],too_early:["warn","⏳ Zu früh"]};
-  const [k,lbl]=map[v]||["neutral",esc(v||"—")];
-  return `<span class="pill pill--${k}">${lbl}</span>`;
+  const map={hit:["ok","✓","Hit"],miss:["err","✗","Miss"],neutral:["neutral","","Neutral"],too_early:["warn","⏳","Zu früh"]};
+  const [k,icon,lbl]=map[v]||["neutral","",esc(v||"—")];
+  return `<span class="pill pill--${k}">${icon?`<span aria-hidden="true">${icon}</span> `:""}${lbl}</span>`;
 }
 function moveCell(m){
   if(m==null) return '<span class="muted">—</span>';
@@ -816,7 +816,7 @@ function calibSvg(buckets){
         </tr>`).join("")}</tbody></table>`;
     })() : "";
     $("trbody").innerHTML=`<div class="panel"><div class="empty">
-      <div class="g">⏳</div>
+      <div class="g" aria-hidden="true">⏳</div>
       <div class="hl">Noch keine gewerteten Thesen</div>
       <div class="ex">${a.too_early||0} offene These${(a.too_early===1)?"":"n"} — der Zeithorizont (Wochen/Quartale) ist noch nicht abgelaufen. Gewertet wird gegen reale Kurse, keine Schätzungen.</div>
       ${cd}
