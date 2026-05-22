@@ -21,7 +21,7 @@ EDGAR_LOOKBACK_DAYS = 3
 
 # arXiv-Kategorien (AI/ML-Forschungsfront)
 ARXIV_CATEGORIES = ["cs.AI", "cs.LG", "cs.CL", "cs.CV"]
-ARXIV_MAX = 15
+ARXIV_MAX = 25
 
 # GitHub: Themen für aufkommende AI-Projekte (zuletzt erstellt, nach Stars)
 GITHUB_TOPICS = [

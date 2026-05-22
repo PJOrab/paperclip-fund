@@ -325,8 +325,17 @@ class ArxivAdapter:
             title = re.sub(r"\s+", " ", t.group(1)).strip()
             if not title:
                 continue
+            # Include abstract so triage/analyst can reason about content,
+            # not just paper titles. Truncate to 250 chars to stay token-efficient.
+            summary_m = re.search(r"<summary>(.*?)</summary>", entry, re.DOTALL)
+            abstract = ""
+            if summary_m:
+                abstract = re.sub(r"\s+", " ", summary_m.group(1)).strip()
+                if len(abstract) > 250:
+                    abstract = abstract[:247] + "..."
+            text = f"[arXiv] {title}" + (f" — {abstract}" if abstract else "")
             out.append({
-                "text": f"[arXiv] {title}",
+                "text": text,
                 "source": "arxiv",
                 "url": link.group(1).strip() if link else None,
                 "reliability": W.SOURCE_RELIABILITY["arxiv"],
