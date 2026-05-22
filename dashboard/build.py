@@ -245,7 +245,9 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pill--ok{background:rgba(63,185,80,.15);color:var(--ok);border:1px solid var(--ok)}
 .pill--warn{background:rgba(210,153,34,.15);color:var(--warn);border:1px solid var(--warn)}
 .pill--err{background:rgba(248,81,73,.15);color:var(--err);border:1px solid var(--err)}
-.foot{color:var(--mut);font-size:var(--fs-cap);margin-top:var(--s6);text-align:center}
+.foot{color:var(--mut);font-size:var(--fs-cap);margin-top:var(--s6);text-align:center;border-top:1px solid var(--line);padding-top:var(--s4)}
+.foot-disclaimer{max-width:var(--measure);margin:0 auto var(--s2);font-size:var(--fs-micro);line-height:1.5}
+.foot-meta{margin:0}
 /* track-record (HED-29) */
 .pill--neutral{background:rgba(138,160,189,.12);color:var(--mut);border:1px solid var(--line)}
 .tr-tbl{display:grid;grid-template-columns:auto 1.4fr auto auto 1.3fr auto auto;border-collapse:collapse;width:100%;
@@ -424,7 +426,10 @@ main:focus{outline:none}
     </div>
   </details>
 
-  <div class="foot">AI/Tech Fund · generiert aus Supabase · keine Secrets im Browser</div>
+  <footer class="foot">
+    <p class="foot-disclaimer">Research- und Demonstrations-MVP. Keine Anlageberatung und keine Kauf- oder Verkaufsempfehlung. Dargestellte Thesen, Konviktionen und Richtungs-Calls dienen ausschließlich Forschungs- und Bildungszwecken — keine Gewähr für Richtigkeit, Vollständigkeit oder Eignung. Investitionsentscheidungen erfolgen auf eigenes Risiko.</p>
+    <p class="foot-meta">AI/Tech Fund · generiert aus Supabase · keine Secrets im Browser</p>
+  </footer>
 </div>
 <script>
 const D = __DATA__;
