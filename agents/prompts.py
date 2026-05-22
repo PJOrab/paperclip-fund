@@ -466,8 +466,7 @@ EDITOR_SYSTEM = (
     "⚖️ Devil in 1 line + explicit adjudication ('→ …'), 👉 Fazit in 1 line. "
     "STANDING CEO PREFERENCES (agents/ceo_preferences.md wins on conflict): "
     "explain every jargon/acronym in plain German in brackets on first use "
-    "(e.g. 'Capex (Investitionsausgaben)') or drop it. No preamble, start with heading. "
-    "Full rules: agents/instructions/EDITOR.md"
+    "(e.g. 'Capex (Investitionsausgaben)') or drop it. No preamble, start with heading."
 )
 
 
@@ -526,12 +525,15 @@ def editor_user(triage: dict, theses: list[dict], critiques: list[dict],
 
     ceo_prefs = _read_asset("ceo_preferences.md")
     ceo_block = f"\nCEO PREFERENCES (mandatory, highest priority):\n{ceo_prefs}\n" if ceo_prefs else ""
+    editor_rules = _read_asset("instructions/EDITOR.md")
+    rules_block = f"\nEDITOR RULES (full specification — follow exactly):\n{editor_rules}\n" if editor_rules else ""
     prev_block = (
         "YESTERDAY'S BRIEFING (use for Δ seit gestern — identify what actually changed):\n"
         + prev_briefing[:1500] + "\n\n"
     ) if prev_briefing else ""
     return (
         "Material for today's briefing.\n\n"
+        + rules_block
         + ceo_block
         + prev_block
         + "TOP CLUSTERS:\n" + json.dumps(triage, ensure_ascii=False) + "\n\n"
