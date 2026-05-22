@@ -339,7 +339,13 @@ ANALYST_SYSTEM = (
 def analyst_user(clusters: list[dict]) -> str:
     import json
     return (
-        "Clusters to analyze:\n\n" + json.dumps(clusters, ensure_ascii=False) + "\n\n"
+        "Clusters to analyze (sorted by importance DESC — analyze in this order):\n\n"
+        + json.dumps(clusters, ensure_ascii=False) + "\n\n"
+        "PRIORITIZATION: Analyze every cluster, but order your output by analytical value: "
+        "high-magnitude + short-horizon (days/weeks) + differentiated clusters first. "
+        "If there are more than 12 clusters, return at most 12 analyses — drop the lowest-importance "
+        "macro/sentiment clusters when trimming. Always keep earnings_result, sec_8k, sec_form4, "
+        "sec_registration, and sec_13dg clusters regardless of importance score.\n\n"
         "Return JSON:\n"
         '{"analyses": [{"title": str, "tickers": [str], '
         '"read": "bullish|bearish|mixed", "magnitude": "low|medium|high", '
