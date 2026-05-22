@@ -385,6 +385,7 @@ a.call-chip:hover{border-color:var(--accent);background:var(--panel)}
 .sec-call-badge{font-size:10px;padding:0 4px;line-height:1.6;cursor:help}
 .sec-row .px{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;min-width:64px;margin-left:auto}
 .sec-row .ch{font-variant-numeric:tabular-nums;font-size:var(--fs-cap);min-width:62px;text-align:right}
+.sec-row .w52{font-size:10px;color:var(--mut);min-width:36px;text-align:right;white-space:nowrap}
 .sec-ph{color:var(--mut);font-size:var(--fs-h2);padding:var(--s2) 0}
 @media (max-width:760px){
   .cards{grid-template-columns:repeat(2,1fr)}
@@ -898,7 +899,10 @@ function calibSvg(buckets){
         const tkHtml=badge
           ? `<span class="sec-tk"><a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(t.ticker)}" target="_blank" rel="noopener">${esc(t.ticker)}</a>${badge}</span>`
           : `<a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(t.ticker)}" target="_blank" rel="noopener">${esc(t.ticker)}</a>`;
-        return `<div class="sec-row">${tkHtml}<span class="px">${px}</span>${chCell(t.change_pct)}</div>`;
+        const w52 = t.pct_of_52w_high!=null
+          ? `<span class="w52" title="52-Wochen-Hoch: $${t.w52_high!=null?t.w52_high.toFixed(0):'?'} · Tief: $${t.w52_low!=null?t.w52_low.toFixed(0):'?'}">${t.pct_of_52w_high.toFixed(0)}%↑</span>`
+          : "";
+        return `<div class="sec-row">${tkHtml}<span class="px">${px}</span>${chCell(t.change_pct)}${w52}</div>`;
       }).join("");
     } else {
       body = `<div class="sec-ph">${esc(s.note||"Keine in-universe Ticker.")}</div>`;
