@@ -856,7 +856,8 @@ function calibSvg(buckets){
     const tks=s.tickers||[];
     let body;
     if(tks.length){
-      body = tks.map(t=>{
+      // sort tickers by absolute move descending — biggest intraday movers lead the list (F-pattern, Information Scent); nulls trail
+      body = tks.slice().sort((a,b)=>{const ma=a.change_pct!=null?Math.abs(a.change_pct):-1,mb=b.change_pct!=null?Math.abs(b.change_pct):-1;return mb-ma;}).map(t=>{
         const px = t.price!=null ? t.price.toFixed(2) : '<span class="muted">—</span>';
         const call=activeCalls[(t.ticker||"").toUpperCase()];
         const badge=call?`<span class="cd ${dirCls(call.dir)} sec-call-badge" title="Aktiver Call: ${esc(call.dir.toUpperCase())}${call.conv!=null?" · Conv "+call.conv.toFixed(2):""}" aria-label="Aktiver Call ${esc(call.dir.toUpperCase())}">${esc(call.dir.toUpperCase())}</span>`:"";
@@ -937,6 +938,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
