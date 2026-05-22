@@ -171,6 +171,15 @@ h2{font-size:var(--fs-h2);font-weight:600;text-transform:uppercase;letter-spacin
 .sectors{grid-template-columns:repeat(3,1fr)}
 .two-col{grid-template-columns:1fr 1fr}
 #briefing{min-height:220px}#trackrecord{min-height:120px}#sectorview{min-height:140px}
+/* loading skeleton: animated placeholder fills reserved space while CDN/JS loads (Doherty, perceived performance) */
+.skel{position:relative;overflow:hidden;background:var(--panel2);border-radius:8px}
+.skel::after{content:"";position:absolute;inset:0;transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,rgba(230,237,246,.07),transparent);
+  animation:skel-shimmer 1.4s ease-in-out infinite}
+@keyframes skel-shimmer{100%{transform:translateX(100%)}}
+.skel-line{height:12px;margin:10px 0;border-radius:6px}
+.skel-chip{height:30px;width:160px;display:inline-block;margin:0 var(--s2) var(--s3) 0;border-radius:8px}
+.skel-tile{height:120px;border-radius:12px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:var(--s4)}
 .kpi{font-size:var(--fs-kpi);font-weight:700;font-variant-numeric:tabular-nums}
 .kpi small{font-size:var(--fs-h2);color:var(--mut);font-weight:400}
@@ -394,13 +403,13 @@ main:focus{outline:none}
 
   <main id="main" tabindex="-1">
   <h2>Letztes Briefing</h2>
-  <div id="briefing" aria-live="polite" aria-atomic="false"></div>
+  <div id="briefing" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><span class="skel skel-chip"></span><span class="skel skel-chip"></span><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:84%"></div><div class="skel skel-line" style="width:88%"></div></div></div>
 
   <h2>Thesen-Track-Record <span id="trstand" class="tag"></span></h2>
-  <div id="trackrecord" aria-live="polite" aria-atomic="false"></div>
+  <div id="trackrecord" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:60%"></div><div class="skel skel-line" style="width:75%"></div></div></div>
 
   <h2>Sektor-Ansicht <span id="secstand" class="tag"></span></h2>
-  <div class="grid sectors" id="sectorview"></div>
+  <div class="grid sectors" id="sectorview" aria-busy="true"><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div></div>
   </main>
 
   <details class="wf-details">
@@ -703,6 +712,8 @@ function calibSvg(buckets){
 })();
 
 function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));}
+// loading complete: clear skeleton busy-state so assistive tech announces rendered content
+["briefing","trackrecord","sectorview"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 </script></body></html>"""
 
 
