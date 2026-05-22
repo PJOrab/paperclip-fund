@@ -77,6 +77,31 @@ def collect() -> dict:
     # Sort thesis calls newest-first
     thesis_calls.sort(key=lambda x: x["date"], reverse=True)
 
+    # Track-record aggregates (proxy: devil verdict as independent opinion)
+    scored_calls = [c for c in thesis_calls if c["verdict"] in ("agree", "caution", "reject")]
+    agree_n = sum(1 for c in scored_calls if c["verdict"] == "agree")
+    caution_n = sum(1 for c in scored_calls if c["verdict"] == "caution")
+    reject_n = sum(1 for c in scored_calls if c["verdict"] == "reject")
+    # High-conviction (>=0.55) agree rate — ideally high
+    hc = [c for c in scored_calls if isinstance(c.get("conviction"), (int, float)) and c["conviction"] >= 0.55]
+    hc_agree = sum(1 for c in hc if c["verdict"] == "agree")
+    # Low-conviction (<0.55) reject+caution rate — ideally high (we were rightly cautious)
+    lc = [c for c in scored_calls if isinstance(c.get("conviction"), (int, float)) and c["conviction"] < 0.55]
+    lc_cautious = sum(1 for c in lc if c["verdict"] in ("caution", "reject"))
+    convictions = [c["conviction"] for c in thesis_calls if isinstance(c.get("conviction"), (int, float))]
+    track_record = {
+        "total_calls": len(thesis_calls),
+        "scored": len(scored_calls),
+        "agree": agree_n,
+        "caution": caution_n,
+        "reject": reject_n,
+        "agree_rate": round(agree_n / len(scored_calls) * 100) if scored_calls else None,
+        "high_conv_agree_rate": round(hc_agree / len(hc) * 100) if hc else None,
+        "low_conv_cautious_rate": round(lc_cautious / len(lc) * 100) if lc else None,
+        "avg_conviction": round(sum(convictions) / len(convictions), 2) if convictions else None,
+        "nc_pct": round(sum(1 for c in thesis_calls if c["is_differentiated"]) / len(thesis_calls) * 100) if thesis_calls else None,
+    }
+
     return {
         "total": total,
         "by_source": dict(Counter(r["source"] for r in rows).most_common()),
@@ -86,6 +111,7 @@ def collect() -> dict:
         "briefing": briefing,
         "briefing_history": briefing_history,
         "thesis_calls": thesis_calls,
+        "track_record": track_record,
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
 
@@ -175,6 +201,9 @@ max-width:var(--measure);margin-inline:auto;line-height:1.7}
 
   <h2>Briefing-Verlauf</h2>
   <div class="panel" id="bhistory"></div>
+
+  <h2>Track Record <span id="trbadge"></span></h2>
+  <div class="grid cards" id="trkpis"></div>
 
   <h2>Thesis Calls <span id="callsbadge"></span></h2>
   <div class="panel" id="thesiscalls"></div>
@@ -291,6 +320,32 @@ if(hist.length){
     </tr></thead><tbody>${rows}</tbody></table>`;
 }else{
   $("bhistory").innerHTML='<div class="muted">Noch keine Briefing-Runs.</div>';
+}
+
+// Track Record KPIs
+const tr = D.track_record||{};
+if(tr.total_calls){
+  const fmt=(v,sfx='%')=>v!=null?v+sfx:'—';
+  const kpiData=[
+    ["Calls gesamt", tr.total_calls, "letzten 14 Runs"],
+    ["⌀ Conviction", tr.avg_conviction!=null?tr.avg_conviction.toFixed(2):'—', "aller Thesen"],
+    ["Devil Agree-Rate", fmt(tr.agree_rate), `${tr.agree??0}/${tr.scored??0} bewertet`],
+    ["High-Conv Agree", fmt(tr.high_conv_agree_rate), "Conv ≥ 0.55 → devil agree"],
+    ["Low-Conv Cautious", fmt(tr.low_conv_cautious_rate), "Conv < 0.55 → devil caution/reject"],
+    ["Non-Consensus %", fmt(tr.nc_pct), "★ differentiated calls"],
+  ];
+  $("trkpis").style.gridTemplateColumns="repeat(3,1fr)";
+  $("trkpis").innerHTML=kpiData.map(([label,val,sub])=>`
+    <div class="panel"><div class="kpi">${val}</div>
+    <div class="muted" style="font-size:12px;margin-top:4px">${label}</div>
+    <div class="muted" style="font-size:11px">${sub}</div></div>`).join('');
+  const agree_rate=tr.agree_rate??0;
+  $("trbadge").innerHTML=agree_rate>=60
+    ?'<span class="pill pill--ok">gut kalibriert</span>'
+    :agree_rate>=40?'<span class="pill pill--warn">kalibrierung prüfen</span>'
+    :'<span class="pill pill--err">kalibrierung schwach</span>';
+}else{
+  $("trkpis").innerHTML='<div class="panel muted">Noch keine Track-Record-Daten.</div>';
 }
 
 // Thesis Calls table
