@@ -55,7 +55,11 @@ RSS_LOOKBACK_DAYS = 3
 FUNDING_RSS_FEEDS = {
     "techcrunch_startups": "https://techcrunch.com/category/startups/feed/",
     "techcrunch_funding":  "https://techcrunch.com/tag/funding/feed/",
+    "techcrunch_venture":  "https://techcrunch.com/category/venture/feed/",
     "venturebeat":         "https://venturebeat.com/feed/",
+    # Crunchbase News = kanonische Runden-Quelle; fängt Rounds, die nur die
+    # generalistischen Feeds verpassen (Exa/Mercury/Cohere-Misses, HED-27-QC).
+    "crunchbase_news":     "https://news.crunchbase.com/feed/",
 }
 
 # X/Twitter: AI/Tech-Accounts (ersetzen die Makro-Liste von macro-agent).
