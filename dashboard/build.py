@@ -188,9 +188,21 @@ border-radius:8px;padding:var(--s3);margin-bottom:10px}
 .devil{margin-top:var(--s2);padding:var(--s2) 10px;background:#1a1320;border:1px solid #3a2540;
 border-radius:8px;font-size:13px}
 .devil .v{font-weight:600;text-transform:uppercase;font-size:11px}
-.brief{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:18px;
-max-width:var(--measure);margin-inline:auto;line-height:1.7}
-.brief h1{font-size:18px}.brief h2{color:var(--txt);text-transform:none;letter-spacing:0;font-size:15px}
+.brief{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:20px 24px;
+max-width:var(--measure);margin-inline:auto;line-height:1.75}
+.brief h1{font-size:18px;margin:0 0 var(--s3)}.brief h2{color:var(--txt);text-transform:none;letter-spacing:0;font-size:15px;margin-top:var(--s5)}
+/* lede: first paragraph elevated as abstract */
+.brief-lede{font-size:15px;color:var(--txt);line-height:1.65;margin:var(--s3) 0 var(--s4);
+  padding-bottom:var(--s3);border-bottom:1px solid var(--line);font-weight:400}
+/* collapsible analysis body */
+.brief details{margin-top:var(--s2)}
+.brief summary{cursor:pointer;font-size:12px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--accent);list-style:none;padding:var(--s2) 0;
+  border-bottom:1px solid var(--line);margin-bottom:var(--s3);user-select:none}
+.brief summary::-webkit-details-marker{display:none}
+.brief summary::after{content:" ▾";font-size:11px}
+.brief details[open] summary::after{content:" ▴";font-size:11px}
+.brief summary:hover{color:var(--txt)}
 .muted{color:var(--mut)}
 .pill{display:inline-block;font-size:var(--fs-cap);padding:2px 8px;border-radius:6px;text-transform:capitalize}
 .pill--ok{background:rgba(63,185,80,.15);color:var(--ok);border:1px solid var(--ok)}
@@ -377,7 +389,25 @@ else{
     }).join("");
     html+=`<div class="calls-strip">${chips}</div>`;
   }
-  if(b.briefing_md){ html+=`<div class="brief">${marked.parse(b.briefing_md)}</div>`; }
+  if(b.briefing_md){
+    // Progressive Disclosure: elevate lede (first <p>) + collapse dense analysis body
+    const raw = marked.parse(b.briefing_md);
+    const tmp = document.createElement("div"); tmp.innerHTML = raw;
+    const nodes = Array.from(tmp.childNodes);
+    // find first non-empty <p> as lede
+    const ledeIdx = nodes.findIndex(n=>n.nodeName==="P" && (n.textContent||"").trim().length>0);
+    let briefHtml = "";
+    if(ledeIdx>=0){
+      // headings before lede (e.g. h1 title) pass through unchanged
+      for(let i=0;i<ledeIdx;i++) briefHtml+=nodes[i].outerHTML||"";
+      briefHtml+=`<p class="brief-lede">${nodes[ledeIdx].innerHTML}</p>`;
+      const rest=nodes.slice(ledeIdx+1).map(n=>n.outerHTML||n.textContent||"").join("");
+      if(rest.trim()) briefHtml+=`<details open><summary>Vollanalyse</summary>${rest}</details>`;
+    } else {
+      briefHtml=raw;
+    }
+    html+=`<div class="brief">${briefHtml}</div>`;
+  }
   if(theses.length){
     html+='<h2 style="margin-top:20px">Thesen & Devil\'s Advocate</h2>';
     html+=theses.map(t=>{
