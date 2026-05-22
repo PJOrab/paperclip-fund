@@ -345,6 +345,8 @@ a.call-chip:hover{border-color:var(--accent);background:var(--panel)}
   padding:var(--s2) 0;border-bottom:1px solid var(--line);font-size:var(--fs-h2)}
 .sec-row:last-child{border-bottom:0}
 .sec-row .tk{font-weight:600}
+.sec-tk{display:inline-flex;align-items:center;gap:5px}
+.sec-call-badge{font-size:10px;padding:0 4px;line-height:1.6;cursor:help}
 .sec-row .px{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;min-width:64px;margin-left:auto}
 .sec-row .ch{font-variant-numeric:tabular-nums;font-size:var(--fs-cap);min-width:62px;text-align:right}
 .sec-ph{color:var(--mut);font-size:var(--fs-h2);padding:var(--s2) 0}
@@ -765,6 +767,19 @@ function calibSvg(buckets){
   const sv=D.sector_view, root=$("sectorview");
   if(!sv || !(sv.sectors||[]).length){
     root.innerHTML='<div class="panel muted">Sektor-Ansicht noch nicht verfügbar.</div>'; return; }
+  // Build active-call direction map from latest briefing theses
+  const activeCalls={};
+  const latestB=D.briefing||{};
+  ((latestB.theses||{}).theses||[]).forEach(t=>{
+    const dir=(t.direction||"").toLowerCase();
+    (t.tickers||[]).forEach(tk=>{
+      const key=tk.toUpperCase();
+      const ex=activeCalls[key];
+      if(!ex||(t.conviction!=null&&(ex.conv==null||t.conviction>ex.conv)))
+        activeCalls[key]={dir,conv:t.conviction};
+    });
+  });
+  const dirCls=d=>d==="long"?"cd-long":d==="short"?"cd-short":"cd-pair";
   $("secstand").innerHTML = sv.as_of
     ? `Kurse <time datetime="${(sv.as_of_iso||sv.as_of.replace(' UTC','').replace(' ','T')+'Z')}">${sv.as_of}</time>`
     : "Taxonomie (ohne Kurse)";
@@ -787,8 +802,12 @@ function calibSvg(buckets){
     if(tks.length){
       body = tks.map(t=>{
         const px = t.price!=null ? t.price.toFixed(2) : '<span class="muted">—</span>';
-        return `<div class="sec-row"><a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(t.ticker)}" target="_blank" rel="noopener">${esc(t.ticker)}</a>
-          <span class="px">${px}</span>${chCell(t.change_pct)}</div>`;
+        const call=activeCalls[(t.ticker||"").toUpperCase()];
+        const badge=call?`<span class="cd ${dirCls(call.dir)} sec-call-badge" title="Aktiver Call: ${esc(call.dir.toUpperCase())}${call.conv!=null?" · Conv "+call.conv.toFixed(2):""}" aria-label="Aktiver Call ${esc(call.dir.toUpperCase())}">${esc(call.dir.toUpperCase())}</span>`:"";
+        const tkHtml=badge
+          ? `<span class="sec-tk"><a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(t.ticker)}" target="_blank" rel="noopener">${esc(t.ticker)}</a>${badge}</span>`
+          : `<a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(t.ticker)}" target="_blank" rel="noopener">${esc(t.ticker)}</a>`;
+        return `<div class="sec-row">${tkHtml}<span class="px">${px}</span>${chCell(t.change_pct)}</div>`;
       }).join("");
     } else {
       body = `<div class="sec-ph">${esc(s.note||"Keine in-universe Ticker.")}</div>`;
@@ -862,6 +881,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
