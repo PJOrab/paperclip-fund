@@ -78,6 +78,7 @@ def collect() -> dict:
         "options_tape": collect_options_tape(c),
         "short_squeeze": collect_short_squeeze(c),
         "eps_revisions": collect_eps_revisions(c),
+        "tech_levels": collect_tech_levels(c),
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "built_at_iso": datetime.now(timezone.utc).isoformat(),
     }
@@ -978,6 +979,179 @@ def collect_eps_revisions(c, lookback_days: int = 21, ticker_cap: int = 24) -> d
         "n_neg": n_neg,
         "n_strong": n_strong,
         "n_accel": n_accel,
+        "stale": stale,
+    }
+
+
+# Technical-Levels regexes (HED-137 Zyklus 113)
+# Text format: "[TECH · NVDA] Golden Cross (50d SMA crossed above 200d today) — RSI-14 72 (overbought) (as of 2026-05-22)"
+_TL_HEAD = re.compile(r"^\[TECH\s*·\s*([A-Z][A-Z0-9.\-]{0,9})\]\s+(.+?)(?:\s+\(as of (\d{4}-\d{2}-\d{2})\))?$", re.DOTALL)
+_TL_GOLDEN = re.compile(r"Golden Cross", re.IGNORECASE)
+_TL_DEATH = re.compile(r"Death Cross", re.IGNORECASE)
+_TL_200D = re.compile(r"([+-]?[\d.]+)%\s+vs 200d SMA", re.IGNORECASE)
+_TL_52H = re.compile(r"within [\d.]+% of 52w high", re.IGNORECASE)
+_TL_52L = re.compile(r"within [\d.]+% of 52w low", re.IGNORECASE)
+_TL_50D = re.compile(r"([+-]?[\d.]+)%\s+vs 50d SMA", re.IGNORECASE)
+_TL_RSI_OS = re.compile(r"RSI-14\s+(\d+)\s*\(oversold\)", re.IGNORECASE)
+_TL_RSI_OB = re.compile(r"RSI-14\s+(\d+)\s*\(overbought\)", re.IGNORECASE)
+_TL_VOL = re.compile(r"volume\s+([\d.]+)x\s+20d-avg", re.IGNORECASE)
+_TL_GAP_UP = re.compile(r"gap-up\s+([+\d.]+)%", re.IGNORECASE)
+_TL_GAP_DN = re.compile(r"gap-down\s+(-?[\d.]+)%", re.IGNORECASE)
+
+
+def _tl_parse(text: str) -> dict | None:
+    """Parse one TechnicalLevelsAdapter raw_item text into a structured dict."""
+    if not text:
+        return None
+    m = _TL_HEAD.match(text.strip())
+    if not m:
+        return None
+    ticker = m.group(1).upper()
+    body = m.group(2)
+    as_of = m.group(3)
+
+    # Tier detection drives card colour (higher = stronger signal)
+    tier = 1
+    tone = "neutral"  # bullish / bearish / neutral / mixed
+
+    triggers = []
+
+    if _TL_GOLDEN.search(body):
+        tier = 4
+        tone = "bullish"
+        triggers.append({"label": "Golden Cross", "kind": "cross_bull"})
+    if _TL_DEATH.search(body):
+        tier = 4
+        tone = "bearish"
+        triggers.append({"label": "Death Cross", "kind": "cross_bear"})
+
+    m200 = _TL_200D.search(body)
+    if m200:
+        pct = float(m200.group(1))
+        if tier < 4:
+            tier = 4
+        if pct >= 0:
+            tone = tone if tone == "bearish" else "bullish"
+            triggers.append({"label": f"200d SMA {pct:+.1f}%", "kind": "sma200_bull"})
+        else:
+            tone = tone if tone == "bullish" else "bearish"
+            triggers.append({"label": f"200d SMA {pct:+.1f}%", "kind": "sma200_bear"})
+
+    if _TL_52H.search(body):
+        if tier < 3:
+            tier = 3
+        tone = tone if tone == "bearish" else "bullish"
+        triggers.append({"label": "Near 52w High", "kind": "52h"})
+    if _TL_52L.search(body):
+        if tier < 3:
+            tier = 3
+        tone = tone if tone == "bullish" else "bearish"
+        triggers.append({"label": "Near 52w Low", "kind": "52l"})
+
+    m50 = _TL_50D.search(body)
+    if m50:
+        pct = float(m50.group(1))
+        if tier < 2:
+            tier = 2
+        if pct >= 0:
+            tone = tone if tone == "bearish" else "bullish"
+            triggers.append({"label": f"50d SMA {pct:+.1f}%", "kind": "sma50_bull"})
+        else:
+            tone = tone if tone == "bullish" else "bearish"
+            triggers.append({"label": f"50d SMA {pct:+.1f}%", "kind": "sma50_bear"})
+
+    rsi_os = _TL_RSI_OS.search(body)
+    if rsi_os:
+        triggers.append({"label": f"RSI {rsi_os.group(1)} Oversold", "kind": "rsi_os"})
+    rsi_ob = _TL_RSI_OB.search(body)
+    if rsi_ob:
+        triggers.append({"label": f"RSI {rsi_ob.group(1)} Overbought", "kind": "rsi_ob"})
+
+    vol = _TL_VOL.search(body)
+    if vol:
+        triggers.append({"label": f"Vol {float(vol.group(1)):.1f}× Avg", "kind": "vol"})
+
+    gap_up = _TL_GAP_UP.search(body)
+    if gap_up:
+        triggers.append({"label": f"Gap-Up +{gap_up.group(1)}%", "kind": "gap_up"})
+    gap_dn = _TL_GAP_DN.search(body)
+    if gap_dn:
+        triggers.append({"label": f"Gap-Down {gap_dn.group(1)}%", "kind": "gap_dn"})
+
+    if not triggers:
+        return None
+
+    # Cross ↔ contradictory SMA can show "mixed" — only when both cross types present
+    if any(t["kind"] == "cross_bull" for t in triggers) and any(t["kind"] == "cross_bear" for t in triggers):
+        tone = "mixed"
+
+    return {
+        "ticker": ticker,
+        "tier": tier,
+        "tone": tone,
+        "triggers": triggers,
+        "as_of": as_of,
+    }
+
+
+def collect_tech_levels(c, lookback_days: int = 7, ticker_cap: int = 20) -> dict:
+    """Aggregate the most recent technical trigger per ticker from TechnicalLevelsAdapter.
+
+    Pulls source='tech_level' raw_items from the last `lookback_days`, keeps
+    freshest per ticker, and returns a render-ready envelope sorted by
+    descending tier then by tone severity (bearish before bullish before neutral).
+    """
+    try:
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=lookback_days)).isoformat()
+        rows = (c.table("raw_items")
+                .select("text,fetched_at,url")
+                .eq("source", "tech_level")
+                .gte("fetched_at", cutoff)
+                .order("fetched_at", desc=True)
+                .limit(300)
+                .execute().data or [])
+    except Exception:
+        rows = []
+
+    latest: dict[str, dict] = {}
+    for r in rows:
+        p = _tl_parse(r.get("text"))
+        if not p:
+            continue
+        tk = p["ticker"]
+        if tk not in latest:
+            p["fetched_at"] = r.get("fetched_at")
+            p["url"] = r.get("url")
+            latest[tk] = p
+
+    tone_order = {"bearish": 0, "mixed": 1, "bullish": 2, "neutral": 3}
+    out = sorted(
+        latest.values(),
+        key=lambda r: (-r["tier"], tone_order.get(r["tone"], 9))
+    )[:ticker_cap]
+
+    n_bull = sum(1 for r in out if r["tone"] == "bullish")
+    n_bear = sum(1 for r in out if r["tone"] == "bearish")
+    n_tier4 = sum(1 for r in out if r["tier"] == 4)
+
+    stale = False
+    if out:
+        try:
+            newest = max(
+                datetime.fromisoformat(str(r["fetched_at"]).replace("Z", "+00:00"))
+                for r in out if r.get("fetched_at")
+            )
+            stale = (datetime.now(timezone.utc) - newest).days > 3
+        except Exception:
+            stale = False
+
+    return {
+        "as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        "lookback_days": lookback_days,
+        "tickers": out,
+        "n_bull": n_bull,
+        "n_bear": n_bear,
+        "n_tier4": n_tier4,
         "stale": stale,
     }
 
@@ -2551,6 +2725,56 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .er-drift-strong{font-size:13px}
   .er-accel,.er-fy{font-size:8px;padding:1px 4px;margin-left:2px;margin-top:2px;display:inline-block}
 }
+/* Technical-Levels Heatmap (HED-137 Zyklus 113): institutional price-action triage grid */
+.tl-panel{padding:var(--s3);margin-top:var(--s3)}
+.tl-header{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;margin-bottom:var(--s3)}
+.tl-summary{display:flex;gap:var(--s3);flex-wrap:wrap;font-size:var(--fs-cap);color:var(--mut)}
+.tl-summary span{display:inline-flex;align-items:center;gap:4px}
+.tl-summary .bull{color:var(--green)}
+.tl-summary .bear{color:var(--red)}
+.tl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:var(--s3)}
+.tl-card{border-radius:6px;border:1px solid var(--line);background:var(--panel);padding:10px 12px;position:relative;transition:border-color .15s}
+.tl-card:hover{border-color:var(--accent)}
+/* tier-4 = regime change — strong left border */
+.tl-card.tier4{border-left:3px solid}
+.tl-card.tier4.bullish{border-left-color:var(--green);background:rgba(63,185,80,.04)}
+.tl-card.tier4.bearish{border-left-color:var(--red);background:rgba(248,81,73,.04)}
+.tl-card.tier4.mixed{border-left-color:var(--accent);background:rgba(88,166,255,.04)}
+/* tier-3 = notable extreme — subtle background */
+.tl-card.tier3.bullish{background:rgba(63,185,80,.025)}
+.tl-card.tier3.bearish{background:rgba(248,81,73,.025)}
+/* tier-1/2 = structural signal */
+.tl-card.tier2,.tl-card.tier1{border-left:2px solid var(--line)}
+.tl-ticker{font-size:15px;font-weight:700;letter-spacing:.03em;line-height:1;color:var(--txt);font-variant-numeric:tabular-nums}
+.tl-ticker.bullish{color:var(--green)}
+.tl-ticker.bearish{color:var(--red)}
+.tl-tier-badge{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.tl-tier4-badge{background:rgba(255,215,0,.18);color:#c9a500}
+.tl-tier3-badge{background:rgba(88,166,255,.15);color:var(--accent)}
+.tl-tier2-badge,.tl-tier1-badge{background:var(--panel2);color:var(--mut)}
+.tl-triggers{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tl-chip{display:inline-block;font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em;line-height:1.3;white-space:nowrap}
+/* chip colours by kind */
+.tl-chip-cross_bull{background:rgba(63,185,80,.22);color:var(--green)}
+.tl-chip-cross_bear{background:rgba(248,81,73,.22);color:var(--red)}
+.tl-chip-sma200_bull{background:rgba(63,185,80,.14);color:var(--green)}
+.tl-chip-sma200_bear{background:rgba(248,81,73,.14);color:var(--red)}
+.tl-chip-52h{background:rgba(63,185,80,.10);color:var(--green)}
+.tl-chip-52l{background:rgba(248,81,73,.10);color:var(--red)}
+.tl-chip-sma50_bull{background:rgba(63,185,80,.08);color:var(--green)}
+.tl-chip-sma50_bear{background:rgba(248,81,73,.08);color:var(--red)}
+.tl-chip-rsi_os{background:rgba(255,165,0,.15);color:#c87800}
+.tl-chip-rsi_ob{background:rgba(255,165,0,.15);color:#c87800}
+.tl-chip-vol{background:rgba(88,166,255,.12);color:var(--accent)}
+.tl-chip-gap_up{background:rgba(63,185,80,.08);color:var(--green)}
+.tl-chip-gap_dn{background:rgba(248,81,73,.08);color:var(--red)}
+.tl-as-of{font-size:9px;color:var(--mut);margin-top:5px;letter-spacing:.04em}
+.tl-empty{color:var(--mut);font-size:var(--fs-cap);padding:var(--s3) 0}
+@media(max-width:640px){
+  .tl-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+  .tl-ticker{font-size:13px}
+  .tl-chip{font-size:8px;padding:1px 5px}
+}
 /* Katalysator-Runway: event-driven timeline (earnings + thesis-horizon) for the next 30 days (HED-137 Zyklus 85) */
 .cat-panel{padding:var(--s3)}
 .cat-svg{width:100%;height:auto;display:block;max-height:160px;margin-top:var(--s2)}
@@ -3301,6 +3525,7 @@ main:focus{outline:none}
     <a href="#h-earnplay">Earnings-Playbook</a>
     <a href="#h-quality">Quality-Scorecard</a>
     <a href="#h-epsrev">EPS-Revisions</a>
+    <a href="#h-techlevels">Tech-Levels</a>
     <a href="#h-scanner">Ideen-Scanner</a>
     <a href="#h-consspread">Konsens-Spread</a>
     <a href="#h-sectorview">Sektoren</a>
@@ -3370,6 +3595,11 @@ main:focus{outline:none}
   <section aria-labelledby="h-epsrev">
   <h2 id="h-epsrev">EPS-Revisions-Velocity <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Sell-Side-Momentum · StarMine · EE/EM</span></h2>
   <div id="epsrev" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:52%"></div><div class="skel skel-line" style="width:68%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
+  </section>
+
+  <section aria-labelledby="h-techlevels">
+  <h2 id="h-techlevels">Technical-Levels <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Preis-Regime · SMA-Crossovers · RSI · Institutionelle Trigger</span></h2>
+  <div id="techlevels" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:48%"></div><div class="skel skel-line" style="width:65%"></div><div class="skel skel-line" style="width:55%"></div></div></div>
   </section>
 
   <section aria-labelledby="h-scanner">
@@ -7072,6 +7302,70 @@ function calibSvg(buckets){
   root.setAttribute("aria-busy","false");
 })();
 
+// Technical-Levels Heatmap (HED-137 Zyklus 113): institutional price-action triage panel.
+// Reads D.tech_levels from collect_tech_levels() — TechnicalLevelsAdapter source='tech_level'.
+// Cards sorted by descending trigger tier (4=cross/200d, 3=52w, 2=50d, 1=RSI/vol/gap) then by
+// tone severity (bearish first, then mixed, bullish, neutral). Tier-4 cards get a coloured
+// left border and tinted background — the Bloomberg TECHNICAL screen equivalent.
+(function renderTechLevels(){
+  const root=$("techlevels");
+  if(!root) return;
+  const tl=D.tech_levels||{};
+  const tickers=tl.tickers||[];
+
+  if(!tickers.length){
+    root.innerHTML='<div class="panel tl-panel"><div class="tl-empty">Keine aktiven technischen Trigger in den letzten '+(tl.lookback_days||7)+'d — TechnicalLevelsAdapter hat keine Schwellwert-Ereignisse emittiert (Markt seitwärts, keine Extremlagen).</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+
+  const TIER_LABELS={4:"Regime",3:"Extreme",2:"Struktur",1:"Signal"};
+  const TIER_BADGE_CSS={4:"tl-tier4-badge",3:"tl-tier3-badge",2:"tl-tier2-badge",1:"tl-tier1-badge"};
+  const TONE_LABELS={bullish:"Bullish",bearish:"Bearish",mixed:"Mixed",neutral:"Neutral"};
+
+  function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+
+  const cards=tickers.map(row=>{
+    const tone=row.tone||"neutral";
+    const tier=row.tier||1;
+    const url=row.url?` href="${esc(row.url)}" target="_blank" rel="noopener"`:"";
+    const tierLabel=TIER_LABELS[tier]||"Signal";
+    const tierBadge=TIER_BADGE_CSS[tier]||"tl-tier1-badge";
+    const chips=(row.triggers||[]).map(t=>{
+      const kind=t.kind||"vol";
+      return `<span class="tl-chip tl-chip-${esc(kind)}">${esc(t.label)}</span>`;
+    }).join("");
+    const asOf=row.as_of?`<div class="tl-as-of">as of ${esc(row.as_of)}</div>`:"";
+    return `<a class="tl-card tier${tier} ${esc(tone)}"${url} style="text-decoration:none;color:inherit;display:block">
+      <div>
+        <span class="tl-ticker ${esc(tone)}">${esc(row.ticker)}</span>
+        <span class="tl-tier-badge ${tierBadge}">${esc(tierLabel)}</span>
+      </div>
+      <div class="tl-triggers">${chips}</div>
+      ${asOf}
+    </a>`;
+  }).join("");
+
+  const nBull=tl.n_bull||0, nBear=tl.n_bear||0, nTier4=tl.n_tier4||0;
+  const staleWarn=tl.stale?'<span style="color:var(--red);font-weight:600">⚠ Daten älter als 3d</span>':"";
+  const summaryHtml=`<div class="tl-summary">
+    <span>Active Trigger: <b>${tickers.length}</b></span>
+    ${nTier4?`<span><b>${nTier4}</b> Regime-Events</span>`:""}
+    ${nBull?`<span class="bull">▲ ${nBull} Bullish</span>`:""}
+    ${nBear?`<span class="bear">▼ ${nBear} Bearish</span>`:""}
+    ${staleWarn}
+  </div>`;
+
+  root.innerHTML=`<div class="panel tl-panel">
+    ${summaryHtml}
+    <div class="tl-grid">${cards}</div>
+    <div class="er-foot" style="margin-top:var(--s3)">
+      Technical-Levels triage zeigt nur Ticker mit aktiven institutionellen Triggern — kein Rauschen. <b>Tier 4 (Regime)</b>: Golden/Death Cross (50d ↔ 200d SMA-Kreuzung = Trendwechsel-Signal) und 200d-SMA-Nähe (±2% = kritische Regime-Linie). <b>Tier 3 (Extreme)</b>: 52-Wochen-Hoch/Tief-Proximity = Momentum-Breakout oder Kapitulaion. <b>Tier 2 (Struktur)</b>: 50d-SMA-Nähe = mittelfristige Trendlinie. <b>Tier 1 (Signal)</b>: RSI-14 Oversold/Overbought + Volumen-Spike (institutioneller Flow-Indikator) + Gap-Moves. Quelle: <a href="https://finance.yahoo.com/" target="_blank" rel="noopener">yfinance OHLCV</a> via <code>TechnicalLevelsAdapter</code>; OHLCV-Daten via Yahoo Finance API, Lookback 1 Jahr (260 Handelstage), ISO-Wochen-Dedup.
+    </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 // Katalysator-Runway (HED-137 Zyklus 85): 30-day event timeline combining earnings calendar
 // and active-thesis horizon-resolution dates. Distinguishes positions im Buch (direkter P&L-Impact)
 // from Watchlist (re-entry signal). Bloomberg ECO/ER equivalent, customised to our actual book.
@@ -7940,7 +8234,7 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 })();
 
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
-["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","insidertape","opttape","ivrvedge","signalmatrix"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","techlevels","insidertape","opttape","ivrvedge","signalmatrix"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
 // Section nav: highlight the anchor pill whose section is currently most in view
 (function(){
