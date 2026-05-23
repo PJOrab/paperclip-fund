@@ -2146,6 +2146,52 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* News-Flow — Relevant für Buch & Ideen (HED-150 Zyklus 168)
+   Filters the unified `recent` feed to items mentioning active positions + trade
+   ideas. Groups by ticker, sorted by engagement priority (active > LONG-idea >
+   SHORT-idea > watch). Each item is a clickable card with source badge + timestamp. */
+.pf-nf-panel{padding:var(--s3)}
+.pf-nf-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-nf-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-nf-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-nf-stats{display:flex;gap:var(--s3);flex-wrap:wrap;flex-shrink:0;align-items:flex-end}
+.pf-nf-stat{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:50px}
+.pf-nf-stat-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt)}
+.pf-nf-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut)}
+.pf-nf-stat-val-pos{color:#3fb950}
+.pf-nf-stat-val-warn{color:#e3b341}
+.pf-nf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:var(--s2)}
+.pf-nf-tk-group{display:flex;flex-direction:column;gap:6px;background:rgba(139,148,158,.03);border:1px solid rgba(139,148,158,.08);border-radius:6px;padding:10px;border-top:3px solid rgba(139,148,158,.3)}
+.pf-nf-tk-group-active{border-top-color:#3fb950;background:rgba(35,134,54,.03)}
+.pf-nf-tk-group-long-idea{border-top-color:var(--blue);background:rgba(88,166,255,.03)}
+.pf-nf-tk-group-short-idea{border-top-color:#a855f7;background:rgba(168,85,247,.03)}
+.pf-nf-tk-hdr{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px}
+.pf-nf-tk{font-weight:700;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px;color:var(--txt);letter-spacing:.02em}
+.pf-nf-tk-status{display:inline-flex;align-items:center;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.4}
+.pf-nf-tk-status-active{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-nf-tk-status-long-idea{background:rgba(88,166,255,.15);color:var(--blue)}
+.pf-nf-tk-status-short-idea{background:rgba(168,85,247,.15);color:#a855f7}
+.pf-nf-tk-count{font-size:10px;color:var(--mut);font-variant-numeric:tabular-nums}
+.pf-nf-item{display:flex;flex-direction:column;gap:3px;padding:5px 0;border-top:1px solid rgba(139,148,158,.08)}
+.pf-nf-item:first-of-type{border-top:0;padding-top:0}
+.pf-nf-item-meta{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--mut)}
+.pf-nf-source{display:inline-flex;align-items:center;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;line-height:1.4;background:rgba(139,148,158,.08)}
+.pf-nf-source-sec{background:rgba(248,81,73,.12);color:#f85149}
+.pf-nf-source-yahoo{background:rgba(168,85,247,.12);color:#a855f7}
+.pf-nf-source-news{background:rgba(88,166,255,.12);color:var(--blue)}
+.pf-nf-source-social{background:rgba(35,134,54,.12);color:#3fb950}
+.pf-nf-when{color:var(--mut);font-variant-numeric:tabular-nums}
+.pf-nf-text{font-size:var(--fs-cap);line-height:1.4;color:var(--txt);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pf-nf-text a{color:var(--txt);text-decoration:none}
+.pf-nf-text a:hover{color:var(--blue);text-decoration:underline}
+.pf-nf-empty{padding:var(--s4);text-align:center;color:var(--mut);font-size:var(--fs-cap);background:rgba(139,148,158,.04);border-radius:6px}
+.pf-nf-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+@media(max-width:600px){
+  .pf-nf-h{flex-direction:column}
+  .pf-nf-stats{width:100%;justify-content:space-between}
+  .pf-nf-grid{grid-template-columns:1fr;gap:6px}
+  .pf-nf-tk-group{padding:8px}
+}
 /* Earnings-Kalender — Bestätigte Termine (HED-150 Zyklus 167)
    Real confirmed earnings dates from sector_view.earnings_calendar (Yahoo-driven),
    cross-referenced with options-tape for implied move + setup verdict. Marks active
@@ -11363,6 +11409,7 @@ function calibSvg(buckets){
       _chip("#pf-fundamentals","◇","Fundamentals","",""),
       _chip("#pf-ideas","✦","Ideas",nIdeas?nIdeas:"","pf-nav-chip-badge-pos"),
       _chip("#pf-events","◷","Events",nEvents?nEvents:"","pf-nav-chip-badge-warn"),
+      _chip("#pf-news","✉","News","",""),
       _chip("#pf-scanner","⋮⋮","Scanner","",""),
       _chip("#pf-insider","►","Insider","",""),
       _chip("#pf-analysis","✎","Analyse","",""),
@@ -11545,7 +11592,183 @@ function calibSvg(buckets){
     }
   }
 
-  root.innerHTML=`${subNavHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // News-Flow — Relevant für Buch & Ideen (HED-150 Zyklus 168).
+  // Filters the unified `recent` feed (cross-source ingest log) to items mentioning
+  // active positions + trade-idea candidates. Groups by ticker, priority-sorted
+  // (active > LONG-idea > SHORT-idea). Clickable cards with source + relative time.
+  let newsFlowHtml="";
+  {
+    const recent=D.recent||[];
+    if(recent.length){
+      const _activeTk=new Set(active.flatMap(th=>(th.tickers||[]).map(tk=>String(tk).toUpperCase())));
+      const _activeDir={};
+      active.forEach(th=>{const dir=(th.direction||"long").toLowerCase();(th.tickers||[]).forEach(tk=>_activeDir[String(tk).toUpperCase()]=dir);});
+
+      // Build idea tickers from cross-signal scoring
+      const _sv={};
+      ((D.sector_view||{}).sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{if(t&&t.ticker) _sv[t.ticker.toUpperCase()]={...t,sector_name:s.name};}));
+      const _ot={};((D.options_tape||{}).tickers||[]).forEach(t=>{if(t&&t.ticker) _ot[t.ticker.toUpperCase()]=t;});
+      const _ideaLongs=new Set(), _ideaShorts=new Set();
+      Object.entries(_sv).forEach(([tk,d])=>{
+        if(_activeTk.has(tk)) return;
+        const c=d.consensus||{}; const o=_ot[tk]||null;
+        let s=0;
+        if(o){if(o.verdict==="bullish_setup") s+=2; else if(o.verdict==="bearish_setup") s-=2; else if(o.verdict==="hedge_bid") s-=1;}
+        const fpe=c.fwd_pe, rev=c.rev_growth_yoy;
+        if(typeof fpe==="number"&&fpe>0&&typeof rev==="number"){
+          const g=rev/fpe;
+          if(g>5) s+=2; else if(g>2) s+=1; else if(g<1&&fpe>30) s-=1;
+        }
+        if(c.rec==="strong_buy") s+=1;
+        else if(c.rec==="sell"||c.rec==="strong_sell") s-=1;
+        const pt=c.pt_mean, price=d.price;
+        if(typeof pt==="number"&&pt>0&&typeof price==="number"&&price>0){
+          const up=(pt-price)/price*100;
+          if(up>30) s+=1; else if(up<-10) s-=1;
+        }
+        if(s>=2) _ideaLongs.add(tk);
+        else if(s<=-2) _ideaShorts.add(tk);
+      });
+
+      // Track relevant tickers (active + ideas)
+      const relevant=new Set([..._activeTk, ..._ideaLongs, ..._ideaShorts]);
+
+      // Filter recent items by ticker mention (word-boundary)
+      const tickerItems={}; // tk -> [items]
+      const tkRe={};
+      Array.from(relevant).forEach(tk=>{tkRe[tk]=new RegExp("\\b"+tk+"\\b");});
+
+      recent.forEach(item=>{
+        const text=(item.text||"").toUpperCase();
+        Array.from(relevant).forEach(tk=>{
+          if(tkRe[tk].test(text)){
+            if(!tickerItems[tk]) tickerItems[tk]=[];
+            tickerItems[tk].push(item);
+          }
+        });
+      });
+
+      const tkWithItems=Object.keys(tickerItems);
+      if(tkWithItems.length){
+        function _sourceCls(src){
+          const s=(src||"").toLowerCase();
+          if(s.startsWith("sec_")) return "pf-nf-source pf-nf-source-sec";
+          if(s.includes("yahoo")) return "pf-nf-source pf-nf-source-yahoo";
+          if(s.includes("news")||s.includes("press")) return "pf-nf-source pf-nf-source-news";
+          if(s.startsWith("x_")||s.includes("hackernews")) return "pf-nf-source pf-nf-source-social";
+          return "pf-nf-source";
+        }
+        function _sourceLbl(src){
+          const s=(src||"").toLowerCase();
+          if(s==="sec_form4") return "SEC 4";
+          if(s==="sec_8k") return "SEC 8K";
+          if(s==="sec_broad_event") return "SEC";
+          if(s==="sec_registration") return "SEC S-1";
+          if(s==="yahoo_finance") return "Yahoo";
+          if(s==="tech_news") return "News";
+          if(s==="hackernews") return "HN";
+          if(s.startsWith("x_")) return "X";
+          if(s==="earnings_result") return "Earnings";
+          if(s==="press_wire") return "PR";
+          return src.slice(0,10);
+        }
+        function _relTime(iso){
+          if(!iso) return "";
+          try{
+            const t=new Date(iso); const now=Date.now();
+            const min=Math.floor((now-t)/60000);
+            if(min<1) return "jetzt";
+            if(min<60) return `${min}m`;
+            const h=Math.floor(min/60);
+            if(h<24) return `${h}h`;
+            const d=Math.floor(h/24);
+            return `${d}d`;
+          }catch(e){return "";}
+        }
+        function _itemHtml(item){
+          const sCls=_sourceCls(item.source);
+          const sLbl=_sourceLbl(item.source);
+          const when=_relTime(item.fetched_at);
+          let cleanText=item.text||"";
+          // Strip yahoo [TICKER] prefix and trailing " — "
+          cleanText=cleanText.replace(/^\[[A-Z.]+\]\s*/,"");
+          const linkOpen=item.url?`<a href="${esc(item.url)}" target="_blank" rel="noopener">`:"";
+          const linkClose=item.url?`</a>`:"";
+          return `<div class="pf-nf-item">
+            <div class="pf-nf-item-meta">
+              <span class="${sCls}">${esc(sLbl)}</span>
+              <span class="pf-nf-when">${esc(when)} ago</span>
+            </div>
+            <div class="pf-nf-text">${linkOpen}${esc(cleanText.slice(0,220))}${cleanText.length>220?"…":""}${linkClose}</div>
+          </div>`;
+        }
+
+        // Priority sort: active first, then LONG-idea, then SHORT-idea
+        function _priority(tk){
+          if(_activeTk.has(tk)) return 0;
+          if(_ideaLongs.has(tk)) return 1;
+          if(_ideaShorts.has(tk)) return 2;
+          return 3;
+        }
+        tkWithItems.sort((a,b)=>{
+          const p=_priority(a)-_priority(b);
+          if(p!==0) return p;
+          return (tickerItems[b]||[]).length-(tickerItems[a]||[]).length;
+        });
+
+        const groupsHtml=tkWithItems.map(tk=>{
+          const items=tickerItems[tk].slice(0,3); // max 3 items per ticker
+          let groupCls="pf-nf-tk-group";
+          let statusPill="";
+          if(_activeTk.has(tk)){
+            groupCls+=" pf-nf-tk-group-active";
+            const dir=_activeDir[tk]||"long";
+            statusPill=`<span class="pf-nf-tk-status pf-nf-tk-status-active">▶ ${dir.toUpperCase()}</span>`;
+          } else if(_ideaLongs.has(tk)){
+            groupCls+=" pf-nf-tk-group-long-idea";
+            statusPill=`<span class="pf-nf-tk-status pf-nf-tk-status-long-idea">▲ IDEA</span>`;
+          } else if(_ideaShorts.has(tk)){
+            groupCls+=" pf-nf-tk-group-short-idea";
+            statusPill=`<span class="pf-nf-tk-status pf-nf-tk-status-short-idea">▼ SHORT-IDEA</span>`;
+          }
+          const itemsHtml=items.map(_itemHtml).join("");
+          const totalCount=tickerItems[tk].length;
+          const moreLbl=totalCount>3?`<span class="pf-nf-tk-count">+${totalCount-3} mehr</span>`:`<span class="pf-nf-tk-count">${totalCount} Erwähnung${totalCount===1?"":"en"}</span>`;
+          return `<div class="${groupCls}">
+            <div class="pf-nf-tk-hdr">
+              <div><span class="pf-nf-tk">${esc(tk)}</span> ${statusPill}</div>
+              ${moreLbl}
+            </div>
+            ${itemsHtml}
+          </div>`;
+        }).join("");
+
+        const totalMentions=tkWithItems.reduce((s,tk)=>s+tickerItems[tk].length,0);
+        const activeMentions=Array.from(_activeTk).reduce((s,tk)=>s+(tickerItems[tk]?.length||0),0);
+        const sources=new Set();
+        tkWithItems.forEach(tk=>tickerItems[tk].forEach(i=>sources.add(i.source)));
+
+        newsFlowHtml=`<div class="panel pf-nf-panel">
+          <div class="pf-nf-h">
+            <div>
+              <div class="pf-nf-title">News-Flow — Relevant für Buch &amp; Ideen</div>
+              <div class="pf-nf-sub">Gefiltert aus ${recent.length}-Item Recent-Feed (cross-source ingest log) auf Mentions von aktiven Positionen + Trade-Ideen · Word-Boundary-Match, gruppiert per Ticker · Status-Pille zeigt Engagement</div>
+            </div>
+            <div class="pf-nf-stats">
+              <div class="pf-nf-stat"><span class="pf-nf-stat-val">${tkWithItems.length}</span><span class="pf-nf-stat-lbl">Ticker</span></div>
+              <div class="pf-nf-stat"><span class="pf-nf-stat-val">${totalMentions}</span><span class="pf-nf-stat-lbl">Items</span></div>
+              <div class="pf-nf-stat"><span class="pf-nf-stat-val pf-nf-stat-val-pos">${activeMentions}</span><span class="pf-nf-stat-lbl">Im Buch</span></div>
+              <div class="pf-nf-stat"><span class="pf-nf-stat-val">${sources.size}</span><span class="pf-nf-stat-lbl">Quellen</span></div>
+            </div>
+          </div>
+          <div class="pf-nf-grid">${groupsHtml}</div>
+          <div class="pf-nf-foot">Quellen-Badges: <b>SEC</b> (rot) = EDGAR-Filings (Form-4/8K/S-1/Broad-Events) · <b>Yahoo</b> (lila) = Yahoo-Finance-Headlines · <b>News</b> (blau) = Tech-News-RSS + Press-Wire · <b>HN/X</b> (grün) = HackerNews + X/Twitter-Accounts. Items mit Klick auf Headline-Text → Original-URL in neuem Tab. Max 3 Items per Ticker, Rest als \"+N mehr\". Refresh-Zyklus: jeder Ingestion-Run (~5-15 Min).</div>
+        </div>`;
+      }
+    }
+  }
+
+  root.innerHTML=`${subNavHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
