@@ -2004,6 +2004,69 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .sc-qlabel{font-size:9px;fill:var(--mut);text-transform:uppercase;letter-spacing:.04em;font-family:inherit}
 .sc-axlabel{font-size:9px;fill:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-family:inherit}
 .sc-foot{font-size:var(--fs-micro);margin-top:6px;line-height:1.4}
+/* Asymmetrie-Karte (HED-150 Zyklus 150): portfolio R/R scatter — Bull-Upside × Bear-Downside.
+   Forward-looking decision view: which calls have asymmetric upside, which are R/R-misaligned. */
+.pf-asym{margin-top:var(--s3);padding:var(--s3)}
+.pf-asym-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-asym-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt);line-height:1.2}
+.pf-asym-sub{font-size:var(--fs-micro);margin-top:2px;line-height:1.4}
+.pf-asym-kpis{display:flex;gap:var(--s4);flex-wrap:wrap;flex-shrink:0}
+.pf-asym-kpi{display:flex;flex-direction:column;align-items:flex-end;font-variant-numeric:tabular-nums;gap:2px;cursor:help}
+.pf-asym-kpi-lbl{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.05em;font-weight:600;color:var(--mut)}
+.pf-asym-kpi-val{font-size:18px;font-weight:700;line-height:1}
+.pf-asym-svg{width:100%;height:auto;display:block;max-height:340px}
+.pf-asym-rr{fill:none;stroke-width:1}
+.pf-asym-rr-1{stroke:var(--mut);stroke-dasharray:3 4;opacity:.7}
+.pf-asym-rr-2{stroke:var(--accent);stroke-dasharray:5 4;opacity:.6}
+.pf-asym-rr-3{stroke:var(--green);stroke-dasharray:6 3;opacity:.45}
+.pf-asym-rr-lbl{font-size:9px;font-weight:700;font-family:inherit;letter-spacing:.04em}
+.pf-asym-rr-lbl-1{fill:var(--mut)}
+.pf-asym-rr-lbl-2{fill:var(--accent)}
+.pf-asym-rr-lbl-3{fill:var(--green)}
+.pf-asym-dot{stroke:var(--bg);stroke-width:1.5;cursor:help;transition:fill-opacity .12s,stroke-width .12s}
+.pf-asym-dot:hover{stroke-width:2.5}
+.pf-asym-dot-long{fill:var(--green)}
+.pf-asym-dot-short{fill:var(--red)}
+.pf-asym-tklbl{font-size:10px;fill:var(--txt);font-weight:700;pointer-events:none;font-family:inherit;font-variant-numeric:tabular-nums}
+.pf-asym-quad{font-size:9px;fill:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-family:inherit;font-weight:600}
+.pf-asym-quad-short{display:none}
+@media(max-width:560px){
+  .pf-asym-quad-full{display:none}
+  .pf-asym-quad-short{display:inline}
+}
+.pf-asym-mis{margin-top:var(--s3);padding:var(--s3);border:1px solid rgba(248,81,73,.35);border-radius:6px;background:rgba(248,81,73,.05)}
+.pf-asym-mis-h{font-size:var(--fs-cap);font-weight:700;color:var(--txt);margin-bottom:var(--s2);display:flex;align-items:center;gap:6px}
+.pf-asym-mis-icon{color:var(--red)}
+.pf-asym-mis-row{display:grid;grid-template-columns:68px 1fr 90px 90px 90px;gap:var(--s3);align-items:baseline;padding:6px 0;border-top:1px solid rgba(255,255,255,.04);font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+.pf-asym-mis-row:first-of-type{border-top:0}
+.pf-asym-mis-tk{font-weight:700;color:var(--txt)}
+.pf-asym-mis-lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;color:var(--mut);font-size:var(--fs-micro)}
+.pf-asym-mis-bull{color:var(--green);font-weight:600;text-align:right}
+.pf-asym-mis-bear{color:var(--red);font-weight:600;text-align:right}
+.pf-asym-mis-rr{text-align:right;font-weight:700;color:var(--red)}
+.pf-asym-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.55}
+.pf-asym-legend{display:inline-flex;gap:var(--s3);align-items:center;flex-wrap:wrap;font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s2)}
+.pf-asym-leg-item{display:inline-flex;align-items:center;gap:4px}
+.pf-asym-leg-dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+.pf-asym-leg-long{background:var(--green);opacity:.7}
+.pf-asym-leg-short{background:var(--red);opacity:.7}
+.pf-asym-leg-line{display:inline-block;width:18px;height:0;border-top:2px dashed var(--mut)}
+.pf-asym-leg-line-2{border-top-color:var(--accent)}
+.pf-asym-leg-line-3{border-top-color:var(--green)}
+@media(max-width:560px){
+  .pf-asym-h{flex-direction:column;gap:var(--s2)}
+  .pf-asym-kpis{width:100%;justify-content:space-between;gap:var(--s3)}
+  .pf-asym-kpi{align-items:flex-start;flex:1;min-width:0}
+  .pf-asym-kpi-val{font-size:16px}
+  .pf-asym-mis-row{grid-template-columns:60px 1fr auto;grid-template-areas:"tk lbl rr" "bull bear bear";column-gap:var(--s2);row-gap:3px}
+  .pf-asym-mis-tk{grid-area:tk}
+  .pf-asym-mis-lbl{grid-area:lbl;font-size:var(--fs-micro);text-align:left}
+  .pf-asym-mis-rr{grid-area:rr;text-align:right}
+  .pf-asym-mis-bull{grid-area:bull;font-size:var(--fs-micro);text-align:left}
+  .pf-asym-mis-bear{grid-area:bear;font-size:var(--fs-micro);text-align:right}
+  .pf-asym-tklbl{font-size:9px}
+  .pf-asym-quad{font-size:8px}
+}
 /* Korrelationsmatrix — Diversifikations-Diagnose (HED-137 Zyklus 86): pairwise 30d return correlation */
 .pf-corr{margin-top:var(--s3);padding:var(--s3)}
 .pf-corr-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3);font-weight:700;font-size:var(--fs-h2);text-transform:none;letter-spacing:0;color:var(--txt)}
@@ -7216,6 +7279,189 @@ function calibSvg(buckets){
       <div class="sc-foot muted">Ideal: High-Conviction-Calls rechts oben. Systematischer Drift in "Dragging" = Conviction-Scoring neu kalibrieren.</div>
     </div>`;
   }
+  // Asymmetrie-Karte (HED-150 Zyklus 150): portfolio R/R scatter — Bull-Upside × Bear-Downside.
+  // For each active call, plot direction-corrected returns implied by the Street's analyst
+  // consensus PT band (pt_low/pt_high from sector_view): bull anchor = pt_high (LONG) or
+  // pt_low (SHORT); bear anchor = pt_low (LONG) or pt_high (SHORT). All returns sign-corrected
+  // so "good outcome" is up-right regardless of direction. Diagonals mark 1:1 / 2:1 / 3:1
+  // reward-to-risk lines. Points above 2:1 = asymmetric setups (institutional sweet spot).
+  // Points below 1:1 (more bear-downside than bull-upside) get flagged in a Misaligned-
+  // Positions list as resize/exit candidates. Bubble size ∝ conviction, colour = direction.
+  // Why Street PTs instead of own scenarios: PTs are always present in sector_view,
+  // verifiable, and institutionally credible — "is the book sized into setups the Street
+  // already prices as asymmetric?" is the canonical PM check. Complements the historical
+  // calibration scatter above (look-back) with a forward look-forward view: are we sizing
+  // convictions into asymmetric setups, or underwriting symmetric/inverted R/R the market
+  // has already priced?
+  let asymPanelHtml="";
+  {
+    // Build PT lookup from sector_view: ticker → {ptLow, ptHigh, ptMean, anCount}.
+    // PT data lives under tk.consensus (yfinance-aggregated analyst price-targets).
+    const _ptMap={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>{
+      (s.tickers||[]).forEach(tk=>{
+        if(!tk||!tk.ticker) return;
+        const sym=String(tk.ticker).toUpperCase();
+        const c=tk.consensus||{};
+        if(c.pt_low!=null&&c.pt_high!=null){
+          _ptMap[sym]={ptLow:Number(c.pt_low),ptHigh:Number(c.pt_high),
+            ptMean:c.pt_mean!=null?Number(c.pt_mean):null,
+            anCount:c.analyst_count!=null?Number(c.analyst_count):null};
+        }
+      });
+    });
+    const asymRows=[];
+    active.forEach(t=>{
+      if(t.baseline_price==null) return;
+      const tks=(t.tickers||[]).map(x=>String(x).toUpperCase());
+      if(!tks.length) return;
+      const primTk=tks[0];
+      const pt=_ptMap[primTk]; if(!pt) return;
+      if(!(pt.ptLow>0)||!(pt.ptHigh>0)||pt.ptHigh<=pt.ptLow) return;
+      const dir=(t.direction||"").toLowerCase();
+      const sign=dir==="short"?-1:1;
+      const bullPx=dir==="short"?pt.ptLow:pt.ptHigh;
+      const bearPx=dir==="short"?pt.ptHigh:pt.ptLow;
+      const bullPct=sign*(bullPx-t.baseline_price)/t.baseline_price*100;
+      const bearPct=sign*(bearPx-t.baseline_price)/t.baseline_price*100;
+      if(bullPct<=bearPct) return;
+      const tk=tks.join("·")||"?";
+      const conv=t.conviction!=null?t.conviction:0;
+      const rr=bearPct<-0.01?Math.abs(bullPct/bearPct):null;
+      const curPrice=_pricePf[primTk]!=null?_pricePf[primTk]:null;
+      const livePct=curPrice!=null?sign*(curPrice-t.baseline_price)/t.baseline_price*100:null;
+      const ptMeanPct=pt.ptMean!=null?sign*(pt.ptMean-t.baseline_price)/t.baseline_price*100:null;
+      asymRows.push({t,tk,primTk,dir,conv,bullPct,bearPct,bullPx,bearPx,rr,livePct,
+        ptMeanPct,anCount:pt.anCount,label:t.label||""});
+    });
+    if(asymRows.length>=2){
+      const W=520,H=320;
+      const pad={l:50,r:20,t:26,b:38};
+      const iW=W-pad.l-pad.r, iH=H-pad.t-pad.b;
+      const xVals=asymRows.map(r=>r.bearPct).concat([0]);
+      const yVals=asymRows.map(r=>r.bullPct).concat([0]);
+      let xLo=Math.min.apply(null,xVals), yHi=Math.max.apply(null,yVals);
+      const padMag=Math.max(2,Math.max(Math.abs(xLo),yHi)*0.12);
+      xLo-=padMag; yHi+=padMag;
+      const maxMag=Math.max(Math.abs(xLo),yHi);
+      xLo=-maxMag; yHi=maxMag;
+      const xHi=0, yLo=0;
+      const xMap=v=>pad.l+(v-xLo)/(xHi-xLo)*iW;
+      const yMap=v=>pad.t+(yHi-v)/(yHi-yLo)*iH;
+      const origX=xMap(0), origY=yMap(0);
+      function _diagPath(ratio){
+        let x1=xLo, y1=-ratio*xLo;
+        if(y1>yHi){y1=yHi; x1=-yHi/ratio;}
+        return `M${xMap(0).toFixed(1)},${yMap(0).toFixed(1)} L${xMap(x1).toFixed(1)},${yMap(y1).toFixed(1)}`;
+      }
+      function _diagLabel(ratio,lbl,cls){
+        // Anchor each label about 70% from origin along its ratio line, offset above-right so
+        // ratios don't collide with the Y-axis +max% tick.
+        let x1=xLo*0.7, y1=-ratio*x1;
+        if(y1>yHi*0.9){y1=yHi*0.9; x1=-y1/ratio;}
+        const lx=xMap(x1)+8, ly=yMap(y1)-2;
+        return `<text class="pf-asym-rr-lbl ${cls}" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}">R/R ${lbl}</text>`;
+      }
+      const rr1=`<path class="pf-asym-rr pf-asym-rr-1" d="${_diagPath(1)}"/>`;
+      const rr2=`<path class="pf-asym-rr pf-asym-rr-2" d="${_diagPath(2)}"/>`;
+      const rr3=`<path class="pf-asym-rr pf-asym-rr-3" d="${_diagPath(3)}"/>`;
+      const rrLabels=`${_diagLabel(1,"1:1","pf-asym-rr-lbl-1")}${_diagLabel(2,"2:1","pf-asym-rr-lbl-2")}${_diagLabel(3,"3:1","pf-asym-rr-lbl-3")}`;
+      const axisX=`<line class="sc-axis" x1="${pad.l}" y1="${origY.toFixed(1)}" x2="${(pad.l+iW).toFixed(1)}" y2="${origY.toFixed(1)}"/>`;
+      const axisY=`<line class="sc-axis" x1="${origX.toFixed(1)}" y1="${pad.t}" x2="${origX.toFixed(1)}" y2="${(pad.t+iH).toFixed(1)}"/>`;
+      const xLabL=`<text class="sc-axlabel" x="${(pad.l+2).toFixed(1)}" y="${(H-14).toFixed(1)}">${xLo.toFixed(0)}%</text>`;
+      const xLab0=`<text class="sc-axlabel" x="${origX.toFixed(1)}" y="${(H-14).toFixed(1)}" text-anchor="middle">0%</text>`;
+      const yLabT=`<text class="sc-axlabel" x="${(pad.l-6).toFixed(1)}" y="${(pad.t+6).toFixed(1)}" text-anchor="end">+${yHi.toFixed(0)}%</text>`;
+      const yLab0=`<text class="sc-axlabel" x="${(pad.l-6).toFixed(1)}" y="${(origY+4).toFixed(1)}" text-anchor="end">0</text>`;
+      const xTitle=`<text class="sc-axlabel" x="${(pad.l+iW/2).toFixed(1)}" y="${(H-1).toFixed(1)}" text-anchor="middle">Bear-Case-Return (Direction-bereinigt)</text>`;
+      const yTitle=`<text class="sc-axlabel" transform="rotate(-90)" x="${-(pad.t+iH/2).toFixed(1)}" y="12" text-anchor="middle">Bull-Case-Return (Direction-bereinigt)</text>`;
+      const quadIdeal=`<text class="pf-asym-quad pf-asym-quad-full" x="${(origX+8).toFixed(1)}" y="${(pad.t+14).toFixed(1)}">↗ asymmetrisch — Bull ≫ |Bear|</text>
+        <text class="pf-asym-quad pf-asym-quad-short" x="${(origX+8).toFixed(1)}" y="${(pad.t+14).toFixed(1)}">↗ asymmetrisch</text>`;
+      const quadSym=`<text class="pf-asym-quad pf-asym-quad-full" x="${(pad.l+6).toFixed(1)}" y="${(origY-6).toFixed(1)}">symmetrisch ≈ 1:1</text>
+        <text class="pf-asym-quad pf-asym-quad-short" x="${(pad.l+6).toFixed(1)}" y="${(origY-6).toFixed(1)}">symm. 1:1</text>`;
+      const sortedRows=asymRows.slice().sort((a,b)=>b.conv-a.conv);
+      const dots=sortedRows.map(r=>{
+        const cx=xMap(r.bearPct), cy=yMap(r.bullPct);
+        const radius=6+r.conv*11;
+        const dirCls=r.dir==="short"?"pf-asym-dot-short":"pf-asym-dot-long";
+        const opacity=(0.42+r.conv*0.42).toFixed(2);
+        const rrTxt=r.rr!=null?`R/R ${r.rr.toFixed(2)}:1`:"R/R —";
+        const ptTxt=` · PT-Band $${r.bearPx.toFixed(0)}↔$${r.bullPx.toFixed(0)}${r.anCount?" ("+r.anCount+" Analysten)":""}`;
+        const meanTxt=r.ptMeanPct!=null?` · PT-Mean ${r.ptMeanPct>=0?"+":""}${r.ptMeanPct.toFixed(1)}%`:"";
+        const liveTxt=r.livePct!=null?` · Live vs Entry ${r.livePct>=0?"+":"−"}${Math.abs(r.livePct).toFixed(2)}%`:"";
+        const tip=`${r.tk}${r.label?" — "+r.label:""} · ${r.dir.toUpperCase()} · Conv ${r.conv.toFixed(2)} · Bull ${r.bullPct>=0?"+":""}${r.bullPct.toFixed(1)}% · Bear ${r.bearPct.toFixed(1)}% · ${rrTxt}${ptTxt}${meanTxt}${liveTxt}`;
+        return `<circle class="pf-asym-dot ${dirCls}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${radius.toFixed(1)}" style="fill-opacity:${opacity}"><title>${esc(tip)}</title></circle>`;
+      }).join("");
+      const labels=sortedRows.map(r=>{
+        const cx=xMap(r.bearPct), cy=yMap(r.bullPct);
+        const radius=6+r.conv*11;
+        const above=cy>pad.t+24;
+        const ly=above?(cy-radius-4):(cy+radius+11);
+        return `<text class="pf-asym-tklbl" x="${cx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle">${esc(r.tk)}</text>`;
+      }).join("");
+      const svg=`<svg class="pf-asym-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet"
+        role="img" aria-label="Risk-Reward Asymmetrie-Karte — ${asymRows.length} aktive Calls">
+        ${axisX}${axisY}
+        ${rr3}${rr2}${rr1}
+        ${quadIdeal}${quadSym}
+        ${xLabL}${xLab0}${yLabT}${yLab0}
+        ${xTitle}${yTitle}
+        ${dots}${labels}
+        ${rrLabels}
+      </svg>`;
+      const rrs=asymRows.filter(r=>r.rr!=null).map(r=>r.rr).sort((a,b)=>a-b);
+      const medRR=rrs.length?(rrs.length%2?rrs[Math.floor(rrs.length/2)]:(rrs[rrs.length/2-1]+rrs[rrs.length/2])/2):null;
+      const nAsym=asymRows.filter(r=>r.rr!=null&&r.rr>=2).length;
+      const nMisaligned=asymRows.filter(r=>r.rr!=null&&r.rr<1).length;
+      const medClass=medRR==null?"muted":medRR>=2?"move-up":medRR<1?"move-dn":"";
+      const misRows=asymRows.filter(r=>r.rr!=null&&r.rr<1).sort((a,b)=>a.rr-b.rr);
+      const misListHtml=misRows.length?`<div class="pf-asym-mis">
+        <div class="pf-asym-mis-h"><span class="pf-asym-mis-icon" aria-hidden="true">▼</span> Asymmetrie-Risiko: Bear-Downside überwiegt Bull-Upside (R/R &lt; 1)</div>
+        ${misRows.map(r=>`<div class="pf-asym-mis-row">
+          <span class="pf-asym-mis-tk">${esc(r.tk)}</span>
+          <span class="pf-asym-mis-lbl">${esc(r.label)}</span>
+          <span class="pf-asym-mis-bull">Bull ${r.bullPct>=0?"+":""}${r.bullPct.toFixed(1)}%</span>
+          <span class="pf-asym-mis-bear">Bear ${r.bearPct.toFixed(1)}%</span>
+          <span class="pf-asym-mis-rr">R/R ${r.rr.toFixed(2)}:1</span>
+        </div>`).join("")}
+      </div>`:"";
+      const skipped=active.length-asymRows.length;
+      const skipNote=skipped>0?` · ${skipped} Call${skipped===1?"":"s"} ohne Analysten-PT-Band ausgeblendet`:"";
+      const legend=`<div class="pf-asym-legend" aria-label="Legende">
+        <span class="pf-asym-leg-item"><span class="pf-asym-leg-dot pf-asym-leg-long"></span>Long</span>
+        <span class="pf-asym-leg-item"><span class="pf-asym-leg-dot pf-asym-leg-short"></span>Short</span>
+        <span class="pf-asym-leg-item"><span class="pf-asym-leg-line"></span>1:1</span>
+        <span class="pf-asym-leg-item"><span class="pf-asym-leg-line pf-asym-leg-line-2"></span>2:1</span>
+        <span class="pf-asym-leg-item"><span class="pf-asym-leg-line pf-asym-leg-line-3"></span>3:1</span>
+        <span class="pf-asym-leg-item">Bubble ∝ Conviction</span>
+      </div>`;
+      asymPanelHtml=`<div class="panel pf-asym">
+        <div class="pf-asym-h">
+          <div>
+            <div class="pf-asym-title">Asymmetrie-Karte — Bull-Upside vs. Bear-Downside</div>
+            <div class="pf-asym-sub muted">Forward Risk-Reward-Verteilung über alle aktiven Calls · Direction-bereinigt${esc(skipNote)}</div>
+          </div>
+          <div class="pf-asym-kpis">
+            <div class="pf-asym-kpi" title="Median Reward-zu-Risk über alle Calls mit parsbaren Bull/Bear-Targets — &gt;2:1 ist das institutionelle Setup-Ideal, &lt;1:1 deutet auf Mispricing in der Sizing-Entscheidung hin">
+              <span class="pf-asym-kpi-lbl">Median R/R</span>
+              <b class="pf-asym-kpi-val ${medClass}">${medRR!=null?medRR.toFixed(2)+":1":"—"}</b>
+            </div>
+            <div class="pf-asym-kpi" title="Calls mit Bull/Bear ≥ 2:1 — asymmetrische Setups, klassisches Hedge-Fund-Ideal">
+              <span class="pf-asym-kpi-lbl">≥ 2:1</span>
+              <b class="pf-asym-kpi-val ${nAsym>0?'move-up':''}">${nAsym}</b>
+            </div>
+            <div class="pf-asym-kpi" title="Calls bei denen Bear-Downside &gt; Bull-Upside — Resize- oder Exit-Kandidaten">
+              <span class="pf-asym-kpi-lbl">&lt; 1:1</span>
+              <b class="pf-asym-kpi-val ${nMisaligned>0?'move-dn':''}">${nMisaligned}</b>
+            </div>
+          </div>
+        </div>
+        ${svg}
+        ${legend}
+        ${misListHtml}
+        <div class="pf-asym-foot">Bull/Bear-Anker aus dem <b>Street-Analysten-Konsens-PT-Band</b> (pt_low / pt_high aus Yahoo-Finance), umgerechnet in Return-% gegen den Entry-Preis. Direction-bereinigt: für SHORTs wird das Band gespiegelt — pt_low wird zum Bull-Anker (gut für Short), pt_high zum Bear-Anker (schlecht für Short) — so liegt die ideale Zone für Longs <em>und</em> Shorts oben-rechts. Die Diagonalen markieren symmetrische R/R-Verhältnisse 1:1, 2:1, 3:1; Punkte oberhalb der 2:1-Linie sind asymmetrisch zugunsten der These (institutionelles Setup-Ideal). Punkte unterhalb 1:1 = mehr Downside als Upside, Resize-Kandidaten. Bubble-Größe ∝ Conviction. Komplement zum historischen Conviction-vs-P&amp;L-Scatter unten: dort wird kalibriert (war meine Conviction richtig?), hier wird vor dem Trade entschieden (sitze ich in Setups, die der Street selbst als asymmetrisch zugunsten meiner Richtung preist?). Quelle: <code>yfinance.targetLowPrice/targetHighPrice</code> via Yahoo-Finance Konsens-Aggregation.</div>
+      </div>`;
+    }
+  }
   // Korrelationsmatrix der aktiven Calls — Diversifikations-Diagnose (HED-137 Zyklus 86).
   // Pairwise Pearson r über die letzten 25 Tagesrenditen aus den sector_view-Sparks,
   // sign-flipped für Shorts (auf P&L-Ebene, nicht Underlying-Ebene). Off-diagonal-Mittel
@@ -7846,7 +8092,7 @@ function calibSvg(buckets){
       </div>`;
     }
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
