@@ -1663,6 +1663,8 @@ class ShortInterestAdapter:
         short_pct = None
         shares_short = None
         prior_shares = None
+        short_ratio = None  # days-to-cover at avg daily volume
+        date_short = None   # FINRA settlement date of this snapshot
         try:
             import yfinance as _yf
             info = _yf.Ticker(ticker).info
@@ -1675,6 +1677,18 @@ class ShortInterestAdapter:
             raw_pr = info.get("sharesShortPriorMonth")
             if raw_pr is not None:
                 prior_shares = int(raw_pr)
+            raw_sr = info.get("shortRatio")
+            if raw_sr is not None:
+                try:
+                    short_ratio = float(raw_sr)
+                except (TypeError, ValueError):
+                    pass
+            raw_ds = info.get("dateShortInterest")
+            if raw_ds is not None:
+                try:
+                    date_short = int(raw_ds)
+                except (TypeError, ValueError):
+                    pass
         except Exception:
             pass
         # Fallback: direct quoteSummary API
@@ -1696,30 +1710,71 @@ class ShortInterestAdapter:
                         raw_pr = (ks.get("sharesShortPriorMonth") or {}).get("raw")
                         if raw_pr:
                             prior_shares = int(raw_pr)
+                        raw_sr = (ks.get("shortRatio") or {}).get("raw")
+                        if raw_sr is not None:
+                            try:
+                                short_ratio = float(raw_sr)
+                            except (TypeError, ValueError):
+                                pass
+                        raw_ds = (ks.get("dateShortInterest") or {}).get("raw")
+                        if raw_ds:
+                            try:
+                                date_short = int(raw_ds)
+                            except (TypeError, ValueError):
+                                pass
             except Exception:
                 pass
         try:
             if short_pct is None:
                 return None
-            if short_pct < self.MIN_SHORT_PCT:
-                return None
-            change_str = ""
-            change_direction = ""
+            # MoM share-count delta — drives direction tag AND trigger gate
+            change_pct = None
             if prior_shares and shares_short and prior_shares > 0:
                 change_pct = (shares_short - prior_shares) / prior_shares
-                if abs(change_pct) >= self.MIN_CHANGE_PCT:
-                    direction = "↑" if change_pct > 0 else "↓"
-                    change_direction = "up" if change_pct > 0 else "down"
-                    change_str = f", {direction}{abs(change_pct)*100:.0f}% vs prior month"
-            elif short_pct < self.MIN_SHORT_PCT:
+            # Three orthogonal trigger gates (any one fires the emit):
+            #   - elevated %float (>=3%) — bearish positioning base level
+            #   - big MoM change (>=20%) — significant repositioning
+            #   - days-to-cover >=4 — concentrated squeeze fuel even if pct low
+            elevated_pct = short_pct >= self.MIN_SHORT_PCT
+            big_mom = change_pct is not None and abs(change_pct) >= self.MIN_CHANGE_PCT
+            squeeze_fuel = short_ratio is not None and short_ratio >= 4.0
+            if not (elevated_pct or big_mom or squeeze_fuel):
                 return None
+            # Direction tag — actionable interpretation: RISING = bearish add,
+            # COVERING = squeeze in progress, FLAT = stable, ELEVATED = no prior
+            if change_pct is None:
+                direction_tag = "ELEVATED"
+            elif change_pct >= 0.05:
+                direction_tag = "RISING"
+            elif change_pct <= -0.05:
+                direction_tag = "COVERING"
+            else:
+                direction_tag = "FLAT"
+            head = f"[{ticker}] Short interest {direction_tag}"
+            if date_short:
+                try:
+                    snap = datetime.utcfromtimestamp(date_short).strftime("%Y-%m-%d")
+                    head += f" (FINRA snap {snap})"
+                except (TypeError, ValueError, OSError):
+                    pass
+            parts = [head, f"{short_pct*100:.1f}% of float"]
+            change_direction = ""
+            if change_pct is not None and abs(change_pct) >= self.MIN_CHANGE_PCT:
+                arrow = "↑" if change_pct > 0 else "↓"
+                change_direction = "up" if change_pct > 0 else "down"
+                parts.append(f"{arrow}{abs(change_pct)*100:.0f}% MoM share-count")
+            if short_ratio is not None:
+                parts.append(f"{short_ratio:.1f}d to cover")
             squeeze_note = ""
             if short_pct >= 0.10 and change_direction == "up":
-                squeeze_note = " — elevated short + rising = squeeze-setup risk"
+                squeeze_note = "elevated short + rising = squeeze-setup risk"
             elif short_pct >= 0.08:
-                squeeze_note = " — elevated short interest = potential squeeze setup on positive catalyst"
-            text = (f"[{ticker}] Short interest: {short_pct*100:.1f}% of float"
-                    f"{change_str}{squeeze_note}")
+                squeeze_note = "elevated short interest = potential squeeze setup on positive catalyst"
+            elif squeeze_fuel and short_pct >= 0.05:
+                squeeze_note = "concentrated days-to-cover = squeeze-fuel"
+            if squeeze_note:
+                parts.append(squeeze_note)
+            text = " — ".join(parts)
             return {
                 "text": text,
                 "source": self.SOURCE,

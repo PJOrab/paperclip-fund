@@ -63,6 +63,29 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-23 — HED-140 (DE Loop Zyklus 89): **ShortInterestAdapter enhanced — direction tag, days-to-cover, FINRA snap date**
+  (`ingestion/sources_aitech.py`, `agents/prompts.py`). Strategy.md #1 target ("Short-Interest-Daten |
+  Contrarian-Signal, Squeeze-Setup-Erkennung | niedrig") — HF pay S3 Partners / Ortex / IHS Markit
+  five-figures/month for this. CIO loop had shipped a minimal version (HED-127 commits `dbbe207`/`76cda25`)
+  with %float + MoM only. **Loop-convergence avoided: detected duplicate during code review, enhanced the
+  existing class instead of double-shipping** (cf. [HED-121](/HED/issues/HED-121), [HED-136](/HED/issues/HED-136)).
+  Three new orthogonal signals layered on the existing %float + MoM gates:
+  (1) **`shortRatio` (days-to-cover at avg volume)** — fetched from yfinance `info` + quoteSummary
+  fallback. New trigger gate: days-to-cover ≥4 emits even when %float is low, because thin liquidity
+  makes any forced covering rush violent (squeeze fuel concentration).
+  (2) **Direction tag** RISING (MoM ≥+5%, fresh bear add) / COVERING (MoM ≤-5%, squeeze in progress
+  unwinding) / FLAT (-5% to +5%, stable positioning) / ELEVATED (no prior month available). This is
+  actionable interpretation — a HF analyst reads RISING + low P/C ratio = gamma-squeeze setup; reads
+  COVERING + high %float = squeeze actively unwinding, the latter previously invisible to the briefing.
+  (3) **FINRA snapshot date** (`dateShortInterest`) in header so analyst can calibrate freshness
+  (FINRA snaps are bi-monthly settlement-date — knowing the date matters for catalyst-timing).
+  Triage prompt updated: importance 4 for RISING+≥10% (gamma-squeeze setup), 4 for COVERING+≥8% (squeeze
+  unwinding actionably late but real), days-to-cover-only = importance 3, **cross-reference rule with
+  `options_market` cluster** = high short + low P/C + negative IV skew = textbook squeeze, importance 5.
+  **Live test: 13 directional items.** Key new reads invisible to prior version:
+  CRM COVERING 9.9% + 5.2d-to-cover (squeeze unwinding); ARM FLAT 11.4% + SMCI FLAT 17.9% (structurally
+  elevated bear positioning); NOW RISING +65% MoM, ADBE RISING +43% MoM, VST RISING +34% (fresh bear bets).
+  dedup + watchlist-sync tests green, py_compile clean, build_adapters() = 18 adapters.
 - 2026-05-23 — HED-136 (DE Loop): **EpsRevisionsAdapter — sell-side IBES estimate-revision velocity**
   (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`, `agents/prompts.py`).
   Strategy.md gap #1 (datentiefe): pulls per-ticker IBES/StarMine-equivalent estimate-revision data
