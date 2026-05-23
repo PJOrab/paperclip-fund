@@ -2542,6 +2542,47 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 @media print{
   .pf-status-bar{display:none!important}
 }
+/* Book-Tape (HED-150 Zyklus 191) — sticky horizontal strip of all active calls.
+   Mini-tile per thesis: conv-dot · ticker · dir-arrow · live P&L% · baseline→current.
+   Always visible while scrolling so the user knows "what am I in" across 16k lines
+   of panels. Sits just below the Live Page-Status Bar; click → scroll to Position-Matrix. */
+.pf-bt-strip{position:sticky;top:24px;z-index:29;background:rgba(11,15,23,.96);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-bottom:1px solid rgba(139,148,158,.18);padding:6px var(--s3);display:flex;align-items:center;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pf-bt-strip[hidden]{display:none}
+.pf-bt-strip::-webkit-scrollbar{height:4px}
+.pf-bt-strip::-webkit-scrollbar-thumb{background:rgba(139,148,158,.3);border-radius:2px}
+.pf-bt-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:700;padding-right:7px;border-right:1px solid rgba(139,148,158,.18);margin-right:1px;flex-shrink:0}
+.pf-bt-tile{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 8px;border:1px solid rgba(139,148,158,.22);border-radius:6px;background:rgba(20,28,40,.4);font-size:11px;line-height:1.2;flex-shrink:0;cursor:pointer;transition:border-color .15s ease,background .15s ease;font-family:inherit;color:var(--txt)}
+.pf-bt-tile:hover{border-color:rgba(139,148,158,.5);background:rgba(30,40,55,.6)}
+.pf-bt-tile:focus-visible{outline:2px solid #58a6ff;outline-offset:1px}
+.pf-bt-tile-pos{border-left:2px solid #3fb950}
+.pf-bt-tile-neg{border-left:2px solid #f85149}
+.pf-bt-tile-flat{border-left:2px solid rgba(139,148,158,.5)}
+.pf-bt-tk{font-weight:700;color:var(--txt);letter-spacing:.02em}
+.pf-bt-dir{font-size:9px;font-weight:700;opacity:.9}
+.pf-bt-dir-long{color:#3fb950}
+.pf-bt-dir-short{color:#f85149}
+.pf-bt-cdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.pf-bt-cdot-hi{background:#3fb950;box-shadow:0 0 3px rgba(63,185,80,.5)}
+.pf-bt-cdot-mid{background:#e3b341}
+.pf-bt-cdot-lo{background:rgba(139,148,158,.6)}
+.pf-bt-pnl{font-weight:700;font-variant-numeric:tabular-nums}
+.pf-bt-pnl-pos{color:#3fb950}
+.pf-bt-pnl-neg{color:#f85149}
+.pf-bt-pnl-flat{color:var(--mut)}
+.pf-bt-prices{color:var(--mut);font-size:9.5px;letter-spacing:.02em}
+.pf-bt-empty{color:var(--mut);font-size:11px;font-style:italic}
+@media(max-width:600px){
+  /* Status-Bar wrappt auf Mobile auf ~47px Höhe — beide sticky würden 9% Viewport fressen.
+     Auf Mobile Book-Tape in den normalen Flow lassen: einmal sichtbar, scrollt weg.
+     Status-Bar (sticky) trägt weiter Buch-P&L als kontinuierliches Signal. */
+  .pf-bt-strip{position:static;padding:6px var(--s2);gap:5px;border-top:1px solid rgba(139,148,158,.18)}
+  .pf-bt-tile{padding:2px 6px;font-size:10px;gap:5px}
+  .pf-bt-lbl{font-size:8px;padding-right:5px}
+  .pf-bt-prices{display:none}
+}
+@media print{
+  .pf-bt-strip{display:none!important}
+}
 /* Monte-Carlo Forward-P&L Distribution (HED-150 Zyklus 189) — Bloomberg PORT<GO> equivalent.
    Bootstrap-resampling of book daily-return history (n_obs trading days) → N=2000 forward
    paths over 30/60/90d; fan chart (P5/P10/P25/P50/P75/P90/P95 quantile bands) + terminal
@@ -5480,6 +5521,10 @@ main:focus{outline:none}
   <!-- Live Page-Status Bar (HED-150 Zyklus 181): always-visible Bloomberg-style ticker bar.
        Sticky at top:0, shows book P&L · CRIT count · market status · last-update across all sections. -->
   <div id="pf-status-bar" class="pf-status-bar" aria-label="Live Page Status — Book PnL, Alerts, Market" hidden></div>
+
+  <!-- Book-Tape (HED-150 Zyklus 191): sticky strip of all active calls under the status bar.
+       Mini-tile per thesis · live P&L · click scrolls to Position-Matrix. -->
+  <div id="pf-book-tape" class="pf-bt-strip" aria-label="Active Calls — Live P&L Tape" hidden></div>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
   <div id="pf-kb-overlay" class="pf-kb-overlay" role="dialog" aria-modal="true" aria-label="Keyboard Shortcuts" hidden>
@@ -13392,6 +13437,90 @@ function calibSvg(buckets){
     // Initial render after a moment so Portfolio-Alerts has had time to render
     setTimeout(_refresh, 600);
     setInterval(_refresh, 30000);
+  })();
+
+  // Book-Tape (HED-150 Zyklus 191) — sticky strip of all active calls below the
+  // status bar. Mini-tile per thesis: conv-dot · ticker · dir-arrow · live P&L% ·
+  // baseline→current. Sorted by |P&L| desc so biggest movers lead. Click → scroll
+  // to Position-Matrix. Always visible while scrolling through 16k lines of panels
+  // — answers "what am I in?" without needing to jump back to track-record.
+  (function initBookTape(){
+    const strip=document.getElementById("pf-book-tape");
+    if(!strip) return;
+    const _escA=s=>String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    // Live prices from sector_view (same source as status-bar/heute-story)
+    const _bt_pf={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{
+      if(t&&t.ticker&&t.price!=null) _bt_pf[String(t.ticker).toUpperCase()]=t.price;
+    }));
+    if(!active.length){
+      strip.innerHTML='<span class="pf-bt-lbl">Buch</span><span class="pf-bt-empty">Keine aktiven Calls — Tape ist leer.</span>';
+      strip.removeAttribute("hidden");
+      return;
+    }
+    const tiles=active.map(t=>{
+      const tk=String((t.tickers||[])[0]||"").toUpperCase();
+      const cur=_bt_pf[tk];
+      const base=t.baseline_price;
+      const dir=(t.direction||"").toLowerCase();
+      const sign=dir==="short"?-1:1;
+      const pnl=(cur!=null&&base!=null)?((cur-base)/base*100)*sign:null;
+      return {t,tk,cur,base,dir,pnl,conv:t.conviction||0};
+    }).filter(r=>r.tk);
+    if(!tiles.length){
+      strip.innerHTML='<span class="pf-bt-lbl">Buch</span><span class="pf-bt-empty">Keine aktiven Calls mit Ticker.</span>';
+      strip.removeAttribute("hidden");
+      return;
+    }
+    // Sort: priced tiles by |P&L| desc, unpriced by conviction desc, appended last.
+    tiles.sort((a,b)=>{
+      if(a.pnl==null&&b.pnl==null) return b.conv-a.conv;
+      if(a.pnl==null) return 1; if(b.pnl==null) return -1;
+      return Math.abs(b.pnl)-Math.abs(a.pnl);
+    });
+    const _convCls=c=>c>=0.6?"pf-bt-cdot-hi":c>=0.45?"pf-bt-cdot-mid":"pf-bt-cdot-lo";
+    const _convLbl=c=>c>=0.6?"Hoch":c>=0.45?"Moderat":"Niedrig";
+    const html=tiles.map(r=>{
+      const dirArr=r.dir==="short"?"▼":"▲";
+      const dirCls=r.dir==="short"?"pf-bt-dir-short":"pf-bt-dir-long";
+      let pnlHtml='<span class="pf-bt-pnl pf-bt-pnl-flat">—</span>';
+      let tileCls="pf-bt-tile-flat";
+      if(r.pnl!=null){
+        const cls=r.pnl>0.05?"pf-bt-pnl-pos":r.pnl<-0.05?"pf-bt-pnl-neg":"pf-bt-pnl-flat";
+        tileCls=r.pnl>0.05?"pf-bt-tile-pos":r.pnl<-0.05?"pf-bt-tile-neg":"pf-bt-tile-flat";
+        const sgn=r.pnl>=0?"+":"−";
+        pnlHtml=`<span class="pf-bt-pnl ${cls}">${sgn}${Math.abs(r.pnl).toFixed(2)}%</span>`;
+      }
+      const pricesHtml=(r.base!=null&&r.cur!=null)
+        ? `<span class="pf-bt-prices">$${r.base.toFixed(2)}→$${r.cur.toFixed(2)}</span>`
+        : (r.base!=null?`<span class="pf-bt-prices">$${r.base.toFixed(2)}</span>`:"");
+      const tip=`${r.tk} · ${r.dir.toUpperCase()} · Conviction ${r.conv.toFixed(2)} (${_convLbl(r.conv)})`
+        + (r.base!=null?` · Baseline $${r.base.toFixed(2)}`:"")
+        + (r.cur!=null?` → $${r.cur.toFixed(2)}`:"")
+        + (r.pnl!=null?` · ${(r.pnl>=0?"+":"")}${r.pnl.toFixed(2)}%`:"")
+        + (r.t.label?` · ${r.t.label}`:"")
+        + " — Klick: zum Position-Matrix scrollen";
+      return `<button type="button" class="pf-bt-tile ${tileCls}" data-bt-tk="${_escA(r.tk)}" title="${_escA(tip)}" aria-label="${_escA(tip)}">`
+        + `<span class="pf-bt-cdot ${_convCls(r.conv)}" aria-hidden="true" title="Conviction ${_convLbl(r.conv)} (${r.conv.toFixed(2)})"></span>`
+        + `<span class="pf-bt-tk">${_escA(r.tk)}</span>`
+        + `<span class="pf-bt-dir ${dirCls}" aria-hidden="true">${dirArr}</span>`
+        + pnlHtml + pricesHtml
+        + `</button>`;
+    }).join("");
+    strip.innerHTML=`<span class="pf-bt-lbl" title="Alle aktiven Calls — sortiert nach absolutem P&amp;L">Buch · ${tiles.length}</span>${html}`;
+    strip.removeAttribute("hidden");
+    // Click → scroll to Position-Matrix
+    strip.querySelectorAll("[data-bt-tk]").forEach(btn=>{
+      btn.addEventListener("click",function(){
+        const pm=document.querySelector(".pf-pm-panel");
+        if(pm){
+          pm.scrollIntoView({behavior:"smooth",block:"start"});
+        } else {
+          const pv=document.getElementById("portfolioview");
+          if(pv) pv.scrollIntoView({behavior:"smooth",block:"start"});
+        }
+      });
+    });
   })();
 
   // Position-Matrix CSV Export (HED-150 Zyklus 180).
