@@ -523,6 +523,43 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .sc-qlabel{font-size:9px;fill:var(--mut);text-transform:uppercase;letter-spacing:.04em;font-family:inherit}
 .sc-axlabel{font-size:9px;fill:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-family:inherit}
 .sc-foot{font-size:var(--fs-micro);margin-top:6px;line-height:1.4}
+/* Katalysator-Runway: event-driven timeline (earnings + thesis-horizon) for the next 30 days (HED-137 Zyklus 85) */
+.cat-panel{padding:var(--s3)}
+.cat-svg{width:100%;height:auto;display:block;max-height:160px;margin-top:var(--s2)}
+.cat-grid{stroke:var(--line);stroke-width:1;stroke-dasharray:2 3;opacity:.55}
+.cat-axis{stroke:var(--line);stroke-width:1}
+.cat-xlab{font-size:10px;fill:var(--mut);font-family:inherit;letter-spacing:.04em}
+.cat-mark{cursor:help}
+.cat-mark-th{stroke:var(--bg);stroke-width:2}
+.cat-mark-er-watch{fill:none;stroke-width:1.6}
+.cat-label{font-size:9px;font-family:inherit;fill:var(--mut);font-variant-numeric:tabular-nums;pointer-events:none}
+.cat-label-held{fill:var(--txt);font-weight:600}
+.cat-legend{display:flex;flex-wrap:wrap;gap:var(--s3);align-items:center;font-size:var(--fs-micro);color:var(--mut);margin-top:6px}
+.cat-leg-item{display:inline-flex;align-items:center;gap:5px}
+.cat-leg-dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.cat-leg-dot--held{background:var(--green)}
+.cat-leg-dot--watch{background:transparent;border:1.5px solid var(--mut)}
+.cat-leg-dia{display:inline-block;width:9px;height:9px;background:var(--amber);transform:rotate(45deg);flex-shrink:0}
+.cat-list{margin-top:var(--s3);font-size:var(--fs-cap)}
+.cat-list-row{display:grid;grid-template-columns:64px 44px 22px 1fr auto;align-items:center;gap:var(--s3);padding:var(--s2) 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.cat-list-row:first-of-type{border-top:0}
+.cat-list-row .d-when{color:var(--txt);font-weight:600}
+.cat-list-row .d-out{color:var(--mut);font-size:var(--fs-micro)}
+.cat-list-row .d-sym{font-size:13px;text-align:center;line-height:1}
+.cat-list-row .d-tk{font-weight:700}
+.cat-list-row .d-kind{color:var(--mut);font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.04em;margin-left:6px}
+.cat-list-row .d-tag{font-size:var(--fs-micro);padding:2px 7px;border-radius:4px;white-space:nowrap;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+.cat-tag-held-long{background:rgba(63,185,80,.18);color:var(--green)}
+.cat-tag-held-short{background:rgba(248,81,73,.18);color:var(--red)}
+.cat-tag-held-pair{background:rgba(210,153,34,.18);color:var(--amber)}
+.cat-tag-watch{background:var(--panel2);color:var(--mut);font-weight:500}
+.cat-empty{color:var(--mut);font-size:var(--fs-micro);padding:var(--s3) 0}
+.cat-foot{color:var(--mut);font-size:var(--fs-micro);margin-top:var(--s2);line-height:1.4}
+@media(max-width:640px){
+  .cat-svg{max-height:200px}
+  .cat-list-row{grid-template-columns:50px 38px 20px 1fr auto;gap:var(--s2);font-size:var(--fs-micro)}
+  .cat-list-row .d-kind{display:none}
+}
 /* Thesis price-context bar: Bloomberg-style market data row embedded in each call card */
 .th-mkt{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin:var(--s2) 0 var(--s3);
   background:var(--bg);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-variant-numeric:tabular-nums}
@@ -813,6 +850,7 @@ main:focus{outline:none}
     <a href="#h-briefing">Briefing</a>
     <a href="#h-trackrecord">Track-Record</a>
     <a href="#h-portfolio">Portfolio</a>
+    <a href="#h-catalysts">Katalysatoren</a>
     <a href="#h-sectorview">Sektoren</a>
   </nav>
 
@@ -833,10 +871,14 @@ main:focus{outline:none}
   <div id="portfolioview" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:55%"></div><div class="skel skel-line" style="width:70%"></div></div></div>
   </section>
 
+  <section aria-labelledby="h-catalysts">
+  <h2 id="h-catalysts">Katalysator-Runway</h2>
+  <div id="catalysts" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:48%"></div><div class="skel skel-line" style="width:62%"></div></div></div>
+  </section>
+
   <section aria-labelledby="h-sectorview">
   <h2 id="h-sectorview">Sektor-Ansicht <span id="secstand" class="tag"></span></h2>
   <div class="grid sectors" id="sectorview" aria-busy="true"><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div></div>
-  <div id="earnings-cal" style="margin-top:var(--s4)"></div>
   </section>
   </main>
 
@@ -1825,23 +1867,186 @@ function calibSvg(buckets){
   }).join("");
 })();
 
-(function renderEarningsCal(){
-  const cal=((D.sector_view||{}).earnings_calendar)||[];
-  const root=$("earnings-cal");
-  if(!root||!cal.length) return;
-  const today=new Date().toISOString().slice(0,10);
-  const pills=cal.map(e=>{
-    const d=e.days_out;
-    const cls=d===0?"pill pill--err":d<=2?"pill pill--warn":"pill pill--neutral";
-    const when=d===0?"heute":d===1?"morgen":`in ${d}d`;
-    return `<span class="${cls}" style="font-size:var(--fs-cap);margin:2px"><b>${esc(e.ticker)}</b> ${when} (${esc(e.date)})</span>`;
-  }).join(" ");
-  root.innerHTML=`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px"><span style="font-size:var(--fs-cap);color:var(--mut);margin-right:4px">📅 Earnings:</span>${pills}</div>`;
+// Katalysator-Runway (HED-137 Zyklus 85): 30-day event timeline combining earnings calendar
+// and active-thesis horizon-resolution dates. Distinguishes positions im Buch (direkter P&L-Impact)
+// from Watchlist (re-entry signal). Bloomberg ECO/ER equivalent, customised to our actual book.
+(function renderCatalysts(){
+  const root=$("catalysts");
+  if(!root) return;
+  const sv=D.sector_view||{}, tr=D.track_record||{};
+  const earnings=(sv.earnings_calendar||[]).slice();
+  const theses=(tr.theses||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  // Sector map for tagging events with sector id
+  const SECTOR_MAP={};
+  ((sv.sectors)||[]).forEach(s=>{
+    (s.tickers||[]).forEach(tk=>{ const sym=tk&&tk.ticker!=null?String(tk.ticker).toUpperCase():(typeof tk==="string"?tk.toUpperCase():null); if(sym) SECTOR_MAP[sym]=s.id; });
+  });
+  // Map held tickers → first matching thesis (for direction tagging on earnings events)
+  const heldMap={};
+  theses.forEach(t=>{
+    (t.tickers||[]).forEach(tk=>{
+      const k=String(tk).toUpperCase();
+      if(!heldMap[k]) heldMap[k]={direction:(t.direction||"").toLowerCase(),conv:t.conviction||0,label:t.label||""};
+    });
+  });
+  // As-of date drives days_out for horizon events
+  const asOfStr=(sv.as_of_iso||sv.as_of||"").replace(/ UTC.*/,"").slice(0,10);
+  const asOfDate=asOfStr?new Date(asOfStr+"T00:00:00Z"):new Date();
+  function _daysOut(dStr){
+    if(!dStr) return null;
+    try{ const d=new Date(String(dStr)+"T00:00:00Z"); if(isNaN(d)) return null; return Math.round((d-asOfDate)/86400000); }catch(e){ return null; }
+  }
+  function _weekday(dStr){
+    const wd=["So","Mo","Di","Mi","Do","Fr","Sa"];
+    try{ const d=new Date(String(dStr)+"T00:00:00Z"); if(isNaN(d)) return ""; return wd[d.getUTCDay()]; }catch(e){ return ""; }
+  }
+  function _ddmm(dStr){
+    const m=String(dStr||"").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m?`${m[3]}.${m[2]}`:String(dStr||"");
+  }
+  // Build event list
+  const events=[];
+  earnings.forEach(e=>{
+    const tk=String(e.ticker||"").toUpperCase(); if(!tk) return;
+    const dOut=e.days_out!=null?e.days_out:_daysOut(e.date);
+    if(dOut==null||dOut<0) return;
+    const held=heldMap[tk];
+    events.push({type:"earnings",ticker:tk,date:e.date,daysOut:dOut,
+      held:!!held,direction:held?held.direction:null,
+      sector:SECTOR_MAP[tk]||null,
+      sort:dOut*10+1});
+  });
+  theses.forEach(t=>{
+    const dOut=_daysOut(t.earliest_score_date);
+    if(dOut==null||dOut<0) return;
+    const tks=(t.tickers||[]).map(x=>String(x).toUpperCase());
+    const tk=tks[0]||"?";
+    events.push({type:"horizon",ticker:tk,tickers:tks,date:t.earliest_score_date,daysOut:dOut,
+      held:true,direction:(t.direction||"").toLowerCase(),
+      conv:t.conviction,label:t.label||"",
+      sector:SECTOR_MAP[tk]||null,
+      sort:dOut*10+2});
+  });
+  if(!events.length){
+    root.innerHTML='<div class="panel cat-panel"><div class="cat-empty">Keine anstehenden Katalysatoren — keine offenen Calls oder Earnings im Datenfeed.</div></div>';
+    root.setAttribute("aria-busy","false"); return;
+  }
+  events.sort((a,b)=>a.sort-b.sort);
+  // KPIs (count distinct events, not tickers — back-to-back earnings still count separately)
+  const inWindow=events.filter(e=>e.daysOut<=30);
+  const beyond=events.length-inWindow.length;
+  const week=events.filter(e=>e.daysOut<=7).length;
+  const weekHeld=events.filter(e=>e.daysOut<=7&&e.held).length;
+  const twoWeek=events.filter(e=>e.daysOut<=14).length;
+  // SVG timeline (today=0 → +30d). Same-day events stack vertically by sort order.
+  const WIN=30, W=720, H=140;
+  const pad={l:24,r:60,t:14,b:30};
+  const iW=W-pad.l-pad.r, iH=H-pad.t-pad.b;
+  const xAt=d=>pad.l+(Math.min(d,WIN)/WIN)*iW;
+  const baseY=pad.t+8;
+  // Group by daysOut for stacking
+  const byDay={};
+  inWindow.forEach(e=>{ (byDay[e.daysOut]=byDay[e.daysOut]||[]).push(e); });
+  // Gridlines at weeks
+  const ticks=[0,7,14,21,28];
+  const gridSvg=ticks.map(d=>`<line class="cat-grid" x1="${xAt(d).toFixed(1)}" y1="${pad.t}" x2="${xAt(d).toFixed(1)}" y2="${(H-pad.b).toFixed(1)}"/>`).join("");
+  const xlabSvg=ticks.map(d=>`<text class="cat-xlab" x="${xAt(d).toFixed(1)}" y="${(H-12).toFixed(1)}" text-anchor="middle">${d===0?"Heute":"+"+d+"d"}</text>`).join("");
+  // Today marker (vertical accent)
+  const todayMark=`<line class="cat-axis" x1="${xAt(0).toFixed(1)}" y1="${pad.t}" x2="${xAt(0).toFixed(1)}" y2="${(H-pad.b).toFixed(1)}" stroke="var(--accent)" stroke-width="1.5"/>`;
+  // Marks
+  const markSvg=[];
+  Object.keys(byDay).sort((a,b)=>Number(a)-Number(b)).forEach(dKey=>{
+    const evs=byDay[dKey];
+    const x=xAt(Number(dKey));
+    evs.forEach((e,i)=>{
+      const y=baseY+i*16;
+      if(y>H-pad.b-4) return; // overflow safety
+      const dirColor=e.direction==="long"?"var(--green)":e.direction==="short"?"var(--red)":"var(--mut)";
+      const tipParts=[
+        `${e.ticker} · ${e.type==="earnings"?"Earnings":"Thesis-Horizont"}`,
+        `${_weekday(e.date)} ${e.date} (+${e.daysOut}d)`,
+      ];
+      if(e.held&&e.type==="earnings") tipParts.push(`im Buch (${(e.direction||"?").toUpperCase()})`);
+      else if(!e.held) tipParts.push("Watchlist");
+      if(e.type==="horizon"&&e.conv!=null) tipParts.push(`Conv ${e.conv.toFixed(2)}`);
+      if(e.label) tipParts.push(e.label);
+      const tip=tipParts.join(" · ");
+      if(e.type==="earnings"){
+        if(e.held){
+          markSvg.push(`<circle class="cat-mark cat-mark-th" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${dirColor}"><title>${esc(tip)}</title></circle>`);
+        } else {
+          markSvg.push(`<circle class="cat-mark cat-mark-er-watch" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" stroke="var(--mut)"><title>${esc(tip)}</title></circle>`);
+        }
+      } else {
+        // diamond for horizon (rotated square)
+        markSvg.push(`<rect class="cat-mark cat-mark-th" x="${(x-5).toFixed(1)}" y="${(y-5).toFixed(1)}" width="10" height="10" transform="rotate(45 ${x.toFixed(1)} ${y.toFixed(1)})" fill="${dirColor}"><title>${esc(tip)}</title></rect>`);
+      }
+      const lblCls=e.held?"cat-label cat-label-held":"cat-label";
+      // Right-anchor labels for events near right edge so they don't run off
+      const rightEdge=(x>pad.l+iW-50);
+      const lblX=rightEdge?(x-8).toFixed(1):(x+8).toFixed(1);
+      const lblAnchor=rightEdge?` text-anchor="end"`:"";
+      markSvg.push(`<text class="${lblCls}" x="${lblX}" y="${(y+3).toFixed(1)}"${lblAnchor}>${esc(e.ticker)}</text>`);
+    });
+  });
+  const svg=`<svg class="cat-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Katalysator-Timeline für die nächsten 30 Tage — ${inWindow.length} Events">
+    ${gridSvg}
+    ${todayMark}
+    ${markSvg.join("")}
+    ${xlabSvg}
+  </svg>`;
+  // Detail list — first 8 events in window
+  const sym=t=>t==="earnings"?"📊":"⏰";
+  const tagFor=e=>{
+    if(!e.held) return '<span class="d-tag cat-tag-watch">Watch</span>';
+    const d=e.direction;
+    const cls=d==="long"?"cat-tag-held-long":d==="short"?"cat-tag-held-short":"cat-tag-held-pair";
+    const lbl=d==="long"?"Long":d==="short"?"Short":"Pair";
+    return `<span class="d-tag ${cls}" title="Im Buch · ${esc(lbl)}">${lbl} · Buch</span>`;
+  };
+  const kindLbl=e=>{
+    if(e.type==="earnings") return "Earnings"+(e.sector?` · ${e.sector}`:"");
+    const dirTxt=e.direction?` · ${e.direction.toUpperCase()}`:"";
+    const convTxt=e.conv!=null?` · Conv ${e.conv.toFixed(2)}`:"";
+    return `Horizont${dirTxt}${convTxt}`;
+  };
+  const listRows=inWindow.slice(0,8).map(e=>`<div class="cat-list-row" title="${esc(e.label||e.ticker+' '+e.date)}">
+    <span class="d-when">${esc(_weekday(e.date))} ${esc(_ddmm(e.date))}</span>
+    <span class="d-out">+${e.daysOut}d</span>
+    <span class="d-sym" aria-hidden="true">${sym(e.type)}</span>
+    <span><b class="d-tk">${esc(e.ticker)}</b><span class="d-kind">${esc(kindLbl(e))}</span></span>
+    ${tagFor(e)}
+  </div>`).join("");
+  const more=inWindow.length>8?`<div class="cat-foot">+${inWindow.length-8} weitere Event${inWindow.length-8===1?"":"s"} im 30-Tage-Fenster</div>`:"";
+  const beyondFoot=beyond?`<div class="cat-foot">${beyond} Katalysator${beyond===1?"":"en"} jenseits 30d (Quartals-Horizonte, später skaliert)</div>`:"";
+  root.innerHTML=`<div class="panel cat-panel">
+    <div class="ec-h">
+      <div class="ec-h-l">
+        <div class="ec-title">Katalysator-Runway <span class="muted" style="font-weight:400">(30 Tage)</span></div>
+        <div class="ec-h-sub muted">Earnings + Thesis-Horizont, kombiniert mit aktivem Buch</div>
+      </div>
+      <div class="ec-kpis">
+        <div class="ec-kpi" title="Katalysatoren in den nächsten 7 Tagen"><span class="muted">≤ 7d</span><b>${week}</b></div>
+        <div class="ec-kpi" title="Davon mit Position im Buch (direkter P&amp;L-Impact)"><span class="muted">im Buch</span><b class="${weekHeld>0?'move-up':''}">${weekHeld}</b></div>
+        <div class="ec-kpi" title="Katalysatoren in den nächsten 14 Tagen"><span class="muted">≤ 14d</span><b>${twoWeek}</b></div>
+      </div>
+    </div>
+    ${svg}
+    <div class="cat-legend" aria-label="Legende">
+      <span class="cat-leg-item"><span class="cat-leg-dot cat-leg-dot--held"></span>Earnings · im Buch (Farbe = Direction)</span>
+      <span class="cat-leg-item"><span class="cat-leg-dot cat-leg-dot--watch"></span>Earnings · Watchlist</span>
+      <span class="cat-leg-item"><span class="cat-leg-dia"></span>Thesis-Horizont (Score-Termin)</span>
+    </div>
+    <div class="cat-list">${listRows}</div>
+    ${more}
+    ${beyondFoot}
+  </div>`;
+  root.setAttribute("aria-busy","false");
 })();
 
 function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));}
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
-["briefing","trackrecord","portfolioview","sectorview"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+["briefing","trackrecord","portfolioview","catalysts","sectorview"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
 // Section nav: highlight the anchor pill whose section is currently most in view
 (function(){
