@@ -2105,6 +2105,30 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 @media(min-width:681px){
   .pf-conv-card{display:none}
 }
+/* Makro-Portfolio-Kontext — Regime-Einbettung (HED-150 Zyklus 153) */
+.pf-mpc{margin-top:var(--s3);padding:var(--s3);border-left:3px solid rgba(139,148,158,.3)}
+.pf-mpc-hd{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-mpc-title{font-weight:700;font-size:var(--fs-cap);text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.pf-mpc-verdict{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:4px;font-size:var(--fs-cap);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.pf-mpc-verdict-g{background:rgba(63,185,80,.18);color:var(--green);border:1px solid rgba(63,185,80,.35)}
+.pf-mpc-verdict-r{background:rgba(248,81,73,.18);color:var(--red);border:1px solid rgba(248,81,73,.35)}
+.pf-mpc-verdict-a{background:rgba(210,153,34,.18);color:var(--accent);border:1px solid rgba(210,153,34,.35)}
+.pf-mpc-verdict-n{background:rgba(139,148,158,.1);color:var(--mut);border:1px solid rgba(139,148,158,.2)}
+.pf-mpc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s2)}
+@media(max-width:680px){.pf-mpc-grid{grid-template-columns:repeat(2,1fr)}}
+.pf-mpc-tile{padding:var(--s2);border-radius:6px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);display:flex;flex-direction:column;gap:3px}
+.pf-mpc-tile-g{border-color:rgba(63,185,80,.3);background:rgba(63,185,80,.04)}
+.pf-mpc-tile-r{border-color:rgba(248,81,73,.3);background:rgba(248,81,73,.04)}
+.pf-mpc-tile-a{border-color:rgba(210,153,34,.3);background:rgba(210,153,34,.04)}
+.pf-mpc-tile-lbl{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--mut)}
+.pf-mpc-tile-val{font-size:16px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums;line-height:1.1}
+.pf-mpc-tile-delta{font-size:var(--fs-micro);font-variant-numeric:tabular-nums;font-weight:600}
+.pf-mpc-tile-delta-pos{color:var(--green)}
+.pf-mpc-tile-delta-neg{color:var(--red)}
+.pf-mpc-tile-impact{font-size:9px;color:var(--mut);line-height:1.3;margin-top:2px}
+.pf-mpc-tile-impact-g{color:var(--green);opacity:.85}
+.pf-mpc-tile-impact-r{color:var(--red);opacity:.85}
+.pf-mpc-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s2);line-height:1.5}
 /* Thesis-Karten — Investment Case per aktivem Call (HED-150 Zyklus 152) */
 .pf-thc{margin-top:var(--s3);padding:var(--s3)}
 .pf-thc-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
@@ -8337,6 +8361,90 @@ function calibSvg(buckets){
     }
   }
 
+  // Makro-Portfolio-Kontext — Regime-Einbettung (HED-150 Zyklus 153)
+  // Translates macro_pulse tiles (VIX, 10Y, HY OAS, USD) into portfolio-level
+  // tailwind / headwind signals for a long-biased AI/Tech book.
+  // Placed above thesis cards so the PM sees the macro regime before reviewing calls.
+  let mpcPanelHtml="";
+  {
+    const mp=D.macro_pulse||{};
+    const tiles=mp.tiles||[];
+    const _findTile=sid=>tiles.find(t=>t.sid===sid)||null;
+
+    const vix=_findTile("VIXCLS"), tsy=_findTile("DGS10"), hy=_findTile("BAMLH0A0HYM2")||_findTile("BAMLH0A0HYM2EY"), usd=_findTile("DTWEXBGS")||_findTile("USD TWI");
+
+    // Signal logic for a LONG-biased tech book (all 4 active calls are LONG)
+    // Returns: {sig:"g"|"r"|"a"|"n", impact:string}
+    function _vixSig(t){
+      if(!t) return {sig:"n",impact:"Keine VIX-Daten"};
+      const v=t.value;
+      if(v<16) return {sig:"g",impact:"Fear niedrig → Risk-on, stützt Long-Buch"};
+      if(v<22) return {sig:"g",impact:"Vol normal → kein Marktdruck auf Long-Calls"};
+      if(v<30) return {sig:"a",impact:"Vol erhöht → Selectivity steigt, Position-Sizing überprüfen"};
+      return {sig:"r",impact:"Fear hoch → Risk-off, Drawdown-Risiko für Long-Buch"};
+    }
+    function _tsySig(t){
+      if(!t) return {sig:"n",impact:"Keine Zinsdaten"};
+      const d=t.delta_pct;
+      if(d<=-3) return {sig:"g",impact:"Zinsen fallen → Multiple-Expansion-Tailwind für Tech"};
+      if(d<=-1) return {sig:"g",impact:"Zinsen leicht rückläufig → positiv für lang laufende Assets"};
+      if(d>=3) return {sig:"r",impact:"Zinsen steigen → Multiple-Compression-Risiko für High-PE Tech"};
+      if(d>=1) return {sig:"a",impact:"Zinsen leicht steigend → Gegenwind für Bewertungs-Multiple"};
+      return {sig:"a",impact:"Zinsen stabil → keine starke Richtung"};
+    }
+    function _hySig(t){
+      if(!t) return {sig:"n",impact:"Keine Credit-Daten"};
+      const d=t.delta_pct;
+      if(d<=-3) return {sig:"g",impact:"Credit engt ein → Risk-Appetit hoch, stützt Equities"};
+      if(d<=0) return {sig:"g",impact:"Credit stabil bis enger → kein Systemrisiko sichtbar"};
+      if(d>=5) return {sig:"r",impact:"Credit weitet aus → Risiko-Aversion steigt"};
+      return {sig:"a",impact:"Credit leicht weiter → Watchlist-Modus"};
+    }
+    function _usdSig(t){
+      if(!t) return {sig:"n",impact:"Keine USD-Daten"};
+      const d=t.delta_pct;
+      if(d>=2) return {sig:"r",impact:"USD stark → Headwind für globale US-Tech-Revenues"};
+      if(d<=-2) return {sig:"g",impact:"USD schwächer → Rückenwind für US-Multinationals"};
+      return {sig:"a",impact:"USD stabil → kein FX-Risiko auf Portfolioebene"};
+    }
+
+    const sigs=[_vixSig(vix),_tsySig(tsy),_hySig(hy),_usdSig(usd)];
+    const gs=sigs.filter(s=>s.sig==="g").length, rs=sigs.filter(s=>s.sig==="r").length;
+    const netSig=gs>=3?"g":rs>=3?"r":gs>rs?"a":"a";
+    const netLabel=netSig==="g"?"Makro-Tailwind":netSig==="r"?"Makro-Gegenwind":"Makro-Gemischt";
+
+    function _tile(t, sigObj, label, invertDelta){
+      if(!t) return "";
+      const delt=t.delta_pct;
+      const deltSign=delt>=0?"+":"";
+      // invertDelta: for VIX/yields, falling = good (green); for spreads/USD same
+      const deltGood = invertDelta ? delt<=0 : delt>=0;
+      const deltCls=deltGood?"pf-mpc-tile-delta-pos":"pf-mpc-tile-delta-neg";
+      return `<div class="pf-mpc-tile pf-mpc-tile-${sigObj.sig}" title="${esc(t.hint||'')}">
+        <div class="pf-mpc-tile-lbl">${esc(label||t.label)}</div>
+        <div class="pf-mpc-tile-val">${esc(t.display)}</div>
+        <div class="pf-mpc-tile-delta ${deltCls}">${deltSign}${Math.abs(delt||0).toFixed(1)}% Δ</div>
+        <div class="pf-mpc-tile-impact pf-mpc-tile-impact-${sigObj.sig}">${esc(sigObj.impact)}</div>
+      </div>`;
+    }
+
+    if(tiles.length){
+      const tileHtml=_tile(vix,sigs[0],"VIX",true)
+        +_tile(tsy,sigs[1],"10Y UST",true)
+        +_tile(hy,sigs[2],"HY Spread",true)
+        +_tile(usd,sigs[3],"USD",false);
+
+      mpcPanelHtml=`<div class="panel pf-mpc">
+        <div class="pf-mpc-hd">
+          <div class="pf-mpc-title">Makro-Regime · Portfolio-Relevanz</div>
+          <span class="pf-mpc-verdict pf-mpc-verdict-${netSig}">${esc(netLabel)}</span>
+        </div>
+        <div class="pf-mpc-grid">${tileHtml}</div>
+        <div class="pf-mpc-foot">Tailwind/Headwind direction-adjustiert für das aktuelle Buch (${active.length} LONG-Call${active.length!==1?"s":""}). VIX &lt; 22 = Low-Fear-Regime. 10Y-Delta negativ = Zinsen fallen = Multiple-Expansion. HY-OAS enger = Credit-Risk-Appetit. USD-Stärke = Headwind für US-Tech-Multinational-Revenues.</div>
+      </div>`;
+    }
+  }
+
   // Thesis-Karten — Investment Case per aktivem Call (HED-150 Zyklus 152)
   // For each active portfolio thesis, renders a card with:
   // - direction + conviction badge
@@ -8503,7 +8611,7 @@ function calibSvg(buckets){
     }
   }
 
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${thcPanelHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
