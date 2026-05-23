@@ -322,6 +322,15 @@ SOURCE_RELIABILITY = {
     # competitor analogue costs six figures/yr from FactSet/Refinitiv. We emit
     # only when there's clear directional momentum (filtered tug-of-war noise).
     "eps_revisions": 0.85,
+    # US Federal contract awards from USAspending.gov per watchlist company.
+    # Official US Treasury / SAM.gov data — same authoritative tier as Fed/BLS.
+    # Contract obligations typically appear in USAspending 7-14 days BEFORE the
+    # contractor announces them in a press release / 8-K — leading indicator
+    # for federal-rev-concentrated names (PLTR ~55% gov rev, ORCL Oracle Cloud
+    # Gov + JWCC, MSFT/AMZN/GOOGL JWCC cloud, DELL server hardware, ANET
+    # networking). Quant funds buy this signal from Quiver/GovTribe/Bloomberg
+    # GOVCON; the official source is free + no API key.
+    "gov_contracts": 0.90,
     # Earnings dates from yfinance are authoritative forward-looking events.
     # High reliability: directly from exchange/company filings via Yahoo.
     "earnings_calendar": 0.88,

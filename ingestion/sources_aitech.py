@@ -2248,3 +2248,177 @@ class EpsRevisionsAdapter:
             "url": dedup_url,
             "reliability": self.RELIABILITY,
         }
+
+
+class GovContractsAdapter:
+    """
+    US Federal contract awards per watchlist company via USAspending.gov.
+
+    Strategy.md tier-1 supply-chain / forward-revenue signal: a $1B+ DoD or
+    Treasury contract obligation routinely appears in USAspending 7-14 days
+    before the contractor announces it in a press release / 8-K. Quant funds
+    pay Quiver Quant / GovTribe / Bloomberg GOVCON five-figure annual fees for
+    this same data; the official source is free, JSON, no API key required.
+
+    The signal is highest for software/cloud primes whose revenue is heavily
+    federal (PLTR — ~55% gov rev, ORCL — Oracle Cloud Gov + JWCC, MSFT/AMZN/
+    GOOGL — JWCC cloud, DELL — server hardware) and for networking primes
+    (ANET federal). Hardware-OEM tickers (NVDA, AMD, ASML, TSM, etc.) typically
+    reach federal buyers via integrator resellers and have ~zero direct prime
+    flow — they are intentionally excluded to keep API budget focused (validated
+    empirically 2026-05-23: 0 contracts ≥$1M past 2 months for NVDA/AMD/CRWD/
+    NOW/SNOW/CRM/VRT/ADBE).
+
+    Per ticker, queries award_type A/B/C/D (definitive + IDV contracts; excludes
+    grants, loans, direct payments) with action_date in the last 14 days and
+    amount ≥ $1M. Emits one item per qualifying award. Stable dedup per
+    USAspending `generated_internal_id`.
+
+    Source: 'gov_contracts'. Reliability 0.90 — official US Treasury / SAM.gov
+    data; same authoritative tier as Fed/BLS macro releases.
+    """
+
+    SOURCE = "gov_contracts"
+    RELIABILITY = 0.90
+    LOOKBACK_DAYS = 14
+    AMOUNT_FLOOR = 1_000_000
+    MAX_AWARDS_PER_TICKER = 10
+    API_URL = "https://api.usaspending.gov/api/v2/search/spending_by_award/"
+
+    # Validated empirically 2026-05-23 against USAspending for awards >=$1M signed
+    # 2026-04-01 -> present: only these 7 watchlist tickers have measurable direct
+    # federal prime flow. The other 23 watchlist tickers returned 0 awards at this
+    # threshold and are omitted (saves 23 API calls/cycle for zero signal).
+    TICKER_TO_RECIPIENT = {
+        "PLTR":  ["PALANTIR"],
+        "MSFT":  ["MICROSOFT"],
+        "AMZN":  ["AMAZON WEB SERVICES", "AMAZON.COM"],
+        "GOOGL": ["GOOGLE LLC"],
+        "ORCL":  ["ORACLE AMERICA", "ORACLE CORPORATION"],
+        "DELL":  ["DELL FEDERAL", "DELL MARKETING"],
+        "ANET":  ["ARISTA NETWORKS"],
+    }
+
+    # A=BPA Call, B=Purchase Order, C=Delivery Order, D=Definitive Contract.
+    # Excludes grants, loans, direct payments.
+    AWARD_TYPE_CODES = ["A", "B", "C", "D"]
+
+    @staticmethod
+    def _fmt_dollar(v) -> str:
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            return "$?"
+        if abs(v) >= 1e9:
+            return f"${v/1e9:.2f}B"
+        if abs(v) >= 1e6:
+            return f"${v/1e6:.1f}M"
+        if abs(v) >= 1e3:
+            return f"${v/1e3:.0f}K"
+        return f"${v:.0f}"
+
+    @classmethod
+    def _post_json(cls, body: dict, timeout: int = 20):
+        try:
+            data = _json.dumps(body).encode("utf-8")
+            headers = dict(_DEFAULT_UA)
+            headers["Content-Type"] = "application/json"
+            headers["Accept"] = "application/json"
+            req = urllib.request.Request(cls.API_URL, data=data, headers=headers, method="POST")
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                raw = resp.read().decode("utf-8", errors="replace")
+                return _json.loads(raw)
+        except Exception:
+            return None
+
+    def fetch(self) -> list[dict]:
+        end = datetime.now(timezone.utc).date()
+        start = end - timedelta(days=self.LOOKBACK_DAYS)
+        start_s, end_s = start.isoformat(), end.isoformat()
+
+        out: list[dict] = []
+        seen_award_ids: set[str] = set()
+        for ticker, recipients in self.TICKER_TO_RECIPIENT.items():
+            body = {
+                "filters": {
+                    "award_type_codes": self.AWARD_TYPE_CODES,
+                    "recipient_search_text": recipients,
+                    "time_period": [{"start_date": start_s, "end_date": end_s}],
+                    "award_amounts": [{"lower_bound": self.AMOUNT_FLOOR}],
+                },
+                "fields": [
+                    "Award ID", "Recipient Name", "Award Amount", "Description",
+                    "Awarding Agency", "Awarding Sub Agency", "Start Date",
+                    "Last Modified Date", "Base Obligation Date", "psc_description",
+                ],
+                "sort": "Award Amount",
+                "order": "desc",
+                "limit": self.MAX_AWARDS_PER_TICKER,
+                "page": 1,
+            }
+            resp = self._post_json(body)
+            if not resp:
+                time.sleep(0.4)
+                continue
+            for r in resp.get("results", []) or []:
+                gen_id = r.get("generated_internal_id") or ""
+                award_id = r.get("Award ID") or gen_id
+                if not award_id or award_id in seen_award_ids:
+                    continue
+                seen_award_ids.add(award_id)
+                item = self._format_item(ticker, r)
+                if item:
+                    out.append(item)
+            time.sleep(0.4)
+        return out
+
+    def _format_item(self, ticker: str, r: dict) -> dict | None:
+        amount = r.get("Award Amount")
+        if amount is None or amount < self.AMOUNT_FLOOR:
+            return None
+        agency = (r.get("Awarding Agency") or "").strip()
+        sub_agency = (r.get("Awarding Sub Agency") or "").strip()
+        if sub_agency and sub_agency.lower() != agency.lower():
+            agency_str = f"{agency} ({sub_agency})"
+        else:
+            agency_str = agency or "Federal agency"
+        # Use Last Modified Date as the "action" date — that's WHEN the recent
+        # activity (new obligation, modification, exercise) occurred, regardless
+        # of when the parent IDV was originally signed. The Base Obligation Date
+        # is the parent contract's signing date and can be years older for
+        # ongoing IDVs (AMZN AWS BPAs, ORCL DoD cloud contracts, etc.).
+        last_mod = (r.get("Last Modified Date") or "")[:10]
+        base_obl = r.get("Base Obligation Date") or ""
+        action_date = last_mod or base_obl or r.get("Start Date") or "n/a"
+        # If the parent IDV is older than the recent activity, surface both
+        # so analyst sees "recent mod on a 2021-vintage contract" vs "fresh award".
+        base_hint = ""
+        if base_obl and last_mod and base_obl[:7] != last_mod[:7]:
+            base_hint = f" (base contract: {base_obl})"
+
+        psc = (r.get("psc_description") or "").strip()
+        desc = (r.get("Description") or "").strip()
+        if desc:
+            desc = re.sub(r"\s+", " ", desc)[:220]
+        recipient = (r.get("Recipient Name") or "").strip().title()
+
+        amount_str = self._fmt_dollar(amount)
+        parts = [
+            f"[{ticker}] Federal contract activity {amount_str} from {agency_str} (action {action_date}){base_hint}",
+            f"Recipient: {recipient}",
+        ]
+        if psc:
+            parts.append(f"PSC: {psc[:90]}")
+        if desc:
+            parts.append(f"Scope: {desc}")
+        text = " — ".join(parts)
+
+        gen_id = r.get("generated_internal_id") or ""
+        url = f"https://www.usaspending.gov/award/{gen_id}" if gen_id else None
+
+        return {
+            "text": text,
+            "source": self.SOURCE,
+            "url": url,
+            "reliability": self.RELIABILITY,
+        }

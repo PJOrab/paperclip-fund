@@ -120,6 +120,7 @@ def build_adapters():
         ("Short Interest", S.ShortInterestAdapter()),
         ("Options Market", S.OptionsMarketAdapter()),
         ("EPS Revisions", S.EpsRevisionsAdapter()),
+        ("Gov Contracts", S.GovContractsAdapter()),
     ]
     if getattr(m, "NEWSAPI_KEY", ""):
         adapters.append(("NewsAPI AI", S.AITechNewsAPIAdapter()))
