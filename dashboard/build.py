@@ -520,6 +520,27 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .ec-svg{max-height:130px}
   .dd-svg{max-height:70px}
 }
+/* Risk-adjusted metrics panel — Sharpe, Vol, Beta, Korr, Tracking Error, Info-Ratio (HED-137 cycle 92) */
+.rs-panel{padding:var(--s3)}
+.rs-h{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);margin-bottom:var(--s2);flex-wrap:wrap}
+.rs-title{font-size:var(--fs-cap);color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.rs-notice{font-size:var(--fs-micro);color:var(--mut);font-variant-numeric:tabular-nums;cursor:help;
+  padding:1px 6px;border:1px solid var(--line);border-radius:3px;letter-spacing:.02em}
+.rs-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.rs-cell{background:var(--bg);padding:var(--s2) var(--s3);display:flex;flex-direction:column;gap:2px;
+  cursor:help;font-variant-numeric:tabular-nums}
+.rs-lbl{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.05em;line-height:1.1}
+.rs-val{font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.rs-val.move-up{color:var(--green)}
+.rs-val.move-dn{color:var(--red)}
+.rs-sub{font-size:var(--fs-micro);line-height:1.2}
+.rs-foot{font-size:var(--fs-micro);margin-top:var(--s2);line-height:1.4}
+@media(max-width:840px){.rs-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:480px){
+  .rs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rs-val{font-size:17px}
+}
 /* Conviction-vs-P&L Scatter — "are my high-conviction calls working?" (HED-137 cycle 84) */
 .pf-scatter{margin-top:var(--s3);padding:var(--s3)}
 .pf-scatter-h{font-size:var(--fs-cap);color:var(--mut);margin-bottom:var(--s2);display:flex;
@@ -1870,7 +1891,7 @@ function calibSvg(buckets){
     const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
     _curveSrc.push({conv:(t.conviction!=null?t.conviction:0.5), baseline:t.baseline_price, spark:sp, eOff, sign});
   });
-  let curvePanelHtml="";
+  let curvePanelHtml="", riskStatsPanelHtml="";
   if(_curveSrc.length){
     const _incep=Math.max(..._curveSrc.map(s=>s.eOff));
     const _curve=[];
@@ -1948,6 +1969,75 @@ function calibSvg(buckets){
           spyAlphaPct=lastPct-_spyEnd; // positive = outperforming
           benchSvg=`<polyline class="ec-bench" points="${_spyPts}"/>`
             +`<text class="ec-bench-label" x="${_spyLabelX}" y="${_spyLabelY}" dy="3">SPY</text>`;
+        }
+      }
+      // Risk-adjusted statistics panel — Sharpe, Vol, Beta, Korr, Tracking Error, Info-Ratio (HED-137 cycle 92).
+      // Aligned daily returns: book cumulative pct → daily simple return via index-equivalent; SPY raw closes → simple return.
+      // Common observation window = min(book days, SPY spark days). Standard institutional risk panel.
+      if(_spySpark && _spySpark.length>=3 && _curve.length>=3){
+        const ov=Math.min(_curve.length, _spySpark.length);
+        if(ov>=3){
+          const bookSlice=pcts.slice(pcts.length-ov);
+          const spySlice=_spySpark.slice(_spySpark.length-ov);
+          const rB=[], rS=[];
+          for(let i=1;i<ov;i++){
+            const b0=bookSlice[i-1], b1=bookSlice[i];
+            const s0=spySlice[i-1], s1=spySlice[i];
+            if(s0<=0) continue;
+            rB.push((b1-b0)/(100+b0));
+            rS.push((s1-s0)/s0);
+          }
+          const n=rB.length;
+          if(n>=2){
+            const mB=rB.reduce((s,v)=>s+v,0)/n;
+            const mS=rS.reduce((s,v)=>s+v,0)/n;
+            const mTE=mB-mS;
+            let vB=0, vS=0, cov=0, vTE=0;
+            for(let i=0;i<n;i++){
+              const eB=rB[i]-mB, eS=rS[i]-mS;
+              vB+=eB*eB; vS+=eS*eS; cov+=eB*eS;
+              const eTE=(rB[i]-rS[i])-mTE;
+              vTE+=eTE*eTE;
+            }
+            const denom=Math.max(1, n-1);
+            vB/=denom; vS/=denom; cov/=denom; vTE/=denom;
+            const sdB=Math.sqrt(Math.max(vB,0));
+            const sdS=Math.sqrt(Math.max(vS,0));
+            const sdTE=Math.sqrt(Math.max(vTE,0));
+            const ANN=Math.sqrt(252);
+            const volAnn=sdB*ANN*100;
+            const sharpe=sdB>1e-9 ? mB/sdB*ANN : null;
+            const beta=vS>1e-12 ? cov/vS : null;
+            const corr=(sdB>1e-9 && sdS>1e-9) ? cov/(sdB*sdS) : null;
+            const trackErrAnn=sdTE*ANN*100;
+            const infoRatio=sdTE>1e-9 ? mTE/sdTE*ANN : null;
+            const fmtR=v=>(v==null||!isFinite(v))?'—':(v>=0?'+':'−')+Math.abs(v).toFixed(2);
+            const fmtP=v=>(v==null||!isFinite(v))?'—':v.toFixed(2)+'%';
+            const sharpeBand=v=>v==null?'':v>=2?'exzellent':v>=1?'solide':v>=0?'unterdurchschn.':'negativ';
+            const corrBand=v=>v==null?'':Math.abs(v)>=0.7?'stark gekoppelt':Math.abs(v)>=0.3?'moderat':'schwach';
+            const betaBand=v=>v==null?'':v>=1.2?'hoch-Beta':v>=0.8?'≈ Markt':v>=0.3?'low-Beta':v>=-0.3?'marktneutral':'invers';
+            const irBand=v=>v==null?'':v>=0.5?'starkes Alpha':v>=0?'positiv':'negativ';
+            const sharpeCls=sharpe==null?'':sharpe>=1?'move-up':sharpe<0?'move-dn':'';
+            const irCls=infoRatio==null?'':infoRatio>=0.5?'move-up':infoRatio<0?'move-dn':'';
+            const notice = n<10
+              ? `<span class="rs-notice" title="Bei wenigen Beobachtungen sind die Schätzer verrauscht — Werte stabilisieren sich mit jedem Live-Tag">n=${n} · noisy</span>`
+              : `<span class="muted" style="font-size:var(--fs-micro);font-variant-numeric:tabular-nums">n=${n} Tagesreturns</span>`;
+            riskStatsPanelHtml=`<div class="panel rs-panel" style="margin-top:var(--s3)">
+              <div class="rs-h">
+                <div class="rs-title">Risiko-Kennzahlen <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">· annualisiert · vs SPY</span></div>
+                ${notice}
+              </div>
+              <div class="rs-grid">
+                <div class="rs-cell" title="Sharpe Ratio (rf=0): Mittelwert der Tagesreturns / Standardabweichung × √252. &gt;2 exzellent, &gt;1 solide, &lt;0 verliert risikoadjustiert."><div class="rs-lbl muted">Sharpe</div><div class="rs-val ${sharpeCls}">${fmtR(sharpe)}</div><div class="rs-sub muted">${sharpeBand(sharpe)}</div></div>
+                <div class="rs-cell" title="Annualisierte Volatilität — Standardabweichung der Tagesreturns × √252."><div class="rs-lbl muted">Vola</div><div class="rs-val">${fmtP(volAnn)}</div><div class="rs-sub muted">ann.</div></div>
+                <div class="rs-cell" title="Beta vs SPY — Cov(Buch, SPY)/Var(SPY). 1 ≈ Marktrisiko, &lt;1 defensiver, &gt;1 hebelhafter."><div class="rs-lbl muted">Beta</div><div class="rs-val">${fmtR(beta)}</div><div class="rs-sub muted">${betaBand(beta)}</div></div>
+                <div class="rs-cell" title="Korrelation zu SPY — Pearson r der Tagesreturns. Niedrige Korrelation = diversifiziertes Alpha."><div class="rs-lbl muted">Korr.</div><div class="rs-val">${fmtR(corr)}</div><div class="rs-sub muted">${corrBand(corr)}</div></div>
+                <div class="rs-cell" title="Tracking Error — Standardabweichung der aktiven Returns (Buch − SPY) × √252."><div class="rs-lbl muted">Tr-Error</div><div class="rs-val">${fmtP(trackErrAnn)}</div><div class="rs-sub muted">ann.</div></div>
+                <div class="rs-cell" title="Information Ratio — annualisiertes Alpha geteilt durch Tracking Error. &gt;0.5 starkes Alpha pro Risikoeinheit."><div class="rs-lbl muted">Info-Ratio</div><div class="rs-val ${irCls}">${fmtR(infoRatio)}</div><div class="rs-sub muted">${irBand(infoRatio)}</div></div>
+              </div>
+              <div class="rs-foot muted">Aus täglichen Returns der konv.-gewichteten Buch-Kurve und SPY über den gemeinsamen Beobachtungszeitraum. Standard-Risk-Panel (Bloomberg PORT-Stil). Werte stabilisieren sich mit längerer Live-Historie.</div>
+            </div>`;
+          }
         }
       }
       const svg = `<svg class="ec-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Buch-Equity-Kurve seit Inception als Liniendiagramm — aktuell ${fmt(lastPct)}">
@@ -2327,7 +2417,7 @@ function calibSvg(buckets){
       </div>`;
     }
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskHtml}`;
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskHtml}`;
   root.setAttribute("aria-busy","false");
 })();
 
