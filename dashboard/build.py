@@ -2146,6 +2146,69 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Research Pipeline — Thesis-Funnel + Red-Team Verdikte (HED-150 Zyklus 157)
+   Surfaces the institutional research process: thesis candidates currently being
+   analyzed, their devil's-advocate critique (verdict / blind spot / falsification),
+   and correlation warnings. Answers: "What's in research and why aren't we long it?" */
+.pf-rp-panel{padding:var(--s3)}
+.pf-rp-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-rp-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-rp-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-rp-funnel{display:flex;gap:var(--s2);flex-wrap:wrap;flex-shrink:0;align-items:flex-end}
+.pf-rp-funnel-cell{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:60px;padding:6px 10px;border-radius:6px;background:rgba(139,148,158,.05);border:1px solid rgba(139,148,158,.1)}
+.pf-rp-funnel-val{font-size:20px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:var(--txt)}
+.pf-rp-funnel-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut)}
+.pf-rp-funnel-cell-pass{background:rgba(35,134,54,.08);border-color:rgba(35,134,54,.25)}
+.pf-rp-funnel-cell-pass .pf-rp-funnel-val{color:#3fb950}
+.pf-rp-funnel-cell-cau{background:rgba(210,168,80,.08);border-color:rgba(210,168,80,.25)}
+.pf-rp-funnel-cell-cau .pf-rp-funnel-val{color:#e3b341}
+.pf-rp-funnel-cell-rej{background:rgba(248,81,73,.08);border-color:rgba(248,81,73,.25)}
+.pf-rp-funnel-cell-rej .pf-rp-funnel-val{color:#f85149}
+.pf-rp-corr{margin:0 0 var(--s3) 0;padding:var(--s2) var(--s3);background:rgba(210,168,80,.06);border-left:3px solid #e3b341;border-radius:4px;font-size:var(--fs-cap);color:var(--txt);line-height:1.5}
+.pf-rp-corr-h{font-weight:700;color:#e3b341;text-transform:uppercase;letter-spacing:.04em;font-size:9px;margin-bottom:3px;display:flex;align-items:center;gap:6px}
+.pf-rp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:var(--s3)}
+.pf-rp-card{background:rgba(139,148,158,.04);border:1px solid rgba(139,148,158,.12);border-radius:6px;padding:var(--s3);display:flex;flex-direction:column;gap:var(--s2);border-top:3px solid transparent}
+.pf-rp-card-cau{border-top-color:#e3b341}
+.pf-rp-card-rej{border-top-color:#f85149}
+.pf-rp-card-prc{border-top-color:#3fb950}
+.pf-rp-card-hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s2);flex-wrap:wrap}
+.pf-rp-tickers{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.pf-rp-tk{font-weight:700;font-size:15px;color:var(--txt);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em;padding:2px 6px;background:rgba(139,148,158,.1);border-radius:4px}
+.pf-rp-horizon{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.pf-rp-verd{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;line-height:1.4}
+.pf-rp-verd-prc{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-rp-verd-cau{background:rgba(210,168,80,.18);color:#e3b341}
+.pf-rp-verd-rej{background:rgba(248,81,73,.18);color:#f85149}
+.pf-rp-dir{display:inline-flex;align-items:center;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.pf-rp-dir-long{background:rgba(35,134,54,.12);color:#3fb950}
+.pf-rp-dir-short{background:rgba(248,81,73,.12);color:#f85149}
+.pf-rp-conv-row{display:flex;align-items:center;gap:var(--s2);font-size:var(--fs-cap)}
+.pf-rp-conv-lbl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.pf-rp-conv-bar{flex:1;height:5px;background:rgba(139,148,158,.1);border-radius:3px;overflow:hidden;min-width:80px}
+.pf-rp-conv-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#f85149,#e3b341,#3fb950)}
+.pf-rp-conv-val{font-weight:700;font-variant-numeric:tabular-nums;color:var(--txt);font-size:12px}
+.pf-rp-thesis{font-size:var(--fs-cap);line-height:1.5;color:var(--txt);background:rgba(139,148,158,.03);padding:var(--s2);border-radius:4px;border-left:2px solid rgba(139,148,158,.2)}
+.pf-rp-thesis-lbl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:3px;display:block}
+.pf-rp-cases{display:flex;gap:6px;flex-wrap:wrap}
+.pf-rp-case{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border-radius:3px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.pf-rp-case-bull{background:rgba(35,134,54,.10);color:#3fb950}
+.pf-rp-case-bear{background:rgba(248,81,73,.10);color:#f85149}
+.pf-rp-case-cat{background:rgba(88,166,255,.10);color:var(--blue)}
+.pf-rp-rt{background:rgba(139,148,158,.05);border-radius:4px;padding:var(--s2);border-left:2px solid rgba(248,81,73,.4)}
+.pf-rp-rt-hdr{font-size:9px;color:#f85149;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.pf-rp-rt-blind{font-size:var(--fs-cap);line-height:1.5;color:var(--txt);margin-bottom:6px}
+.pf-rp-rt-falsi{font-size:var(--fs-micro);line-height:1.5;color:var(--mut);border-top:1px dashed rgba(139,148,158,.15);padding-top:5px}
+.pf-rp-rt-falsi-lbl{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--mut);margin-bottom:2px}
+.pf-rp-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+.pf-rp-empty{padding:var(--s4);text-align:center;color:var(--mut);font-size:var(--fs-cap);background:rgba(139,148,158,.04);border-radius:6px}
+@media(max-width:600px){
+  .pf-rp-h{flex-direction:column}
+  .pf-rp-funnel{width:100%;justify-content:space-between;gap:6px}
+  .pf-rp-funnel-cell{flex:1;min-width:0;padding:5px 4px}
+  .pf-rp-funnel-val{font-size:16px}
+  .pf-rp-grid{grid-template-columns:1fr}
+  .pf-rp-card{padding:var(--s2)}
+}
 /* Event-Horizon — Anstehende Katalysator-Termine (HED-150 Zyklus 156)
    Timeline visualization of upcoming binary events (earnings) per ticker.
    Implied moves from options-term-structure (ATM straddle). Catalyst-zone risk
@@ -9305,7 +9368,143 @@ function calibSvg(buckets){
     }
   }
 
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Research Pipeline — Thesis-Funnel + Red-Team Verdikte (HED-150 Zyklus 157).
+  // Surfaces the institutional research process from the latest briefing:
+  // candidates analyzed, devil's-advocate verdicts, blind-spot critiques,
+  // falsification criteria, and cross-thesis correlation warnings. Builds
+  // transparency that retail funds don't show — shows WHY we are/aren't in a name.
+  let researchPipelineHtml="";
+  {
+    const briefing=D.briefing||{};
+    const theses=((briefing.theses||{}).theses)||[];
+    const da=briefing.devils_advocate||{};
+    const critiques=da.critiques||[];
+    const overall=da.overall||"";
+    const corrNote=da.correlation_note||"";
+    // Build critique map
+    const _cMap={};
+    critiques.forEach(c=>{if(c&&c.id) _cMap[c.id]=c;});
+
+    if(theses.length){
+      // Funnel stats
+      const verds={proceed:0, caution:0, reject:0, unknown:0};
+      theses.forEach(t=>{
+        const c=_cMap[t.id]||{};
+        const v=(c.verdict||"unknown").toLowerCase();
+        if(verds[v]!=null) verds[v]++; else verds.unknown++;
+      });
+
+      function _esc(s){return esc(String(s||""));}
+      function _truncate(s,n){
+        if(!s) return "";
+        s=String(s);
+        if(s.length<=n) return s;
+        return s.slice(0,n-1).replace(/\s+\S*$/,"")+"…";
+      }
+      function _verdBadge(v){
+        const m={
+          "proceed":["PROCEED","pf-rp-verd-prc"],
+          "caution":["CAUTION","pf-rp-verd-cau"],
+          "reject":["REJECT","pf-rp-verd-rej"]
+        };
+        const [lbl,cls]=m[v]||["UNGEPRÜFT","pf-rp-verd-cau"];
+        return `<span class="pf-rp-verd ${cls}">${lbl}</span>`;
+      }
+      function _cardCls(v){
+        if(v==="proceed") return "pf-rp-card pf-rp-card-prc";
+        if(v==="caution") return "pf-rp-card pf-rp-card-cau";
+        if(v==="reject") return "pf-rp-card pf-rp-card-rej";
+        return "pf-rp-card";
+      }
+      function _dirBadge(dir){
+        if(!dir) return "";
+        const d=String(dir).toLowerCase();
+        if(d==="long") return `<span class="pf-rp-dir pf-rp-dir-long">LONG</span>`;
+        if(d==="short") return `<span class="pf-rp-dir pf-rp-dir-short">SHORT</span>`;
+        return `<span class="pf-rp-dir">${_esc(dir.toUpperCase())}</span>`;
+      }
+
+      const cardsHtml=theses.map(t=>{
+        const c=_cMap[t.id]||{};
+        const v=(c.verdict||"").toLowerCase();
+        const tickersHtml=(t.tickers||[]).map(tk=>`<span class="pf-rp-tk">${_esc(tk)}</span>`).join("");
+        const horizon=t.horizon?`<span class="pf-rp-horizon">${_esc(t.horizon)}</span>`:"";
+        const dirHtml=_dirBadge(t.direction);
+        const conv=t.conviction!=null?t.conviction:null;
+        const convPct=conv!=null?Math.round(conv*100):null;
+        const convRow=conv!=null?`<div class="pf-rp-conv-row">
+          <span class="pf-rp-conv-lbl">Conviction</span>
+          <div class="pf-rp-conv-bar"><div class="pf-rp-conv-fill" style="width:${convPct}%"></div></div>
+          <span class="pf-rp-conv-val">${(conv).toFixed(2)}</span>
+        </div>`:"";
+        const cases=[
+          t.bull_case?.length?`<span class="pf-rp-case pf-rp-case-bull">▲ ${t.bull_case.length} Bull</span>`:"",
+          t.bear_case?.length?`<span class="pf-rp-case pf-rp-case-bear">▼ ${t.bear_case.length} Bear</span>`:"",
+          t.catalysts?.length?`<span class="pf-rp-case pf-rp-case-cat">◈ ${t.catalysts.length} Katalysator${t.catalysts.length===1?"":"e"}</span>`:""
+        ].filter(Boolean).join("");
+        const thesis=t.thesis?`<div class="pf-rp-thesis"><span class="pf-rp-thesis-lbl">These</span>${_esc(_truncate(t.thesis,260))}</div>`:"";
+
+        let rtHtml="";
+        if(c.blind_spot||c.falsification){
+          const blind=c.blind_spot?`<div class="pf-rp-rt-blind">${_esc(_truncate(c.blind_spot,280))}</div>`:"";
+          const falsi=c.falsification?`<div class="pf-rp-rt-falsi"><span class="pf-rp-rt-falsi-lbl">Falsifikation</span>${_esc(_truncate(c.falsification,220))}</div>`:"";
+          rtHtml=`<div class="pf-rp-rt">
+            <div class="pf-rp-rt-hdr">⚖ Red-Team — Blind Spot</div>
+            ${blind}${falsi}
+          </div>`;
+        }
+
+        return `<div class="${_cardCls(v)}">
+          <div class="pf-rp-card-hdr">
+            <div class="pf-rp-tickers">${tickersHtml}${dirHtml}${horizon}</div>
+            ${_verdBadge(v)}
+          </div>
+          ${convRow}
+          ${thesis}
+          ${cases?`<div class="pf-rp-cases">${cases}</div>`:""}
+          ${rtHtml}
+        </div>`;
+      }).join("");
+
+      // Correlation warning if multiple theses share underlying
+      const tkCounts={};
+      theses.forEach(t=>(t.tickers||[]).forEach(tk=>{const T=String(tk).toUpperCase(); tkCounts[T]=(tkCounts[T]||0)+1;}));
+      const corrTickers=Object.entries(tkCounts).filter(([_,n])=>n>1);
+      let corrHtml="";
+      if(corrNote||corrTickers.length){
+        const note=corrNote?_esc(_truncate(corrNote,400)):
+          `Mehrere Thesen teilen Underlying ${corrTickers.map(([t,n])=>`${t} (${n}×)`).join(" · ")} — keine unabhängigen Signale, gleicher Risk-Factor.`;
+        corrHtml=`<div class="pf-rp-corr">
+          <div class="pf-rp-corr-h">⚖ Korrelations-Diagnose</div>
+          ${note}
+        </div>`;
+      }
+
+      const briefingDate=briefing.created_at?String(briefing.created_at).slice(0,10):"—";
+      const briefingTime=briefing.created_at?String(briefing.created_at).slice(11,16):"";
+      const overallLbl=overall?` · Gesamtverdikt: <b>${_esc(overall.toUpperCase())}</b>`:"";
+
+      researchPipelineHtml=`<div class="panel pf-rp-panel">
+        <div class="pf-rp-h">
+          <div>
+            <div class="pf-rp-title">Research Pipeline — Thesis-Funnel</div>
+            <div class="pf-rp-sub">Letztes Briefing ${briefingDate} ${briefingTime} UTC · ${theses.length} Kandidaten · Red-Team-Verdikte je These${overallLbl}</div>
+          </div>
+          <div class="pf-rp-funnel">
+            <div class="pf-rp-funnel-cell"><span class="pf-rp-funnel-val">${theses.length}</span><span class="pf-rp-funnel-lbl">Analysiert</span></div>
+            <div class="pf-rp-funnel-cell pf-rp-funnel-cell-pass"><span class="pf-rp-funnel-val">${verds.proceed}</span><span class="pf-rp-funnel-lbl">Proceed</span></div>
+            <div class="pf-rp-funnel-cell pf-rp-funnel-cell-cau"><span class="pf-rp-funnel-val">${verds.caution}</span><span class="pf-rp-funnel-lbl">Caution</span></div>
+            <div class="pf-rp-funnel-cell pf-rp-funnel-cell-rej"><span class="pf-rp-funnel-val">${verds.reject}</span><span class="pf-rp-funnel-lbl">Reject</span></div>
+          </div>
+        </div>
+        ${corrHtml}
+        <div class="pf-rp-grid">${cardsHtml}</div>
+        <div class="pf-rp-foot">Quelle: aktuellstes Briefing (id ${_esc((briefing.id||"").slice(0,8))}). Verdikte aus Red-Team-Pass: PROCEED (Position-fähig), CAUTION (Position-fähig mit kleinerer Größe / definiertem Event-Risk), REJECT (strukturelle Schwäche, keine Position). Blind-Spot = was übersieht der Strategist; Falsifikation = was würde die These widerlegen. Korrelations-Diagnose flaggt Konzentration über Thesen hinweg.</div>
+      </div>`;
+    }
+  }
+
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
