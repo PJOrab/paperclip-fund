@@ -1121,6 +1121,43 @@ a.call-chip:hover{border-color:var(--accent);background:var(--panel)}
   /* very narrow: also drop the 30d column and 1d to keep table readable */
   .sec-rot-tbl th.sr-hide-narrow,.sec-rot-tbl td.sr-hide-narrow{display:none}
 }
+/* Valuation-Edge-Scatter (HED-137 cycle 99): Forward P/E × Revenue-Growth scatter for the
+   in-universe watchlist — Bloomberg EQS-style positioning map. Quadrants split at axis
+   medians; book positions get a green/red ring. Answers "is the book in cheap-growth
+   or expensive-quality?" at a glance — fundamental backdrop next to the rotation/momentum view. */
+.vs-panel{padding:var(--s3);margin-bottom:var(--s3)}
+.vs-h{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--s3);flex-wrap:wrap;margin-bottom:var(--s2)}
+.vs-title{font-size:var(--fs-h2);font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+.vs-sub{color:var(--mut);font-size:var(--fs-micro);margin-top:3px;line-height:1.4;max-width:62ch}
+.vs-callout{font-size:var(--fs-micro);color:var(--mut);font-variant-numeric:tabular-nums}
+.vs-callout b{color:var(--txt);font-weight:600}
+.vs-chart{width:100%;height:auto;display:block;font-variant-numeric:tabular-nums}
+.vs-chart .vs-grid{stroke:var(--line);stroke-width:1;opacity:.5}
+.vs-chart .vs-med{stroke:var(--mut);stroke-width:1;stroke-dasharray:3 3;opacity:.55}
+.vs-chart .vs-ax{stroke:var(--line);stroke-width:1}
+.vs-chart text{fill:var(--mut);font-size:10px;font-family:-apple-system,Segoe UI,Roboto,sans-serif}
+.vs-chart .vs-axlbl{fill:var(--txt);font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.vs-chart .vs-qlbl{fill:var(--mut);font-size:9px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;opacity:.7}
+.vs-chart .vs-dot{stroke:var(--bg);stroke-width:1.2;cursor:pointer;transition:r .12s,stroke-width .12s}
+.vs-chart .vs-dot:hover{stroke-width:2}
+.vs-chart .vs-dot.vs-book{stroke-width:2.4}
+.vs-chart .vs-dot.vs-book-long{stroke:var(--green)}
+.vs-chart .vs-dot.vs-book-short{stroke:var(--red)}
+.vs-chart .vs-tklbl{fill:var(--txt);font-size:10px;font-weight:600;pointer-events:none}
+.vs-chart .vs-tklbl-bg{fill:var(--bg);opacity:.78}
+.vs-legend{display:flex;flex-wrap:wrap;gap:var(--s3) var(--s4);margin-top:var(--s2);font-size:var(--fs-micro);color:var(--mut)}
+.vs-leg-item{display:inline-flex;align-items:center;gap:5px}
+.vs-leg-sw{display:inline-block;width:10px;height:10px;border-radius:50%;border:1px solid var(--bg)}
+.vs-leg-ring{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--panel2);border:2px solid var(--accent)}
+.vs-foot{color:var(--mut);font-size:var(--fs-micro);margin-top:var(--s2);line-height:1.4}
+@media (max-width:760px){
+  .vs-panel{padding:var(--s2)}
+  .vs-chart text{font-size:9px}
+  .vs-chart .vs-tklbl{font-size:9px}
+  .vs-chart .vs-axlbl{font-size:9px}
+  .vs-chart .vs-qlbl{display:none}
+  .vs-legend{font-size:10px;gap:var(--s2) var(--s3)}
+}
 @media (max-width:760px){
   .cards{grid-template-columns:repeat(2,1fr)}
   .sectors{grid-template-columns:1fr}
@@ -1297,6 +1334,7 @@ main:focus{outline:none}
   <section aria-labelledby="h-sectorview">
   <h2 id="h-sectorview">Sektor-Ansicht <span id="secstand" class="tag"></span></h2>
   <div class="panel sec-rot" id="sectorrotation" hidden></div>
+  <div class="panel vs-panel" id="valuationscatter" hidden></div>
   <div class="panel sec-hmap" id="sectorheatmap" aria-busy="true" hidden></div>
   <div class="grid sectors" id="sectorview" aria-busy="true"><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div></div>
   </section>
@@ -3320,6 +3358,173 @@ function calibSvg(buckets){
     </table>
     <div class="sec-rot-foot">Sortiert nach 5d-Performance. Heat-Skalen pro Spalte: 1d ±3% · 5d ±6% · 20d ±12% · 30d ±15%. Trend-Logik vergleicht 5d-Tagesrate (5d/5) mit 20d-Tagesrate (20d/20); ≥1.5× = ↗, ≤0.5× = ↘. Buch-Netto: + long, − short, leer = keine Position. Equal-weight, nicht Marktkap.</div>
   `;
+})();
+
+// Valuation-Edge-Scatter (HED-137 Zyklus 99): Bloomberg EQS-style Forward P/E × Revenue-Growth
+// positioning map for the in-universe watchlist. Each dot = one ticker, coloured by sector,
+// ringed green/red if the book holds an active long/short call. Quadrants split at axis medians:
+//   top-left  = high growth, low P/E   → "cheap growth" (attractive)
+//   top-right = high growth, high P/E  → "priced-in growth"
+//   bot-left  = low growth,  low P/E   → "value-trap"
+//   bot-right = low growth,  high P/E  → "expensive low-growth"
+// Answers "where on the valuation/growth grid does the book sit?" in one glance — the
+// fundamental backdrop next to the technical rotation table.
+(function renderValuationScatter(){
+  const sv=D.sector_view, root=$("valuationscatter");
+  if(!sv || !(sv.sectors||[]).length || !root) return;
+  // Build {ticker → sectorId} map and gather (fwdPE, growth) datapoints
+  const SEC_COLOR={S1:"#4da3ff",S2:"#3fb950",S3:"#d29922",S4:"#a371f7",S5:"#f78166",S6:"#76e4f7"};
+  const SEC_NAME={};
+  const pts=[];
+  (sv.sectors||[]).forEach(s=>{
+    SEC_NAME[s.id]=s.name||s.id;
+    (s.tickers||[]).forEach(t=>{
+      const c=t.consensus; if(!c) return;
+      const px=t.price, eps=c.fwd_eps, g=c.rev_growth_yoy;
+      if(!(px>0)||!(eps>0)||g==null||!isFinite(g)) return;
+      const pe=px/eps;
+      // exclude obviously broken inputs (negative or implausibly extreme)
+      if(!isFinite(pe)||pe<=0||pe>200) return;
+      pts.push({tk:String(t.ticker||"").toUpperCase(),sec:s.id,pe,g});
+    });
+  });
+  if(pts.length<4) return;  // need enough points to make the scatter meaningful
+  // Active book direction map — track-record theses that are not yet closed/scored
+  const tr=D.track_record;
+  const theses=(tr&&Array.isArray(tr.theses))?tr.theses:[];
+  const isClosed=t=>{const v=String(t.verdict||"").toLowerCase();return v==="hit"||v==="miss"||v==="closed"||v==="exit";};
+  const bookDir={};
+  theses.filter(t=>!isClosed(t)).forEach(t=>{
+    const dir=String(t.direction||"").toLowerCase();
+    const tk=((t.tickers||[])[0]||"").toUpperCase();
+    if(!tk) return;
+    const ex=bookDir[tk];
+    if(!ex||((t.conviction||0)>(ex.conv||0))) bookDir[tk]={dir,conv:t.conviction||0};
+  });
+  // Also fall back to latest briefing theses (matches Open Calls / Heatmap behaviour)
+  const latestB=D.briefing||{};
+  ((latestB.theses||{}).theses||[]).forEach(t=>{
+    const dir=String(t.direction||"").toLowerCase();
+    (t.tickers||[]).forEach(tk=>{
+      const k=String(tk).toUpperCase();
+      if(!bookDir[k]||(t.conviction||0)>(bookDir[k].conv||0)) bookDir[k]={dir,conv:t.conviction||0};
+    });
+  });
+  // Axis ranges — clamp outliers but keep grid readable
+  const peClamp=v=>Math.max(0,Math.min(v,90));
+  const gClamp =v=>Math.max(-20,Math.min(v,120));
+  pts.forEach(p=>{p.peC=peClamp(p.pe); p.gC=gClamp(p.g);});
+  const peMin=0, peMax=Math.max(60, Math.ceil(Math.max(...pts.map(p=>p.peC))/10)*10);
+  const gValsRaw=pts.map(p=>p.gC);
+  const gMin=Math.min(-10, Math.floor(Math.min(...gValsRaw)/10)*10);
+  const gMax=Math.max(60, Math.ceil(Math.max(...gValsRaw)/10)*10);
+  // Medians for quadrant lines
+  const sorted=arr=>arr.slice().sort((a,b)=>a-b);
+  const median=arr=>{const s=sorted(arr); const n=s.length; return n?(n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2):0;};
+  const peMed=median(pts.map(p=>p.peC));
+  const gMed =median(pts.map(p=>p.gC));
+  // SVG geometry
+  const W=800,H=380, mL=46,mR=14,mT=14,mB=42;
+  const pw=W-mL-mR, ph=H-mT-mB;
+  const xOf=v=>mL+((v-peMin)/(peMax-peMin))*pw;
+  const yOf=v=>mT+ph-((v-gMin)/(gMax-gMin))*ph;
+  // Grid + axis ticks
+  const peTicks=[]; for(let v=10;v<=peMax;v+=10) peTicks.push(v);
+  const gTicks=[]; for(let v=Math.ceil(gMin/20)*20; v<=gMax; v+=20) gTicks.push(v);
+  const gridLines=[
+    ...peTicks.map(v=>`<line class="vs-grid" x1="${xOf(v).toFixed(1)}" y1="${mT}" x2="${xOf(v).toFixed(1)}" y2="${(mT+ph).toFixed(1)}"/>`),
+    ...gTicks.map(v=>`<line class="vs-grid" x1="${mL}" y1="${yOf(v).toFixed(1)}" x2="${(mL+pw).toFixed(1)}" y2="${yOf(v).toFixed(1)}"/>`),
+  ].join("");
+  const tickLabels=[
+    ...peTicks.map(v=>`<text x="${xOf(v).toFixed(1)}" y="${(mT+ph+14).toFixed(1)}" text-anchor="middle">${v}×</text>`),
+    ...gTicks.map(v=>`<text x="${(mL-6).toFixed(1)}" y="${(yOf(v)+3.5).toFixed(1)}" text-anchor="end">${v>0?"+":""}${v}%</text>`),
+  ].join("");
+  // Median quadrant lines
+  const medX=xOf(peMed).toFixed(1), medY=yOf(gMed).toFixed(1);
+  const medLines=`<line class="vs-med" x1="${medX}" y1="${mT}" x2="${medX}" y2="${(mT+ph).toFixed(1)}"/>
+                  <line class="vs-med" x1="${mL}" y1="${medY}" x2="${(mL+pw).toFixed(1)}" y2="${medY}"/>`;
+  // Quadrant labels (only on non-mobile via CSS)
+  const qLabels=`
+    <text class="vs-qlbl" x="${(mL+6)}" y="${(mT+14)}" text-anchor="start">Cheap Growth</text>
+    <text class="vs-qlbl" x="${(mL+pw-6)}" y="${(mT+14)}" text-anchor="end">Priced-In Growth</text>
+    <text class="vs-qlbl" x="${(mL+6)}" y="${(mT+ph-6)}" text-anchor="start">Value-Trap</text>
+    <text class="vs-qlbl" x="${(mL+pw-6)}" y="${(mT+ph-6)}" text-anchor="end">Expensive Low-Growth</text>`;
+  // Axes
+  const axes=`<line class="vs-ax" x1="${mL}" y1="${(mT+ph).toFixed(1)}" x2="${(mL+pw).toFixed(1)}" y2="${(mT+ph).toFixed(1)}"/>
+              <line class="vs-ax" x1="${mL}" y1="${mT}" x2="${mL}" y2="${(mT+ph).toFixed(1)}"/>`;
+  // Axis titles
+  const axTitles=`
+    <text class="vs-axlbl" x="${(mL+pw/2).toFixed(1)}" y="${(H-6).toFixed(1)}" text-anchor="middle">Forward P/E</text>
+    <text class="vs-axlbl" x="${-((mT+ph/2))}" y="12" text-anchor="middle" transform="rotate(-90)">Rev Growth YoY</text>`;
+  // Sort so book dots render on top
+  pts.sort((a,b)=>(bookDir[a.tk]?1:0)-(bookDir[b.tk]?1:0));
+  const esc=window._esc||(s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])));
+  const dots=pts.map(p=>{
+    const cx=xOf(p.peC), cy=yOf(p.gC);
+    const fill=SEC_COLOR[p.sec]||"#8aa0bd";
+    const bk=bookDir[p.tk];
+    const cls=["vs-dot"];
+    if(bk){ cls.push("vs-book"); cls.push(bk.dir==="short"?"vs-book-short":"vs-book-long"); }
+    const r=bk?6.4:4.2;
+    const tip=`${p.tk} · ${SEC_NAME[p.sec]||p.sec} · Fwd P/E ${p.pe.toFixed(1)}× · Rev-Growth ${p.g>=0?"+":""}${p.g.toFixed(1)}%${bk?` · ${bk.dir.toUpperCase()}${bk.conv?" "+bk.conv.toFixed(2):""}`:""}`;
+    return `<circle class="${cls.join(" ")}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}" fill="${fill}"><title>${esc(tip)}</title></circle>`;
+  }).join("");
+  // Ticker labels for book positions only (else too cluttered)
+  const labels=pts.filter(p=>bookDir[p.tk]).map(p=>{
+    const cx=xOf(p.peC), cy=yOf(p.gC);
+    // place label to the right by default; flip if too close to right edge
+    const flip=cx>mL+pw-46;
+    const tx=flip?cx-9:cx+9;
+    const anchor=flip?"end":"start";
+    const w=p.tk.length*5.6+4;
+    const bx=flip?tx-w:tx-2;
+    return `<rect class="vs-tklbl-bg" x="${bx.toFixed(1)}" y="${(cy-7).toFixed(1)}" width="${w.toFixed(1)}" height="13" rx="2"/>
+            <text class="vs-tklbl" x="${tx.toFixed(1)}" y="${(cy+3.5).toFixed(1)}" text-anchor="${anchor}">${esc(p.tk)}</text>`;
+  }).join("");
+  // Legend — sector swatches + book ring explainer
+  const secsUsed=Array.from(new Set(pts.map(p=>p.sec))).sort();
+  const legend=`<div class="vs-legend">${secsUsed.map(sid=>{
+    const col=SEC_COLOR[sid]||"#8aa0bd";
+    return `<span class="vs-leg-item"><span class="vs-leg-sw" style="background:${col}"></span>${esc(sid)} · ${esc(SEC_NAME[sid]||sid)}</span>`;
+  }).join("")}<span class="vs-leg-item"><span class="vs-leg-ring" style="border-color:var(--green)"></span>Buch LONG</span><span class="vs-leg-item"><span class="vs-leg-ring" style="border-color:var(--red)"></span>Buch SHORT</span></div>`;
+  // Stats callout: where does the book sit? share of long names in cheap-growth quadrant
+  const bookPts=pts.filter(p=>bookDir[p.tk]);
+  let calloutHtml="";
+  if(bookPts.length){
+    const longPts=bookPts.filter(p=>bookDir[p.tk].dir!=="short");
+    const cgLong=longPts.filter(p=>p.peC<=peMed && p.gC>=gMed).length;
+    const pricedIn=longPts.filter(p=>p.peC>peMed && p.gC>=gMed).length;
+    const avgPE = bookPts.reduce((s,p)=>s+p.peC,0)/bookPts.length;
+    const avgG  = bookPts.reduce((s,p)=>s+p.gC,0)/bookPts.length;
+    const univAvgPE = pts.reduce((s,p)=>s+p.peC,0)/pts.length;
+    const univAvgG  = pts.reduce((s,p)=>s+p.gC,0)/pts.length;
+    const pePremium=((avgPE-univAvgPE)/Math.max(univAvgPE,1e-6))*100;
+    const gPremium = avgG-univAvgG;
+    calloutHtml=`<div class="vs-callout">Buch: <b>${bookPts.length}</b> Position${bookPts.length===1?"":"en"} · Ø Fwd P/E <b>${avgPE.toFixed(1)}×</b> (Universum ${univAvgPE.toFixed(1)}×, ${pePremium>=0?"+":""}${pePremium.toFixed(0)}%) · Ø Growth <b>${avgG>=0?"+":""}${avgG.toFixed(1)}%</b> (Universum ${univAvgG>=0?"+":""}${univAvgG.toFixed(1)}%, ${gPremium>=0?"+":""}${gPremium.toFixed(1)}pp)${longPts.length?` · davon <b>${cgLong}</b> in Cheap-Growth, <b>${pricedIn}</b> in Priced-In-Growth`:""}</div>`;
+  } else {
+    calloutHtml=`<div class="vs-callout"><b>${pts.length}</b> Ticker mit Konsens-EPS · Median Fwd P/E <b>${peMed.toFixed(1)}×</b> · Median Growth <b>${gMed>=0?"+":""}${gMed.toFixed(1)}%</b></div>`;
+  }
+  root.hidden=false;
+  root.innerHTML = `
+    <div class="vs-h">
+      <div>
+        <div class="vs-title">Valuation × Growth — Edge-Map</div>
+        <div class="vs-sub">Forward P/E (= Preis ÷ Konsens-EPS) gegen Umsatzwachstum YoY für die in-Universe Watchlist. Quadranten teilen sich an den Median-Achsen — links-oben = günstiges Wachstum, rechts-unten = teuer ohne Wachstum. Buch-Positionen sind grün/rot beringt.</div>
+      </div>
+      ${calloutHtml}
+    </div>
+    <svg class="vs-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Valuation-Edge-Scatter — Forward P/E gegen Umsatzwachstum, ${pts.length} Ticker">
+      ${gridLines}
+      ${medLines}
+      ${qLabels}
+      ${axes}
+      ${tickLabels}
+      ${axTitles}
+      ${dots}
+      ${labels}
+    </svg>
+    ${legend}
+    <div class="vs-foot">Forward P/E = aktueller Preis ÷ Konsens-Forward-EPS (Yahoo). Growth = trailing Umsatzwachstum YoY. Ticker ohne EPS-Schätzung oder mit negativem Wachstum unter −20% sind nicht eingezeichnet. Median-Linien dienen als Quadranten-Trenner — sie verschieben sich mit dem Universum, nicht absolut.</div>`;
 })();
 
 // Sektor-Heatmap (HED-137 Zyklus 93): Bloomberg-/Finviz-style scan of the AI/Tech
