@@ -2439,6 +2439,14 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-nav-chip:focus{outline:1px solid var(--blue);outline-offset:1px}
 .pf-nav-chip-active{background:rgba(88,166,255,.15);color:var(--txt);border-color:rgba(88,166,255,.45);box-shadow:0 0 0 1px rgba(88,166,255,.25)}
 .pf-nav-chip-active .pf-nav-chip-icon{color:var(--blue)}
+/* Compact-Mode Toggle (HED-150 Zyklus 176) */
+.pf-nav-toggle{margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:14px;font-size:10px;font-weight:600;color:var(--mut);background:rgba(139,148,158,.06);border:1px solid rgba(139,148,158,.15);cursor:pointer;flex-shrink:0;transition:all .12s;font-family:inherit;white-space:nowrap}
+.pf-nav-toggle:hover{background:rgba(139,148,158,.15);color:var(--txt);border-color:rgba(139,148,158,.3)}
+.pf-nav-toggle-active{background:rgba(88,166,255,.12);color:var(--blue);border-color:rgba(88,166,255,.35)}
+.pf-nav-toggle-active:hover{background:rgba(88,166,255,.2)}
+.pf-nav-toggle-icon{font-size:11px;line-height:1}
+/* When compact mode active, hide legacy HED-137 bottom-half panels */
+.pf-compact .pf-legacy{display:none!important}
 .pf-nav-chip-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:14px;padding:0 4px;border-radius:7px;font-size:9px;font-weight:700;background:rgba(248,81,73,.18);color:#f85149;line-height:1;letter-spacing:0}
 .pf-nav-chip-badge-warn{background:rgba(210,168,80,.18);color:#e3b341}
 .pf-nav-chip-badge-pos{background:rgba(35,134,54,.18);color:#3fb950}
@@ -11580,6 +11588,9 @@ function calibSvg(buckets){
     subNavHtml=`<nav class="pf-nav-strip" aria-label="Portfolio-Sub-Navigation">
       <span class="pf-nav-lbl">Jump-to</span>
       ${chips.join("")}
+      <button id="pf-compact-toggle" class="pf-nav-toggle" type="button" aria-pressed="false" title="Compact Mode — versteckt 19 Legacy-Risiko/Analytics-Panels (Risk-Stats, Stress, Alloc, Kelly, Crowding, etc.) — fokussiert auf die HED-150 Synthese-Layer">
+        <span class="pf-nav-toggle-icon">⊞</span><span class="pf-nav-toggle-lbl">Compact</span>
+      </button>
     </nav>`;
   }
 
@@ -12300,7 +12311,43 @@ function calibSvg(buckets){
     </div>`;
   }
 
-  root.innerHTML=`${subNavHtml}${freshnessHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-funnel")}${funnelHtml}${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  root.innerHTML=`${subNavHtml}${freshnessHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-funnel")}${funnelHtml}${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}<div class="pf-legacy">${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}</div>`;
+  // Compact-Mode Toggle (HED-150 Zyklus 176).
+  // Lets PM hide the 19 legacy bottom-half analytics panels to focus on the
+  // HED-150 synthesis layer. Choice persists via localStorage across sessions.
+  (function initCompactMode(){
+    const btn=document.getElementById("pf-compact-toggle");
+    if(!btn) return;
+    const root=document.getElementById("portfolioview")||document.body;
+    const KEY="pf-compact-mode-v1";
+    function _apply(on){
+      if(on){
+        root.classList.add("pf-compact");
+        btn.classList.add("pf-nav-toggle-active");
+        btn.setAttribute("aria-pressed","true");
+        btn.querySelector(".pf-nav-toggle-icon").textContent="⊟";
+        btn.querySelector(".pf-nav-toggle-lbl").textContent="Full";
+        btn.title="Click — show all 19 legacy analytics panels";
+      } else {
+        root.classList.remove("pf-compact");
+        btn.classList.remove("pf-nav-toggle-active");
+        btn.setAttribute("aria-pressed","false");
+        btn.querySelector(".pf-nav-toggle-icon").textContent="⊞";
+        btn.querySelector(".pf-nav-toggle-lbl").textContent="Compact";
+        btn.title="Compact Mode — versteckt 19 Legacy-Risiko/Analytics-Panels — fokussiert auf die HED-150 Synthese-Layer";
+      }
+    }
+    // Init from localStorage
+    let initial=false;
+    try{initial=localStorage.getItem(KEY)==="1";}catch(e){}
+    _apply(initial);
+    btn.addEventListener("click",function(){
+      const newState=!root.classList.contains("pf-compact");
+      _apply(newState);
+      try{localStorage.setItem(KEY, newState?"1":"0");}catch(e){}
+    });
+  })();
+
   // Heute-Story Copy-to-Clipboard (HED-150 Zyklus 175).
   // PM clicks to grab narrative as plain text for IC emails / Slack sharing.
   (function initStoryCopy(){
