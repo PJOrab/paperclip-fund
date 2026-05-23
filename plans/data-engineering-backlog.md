@@ -63,6 +63,42 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-23 — HED-142 (DE Loop Zyklus 90): **GovContractsAdapter — US federal contract awards via USAspending.gov**
+  (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`,
+  `agents/prompts.py`, pushed `15a0177`). Strategy.md tier-1 supply-chain /
+  forward-revenue signal: a $1B+ DoD or Treasury contract obligation routinely
+  appears in USAspending 7-14 days BEFORE the contractor announces it in a
+  press release or 8-K. Quant funds pay Quiver Quant / GovTribe / Bloomberg
+  GOVCON five-figure annual fees for this same data; the official source is
+  free, JSON, no API key required. Per ticker, queries
+  `/api/v2/search/spending_by_award/` for award_type A/B/C/D (contracts; not
+  grants/loans), action_date last 14d, amount ≥$1M. POST via stdlib
+  `urllib.request` only — no new deps. Coverage scoped to the 7 watchlist
+  tickers with measurable direct federal prime flow (validated empirically
+  2026-05-23): PLTR (~55% gov rev), MSFT (Azure Gov/JWCC), AMZN (AWS Gov/
+  JWCC), GOOGL (JWCC), ORCL (Oracle Cloud Gov + JWCC), DELL (server hardware),
+  ANET (networking). Other 23 watchlist tickers returned 0 awards ≥$1M last
+  2 months (hardware OEMs reach gov via integrator resellers) — omitted to
+  save 23 API calls/cycle for zero signal. Text uses Last Modified Date as
+  action date plus a "base contract: YYYY-MM-DD" hint when the parent IDV
+  signing date differs (distinguishes fresh awards from mods on long-running
+  IDVs). source=gov_contracts, reliability=0.90. Stable dedup per USAspending
+  `generated_internal_id`. Triage prompt: GOV CONTRACTS block with importance
+  tiering by aggregate $ size (≥$500M=5, $100M-500M=4, $10M-100M=3), aggregation
+  rule (roll same-ticker contracts into one cluster), cross-refs to EPS
+  revisions/insider cluster/earnings calendar.
+  **Live test: 16 directional items.** Strongest reads:
+  PLTR $94.7M USDA (LANDMARK platform initiative — major new system),
+  MSFT $76.0M USDA (Azure Stratus), AMZN $97.3M GSA (AWS Cloud Service),
+  DELL $42.5M DHS-CBP + $19.3M USCIS + $19.1M HHS + $11.9M EPA = $92.8M
+  federal MSFT-licensing flow this week through Dell Federal, PLTR $9.0M
+  State Dept + $4.7M DoJ (recurring Palantir USG flow). Adapter count 18 → 19.
+  py_compile + test_dedup + test_watchlist_sync green.
+  Investor framing: PLTR / MSFT-cloud-gov / ORCL-JWCC revenue concentration is
+  a thesis-critical variable. The pipeline previously had zero visibility into
+  the federal contract pipeline — obligations only surfaced post-hoc via press
+  releases or 10-Q footnotes. Now the briefing can flag the $94.7M Palantir
+  USDA award the day it lands in USAspending, not the day Palantir announces it.
 - 2026-05-23 — HED-139 (CIO pipeline-critical loop): **Strict stage-output schema gate — Telegram alert + hard-fail on structural miss**
   (`agents/run.py`, `agents/test_pipeline.py`, pushed `40f977a`). Before: `_check()` silently
   logged schema violations to stderr; a malformed Strategist output or shapeless Triage output
