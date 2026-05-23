@@ -507,6 +507,22 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .ec-kpi b{font-size:15px}
   .ec-svg{max-height:130px}
 }
+/* Conviction-vs-P&L Scatter — "are my high-conviction calls working?" (HED-137 cycle 84) */
+.pf-scatter{margin-top:var(--s3);padding:var(--s3)}
+.pf-scatter-h{font-size:var(--fs-cap);color:var(--mut);margin-bottom:var(--s2);display:flex;
+  justify-content:space-between;align-items:baseline;gap:var(--s3)}
+.pf-scatter-h .pf-scatter-sub{font-size:var(--fs-micro)}
+.pf-scatter-svg{width:100%;height:auto;display:block;max-height:220px}
+.sc-zero{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}
+.sc-axis{stroke:var(--line);stroke-width:1}
+.sc-dot{stroke:var(--bg);stroke-width:2;cursor:help;transition:r .12s}
+.sc-dot-pos{fill:var(--green)}
+.sc-dot-neg{fill:var(--red)}
+.sc-dot-flat{fill:var(--mut)}
+.sc-label{font-size:11px;fill:var(--txt);font-weight:700;font-family:inherit;pointer-events:none}
+.sc-qlabel{font-size:9px;fill:var(--mut);text-transform:uppercase;letter-spacing:.04em;font-family:inherit}
+.sc-axlabel{font-size:9px;fill:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-family:inherit}
+.sc-foot{font-size:var(--fs-micro);margin-top:6px;line-height:1.4}
 /* Thesis price-context bar: Bloomberg-style market data row embedded in each call card */
 .th-mkt{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin:var(--s2) 0 var(--s3);
   background:var(--bg);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-variant-numeric:tabular-nums}
@@ -1643,7 +1659,97 @@ function calibSvg(buckets){
       </table>
     </div>`;
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${riskHtml}`;
+  // Conviction-vs-P&L Scatter — "are my high-conviction calls working?"
+  // X: conviction (0.0–1.0); Y: unrealised P&L %; one dot per priced active call.
+  // Quadrant dividers at x=0.5 (conviction midpoint) and y=0.
+  // If high-conviction dots cluster in the "working" quadrant, the scoring model has edge.
+  let scatterPanelHtml="";
+  if(priced.length>=2){
+    const W=480, H=200;
+    const pad={l:44,r:16,t:20,b:34};
+    const iW=W-pad.l-pad.r, iH=H-pad.t-pad.b;
+    const pnlVals=priced.map(r=>r.pnl);
+    const convVals=priced.map(r=>r.t.conviction||0);
+    let yLo=Math.min(0,...pnlVals), yHi=Math.max(0,...pnlVals);
+    const yRange=yHi-yLo; if(yRange<2){ const mid=(yHi+yLo)/2; yLo=mid-1; yHi=mid+1; }
+    const yPad=yRange*0.18; yLo-=yPad; yHi+=yPad;
+    const xLo=0, xHi=1;
+    const xMap=v=>pad.l+(v-xLo)/(xHi-xLo)*iW;
+    const yMap=v=>pad.t+(yHi-v)/(yHi-yLo)*iH;
+    const yZero=yMap(0), xMid=xMap(0.5);
+    const fmt=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
+    // Y-axis labels
+    const yLabTop=`<text class="sc-axlabel" x="${pad.l-6}" y="${pad.t+4}" text-anchor="end">${fmt(yHi)}</text>`;
+    const yLabBot=`<text class="sc-axlabel" x="${pad.l-6}" y="${pad.t+iH+3}" text-anchor="end">${fmt(yLo)}</text>`;
+    const yLabZero=`<text class="sc-axlabel" x="${pad.l-6}" y="${(yZero+3).toFixed(1)}" text-anchor="end">0%</text>`;
+    // X-axis labels
+    const xLab0=`<text class="sc-axlabel" x="${pad.l}" y="${H-6}">Conv 0.0</text>`;
+    const xLab1=`<text class="sc-axlabel" x="${W-pad.r}" y="${H-6}" text-anchor="end">1.0</text>`;
+    const xLab5=`<text class="sc-axlabel" x="${xMid.toFixed(1)}" y="${H-6}" text-anchor="middle">0.5</text>`;
+    // Axis lines
+    const axisLeft=`<line class="sc-axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+iH}"/>`;
+    const axisBot=`<line class="sc-axis" x1="${pad.l}" y1="${pad.t+iH}" x2="${pad.l+iW}" y2="${pad.t+iH}"/>`;
+    // Quadrant dividers
+    const hZero=`<line class="sc-zero" x1="${pad.l}" y1="${yZero.toFixed(1)}" x2="${(pad.l+iW).toFixed(1)}" y2="${yZero.toFixed(1)}"/>`;
+    const vMid=`<line class="sc-zero" x1="${xMid.toFixed(1)}" y1="${pad.t}" x2="${xMid.toFixed(1)}" y2="${pad.t+iH}"/>`;
+    // Quadrant labels (corners)
+    const qLabelPad=5;
+    const qTR=`<text class="sc-qlabel" x="${xMid+qLabelPad}" y="${pad.t+10}">High conv · Working</text>`;
+    const qTL=`<text class="sc-qlabel" x="${pad.l+qLabelPad}" y="${pad.t+10}">Low conv · Working</text>`;
+    const qBR=`<text class="sc-qlabel" x="${xMid+qLabelPad}" y="${pad.t+iH-4}">High conv · Dragging</text>`;
+    const qBL=`<text class="sc-qlabel" x="${pad.l+qLabelPad}" y="${pad.t+iH-4}">Low conv · Dragging</text>`;
+    // Dots + labels
+    // Detect overlapping labels: nudge y if two dots within 12px horizontally
+    const dotData=priced.map(r=>{
+      const t=r.t, tks=(t.tickers||[]).join("+"), pnl=r.pnl, conv=t.conviction||0;
+      const cx=xMap(conv), cy=yMap(pnl);
+      const cls=pnl>0.05?"sc-dot-pos":pnl<-0.05?"sc-dot-neg":"sc-dot-flat";
+      const tip=`${tks} · Conv ${conv.toFixed(2)} · ${pnl>=0?"+":"−"}${Math.abs(pnl).toFixed(2)}% · ${(t.direction||"").toUpperCase()}${t.label?" · "+t.label:""}`;
+      return {tks,pnl,conv,cx,cy,cls,tip};
+    });
+    const dots=dotData.map(d=>`<circle class="sc-dot ${d.cls}" cx="${d.cx.toFixed(1)}" cy="${d.cy.toFixed(1)}" r="8"><title>${esc(d.tip)}</title></circle>`).join("");
+    // Label placement: above dot if in lower half (pnl<0 or cy>height/2), else below
+    const labels=dotData.map(d=>{
+      const above=d.cy>(pad.t+iH/2);
+      const ly=above?d.cy-11:d.cy+16;
+      return `<text class="sc-label" x="${d.cx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle">${esc(d.tks)}</text>`;
+    }).join("");
+    // X-axis title
+    const xAxisTitle=`<text class="sc-axlabel" x="${(pad.l+iW/2).toFixed(1)}" y="${H}" text-anchor="middle">Conviction</text>`;
+    // Y-axis title (rotated)
+    const yAxisTitle=`<text class="sc-axlabel" transform="rotate(-90)" x="${-(pad.t+iH/2).toFixed(0)}" y="11" text-anchor="middle">P&amp;L %</text>`;
+    // Correlation note: are high-conv calls working more than low-conv?
+    // Pearson r between conv and pnl
+    const n=priced.length;
+    const meanC=priced.reduce((s,r)=>s+(r.t.conviction||0),0)/n;
+    const meanP=priced.reduce((s,r)=>s+r.pnl,0)/n;
+    const cov=priced.reduce((s,r)=>s+((r.t.conviction||0)-meanC)*(r.pnl-meanP),0)/n;
+    const sdC=Math.sqrt(priced.reduce((s,r)=>s+((r.t.conviction||0)-meanC)**2,0)/n);
+    const sdP=Math.sqrt(priced.reduce((s,r)=>s+(r.pnl-meanP)**2,0)/n);
+    const pearsonR=(sdC>0&&sdP>0)?cov/(sdC*sdP):0;
+    const rStr=(pearsonR>=0?"+":"")+pearsonR.toFixed(2);
+    const rInterpret=n<3?"(zu wenig Daten für Korrelation)":pearsonR>0.3?"(positive Edge: höhere Konv → bessere Performance)":pearsonR<-0.3?"(Warnung: höhere Konv → schlechtere Performance — Überzeugung nicht kalibriert)":"(kein signifikanter Zusammenhang bei aktuellem Buch)";
+    const svg=`<svg class="pf-scatter-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet"
+      role="img" aria-label="Conviction vs P&L Streudiagramm — ${n} aktive Calls">
+      ${axisLeft}${axisBot}${hZero}${vMid}
+      ${qTL}${qTR}${qBL}${qBR}
+      ${yLabTop}${yLabBot}${yLabZero}${xLab0}${xLab1}${xLab5}
+      ${yAxisTitle}${xAxisTitle}
+      ${dots}${labels}
+    </svg>`;
+    const highConvWorking=priced.filter(r=>r.pnl>0&&(r.t.conviction||0)>=0.5).length;
+    const highConvTotal=priced.filter(r=>(r.t.conviction||0)>=0.5).length;
+    const edgeNote=highConvTotal>0?`${highConvWorking}/${highConvTotal} High-Conv-Calls im Plus · Pearson r ${rStr} ${rInterpret}`:`Pearson r ${rStr} ${rInterpret}`;
+    scatterPanelHtml=`<div class="panel pf-scatter">
+      <div class="pf-scatter-h">
+        <span>Conviction vs. P&amp;L — Kalibrierungs-Scatter</span>
+        <span class="pf-scatter-sub muted">${esc(edgeNote)}</span>
+      </div>
+      ${svg}
+      <div class="sc-foot muted">Ideal: High-Conviction-Calls rechts oben. Systematischer Drift in "Dragging" = Conviction-Scoring neu kalibrieren.</div>
+    </div>`;
+  }
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${riskHtml}`;
   root.setAttribute("aria-busy","false");
 })();
 
