@@ -500,6 +500,10 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .ec-ylab{font-size:10px;fill:var(--mut);font-variant-numeric:tabular-nums;font-family:inherit}
 .ec-xlab{font-size:10px;fill:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-family:inherit}
 .ec-foot{font-size:var(--fs-micro);margin-top:6px;line-height:1.4}
+/* Benchmark overlay: SPY dashed line on equity curve + alpha KPI (HED-137 cycle 91) */
+.ec-bench{fill:none;stroke:var(--mut);stroke-width:1.5;stroke-dasharray:4 3;opacity:.65}
+.ec-bench-label{font-size:9px;fill:var(--mut);font-family:inherit;font-weight:600;letter-spacing:.04em;opacity:.8}
+.ec-kpi-alpha{border-left:1px solid var(--line);padding-left:12px;margin-left:4px}
 /* Underwater (drawdown) curve — risk profile paired with equity curve (HED-137 cycle 90) */
 .dd-svg{width:100%;height:auto;display:block;max-height:90px;margin-top:2px}
 .dd-line{fill:none;stroke:var(--red);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
@@ -1923,8 +1927,32 @@ function calibSvg(buckets){
         const c=_curve[i];
         return `<circle class="ec-tick" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5"><title>Tag −${c.off}: ${fmt(c.pct)} (${c.n} aktive Calls)</title></circle>`;
       }).join("");
+      // Benchmark overlay: SPY 30-day spark vs book — shows alpha generation context (HED-137 cycle 91).
+      // Align from right (both series end at "today"); normalize SPY at the overlap start.
+      let benchSvg="", spyAlphaPct=null;
+      const _spySpark=((D.sector_view||{}).benchmarks||{})?.SPY?.spark;
+      if(_spySpark && _spySpark.length>=2 && ptCoords.length>=2){
+        const _overlap=Math.min(ptCoords.length, _spySpark.length);
+        const _spySlice=_spySpark.slice(_spySpark.length-_overlap); // last _overlap prices
+        const _spyBase=_spySlice[0];
+        if(_spyBase>0){
+          const _spyPcts=_spySlice.map(p=>(p-_spyBase)/_spyBase*100);
+          // x coords: align to the RIGHT portion of ptCoords (last _overlap points)
+          const _xOff=ptCoords.length-_overlap;
+          const _spyCoords=_spyPcts.map((sp,i)=>[ptCoords[_xOff+i][0], yPct(sp)]);
+          const _spyPts=_spyCoords.map(([x,y])=>`${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+          const _spyEnd=_spyPcts[_spyPcts.length-1];
+          // Label at end of line — right edge
+          const _spyLabelX=(ptCoords[ptCoords.length-1][0]+4).toFixed(1);
+          const _spyLabelY=yPct(_spyEnd).toFixed(1);
+          spyAlphaPct=lastPct-_spyEnd; // positive = outperforming
+          benchSvg=`<polyline class="ec-bench" points="${_spyPts}"/>`
+            +`<text class="ec-bench-label" x="${_spyLabelX}" y="${_spyLabelY}" dy="3">SPY</text>`;
+        }
+      }
       const svg = `<svg class="ec-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Buch-Equity-Kurve seit Inception als Liniendiagramm — aktuell ${fmt(lastPct)}">
         ${zeroLine}
+        ${benchSvg}
         ${areaPath?`<path class="ec-area ${lineCls}" d="${areaPath}"/>`:""}
         ${_curve.length>1?`<polyline class="ec-line ${lineCls}" points="${linePts}"/>`:""}
         ${dots}
@@ -1995,6 +2023,7 @@ function calibSvg(buckets){
             <div class="ec-kpi" title="Aktuelle konviktions-gewichtete Buch-Performance"><span class="muted">Aktuell</span><b class="${lastCls}">${fmt(lastPct)}</b></div>
             <div class="ec-kpi" title="Höchster Buch-Stand seit Inception"><span class="muted">Hoch</span><b class="${peakCls}">${fmt(peakPct)}</b></div>
             <div class="ec-kpi" title="Größter Rückgang vom Hoch (Drawdown)"><span class="muted">Max DD</span><b class="${ddCls}">${maxDD<-0.005?fmt(maxDD):"0.00%"}</b></div>
+            ${spyAlphaPct!=null?`<div class="ec-kpi ec-kpi-alpha" title="Alpha vs SPY über den gemeinsamen Beobachtungszeitraum (Buch − SPY, Prozentpunkte)"><span class="muted">vs SPY</span><b class="${spyAlphaPct>=0?"move-up":"move-dn"}">${spyAlphaPct>=0?"+":"−"}${Math.abs(spyAlphaPct).toFixed(2)}pp</b></div>`:""}
           </div>
         </div>
         ${svg}
