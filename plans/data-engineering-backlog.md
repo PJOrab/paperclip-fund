@@ -63,6 +63,50 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-23 — HED-144 (DE Loop Zyklus 91): **JobPostingsAdapter — Greenhouse + Lever public ATS boards (hiring velocity + composition)**
+  (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`,
+  `agents/prompts.py`). Strategy.md tier-1 forward-revenue / capex-direction
+  signal: hiring is the single strongest forward indicator of revenue and capex
+  months ahead of guidance, quarters ahead of earnings. Quant funds pay Revelio
+  Labs / LinkUp / Thinknum five-figures/month; Greenhouse + Lever publish the
+  same data as free public JSON, no key, stdlib HTTP only. Two layers per
+  company snapshot: (1) **Volume** — total open requisitions + # NEW last 7d /
+  30d using Greenhouse `updated_at` and Lever `createdAt` (ACTIVE HIRING BURST
+  flag when 7d new ≥20 or ≥5% of total); (2) **Composition** — title-pattern
+  classifier into ML/AI · Infra/DC · Sales/GTM buckets (sales_gtm matched first
+  so "Account Executive, AI Native" → sales not ML; "ML Platform Engineer" →
+  ml_ai not infra). Coverage strategy = direct + proxy: PLTR (Lever, direct
+  watchlist ticker), DDOG (Greenhouse ecosystem), plus 7 private AI labs
+  (Anthropic / xAI / Scale AI / Together AI / SambaNova / Databricks / Mistral)
+  whose hiring pulse is the cleanest leading indicator of AI-capex direction
+  for the NVDA/AMD/AVGO/ANET/VRT/MSFT/GOOGL infrastructure chain. Day-bucketed
+  dedup: `?as_of=YYYY-MM-DD` in URL → canonical-URL dedup collapses within-day
+  re-emissions to one row, new row at midnight UTC when the date flips.
+  Skip-floor MIN_TOTAL=5 keeps dead/closed boards out. source=job_postings,
+  reliability=0.85 (data is the company's actual ATS, but directional not a
+  confirmed financial fact).
+  **Live test: 9 directional items.** Strongest reads on first capture (UTC
+  2026-05-23): Anthropic 390 open / 72 new 7d / ML-AI=91 + Sales=66 (mass
+  scale-up, NVDA + MSFT/GOOGL direct compute customer); xAI 225 open / 225
+  new 7d / ML-AI=38 + Infra=18 (full board recently refreshed, active push);
+  Scale AI 171 / 18 new 7d / ML-AI=45 + Sales=20; Databricks 779 / 91 new 7d
+  / Sales=175 (enterprise GTM push = revenue runway); Datadog 414 / 41 new 7d
+  / Sales=198 (revenue-confidence read); PLTR 226 / 6 new 7d / Sales=53 +
+  Infra=23 (steady-state commercial buildout); Mistral 163 / 5 new 7d /
+  ML-AI=45 (EU AI lab researcher-heavy). Adapter count 20 → 21.
+  py_compile + classifier (12 cases) + dedup + watchlist-sync tests green;
+  consecutive fetches produce identical hash set (no per-cycle churn).
+  Triage prompt JOB POSTINGS block: importance tiering (BURST at AI lab ≥100
+  reqs = 4; direct ticker Sales-burst ≥20 new/7d = 4; steady-state = 3),
+  cross-refs with EPS revisions + insider cluster + earnings calendar +
+  hyperscaler capex commentary, and a roll-up rule (one 'AI ecosystem hiring
+  pulse' cluster for proxies vs per-ticker for 'direct' kind). Investor
+  framing: previously the pipeline had zero visibility into AI-lab hiring
+  velocity — the marginal buyers of NVDA H100/B200 capacity were invisible
+  until Anthropic / xAI announced a funding round or a hyperscaler reported
+  capex. Now the briefing can flag the 72-new-reqs-in-7-days burst at
+  Anthropic the week it happens, weeks before any 10-Q references the
+  partnership expansion.
 - 2026-05-23 — HED-142 (DE Loop Zyklus 90): **GovContractsAdapter — US federal contract awards via USAspending.gov**
   (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`,
   `agents/prompts.py`, pushed `15a0177`). Strategy.md tier-1 supply-chain /

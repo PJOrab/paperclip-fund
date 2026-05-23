@@ -2433,9 +2433,19 @@ class GovContractsAdapter:
 # forward revenue pipeline buildout; Infra/Platform growth signals capacity /
 # capex (compute, datacenter, networking — direct demand for NVDA/AMD/AVGO/
 # ANET/VRT thesis). Patterns are conservative — false positives diluted by
-# only counting clear matches. Order matters: ml_ai pattern checked first so
-# "ML platform engineer" lands in ml_ai not infra_dc.
+# only counting clear matches.
+#
+# Order matters because some titles match multiple buckets — earlier patterns
+# win. We check the most-role-specific tokens first so a title like
+# "Account Executive, AI Native" lands in sales_gtm (the role is AE — the AI
+# is product-vertical context), and "ML Solutions Engineer" lands in sales_gtm
+# too (Solutions Engineer is pre-sales). Then ml_ai before infra_dc so an
+# "ML Platform Engineer" lands in ml_ai (the platform is for ML), not infra.
 _JOB_BUCKET_PATTERNS = [
+    ("sales_gtm", re.compile(
+        r"\b(account\s+executive|\bsales\b|business\s+development|"
+        r"go-to-market|\bgtm\b|forward\s+deployed|customer\s+success|"
+        r"solutions\s+engineer|\bsdr\b|\bbdr\b)", re.I)),
     ("ml_ai", re.compile(
         r"\b(machine\s+learning|applied\s+scientist|research\s+scientist|"
         r"research\s+engineer|deep\s+learning|llm|nlp|computer\s+vision|"
@@ -2444,10 +2454,6 @@ _JOB_BUCKET_PATTERNS = [
         r"\b(infrastructure|platform\s+engineer|site\s+reliability|\bsre\b|"
         r"devops|kubernetes|data\s*cent(?:er|re)|\bgpu\b|\bhpc\b|"
         r"distributed\s+systems|networking\s+engineer)", re.I)),
-    ("sales_gtm", re.compile(
-        r"\b(account\s+executive|\bsales\b|business\s+development|"
-        r"go-to-market|\bgtm\b|forward\s+deployed|customer\s+success|"
-        r"solutions\s+engineer|\bsdr\b|\bbdr\b)", re.I)),
 ]
 
 

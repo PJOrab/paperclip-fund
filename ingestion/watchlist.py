@@ -369,6 +369,36 @@ SOURCE_RELIABILITY = {
     # by strongest trigger (cross/200d=0.90, 52w=0.87, 50d=0.83, RSI/vol/gap=0.78);
     # this base is the source-default for items without an override.
     "tech_level": 0.85,
+    # Job-posting velocity from Greenhouse / Lever public boards. Free public
+    # JSON ATS APIs (no key). Strategy.md tier-1 forward-revenue / capex signal;
+    # quant funds (Citadel, Millennium, Point72) pay Revelio Labs / LinkUp /
+    # Thinknum five-figures/month for the same data. Higher than tech_news but
+    # below SEC filings: the ATS data is the company's actual hiring system,
+    # but it's a directional indicator, not a confirmed financial fact.
+    "job_postings": 0.85,
+}
+
+# Job-posting velocity targets — public Greenhouse + Lever boards. Source the
+# truth from the company's actual ATS, not editorial summaries. Slugs verified
+# 2026-05-23 (>=20 open postings each). Coverage strategy:
+#   - 'direct' kind = ticker is on TICKERS watchlist → reads as direct signal
+#   - 'proxy' kind = private AI ecosystem (Anthropic, xAI, Scale AI, Together AI,
+#     SambaNova, Databricks, Mistral) → leading indicator of AI-capex direction
+#     for the public AI infrastructure chain (NVDA/AMD/AVGO/ANET/VRT/MSFT/GOOGL).
+# Each entry: slug → {label: human name, ticker: equity symbol or proxy id,
+# kind: 'direct'|'proxy'|'ecosystem'}.
+JOB_POSTINGS_GREENHOUSE = {
+    "anthropic":          {"label": "Anthropic",    "ticker": "AI-LAB",   "kind": "proxy"},
+    "xai":                {"label": "xAI",          "ticker": "AI-LAB",   "kind": "proxy"},
+    "scaleai":            {"label": "Scale AI",     "ticker": "AI-LAB",   "kind": "proxy"},
+    "togetherai":         {"label": "Together AI",  "ticker": "AI-INFRA", "kind": "proxy"},
+    "sambanovasystems":   {"label": "SambaNova",    "ticker": "AI-HW",    "kind": "proxy"},
+    "databricks":         {"label": "Databricks",   "ticker": "AI-DATA",  "kind": "proxy"},
+    "datadog":            {"label": "Datadog",      "ticker": "DDOG",     "kind": "ecosystem"},
+}
+JOB_POSTINGS_LEVER = {
+    "palantir":           {"label": "Palantir",     "ticker": "PLTR",     "kind": "direct"},
+    "mistral":            {"label": "Mistral",      "ticker": "AI-LAB",   "kind": "proxy"},
 }
 
 # S5 Energy/Power sector feeds — AI-capex risk thesis (power/grid strain).
