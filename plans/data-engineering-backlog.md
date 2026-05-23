@@ -63,6 +63,24 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-23 — HED-139 (CIO pipeline-critical loop): **Strict stage-output schema gate — Telegram alert + hard-fail on structural miss**
+  (`agents/run.py`, `agents/test_pipeline.py`, pushed `40f977a`). Before: `_check()` silently
+  logged schema violations to stderr; a malformed Strategist output or shapeless Triage output
+  silently propagated through the rest of the pipeline and could ship a garbage briefing to the
+  CEO with zero signal. Now every stage's JSON is hard-gated by the validate-output schema:
+  (1) any violation → Telegram alert with the first 5 defects enumerated (quality drift visible
+  within 30 min instead of weeks later via track-record drift); (2) catastrophic structural miss
+  (top-level `clusters` / `analyses` / `theses` / `critiques` missing or wrong type) → raises so
+  the run hard-fails via `_fail()`; operator paged + status=error instead of shapeless output
+  cascading into the next LLM call; (3) empty list is NOT catastrophic (a quiet day with no
+  high-conviction thesis is a valid signal); (4) structural check runs BEFORE `_validate` to
+  defend against the validator's own AttributeError on str-where-list-expected inputs
+  (`enumerate("not a list")` iterates characters → crash). New `test_check_strict_violation_gate`
+  covers: valid → no alert, empty list → no raise/no alert, per-item violation → alert only,
+  all 4 stages → catastrophic raises with correct tag, `_is_catastrophic` boundary cases
+  (5 cases, 12 assertions). All pipeline tests green. Investor framing: structurally-broken
+  upstream data can no longer reach the CEO briefing; pipeline quality is now machine-observable,
+  not paper-only.
 - 2026-05-23 — HED-140 (DE Loop Zyklus 89): **ShortInterestAdapter enhanced — direction tag, days-to-cover, FINRA snap date**
   (`ingestion/sources_aitech.py`, `agents/prompts.py`). Strategy.md #1 target ("Short-Interest-Daten |
   Contrarian-Signal, Squeeze-Setup-Erkennung | niedrig") — HF pay S3 Partners / Ortex / IHS Markit
