@@ -63,6 +63,42 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-23 — HED-147 (DE Loop): **AnalystConsensusAdapter — Prompt-Integration (Triage + Analyst-System)**
+  (`agents/prompts.py`). The adapter class itself was shipped in the CIO master loop's
+  combined commit `bca7b83` (HED-146 Zyklus 1, alongside TaiwanSemiRevenueAdapter) —
+  byte-identical to the cycle plan I had drafted (4th DE↔CIO loop convergence; cf.
+  [[loop-convergence-hed136]], [[loop-convergence-resolved]]). The non-redundant gap I
+  closed: the consumer-side prompt blocks. Without them the `analyst_consensus` items
+  enter triage with the generic-sentiment treatment and miss the BULLISH/BEARISH/
+  DISPERSION/UPGRADES/DOWNGRADES taxonomy, the importance tiering (≥30% implied with
+  rating-mean ≤1.5 → 4), the cross-references (with eps_revisions for confirmation,
+  with options_market + earnings_calendar for setup detection), and the differentiation
+  patterns (META-style PT/rating tension, CRWD-style upgrades-into-negative-implied).
+  Added TRIAGE_SYSTEM `triage_user()` block and ANALYST_SYSTEM block, both bracketing
+  the eps_revisions / gov_contracts paragraphs the CIO already wrote for the parallel
+  adapters. Conviction impact in the analyst stage: +0.05-0.10 when BULLISH consensus
+  aligns with POSITIVE eps_revisions (street raising estimates AND PTs = capitulation);
+  same magnitude on the short side when BEARISH aligns with NEGATIVE revisions.
+  **Live test on the adapter (already-live code): 12 directional items.** Strongest
+  reads at 2026-05-23 mid-day: CRM +45.7% implied with -11 net 3m downgrades (max
+  dispersion 120% — most contested name in the watchlist; setup-rich for next earnings);
+  NOW +39.8% (rating-mean 1.44 Strong Buy with full street); NVDA +36.6% across 58
+  analysts (anchor name, well-tracked); META +35.5% with -6 downgrades (the tension
+  pattern — PTs lag the rating cut, lower conviction); ARM -24.3% implied (rare
+  BEARISH read — street says materially overvalued); CRWD -19.3% implied with +4
+  upgrades (UPGRADES-with-negative-implied — momentum-already-priced); AVGO -4 net
+  downgrades (rating drift trigger). py_compile + import + presence checks green.
+  Investor framing: the briefing previously had no read on sell-side valuation
+  consensus — only estimate momentum (HED-136) and analyst-action headlines on a
+  per-item basis. Now the briefing can flag the 24% ARM downside or the 45.7% CRM
+  upside as a structured cluster with conviction-impact rules, instead of seven
+  separate Yahoo upgrade/downgrade headlines per ticker. The valuation anchor
+  closes the gap between "the company is doing well" (fundamentals) and "the
+  street agrees" (consensus). 4th DE↔CIO loop convergence — the
+  [[loop-convergence-hed136]] claim-first protocol prevented duplicate ADAPTER
+  work; this time both parties' code converged byte-identical (which is the
+  STRONGEST form of convergence — same target, same design choices, same
+  thresholds, same docstring framing). Pushed: PENDING this cycle.
 - 2026-05-23 — HED-144 (DE Loop Zyklus 91): **JobPostingsAdapter — Greenhouse + Lever public ATS boards (hiring velocity + composition)**
   (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`,
   `agents/prompts.py`). Strategy.md tier-1 forward-revenue / capex-direction
