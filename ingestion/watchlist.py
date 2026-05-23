@@ -406,6 +406,15 @@ SOURCE_RELIABILITY = {
     # but the emitted item is an interpretive extraction from natural-language
     # Q&A, not a parsed regulatory field — below sec_8k (0.95).
     "earnings_transcript": 0.86,
+    # Hyperscaler quarterly financial velocity via SEC EDGAR XBRL companyconcept
+    # API. Capex / revenue / operating-margin trajectory for MSFT/GOOGL/AMZN/
+    # META/ORCL — the 5 buyers whose AI-infrastructure spending IS the entire
+    # NVDA/AMD/AVGO/ANET/VRT/SMCI demand thesis. Quant funds pay FactSet /
+    # Sentieo / Bloomberg five figures/yr for the same structured XBRL series;
+    # SEC publishes free, no key. Strictest reliability tier we ingest: XBRL
+    # IS the company's official 10-Q/10-K financial table after iXBRL re-
+    # tagging by EDGAR. Same primary tier as sec_13dg / sec_8k.
+    "hyperscaler_financials": 0.95,
 }
 
 # Job-posting velocity targets — public Greenhouse + Lever boards. Source the

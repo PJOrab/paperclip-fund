@@ -126,6 +126,7 @@ def build_adapters():
         ("Technical Levels", S.TechnicalLevelsAdapter()),
         ("Taiwan Semi Revenue", S.TaiwanSemiRevenueAdapter()),
         ("Earnings Transcript", S.EarningsTranscriptAdapter()),
+        ("Hyperscaler XBRL", S.HyperscalerFinancialsAdapter()),
     ]
     if getattr(m, "NEWSAPI_KEY", ""):
         adapters.append(("NewsAPI AI", S.AITechNewsAPIAdapter()))

@@ -3432,3 +3432,320 @@ class EarningsTranscriptAdapter:
             "url": dedup_url,
             "reliability": self.RELIABILITY,
         }
+
+
+class HyperscalerFinancialsAdapter:
+    """
+    Hyperscaler quarterly financial velocity via SEC EDGAR XBRL — capex,
+    revenue, and operating-margin trajectory for MSFT / GOOGL / AMZN / META /
+    ORCL, the 5 companies whose AI-infrastructure spending IS the entire
+    NVDA / AMD / AVGO / ANET / VRT / SMCI demand thesis.
+
+    Investor edge:
+      Quant funds pay FactSet / Sentieo / Bloomberg five figures per year for
+      structured XBRL trajectory series — the same numbers that appear in 10-Q
+      financial tables, already normalized into time-series form so QoQ / YoY
+      accelerations can be computed without re-parsing filing HTML each
+      quarter. SEC publishes the same data via the
+      `data.sec.gov/api/xbrl/companyconcept/...` endpoint — free, no API key,
+      official primary source. NVDA has historically moved >10% on a single
+      hyperscaler-capex print (MSFT FQ4-23 capex jump, META FY24 raise) — a
+      structured velocity read on the 5 buyers of AI compute is the single
+      strongest leading indicator we can build for the entire semi-infra book.
+      Complements `earnings_transcript` (qualitative tone) with the hard
+      numbers; complements `tw_semi_revenue` (upstream wafer demand) with the
+      downstream buyer behaviour.
+
+    What's emitted per company per quarter:
+      One item with the most-recent reported quarter's discrete (3-month)
+      capex, revenue, and operating margin, plus:
+        - capex YoY % change (most direct AI-spend velocity read)
+        - capex QoQ % change (recent inflection)
+        - revenue YoY % growth
+        - operating margin and YoY margin delta (capex absorption health)
+      A direction tag (`accelerating` / `expanding` / `steady` /
+      `decelerating` / `contracting`) summarizes the capex trajectory.
+
+    Discrete-quarter filtering:
+      XBRL returns BOTH YTD AND single-quarter values for the same period_end
+      in 10-Qs (e.g. MSFT Q3-26 capex = 80.146B YTD AND 30.876B discrete). We
+      keep ONLY discrete-quarter values where (end - start) ≤ 100 days, which
+      drops YTD overlaps and 10-K full-year values and leaves one figure per
+      reported quarter.
+
+    Coverage choice:
+      MSFT/GOOGL/AMZN/META are the 4 canonical "Big Cloud" hyperscalers. ORCL
+      is included because its Stargate / OCI Gen2 capex commitment to OpenAI
+      makes it a peer-level AI-infra buyer despite the smaller absolute size,
+      and an outlier vs the Big-4 is itself a thesis signal (ORCL accelerating
+      while MSFT decelerates = market-share shift). All 5 have stable, well-
+      tagged XBRL with the same primary concepts; validated 2026-05-23
+      against the live endpoint.
+
+    Source: `https://data.sec.gov/api/xbrl/companyconcept/CIK{cik:010d}/
+      us-gaap/{Concept}.json`. Three concepts per company = 15 requests/cycle.
+      0.15s sleep between calls keeps us well under SEC's 10 req/s cap.
+
+    Reliability 0.95 — XBRL is the strictest tier we ingest: it IS the
+    company's official 10-Q/10-K financial table after iXBRL re-tagging by
+    EDGAR. Same primary tier as sec_13dg and sec_8k.
+    """
+
+    SOURCE = "hyperscaler_financials"
+    RELIABILITY = 0.95
+    ENDPOINT = "https://data.sec.gov/api/xbrl/companyconcept/CIK{cik:010d}/us-gaap/{concept}.json"
+
+    # ticker → (CIK, display name, triage hook)
+    COMPANIES: dict[str, tuple[int, str, str]] = {
+        "MSFT":  (789019,
+                  "Microsoft",
+                  "AI capex anchor · OpenAI/Copilot infra → NVDA/AMD/AVGO demand"),
+        "GOOGL": (1652044,
+                  "Alphabet",
+                  "Google Cloud TPU + NVDA GPU capex · secondary AI-compute buyer"),
+        "AMZN":  (1018724,
+                  "Amazon",
+                  "AWS Trainium/Inferentia + NVDA capacity build · largest hyperscaler"),
+        "META":  (1326801,
+                  "Meta",
+                  "Llama infra buildout · GPU buyer #3 by capex velocity"),
+        "ORCL":  (1341439,
+                  "Oracle",
+                  "OpenAI Stargate / OCI Gen2 · NVDA H100/B200 anchor customer"),
+    }
+
+    # Concept fallback chains. Filers don't all tag the same balance line under
+    # the same us-gaap concept: AMZN tags capex as PaymentsToAcquireProductive-
+    # Assets (broader productive-asset bucket including equipment-finance lease
+    # additions); GOOGL/ORCL prefer the legacy `Revenues` tag over the post-606
+    # `RevenueFromContractWithCustomer…`. Order = preferred first; first hit
+    # with a non-empty series wins per company. Validated 2026-05-23.
+    CAPEX_CONCEPTS = (
+        "PaymentsToAcquirePropertyPlantAndEquipment",
+        "PaymentsToAcquireProductiveAssets",
+    )
+    REVENUE_CONCEPTS = (
+        "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "Revenues",
+    )
+    OPINC_CONCEPTS = ("OperatingIncomeLoss",)
+
+    # Discrete-quarter window: 10-Q quarters are 89-94d; 10-K Q4 can be ~92d
+    # (or 13/14 weeks for 52-/53-week filers). 100d safely separates discrete
+    # quarter values from YTD overlaps (next category is ~180d for H1).
+    QUARTER_MAX_DAYS = 100
+
+    def fetch(self) -> list[dict]:
+        out: list[dict] = []
+        for tk, (cik, label, hook) in self.COMPANIES.items():
+            try:
+                item = self._build_company_item(tk, cik, label, hook)
+            except Exception:
+                # Adapter isolation: a single failing ticker (concept gone,
+                # SEC 5xx) must not kill the rest of the run.
+                continue
+            if item:
+                out.append(item)
+        return out
+
+    def _fetch_concept_quarterly(self, cik: int, concepts: tuple[str, ...]) -> list[dict]:
+        """
+        Try every concept in the fallback chain, return the series with the
+        most recent period_end. Filers sometimes leave an older concept
+        populated with stale historical data after migrating to a newer tag
+        (e.g. GOOGL kept reporting `Revenues` after Q2-25 while leaving the
+        `RevenueFromContractWithCustomer…` series frozen at Q1-25). "First
+        non-empty" picks the stale one and silently emits prior-year numbers
+        with `n/a` deltas; picking the freshest series fixes that without
+        merging across incompatible scope definitions.
+
+        Returns ascending-by-end list of discrete-quarter dicts. Each carries:
+          end, start (date), val (float), fp (str), fy (int), form (str).
+        """
+        best: list[dict] = []
+        best_end = None
+        for concept in concepts:
+            url = self.ENDPOINT.format(cik=cik, concept=concept)
+            data = fetch_json(url, headers=UA, timeout=20)
+            time.sleep(0.15)  # SEC rate limit: well under 10 req/s
+            if not isinstance(data, dict):
+                continue
+            units = (data.get("units") or {}).get("USD") or []
+            if not units:
+                continue
+            kept: list[dict] = []
+            for u in units:
+                try:
+                    end = datetime.strptime(u["end"], "%Y-%m-%d").date()
+                    start = datetime.strptime(u["start"], "%Y-%m-%d").date()
+                except (KeyError, ValueError, TypeError):
+                    continue
+                if (end - start).days > self.QUARTER_MAX_DAYS:
+                    continue  # YTD or full-year — drop
+                try:
+                    val = float(u.get("val") or 0)
+                except (TypeError, ValueError):
+                    continue
+                kept.append({
+                    "end": end,
+                    "start": start,
+                    "val": val,
+                    "fp": u.get("fp", ""),
+                    "fy": u.get("fy", 0),
+                    "form": u.get("form", ""),
+                })
+            if not kept:
+                continue
+            # Last-write-wins per period_end (10-K/A restatements override
+            # original 10-Q if same end repeats).
+            dedup: dict = {}
+            for r in kept:
+                dedup[r["end"]] = r
+            series = sorted(dedup.values(), key=lambda r: r["end"])
+            latest_end = series[-1]["end"]
+            if best_end is None or latest_end > best_end:
+                best = series
+                best_end = latest_end
+        return best
+
+    @staticmethod
+    def _find_year_ago(series: list[dict], current_end) -> dict | None:
+        """Closest entry whose end is within ±20d of (current_end - 1y).
+        Handles 52/53-week filers (META, AMZN occasionally) and restated periods."""
+        target = current_end - timedelta(days=365)
+        best = None
+        best_delta = 9999
+        for r in series:
+            d = abs((r["end"] - target).days)
+            if d < best_delta and d <= 20:
+                best, best_delta = r, d
+        return best
+
+    @staticmethod
+    def _pct_change(curr: float, prior: float) -> float | None:
+        if prior == 0 or prior is None:
+            return None
+        return (curr - prior) / abs(prior) * 100.0
+
+    @staticmethod
+    def _fmt_usd(v: float) -> str:
+        if abs(v) >= 1e9:
+            return f"${v/1e9:,.2f}B"
+        if abs(v) >= 1e6:
+            return f"${v/1e6:,.0f}M"
+        return f"${v:,.0f}"
+
+    @staticmethod
+    def _fmt_pct(p: float | None) -> str:
+        return "n/a" if p is None else f"{p:+.1f}%"
+
+    @staticmethod
+    def _capex_tag(yoy: float | None) -> str:
+        if yoy is None:
+            return "steady"
+        if yoy >= 30.0:
+            return "accelerating"
+        if yoy >= 15.0:
+            return "expanding"
+        if yoy <= -15.0:
+            return "contracting"
+        if yoy <= -5.0:
+            return "decelerating"
+        return "steady"
+
+    def _build_company_item(self, ticker: str, cik: int, label: str, hook: str) -> dict | None:
+        capex_s = self._fetch_concept_quarterly(cik, self.CAPEX_CONCEPTS)
+        rev_s = self._fetch_concept_quarterly(cik, self.REVENUE_CONCEPTS)
+        opinc_s = self._fetch_concept_quarterly(cik, self.OPINC_CONCEPTS)
+        if not capex_s or not rev_s:
+            return None
+
+        # Anchor on the most recent capex report (alpha-bearing variable for
+        # the AI-infra thesis). Revenue / opinc are matched to that period.
+        latest = capex_s[-1]
+        end_d = latest["end"]
+        capex_curr = latest["val"]
+
+        capex_prior = self._find_year_ago(capex_s, end_d)
+        capex_yoy = self._pct_change(capex_curr, capex_prior["val"]) if capex_prior else None
+
+        # QoQ: closest prior discrete quarter (60-120d back).
+        prior_q = None
+        for r in reversed(capex_s[:-1]):
+            gap = (end_d - r["end"]).days
+            if 60 <= gap <= 120:
+                prior_q = r
+                break
+        capex_qoq = self._pct_change(capex_curr, prior_q["val"]) if prior_q else None
+
+        # Revenue at same end (or ±20d).
+        rev_curr_r = next((r for r in rev_s if r["end"] == end_d), None)
+        if rev_curr_r is None:
+            rev_curr_r = min(
+                (r for r in rev_s if abs((r["end"] - end_d).days) <= 20),
+                key=lambda r: abs((r["end"] - end_d).days),
+                default=None,
+            )
+        rev_yoy_pct: float | None = None
+        rev_curr_val: float | None = None
+        if rev_curr_r is not None:
+            rev_curr_val = rev_curr_r["val"]
+            rev_prior = self._find_year_ago(rev_s, rev_curr_r["end"])
+            if rev_prior:
+                rev_yoy_pct = self._pct_change(rev_curr_val, rev_prior["val"])
+
+        # Operating margin (current + YoY delta in pp).
+        margin_curr: float | None = None
+        margin_delta_pp: float | None = None
+        opinc_curr_r = next((r for r in opinc_s if r["end"] == end_d), None)
+        if opinc_curr_r is None:
+            opinc_curr_r = min(
+                (r for r in opinc_s if abs((r["end"] - end_d).days) <= 20),
+                key=lambda r: abs((r["end"] - end_d).days),
+                default=None,
+            )
+        if opinc_curr_r and rev_curr_r and rev_curr_r["val"]:
+            margin_curr = opinc_curr_r["val"] / rev_curr_r["val"] * 100.0
+            opinc_prior = self._find_year_ago(opinc_s, opinc_curr_r["end"])
+            rev_prior_for_margin = self._find_year_ago(rev_s, rev_curr_r["end"])
+            if opinc_prior and rev_prior_for_margin and rev_prior_for_margin["val"]:
+                margin_prior = opinc_prior["val"] / rev_prior_for_margin["val"] * 100.0
+                margin_delta_pp = margin_curr - margin_prior
+
+        fp = latest.get("fp", "") or "Q?"
+        fy = latest.get("fy", 0) or end_d.year
+        period_label = f"{fp} FY{fy}" if fp and fy else end_d.isoformat()
+
+        tag = self._capex_tag(capex_yoy)
+        capex_disp = self._fmt_usd(capex_curr)
+        rev_disp = self._fmt_usd(rev_curr_val) if rev_curr_val else "n/a"
+
+        margin_part = (
+            f"OpM {margin_curr:.1f}% ({self._fmt_pct(margin_delta_pp)} YoY pp)"
+            if margin_curr is not None
+            else "OpM n/a"
+        )
+
+        text = (
+            f"[Hyperscaler XBRL · {label}] {period_label} (end {end_d.isoformat()}): "
+            f"capex {capex_disp} — YoY {self._fmt_pct(capex_yoy)} / "
+            f"QoQ {self._fmt_pct(capex_qoq)} ({tag}); "
+            f"rev {rev_disp} YoY {self._fmt_pct(rev_yoy_pct)}; "
+            f"{margin_part}. {hook}."
+        )
+
+        # Stable per-(ticker, period_end) dedup. SEC submissions page is the
+        # canonical artefact; period suffix makes it unique per reporting period
+        # without depending on accession numbers (not exposed at this endpoint).
+        dedup_url = (
+            f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany"
+            f"&CIK={cik:010d}&type=10-Q&dateb=&owner=include&count=40"
+            f"#xbrl-fin-{end_d.isoformat()}"
+        )
+
+        return {
+            "text": text[:450],
+            "source": self.SOURCE,
+            "url": dedup_url,
+            "reliability": self.RELIABILITY,
+        }

@@ -63,6 +63,66 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-23 — HED-149 (DE Loop Zyklus 92): **HyperscalerFinancialsAdapter — SEC EDGAR XBRL capex / revenue / op-margin velocity (MSFT/GOOGL/AMZN/META/ORCL)**
+  (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`,
+  `ingestion/test_hyperscaler_financials.py`, `agents/prompts.py`). STRATEGY.md
+  tier-1 closure on hyperscaler-capex velocity: quant funds pay FactSet /
+  Sentieo / Bloomberg five-figures/yr for structured XBRL trajectory series —
+  the same numbers that appear in 10-Q financial tables, already normalized
+  into time-series form so QoQ / YoY accelerations are computable without
+  re-parsing filing HTML each quarter. SEC publishes the same data via
+  `data.sec.gov/api/xbrl/companyconcept/CIK{cik}/us-gaap/{Concept}.json` —
+  free, no key, official primary source (reliability 0.95 = strictest tier
+  we ingest). NVDA has historically moved >10% on a single hyperscaler-capex
+  print; the 5 covered companies' AI-infrastructure spending IS the entire
+  NVDA/AMD/AVGO/ANET/VRT/SMCI demand thesis. Two key design decisions: (1)
+  discrete-quarter filter (end-start ≤100d) drops the YTD overlaps and 10-K
+  full-year values that XBRL returns alongside the per-quarter facts (e.g.
+  MSFT Q3-26 capex = 80.146B YTD AND 30.876B discrete — only the latter is
+  what we want); (2) freshest-series-pick across the concept-fallback chain
+  (AMZN tags capex as `PaymentsToAcquireProductiveAssets`; GOOGL/ORCL migrated
+  from `RevenueFromContractWithCustomer…` to `Revenues` mid-2025 leaving the
+  old tag frozen at Q1-25). "First non-empty" would return stale data; we
+  pick by the most recent period_end across the chain. Cross-ref-aware
+  TRIAGE_USER + ANALYST_SYSTEM blocks: pair capex acceleration with positive
+  `tw_semi_revenue` (TSMC/ASE wafer + packaging pull-through downstream of
+  the orders), with `earnings_transcript` forward-guide raises (qualitative
+  AI-capex commentary confirming the hard number), with `insider_cluster`
+  buys on the named semi-infra names (mgmt sees the same demand). Outlier
+  patterns: capex acceleration at ONE hyperscaler with deceleration at the
+  other 4 = market-share-shift signal; capex acceleration with NEGATIVE
+  tw_semi_revenue = differentiated bear (demand-pull air pocket); revenue
+  YoY decelerating with capex still accelerating = capex-cut risk into
+  subsequent quarters. Conviction impact: +0.10 on long NVDA/AVGO/ANET/VRT/
+  SMCI when capex YoY ≥30% at any of the 5; +0.10 on the entire semi-infra
+  basket when 3+ of 5 accelerate same quarter; MUST reduce conviction by
+  ≥0.10 on any contraction read (the rarest and most actionable signal in
+  the AI book).
+  **Live test: 5 items in 6.9s.** Combined Q1 FY2026 capex print: **$138.25B
+  from 5 buyers, all accelerating.** Strongest reads: ORCL Q1-26 capex
+  $8.50B YoY **+269.2%** (Stargate / OCI Gen2 validation — print-worthy on
+  its own); GOOGL Q1-26 $35.67B YoY **+107.4%** (TPU + NVDA GPU build at
+  scale); MSFT Q3 FY26 $30.88B YoY **+84.4%** (OpenAI/Copilot fleet);
+  AMZN Q1-26 $44.20B YoY **+76.7%** (largest absolute buyer); META Q1-26
+  $19.00B YoY **+46.8%** with margin -0.9pp YoY (Llama infra; the only
+  margin-compression read of the 5 = capex-absorption flag). Adapter count
+  24 → 25. py_compile + import + 9 new unit tests green (capex-tag
+  thresholds, _pct_change zero-prior, _find_year_ago ±20d tolerance,
+  discrete-quarter YTD filter, freshest-series-pick across fallback chain,
+  empty-series degradation, end-to-end MSFT-shape item build, capex-missing
+  None return, per-ticker failure isolation). Full ingestion suite 50/50
+  green. Investor framing: the briefing previously had ZERO direct read on
+  the AI-spend velocity at the 5 buyers that define the entire semi-infra
+  thesis — capex commentary leaked in only via 8-K headlines, tech RSS
+  rewrites of press releases, and sell-side analyst quotes. Now the briefing
+  emits the actual XBRL-tagged number with YoY/QoQ deltas and a magnitude-
+  tiered cluster recipe the moment a 10-Q lands. The MSFT Q4-23 capex jump
+  that moved NVDA +12% in a single session would have been a hyperscaler_
+  financials item with importance=5 the morning of the print. Pushed:
+  PENDING this cycle. Shipped alongside CIO's parallel EarningsTranscript
+  Adapter (in-flight uncommitted at start of cycle; orthogonal data source
+  for the qualitative-tone complement to the structured XBRL numbers — two
+  halves of the same earnings-quarter signal).
 - 2026-05-23 — HED-147 (DE Loop): **AnalystConsensusAdapter — Prompt-Integration (Triage + Analyst-System)**
   (`agents/prompts.py`). The adapter class itself was shipped in the CIO master loop's
   combined commit `bca7b83` (HED-146 Zyklus 1, alongside TaiwanSemiRevenueAdapter) —
