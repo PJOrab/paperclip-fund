@@ -2146,6 +2146,70 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Insider-Flow Intelligence — Smart-Money Distribution (HED-150 Zyklus 159)
+   Deep dive on insider activity: WHO is buying/selling, in what role, and how much.
+   Per-ticker net flow bars + top individual transactions table. Universe Scanner
+   shows a single badge per ticker; this panel surfaces the executive-level depth. */
+.pf-if-panel{padding:var(--s3)}
+.pf-if-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-if-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-if-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-if-kpis{display:flex;gap:var(--s3);flex-wrap:wrap;flex-shrink:0;align-items:flex-end}
+.pf-if-kpi{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:62px;padding:5px 10px;border-radius:6px;background:rgba(139,148,158,.05);border:1px solid rgba(139,148,158,.1)}
+.pf-if-kpi-buy{border-color:rgba(35,134,54,.25)}
+.pf-if-kpi-buy .pf-if-kpi-val{color:#3fb950}
+.pf-if-kpi-sell{border-color:rgba(248,81,73,.25)}
+.pf-if-kpi-sell .pf-if-kpi-val{color:#f85149}
+.pf-if-kpi-net-neg .pf-if-kpi-val{color:#f85149}
+.pf-if-kpi-net-pos .pf-if-kpi-val{color:#3fb950}
+.pf-if-kpi-val{font-size:18px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:var(--txt)}
+.pf-if-kpi-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut)}
+.pf-if-warn{margin-bottom:var(--s3);padding:var(--s2) var(--s3);border-radius:4px;font-size:var(--fs-cap);line-height:1.5;color:var(--txt)}
+.pf-if-warn-bear{background:rgba(248,81,73,.06);border-left:3px solid #f85149}
+.pf-if-warn-bull{background:rgba(35,134,54,.06);border-left:3px solid #3fb950}
+.pf-if-warn-h{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:3px}
+.pf-if-warn-bear .pf-if-warn-h{color:#f85149}
+.pf-if-warn-bull .pf-if-warn-h{color:#3fb950}
+.pf-if-cols{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
+.pf-if-col{display:flex;flex-direction:column;gap:var(--s2);min-width:0}
+.pf-if-col-h{font-size:var(--fs-cap);font-weight:700;color:var(--txt);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:6px}
+.pf-if-col-h-pill{display:inline-flex;align-items:center;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;background:rgba(139,148,158,.12);color:var(--mut);letter-spacing:.04em}
+/* Per-ticker bars */
+.pf-if-rows{display:flex;flex-direction:column;gap:6px}
+.pf-if-row{display:grid;grid-template-columns:60px 1fr 90px;gap:8px;align-items:center;font-size:var(--fs-cap);padding:4px 0;border-bottom:1px solid rgba(139,148,158,.06)}
+.pf-if-row-tk{font-weight:700;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em;font-size:13px;display:flex;align-items:center;gap:5px;min-width:0}
+.pf-if-row-active{display:inline-block;width:6px;height:6px;border-radius:50%;background:#3fb950;flex-shrink:0;box-shadow:0 0 4px #3fb950}
+.pf-if-row-bar-wrap{position:relative;height:18px;background:rgba(139,148,158,.05);border-radius:3px;overflow:hidden;display:flex;align-items:center}
+.pf-if-row-bar{height:100%;border-radius:3px;display:flex;align-items:center;padding:0 6px;font-size:9px;font-weight:700;color:#fff;white-space:nowrap}
+.pf-if-row-bar-sell{background:linear-gradient(90deg,rgba(248,81,73,.85),rgba(248,81,73,.6))}
+.pf-if-row-bar-buy{background:linear-gradient(90deg,rgba(35,134,54,.85),rgba(35,134,54,.6))}
+.pf-if-row-amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;font-size:12px}
+.pf-if-row-amt-sell{color:#f85149}
+.pf-if-row-amt-buy{color:#3fb950}
+.pf-if-row-meta{font-size:9px;color:var(--mut);text-align:right}
+/* Top transactions list */
+.pf-if-tx{display:flex;flex-direction:column;gap:3px}
+.pf-if-tx-row{display:grid;grid-template-columns:1fr 60px 80px;gap:8px;align-items:center;padding:5px 6px;background:rgba(139,148,158,.03);border-radius:4px;font-size:var(--fs-cap);border-left:2px solid transparent}
+.pf-if-tx-row-sell{border-left-color:#f85149}
+.pf-if-tx-row-buy{border-left-color:#3fb950}
+.pf-if-tx-who{min-width:0;display:flex;flex-direction:column;gap:1px}
+.pf-if-tx-name{font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.pf-if-tx-role{font-size:9px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-if-tx-tk{font-weight:700;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--txt);text-align:center;padding:2px 4px;background:rgba(139,148,158,.1);border-radius:3px;letter-spacing:.02em}
+.pf-if-tx-amt{font-variant-numeric:tabular-nums;font-weight:700;text-align:right;font-size:13px}
+.pf-if-tx-amt-sell{color:#f85149}
+.pf-if-tx-amt-buy{color:#3fb950}
+.pf-if-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+@media(max-width:600px){
+  .pf-if-h{flex-direction:column}
+  .pf-if-kpis{width:100%;justify-content:space-between;gap:6px}
+  .pf-if-kpi{flex:1;min-width:0;padding:5px 4px}
+  .pf-if-kpi-val{font-size:14px}
+  .pf-if-cols{grid-template-columns:1fr;gap:var(--s3)}
+  .pf-if-row{grid-template-columns:54px 1fr 76px;gap:6px}
+  .pf-if-tx-row{grid-template-columns:1fr 50px 72px;gap:6px;padding:4px}
+  .pf-if-tx-name{font-size:11px}
+}
 /* Heutige Analyse — Schlüssel-Lesungen aus aktuellem Briefing (HED-150 Zyklus 158)
    Surfaces the qualitative synthesis from the latest briefing: per-analysis title,
    bull/bear/mixed read, magnitude, numbered key facts, and explicit key_uncertainty.
@@ -9628,7 +9692,156 @@ function calibSvg(buckets){
     }
   }
 
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Insider-Flow Intelligence — Smart-Money Distribution (HED-150 Zyklus 159).
+  // Deep dive on insider activity. Universe Scanner shows a single badge per ticker;
+  // this panel surfaces the executive-level depth: top transactions with name/role/$,
+  // per-ticker net-flow bars, aggregate buy/sell/net stats, sector-wide signal text.
+  let insiderFlowHtml="";
+  {
+    const it=D.insider_tape||{};
+    const tickers=it.tickers||[];
+    if(tickers.length){
+      // Aggregate stats
+      const totalBuy=tickers.reduce((s,t)=>s+(t.buy_dollar||0),0);
+      const totalSell=tickers.reduce((s,t)=>s+(t.sell_dollar||0),0);
+      const netDollar=totalBuy-totalSell;
+      const lookbackD=it.lookback_days||30;
+      const buyersAny=tickers.filter(t=>(t.n_buy_execs||0)>0).length;
+      const sellersAny=tickers.filter(t=>(t.n_sell_execs||0)>0).length;
+
+      // Active set
+      const _activeTk=new Set(active.flatMap(th=>(th.tickers||[]).map(tk=>String(tk).toUpperCase())));
+
+      // Format helpers
+      function _fmtDollar(amt){
+        const abs=Math.abs(amt);
+        if(abs>=1e9) return `$${(amt/1e9).toFixed(1)}B`;
+        if(abs>=1e6) return `$${(amt/1e6).toFixed(amt>=10e6||amt<=-10e6?0:1)}M`;
+        if(abs>=1e3) return `$${(amt/1e3).toFixed(0)}K`;
+        return `$${amt.toFixed(0)}`;
+      }
+      function _fmtDollarSigned(amt){
+        const sign=amt>=0?"+":"−";
+        return sign+_fmtDollar(Math.abs(amt)).replace("$","")+"";
+      }
+
+      // Sorted tickers by absolute net flow
+      const tkSorted=tickers.slice().sort((a,b)=>Math.abs(b.net_dollar||0)-Math.abs(a.net_dollar||0));
+      const top10Tk=tkSorted.slice(0,10);
+      const maxAbsFlow=Math.max(...tkSorted.map(t=>Math.abs(t.net_dollar||0)));
+
+      // Build per-ticker bar rows
+      const rowsHtml=top10Tk.map(t=>{
+        const TK=String(t.ticker).toUpperCase();
+        const isActive=_activeTk.has(TK);
+        const nd=t.net_dollar||0;
+        const isSell=nd<0;
+        const widthPct=maxAbsFlow>0?Math.max(8,(Math.abs(nd)/maxAbsFlow)*100):8;
+        const cls=isSell?"pf-if-row-bar-sell":"pf-if-row-bar-buy";
+        const amtCls=isSell?"pf-if-row-amt-sell":"pf-if-row-amt-buy";
+        const execText=isSell?`${t.n_sell_execs||0} Exec${(t.n_sell_execs||0)===1?"":"s"}`:`${t.n_buy_execs||0} Exec${(t.n_buy_execs||0)===1?"":"s"}`;
+        const activeDot=isActive?`<span class="pf-if-row-active" title="Aktive Position"></span>`:"";
+        return `<div class="pf-if-row">
+          <div class="pf-if-row-tk">${activeDot}<span>${esc(TK)}</span></div>
+          <div class="pf-if-row-bar-wrap"><div class="pf-if-row-bar ${cls}" style="width:${widthPct}%">${execText}</div></div>
+          <div class="pf-if-row-amt ${amtCls}">${_fmtDollarSigned(nd)}</div>
+        </div>`;
+      }).join("");
+
+      // Flatten all top_actors into transactions, sort by absolute $ amount
+      const txns=[];
+      tickers.forEach(t=>{
+        (t.top_actors||[]).forEach(a=>{
+          if(!a||!a.dollars||Math.abs(a.dollars)<1000) return;
+          txns.push({
+            ticker:String(t.ticker).toUpperCase(),
+            person:a.person||"?",
+            role:a.role||"",
+            side:String(a.side||"").toLowerCase(),
+            dollars:Math.abs(a.dollars)
+          });
+        });
+      });
+      txns.sort((a,b)=>b.dollars-a.dollars);
+      const txTop=txns.slice(0,10);
+
+      function _shortRole(role){
+        if(!role) return "";
+        // Trim "officer: " / "director, officer: " prefixes
+        return role.replace(/^director,\s*officer:\s*/i,"Dir/Officer · ")
+                   .replace(/^officer:\s*/i,"")
+                   .replace(/See Remarks/i,"Exec")
+                   .replace(/Chief Executive Officer/i,"CEO")
+                   .replace(/Chief Financial Officer/i,"CFO")
+                   .replace(/Chief Legal Officer/i,"CLO")
+                   .replace(/Chief Operating Officer/i,"COO")
+                   .replace(/Chief Technology Officer/i,"CTO");
+      }
+
+      const txHtml=txTop.map(tx=>{
+        const isSell=tx.side==="sell";
+        const isActive=_activeTk.has(tx.ticker);
+        const rowCls=isSell?"pf-if-tx-row pf-if-tx-row-sell":"pf-if-tx-row pf-if-tx-row-buy";
+        const amtCls=isSell?"pf-if-tx-amt pf-if-tx-amt-sell":"pf-if-tx-amt pf-if-tx-amt-buy";
+        const sign=isSell?"−":"+";
+        const activeDot=isActive?` <span class="pf-if-row-active" style="width:5px;height:5px;display:inline-block;vertical-align:middle"></span>`:"";
+        return `<div class="${rowCls}">
+          <div class="pf-if-tx-who">
+            <div class="pf-if-tx-name">${esc(tx.person)}${activeDot}</div>
+            <div class="pf-if-tx-role">${esc(_shortRole(tx.role))}</div>
+          </div>
+          <div class="pf-if-tx-tk">${esc(tx.ticker)}</div>
+          <div class="${amtCls}">${sign}${_fmtDollar(tx.dollars).replace("$","")}</div>
+        </div>`;
+      }).join("");
+
+      // Sector signal text — trigger when buys are de-minimis vs sells (<5%)
+      let warnHtml="";
+      if(totalBuy<totalSell*0.05 && totalSell>50e6){
+        const nullishCount=tickers.filter(t=>(t.n_buy_execs||0)===0).length;
+        warnHtml=`<div class="pf-if-warn pf-if-warn-bear">
+          <div class="pf-if-warn-h">⚠ Sektor-Distribution-Signal</div>
+          <b>${nullishCount} von ${tickers.length} Tickern ohne einen einzigen Insider-Käufer</b> über ${lookbackD}d. Verkäufe ${_fmtDollar(totalSell)} gegen ${_fmtDollar(totalBuy)} Käufe — Verhältnis ${(totalSell/Math.max(1,totalBuy)).toFixed(0)}:1. Breite Distribution durch Executives, historisch ein Warnsignal für überhitzten Sektor.
+        </div>`;
+      } else if(netDollar>0 && totalBuy>50e6){
+        warnHtml=`<div class="pf-if-warn pf-if-warn-bull">
+          <div class="pf-if-warn-h">✓ Insider-Akkumulations-Signal</div>
+          Netto-Insider-Käufe ${_fmtDollar(netDollar)} über ${lookbackD}d — Executives kaufen ihre eigenen Aktien, historisch bullish für 60-90d-Horizont.
+        </div>`;
+      }
+
+      const netCls=netDollar>=0?"pf-if-kpi-net-pos":"pf-if-kpi-net-neg";
+
+      insiderFlowHtml=`<div class="panel pf-if-panel">
+        <div class="pf-if-h">
+          <div>
+            <div class="pf-if-title">Insider-Flow Intelligence — Smart-Money Distribution</div>
+            <div class="pf-if-sub">Form-4 Filings ${lookbackD}d Lookback · ${it.rows_parsed||0} Transaktionen geparst · ${tickers.length} Ticker mit Insider-Aktivität · Aktive Positionen markiert ●</div>
+          </div>
+          <div class="pf-if-kpis">
+            <div class="pf-if-kpi pf-if-kpi-buy"><span class="pf-if-kpi-val">${_fmtDollar(totalBuy)}</span><span class="pf-if-kpi-lbl">Käufe</span></div>
+            <div class="pf-if-kpi pf-if-kpi-sell"><span class="pf-if-kpi-val">${_fmtDollar(totalSell)}</span><span class="pf-if-kpi-lbl">Verkäufe</span></div>
+            <div class="pf-if-kpi ${netCls}"><span class="pf-if-kpi-val">${_fmtDollarSigned(netDollar).replace("−","−")}</span><span class="pf-if-kpi-lbl">Netto</span></div>
+            <div class="pf-if-kpi"><span class="pf-if-kpi-val">${buyersAny}/${sellersAny}</span><span class="pf-if-kpi-lbl">Käufer/Verkäufer-Tk</span></div>
+          </div>
+        </div>
+        ${warnHtml}
+        <div class="pf-if-cols">
+          <div class="pf-if-col">
+            <div class="pf-if-col-h">Top Transaktionen <span class="pf-if-col-h-pill">nach $ Größe</span></div>
+            <div class="pf-if-tx">${txHtml}</div>
+          </div>
+          <div class="pf-if-col">
+            <div class="pf-if-col-h">Per-Ticker Netto-Flow <span class="pf-if-col-h-pill">${top10Tk.length} größte</span></div>
+            <div class="pf-if-rows">${rowsHtml}</div>
+          </div>
+        </div>
+        <div class="pf-if-foot">Quelle: SEC Form-4 Filings (executive trading disclosures). Netto-Flow = Σ Käufe − Σ Verkäufe pro Ticker. Aktive Positionen mit ● markiert. CEO/CFO/Directors-Level-Käufe historisch das stärkste insider-Signal (60-90d Outperformance). Massen-Sells durch C-Suite signalisieren typisch Sektor-Distribution oder bekannte interne Probleme. As of ${it.as_of||"—"}.</div>
+      </div>`;
+    }
+  }
+
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${insiderFlowHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
