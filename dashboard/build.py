@@ -2439,6 +2439,30 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-nav-chip:focus{outline:1px solid var(--blue);outline-offset:1px}
 .pf-nav-chip-active{background:rgba(88,166,255,.15);color:var(--txt);border-color:rgba(88,166,255,.45);box-shadow:0 0 0 1px rgba(88,166,255,.25)}
 .pf-nav-chip-active .pf-nav-chip-icon{color:var(--blue)}
+/* Glossary Modal (HED-150 Zyklus 184)
+   Explains the acronyms and methodology used across the dashboard. Click "?"
+   button in status bar (or press "g h"). Includes searchable input. */
+.pf-gl-overlay{position:fixed;inset:0;background:rgba(11,15,23,.78);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;padding:var(--s3);animation:pf-kb-fade .15s ease-out}
+.pf-gl-overlay[hidden]{display:none}
+.pf-gl-card{background:var(--bg);border:1px solid rgba(139,148,158,.25);border-radius:8px;padding:var(--s4);max-width:620px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.pf-gl-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--s3);padding-bottom:var(--s2);border-bottom:1px solid rgba(139,148,158,.15)}
+.pf-gl-title{font-weight:700;font-size:var(--fs-h3);color:var(--txt)}
+.pf-gl-search{flex:1;max-width:200px;margin:0 var(--s3);padding:5px 10px;border-radius:14px;font-size:11px;background:rgba(139,148,158,.08);border:1px solid rgba(139,148,158,.18);color:var(--txt);font-family:inherit}
+.pf-gl-search:focus{outline:none;border-color:rgba(88,166,255,.5);background:rgba(139,148,158,.12)}
+.pf-gl-section{margin-bottom:var(--s3)}
+.pf-gl-section-h{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--mut);margin-bottom:var(--s2);padding-bottom:3px;border-bottom:1px solid rgba(139,148,158,.1)}
+.pf-gl-item{display:grid;grid-template-columns:90px 1fr;gap:10px;padding:5px 0;font-size:var(--fs-cap);align-items:start}
+.pf-gl-item.pf-gl-hidden{display:none}
+.pf-gl-term{font-weight:700;color:var(--txt);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.4}
+.pf-gl-def{color:var(--mut);line-height:1.5;font-size:11px}
+.pf-gl-def b{color:var(--txt);font-weight:600}
+.pf-gl-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;font-size:11px;font-weight:700;color:var(--mut);background:rgba(139,148,158,.12);border:1px solid rgba(139,148,158,.2);cursor:pointer;font-family:inherit;line-height:1;padding:0;margin-left:5px;transition:all .12s}
+.pf-gl-btn:hover{background:rgba(88,166,255,.15);color:var(--blue);border-color:rgba(88,166,255,.35)}
+.pf-gl-empty{padding:var(--s3);text-align:center;color:var(--mut);font-size:var(--fs-cap);font-style:italic}
+@media(max-width:600px){
+  .pf-gl-item{grid-template-columns:70px 1fr;gap:8px}
+}
+@media print{.pf-gl-overlay,.pf-gl-btn{display:none!important}}
 /* Keyboard-Shortcut Overlay (HED-150 Zyklus 182)
    Bloomberg-style g+letter quick-jumps. "?" opens an overlay listing all
    shortcuts. Esc closes. "/" focuses universe filter. Power-user UX. */
@@ -5411,6 +5435,72 @@ main:focus{outline:none}
     </div>
   </div>
   <div class="pf-kb-hint" id="pf-kb-hint">Press <b>?</b> for shortcuts</div>
+
+  <!-- Glossary Modal (HED-150 Zyklus 184): explains all metric acronyms used across panels. -->
+  <div id="pf-gl-overlay" class="pf-gl-overlay" role="dialog" aria-modal="true" aria-label="Glossar" hidden>
+    <div class="pf-gl-card">
+      <div class="pf-gl-h">
+        <span class="pf-gl-title">Glossar — Begriffe &amp; Methodik</span>
+        <input type="text" id="pf-gl-search" class="pf-gl-search" placeholder="Suche…" aria-label="Glossar durchsuchen">
+        <button class="pf-kb-close" id="pf-gl-close-btn" type="button">Esc</button>
+      </div>
+      <div id="pf-gl-body">
+        <div class="pf-gl-section">
+          <div class="pf-gl-section-h">Performance &amp; Risk</div>
+          <div class="pf-gl-item"><span class="pf-gl-term">P&amp;L / PnL</span><span class="pf-gl-def"><b>Profit &amp; Loss</b> — Gewinn/Verlust. Unrealisiert = noch offen; realisiert = beim Verkauf gerealisiert.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Sharpe</span><span class="pf-gl-def">Return ÷ Volatilität — Risikobereinigte Performance. &gt;1 = gut, &gt;2 = exzellent.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Drawdown</span><span class="pf-gl-def">Maximaler Verlust von Peak zum Tiefst. Misst Worst-Case-Erfahrung.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Conviction</span><span class="pf-gl-def">0.0-1.0 Skala — wie überzeugt sind wir? 0.5 = mittel, 0.7+ = high-conv.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Net-Beta</span><span class="pf-gl-def">Direktionales Markt-Exposure. 1.0 = 100% market-exposed, 0 = market-neutral.</span></div>
+        </div>
+        <div class="pf-gl-section">
+          <div class="pf-gl-section-h">Technical Indicators</div>
+          <div class="pf-gl-item"><span class="pf-gl-term">RSI 14</span><span class="pf-gl-def"><b>Relative Strength Index</b> 14-Tage. ≤30 = oversold (bullish mean-reversion), ≥70 = overbought.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">MA30</span><span class="pf-gl-def">30-Day Moving Average. Preis über MA30 = uptrend, unter = downtrend.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">52w-Hoch</span><span class="pf-gl-def">% vom 52-Wochen-Hoch. ≥90 = late-cycle, ≤40 = early/oversold.</span></div>
+        </div>
+        <div class="pf-gl-section">
+          <div class="pf-gl-section-h">Fundamentals</div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Fwd P/E</span><span class="pf-gl-def">Forward Price-to-Earnings — Preis ÷ Konsensus-EPS für nächste 12 Monate.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">EV/S</span><span class="pf-gl-def"><b>Enterprise Value / Sales</b> — Multiple auf Revenue. &gt;15 teuer, &lt;3 günstig (für Tech).</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">GARP</span><span class="pf-gl-def"><b>Growth At Reasonable Price</b> — niedrige P/E + hohes Revenue-Growth. Sweet-spot.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">GM / OM / NM</span><span class="pf-gl-def">Gross / Operating / Net Margin — Profitabilität nach Cost-Stufen.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">FCFM</span><span class="pf-gl-def"><b>Free Cash Flow Margin</b> — Cash-Generation-Effizienz. Höher = besser.</span></div>
+        </div>
+        <div class="pf-gl-section">
+          <div class="pf-gl-section-h">Options &amp; Vol</div>
+          <div class="pf-gl-item"><span class="pf-gl-term">P/C</span><span class="pf-gl-def"><b>Put/Call Ratio</b> — &lt;0.5 bullish positioning, &gt;1.5 bearish.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">IV-Move</span><span class="pf-gl-def"><b>Implied Move</b> = ATM-Straddle ÷ Spot. 1σ Bereich bis Verfall.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">BULL/BEAR Setup</span><span class="pf-gl-def">Options-Pricing signalisiert Direction-Bias durch Skew/P-C-Ratio.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Hedge-Bid</span><span class="pf-gl-def">Put-Skew Bid-Up → Markt kauft Insurance vor Event. Bearish/Cautious.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Squeeze</span><span class="pf-gl-def">Short-Interest hoch + Squeeze-Risk. Volatile up-move möglich wenn Shorts decken.</span></div>
+        </div>
+        <div class="pf-gl-section">
+          <div class="pf-gl-section-h">Insider</div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Form 4</span><span class="pf-gl-def">SEC-Filing für Insider-Trading (Executives, Directors). Innerhalb 2 Tagen disclosed.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Insider-Sell</span><span class="pf-gl-def">Executives verkaufen Aktien — historisch leichter bearish signal, aber Routine/10b5-1-Plans möglich.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Insider-Buy</span><span class="pf-gl-def">Executives kaufen — selten, historisch STARKES bullish signal (60-90d outperformance).</span></div>
+        </div>
+        <div class="pf-gl-section">
+          <div class="pf-gl-section-h">Process &amp; Research</div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Thesis</span><span class="pf-gl-def">Investment-Hypothese — was passieren muss, damit der Trade aufgeht.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Devil-Verdict</span><span class="pf-gl-def">Red-Team-Verdict: PROCEED (position-fähig) / CAUTION (mit Vorsicht) / REJECT (strukturelle Schwäche).</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Blind Spot</span><span class="pf-gl-def">Was die Strategist These übersieht — Red-Team-Output.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Falsifikation</span><span class="pf-gl-def">Was die These widerlegen würde. Pre-committed exit-Bedingung.</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">Calibration</span><span class="pf-gl-def">Korrelation zwischen Conviction und Outcomes — \"sage ich 80%, bin ich 80% richtig?\"</span></div>
+        </div>
+        <div class="pf-gl-section">
+          <div class="pf-gl-section-h">Verdicts &amp; Actions</div>
+          <div class="pf-gl-item"><span class="pf-gl-term">ADD</span><span class="pf-gl-def">Position vergrößern — Signal-Score ≥+2 (high conviction confirmed).</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">HOLD</span><span class="pf-gl-def">Position halten — Signal-Score ≥0 (kein klares Action-Signal).</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">REDUCE</span><span class="pf-gl-def">Position verkleinern — Signal-Score ≥−1 (schwaches Counter-Signal).</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">HEDGE</span><span class="pf-gl-def">Hedge kaufen — Signal-Score ≥−2 (multi-source Counter-Signal vor Event).</span></div>
+          <div class="pf-gl-item"><span class="pf-gl-term">CUT</span><span class="pf-gl-def">Position schließen — Signal-Score &lt;−2 (strukturelle Schwäche).</span></div>
+        </div>
+        <div id="pf-gl-empty" class="pf-gl-empty" hidden>Keine Begriffe gefunden.</div>
+      </div>
+    </div>
+  </div>
 
   <!-- Fund performance summary bar (HED-137 Zyklus 115): above-the-fold trust signal.
        Placed before nav so it's visible immediately on mobile without scrolling. -->
@@ -12538,7 +12628,8 @@ function calibSvg(buckets){
       a:"pf-alerts", m:"pf-matrix", f:"pf-funnel", r:"pf-rotation",
       t:"pf-theses", e:"pf-equity", c:"pf-calmap", v:"pf-fundamentals",
       i:"pf-ideas", x:"pf-events", n:"pf-news", s:"pf-scanner",
-      d:"pf-insider", y:"pf-analysis", p:"pf-pipeline", g:"__top__"
+      d:"pf-insider", y:"pf-analysis", p:"pf-pipeline", g:"__top__",
+      h:"__glossary__"
     };
     let pendingG=false;
     let pendingTimer=null;
@@ -12552,13 +12643,20 @@ function calibSvg(buckets){
     }
     function _jumpTo(id){
       if(id==="__top__"){window.scrollTo({top:0,behavior:"smooth"}); return;}
+      if(id==="__glossary__"){
+        const gl=document.getElementById("pf-gl-overlay");
+        if(gl) gl.removeAttribute("hidden");
+        return;
+      }
       const target=document.getElementById(id);
       if(target){target.scrollIntoView({behavior:"smooth",block:"start"});}
     }
     document.addEventListener("keydown",function(e){
       if(e.metaKey||e.ctrlKey||e.altKey) return;
-      // Close overlay with Esc regardless
+      // Close overlay (kb or glossary) with Esc regardless
       if(e.key==="Escape"){
+        const gl=document.getElementById("pf-gl-overlay");
+        if(gl && !gl.hasAttribute("hidden")){gl.setAttribute("hidden",""); e.preventDefault(); return;}
         if(!overlay.hasAttribute("hidden")){_closeOverlay(); e.preventDefault(); return;}
       }
       // If user is typing in an input, ignore shortcuts (except Esc handled above)
@@ -12604,6 +12702,41 @@ function calibSvg(buckets){
     overlay.addEventListener("click",function(e){if(e.target===overlay) _closeOverlay();});
     // Auto-hide hint after 8s
     if(hint){setTimeout(()=>{hint.style.transition="opacity 1s";hint.style.opacity="0.25";},8000);}
+  })();
+
+  // Glossary Modal (HED-150 Zyklus 184).
+  // Search-filterable definitions for all dashboard metric acronyms.
+  (function initGlossary(){
+    const overlay=document.getElementById("pf-gl-overlay");
+    const closeBtn=document.getElementById("pf-gl-close-btn");
+    const search=document.getElementById("pf-gl-search");
+    const empty=document.getElementById("pf-gl-empty");
+    if(!overlay) return;
+    function _close(){overlay.setAttribute("hidden","");}
+    if(closeBtn) closeBtn.addEventListener("click",_close);
+    overlay.addEventListener("click",function(e){if(e.target===overlay) _close();});
+    if(search){
+      search.addEventListener("input",function(){
+        const q=search.value.trim().toLowerCase();
+        const items=overlay.querySelectorAll(".pf-gl-item");
+        let shown=0;
+        items.forEach(it=>{
+          const txt=it.textContent.toLowerCase();
+          const show=!q||txt.includes(q);
+          it.classList.toggle("pf-gl-hidden",!show);
+          if(show) shown++;
+        });
+        if(empty){
+          if(shown===0&&q) empty.removeAttribute("hidden");
+          else empty.setAttribute("hidden","");
+        }
+        // Hide section headers if all items in them are hidden
+        overlay.querySelectorAll(".pf-gl-section").forEach(sec=>{
+          const visible=sec.querySelectorAll(".pf-gl-item:not(.pf-gl-hidden)").length;
+          sec.style.display=visible?"":"none";
+        });
+      });
+    }
   })();
 
   // Live Page-Status Bar (HED-150 Zyklus 181).
@@ -12660,7 +12793,14 @@ function calibSvg(buckets){
         ${critHtml}
         <span class="pf-status-spacer"></span>
         <span class="pf-status-cell"><span class="pf-status-lbl">Stand</span><span class="pf-status-val">${_ageStr()} alt</span></span>
+        <button class="pf-gl-btn" id="pf-status-gl-btn" type="button" title="Glossar — Begriffs-Erklärungen (oder Tasten g h)" aria-label="Glossar öffnen">?</button>
       `;
+      // Re-wire glossary button (innerHTML rebuilds DOM)
+      const glBtn=document.getElementById("pf-status-gl-btn");
+      const glOverlay=document.getElementById("pf-gl-overlay");
+      if(glBtn && glOverlay){
+        glBtn.addEventListener("click",function(){glOverlay.removeAttribute("hidden");});
+      }
       bar.removeAttribute("hidden");
       // Update browser tab title too
       const titlePrefix=critCount>0?`⚠ ${critCount} · `:"";
