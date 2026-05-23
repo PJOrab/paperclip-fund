@@ -2067,6 +2067,44 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .pf-asym-tklbl{font-size:9px}
   .pf-asym-quad{font-size:8px}
 }
+/* Signal-Konvergenz — Multi-Source Alignment per aktivem Call (HED-150 Zyklus 151) */
+.pf-conv{margin-top:var(--s3);padding:var(--s3)}
+.pf-conv-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-conv-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt);line-height:1.2}
+.pf-conv-sub{font-size:var(--fs-micro);margin-top:2px;line-height:1.4;color:var(--mut)}
+.pf-conv-tbl{width:100%;border-collapse:separate;border-spacing:0}
+.pf-conv-thead th{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.05em;color:var(--mut);font-weight:600;padding:4px 6px 8px;text-align:center;white-space:nowrap}
+.pf-conv-thead th:first-child{text-align:left}
+.pf-conv-row{border-top:1px solid rgba(255,255,255,.04)}
+.pf-conv-row:first-child{border-top:0}
+.pf-conv-cell{padding:8px 6px;vertical-align:middle;text-align:center;font-variant-numeric:tabular-nums}
+.pf-conv-cell:first-child{text-align:left}
+.pf-conv-tk{font-weight:700;font-size:var(--fs-cap);color:var(--txt);white-space:nowrap}
+.pf-conv-dir{font-size:var(--fs-micro);font-weight:600;margin-top:1px}
+.pf-conv-dir-long{color:var(--green)}
+.pf-conv-dir-short{color:var(--red)}
+.pf-conv-badge{display:inline-flex;align-items:center;gap:4px;border-radius:4px;padding:3px 7px;font-size:11px;font-weight:700;white-space:nowrap;letter-spacing:.02em;line-height:1.2}
+.pf-conv-badge-g{background:rgba(63,185,80,.18);color:var(--green)}
+.pf-conv-badge-r{background:rgba(248,81,73,.18);color:var(--red)}
+.pf-conv-badge-a{background:rgba(210,153,34,.18);color:var(--accent)}
+.pf-conv-badge-n{background:rgba(139,148,158,.12);color:var(--mut)}
+.pf-conv-score{display:inline-flex;flex-direction:column;align-items:center;gap:2px}
+.pf-conv-score-bar{width:48px;height:6px;border-radius:3px;background:rgba(139,148,158,.18);overflow:hidden}
+.pf-conv-score-fill{height:100%;border-radius:3px;transition:width .3s}
+.pf-conv-score-val{font-size:var(--fs-micro);font-weight:700;color:var(--txt)}
+.pf-conv-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.55}
+.pf-conv-legend{display:inline-flex;gap:var(--s3);align-items:center;flex-wrap:wrap;font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s2)}
+.pf-conv-leg{display:inline-flex;align-items:center;gap:4px}
+@media(max-width:680px){
+  .pf-conv-tbl,.pf-conv-thead{display:none}
+  .pf-conv-card{display:block;border-top:1px solid rgba(255,255,255,.06);padding:var(--s3) 0}
+  .pf-conv-card:first-child{border-top:0}
+  .pf-conv-card-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--s2)}
+  .pf-conv-badges{display:flex;flex-wrap:wrap;gap:var(--s2)}
+}
+@media(min-width:681px){
+  .pf-conv-card{display:none}
+}
 /* Korrelationsmatrix — Diversifikations-Diagnose (HED-137 Zyklus 86): pairwise 30d return correlation */
 .pf-corr{margin-top:var(--s3);padding:var(--s3)}
 .pf-corr-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3);font-weight:700;font-size:var(--fs-h2);text-transform:none;letter-spacing:0;color:var(--txt)}
@@ -8092,7 +8130,155 @@ function calibSvg(buckets){
       </div>`;
     }
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Signal-Konvergenz — Multi-Source Alignment per aktivem Call (HED-150 Zyklus 151)
+  // For each active portfolio thesis, checks 5 signal sources and scores alignment
+  // vs the thesis direction (LONG/SHORT). Signals: Options-Flow, Insider-Tape,
+  // RSI, MA30, Street-Konsensus. Each signal scored +1 (confirms), -1 (contradicts),
+  // 0 (neutral/missing). Alignment bar = confirms / total_scored.
+  let convPanelHtml="";
+  {
+    // Build lookup maps from each source
+    const _optMap={};
+    ((D.options_tape||{}).tickers||[]).forEach(t=>{
+      if(t&&t.ticker) _optMap[t.ticker.toUpperCase()]={verdict:t.verdict||"",tone:t.tone||"n",score:t.score};
+    });
+    const _insMap={};
+    ((D.insider_tape||{}).tickers||[]).forEach(t=>{
+      if(t&&t.ticker) _insMap[t.ticker.toUpperCase()]={netDollar:t.net_dollar,buyDollar:t.buy_dollar,sellDollar:t.sell_dollar};
+    });
+    const _svMap={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>{
+      (s.tickers||[]).forEach(t=>{
+        if(!t||!t.ticker) return;
+        const sym=t.ticker.toUpperCase();
+        _svMap[sym]={rsi:t.rsi14,pctMa30:t.pct_vs_ma30,rec:(t.consensus||{}).rec||""};
+      });
+    });
+
+    // Options verdict → direction signal (bullish_setup=+1, bearish_setup=-1, else 0)
+    function _optSignal(verdict){ return verdict==="bullish_setup"?1:verdict==="bearish_setup"?-1:0; }
+    // Consensus rec → signal
+    function _recSignal(rec){
+      const r=(rec||"").toLowerCase();
+      if(r==="strong_buy"||r==="buy") return 1;
+      if(r==="sell"||r==="strong_sell") return -1;
+      return 0;
+    }
+    // RSI signal: oversold (<32) = bullish lean, overbought (>70) = bearish lean
+    function _rsiSignal(rsi){ return rsi==null?0:rsi<32?1:rsi>70?-1:0; }
+    // MA30 pct signal: above=bullish, below=bearish
+    function _maSignal(pct){ return pct==null?0:pct>0?1:pct<-2?-1:0; }
+    // Insider net signal: positive net = buy pressure = bullish
+    function _insSignal(net){ return net==null?0:net>0?1:net<0?-1:0; }
+
+    // Badge HTML helper
+    function _badge(text,cls,title){
+      return `<span class="pf-conv-badge pf-conv-badge-${cls}" title="${title||""}">${text}</span>`;
+    }
+    function _signalBadge(sig,posLabel,negLabel,neuLabel,title){
+      if(sig===1) return _badge(posLabel,"g",title);
+      if(sig===-1) return _badge(negLabel,"r",title);
+      return _badge(neuLabel||"—","n",title);
+    }
+
+    const convRows=active.map(thesis=>{
+      const tks=thesis.tickers||[];
+      const dir=(thesis.direction||"long").toLowerCase();
+      const isShort=dir==="short";
+      const dirMult=isShort?-1:1;
+
+      // Aggregate signals across multi-ticker theses
+      const signals=tks.map(sym=>{
+        sym=sym.toUpperCase();
+        const opt=_optMap[sym],ins=_insMap[sym],sv=_svMap[sym]||{};
+        const optSig=opt?_optSignal(opt.verdict)*dirMult:null;
+        const insSig=ins?_insSignal(ins.netDollar)*dirMult:null;
+        const rsiSig=sv.rsi!=null?_rsiSignal(sv.rsi)*dirMult:null;
+        const maSig=sv.pctMa30!=null?_maSignal(sv.pctMa30)*dirMult:null;
+        const recSig=sv.rec?_recSignal(sv.rec)*dirMult:null;
+        return {sym,opt,ins,sv,optSig,insSig,rsiSig,maSig,recSig};
+      });
+
+      // For multi-ticker thesis, take majority vote per signal type
+      function _aggSig(key){ const vals=signals.map(s=>s[key]).filter(v=>v!=null); return vals.length?Math.sign(vals.reduce((a,b)=>a+b,0)):null; }
+      const aggOpt=_aggSig("optSig"), aggIns=_aggSig("insSig"), aggRsi=_aggSig("rsiSig"), aggMa=_aggSig("maSig"), aggRec=_aggSig("recSig");
+      const allSigs=[aggOpt,aggIns,aggRsi,aggMa,aggRec].filter(v=>v!=null);
+      const confirms=allSigs.filter(v=>v===1).length;
+      const scored=allSigs.length;
+      const alignPct=scored?Math.round(confirms/scored*100):0;
+      const barColor=alignPct>=70?"var(--green)":alignPct>=40?"var(--accent)":"var(--red)";
+
+      // Badge cells
+      const optBadge=aggOpt===null?_badge("n/a","n","Keine Options-Daten"):_signalBadge(aggOpt,"Bullish","Bearish","Neutral","Options-Flow: "+((signals[0].opt||{}).verdict||""));
+      const insBadge=aggIns===null?_badge("n/a","n","Keine Insider-Daten"):_signalBadge(aggIns,"Net Buy","Net Sell","Neutral","Insider-Tape: $"+(((signals[0].ins||{}).netDollar||0)/1e6).toFixed(1)+"M net");
+      const rsiBadge=aggRsi===null?_badge("n/a","n","Keine RSI-Daten"):_signalBadge(aggRsi,"Oversold","Überdehnt","Neutral","RSI: "+(signals[0].sv.rsi||"—"));
+      const maBadge=aggMa===null?_badge("n/a","n","Keine MA30-Daten"):_signalBadge(aggMa,"↑ MA30","↓ MA30","Neutral","Vs MA30: "+((signals[0].sv.pctMa30||0)>=0?"+":"")+(signals[0].sv.pctMa30||0).toFixed(1)+"%");
+      const recBadge=aggRec===null?_badge("n/a","n","Keine Konsensus-Daten"):_signalBadge(aggRec,"Strong Buy","Sell","Hold","Konsensus: "+(signals[0].sv.rec||"—"));
+
+      const scoreHtml=`<div class="pf-conv-score">
+        <div class="pf-conv-score-bar"><div class="pf-conv-score-fill" style="width:${alignPct}%;background:${barColor}"></div></div>
+        <div class="pf-conv-score-val" style="color:${barColor}">${confirms}/${scored}</div>
+      </div>`;
+
+      const tkLabel=tks.join("+");
+      const dirHtml=`<div class="pf-conv-dir pf-conv-dir-${isShort?"short":"long"}">${isShort?"SHORT":"LONG"} · ${(thesis.conviction*100).toFixed(0)}%</div>`;
+
+      // Mobile card (hidden on wide)
+      const mobileCard=`<div class="pf-conv-card">
+        <div class="pf-conv-card-hd">
+          <div><div class="pf-conv-tk">${tkLabel}</div>${dirHtml}</div>
+          ${scoreHtml}
+        </div>
+        <div class="pf-conv-badges">${optBadge}${insBadge}${rsiBadge}${maBadge}${recBadge}</div>
+      </div>`;
+
+      return {tkLabel,dirHtml,optBadge,insBadge,rsiBadge,maBadge,recBadge,scoreHtml,alignPct,confirms,scored,mobileCard};
+    });
+
+    if(convRows.length){
+      const thRows=convRows.map(r=>`<tr class="pf-conv-row">
+        <td class="pf-conv-cell"><div class="pf-conv-tk">${r.tkLabel}</div>${r.dirHtml}</td>
+        <td class="pf-conv-cell">${r.optBadge}</td>
+        <td class="pf-conv-cell">${r.insBadge}</td>
+        <td class="pf-conv-cell">${r.rsiBadge}</td>
+        <td class="pf-conv-cell">${r.maBadge}</td>
+        <td class="pf-conv-cell">${r.recBadge}</td>
+        <td class="pf-conv-cell">${r.scoreHtml}</td>
+      </tr>`).join("");
+
+      const mobileCards=convRows.map(r=>r.mobileCard).join("");
+
+      convPanelHtml=`<div class="panel pf-conv">
+        <div class="pf-conv-h">
+          <div>
+            <div class="pf-conv-title">Signal-Konvergenz</div>
+            <div class="pf-conv-sub">Multi-Source Alignment — bestätigt das Tape jeden aktiven Call?</div>
+          </div>
+        </div>
+        <table class="pf-conv-tbl">
+          <thead class="pf-conv-thead"><tr>
+            <th style="text-align:left">Thesis</th>
+            <th>Options-Flow</th>
+            <th>Insider-Tape</th>
+            <th>RSI</th>
+            <th>vs MA30</th>
+            <th>Konsensus</th>
+            <th>Alignment</th>
+          </tr></thead>
+          <tbody>${thRows}</tbody>
+        </table>
+        ${mobileCards}
+        <div class="pf-conv-foot">
+          Alignment = Anteil der verfügbaren Signale, die die Call-Direction bestätigen. Grün ≥ 70% (Tape im Rücken), Amber 40–69% (gemischt), Rot &lt; 40% (Gegenwind). Signalrichtung ist direction-adjustiert: bei SHORT-Calls gilt Net-Selling als "Bullish" (shorts get rewarded for selling pressure). RSI &lt; 32 = überverkauft = Einstiegsfenster für Long; RSI &gt; 70 = überkauft = Risiko für Long. MA30 pct: &gt; 0% = Preis über 30-Tage-Durchschnitt.
+        </div>
+        <div class="pf-conv-legend">
+          ${_badge("Bestätigt","g","Signal in Call-Richtung")} ${_badge("Widerspricht","r","Signal gegen Call-Richtung")} ${_badge("Neutral","a","Kein klares Signal")} ${_badge("n/a","n","Keine Daten")}
+        </div>
+      </div>`;
+    }
+  }
+
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
