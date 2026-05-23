@@ -1072,6 +1072,47 @@ a.call-chip:hover{border-color:var(--accent);background:var(--panel)}
   .sec-hmap-cell .tk{font-size:11px}
   .sec-hmap-cell .ch{font-size:10px}
 }
+/* Sektor-Rotation-Matrix (HED-137 Zyklus 97): relative-strength matrix that shows
+   which sector is accelerating / decelerating across multiple horizons, with book
+   exposure overlay — answers "is the book positioned with the rotation?" at a glance. */
+.sec-rot{padding:var(--s3);margin-bottom:var(--s3)}
+.sec-rot-h{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--s3);flex-wrap:wrap;margin-bottom:var(--s3)}
+.sec-rot-title{font-size:var(--fs-h2);font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+.sec-rot-sub{color:var(--mut);font-size:var(--fs-micro);margin-top:3px;line-height:1.4}
+.sec-rot-callout{font-size:var(--fs-micro);color:var(--mut);font-variant-numeric:tabular-nums}
+.sec-rot-callout b{color:var(--txt);font-weight:600}
+.sec-rot-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.sec-rot-tbl th,.sec-rot-tbl td{padding:7px 8px;border-bottom:1px solid var(--line);font-size:var(--fs-cap);text-align:right;white-space:nowrap}
+.sec-rot-tbl th:nth-child(1),.sec-rot-tbl td:nth-child(1),
+.sec-rot-tbl th:nth-child(2),.sec-rot-tbl td:nth-child(2){text-align:left}
+.sec-rot-tbl thead th{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.04em;color:var(--mut);font-weight:600;border-bottom:1px solid var(--line);padding-bottom:6px}
+.sec-rot-tbl tbody tr:last-child td{border-bottom:none}
+.sec-rot-tbl .sr-id{font-weight:700;color:var(--mut);font-size:var(--fs-micro);letter-spacing:.04em}
+.sec-rot-tbl .sr-nm{color:var(--txt);font-weight:600}
+.sec-rot-tbl .sr-n{color:var(--mut);font-size:var(--fs-micro);margin-left:4px;font-weight:400}
+.sec-rot-tbl .sr-cell{border-radius:4px;padding:5px 6px;display:inline-block;min-width:54px;text-align:right;font-weight:600}
+.sec-rot-tbl .sr-trend{font-size:14px;line-height:1;width:18px;display:inline-block;text-align:center}
+.sec-rot-tbl .sr-trend-acc{color:var(--green)}
+.sec-rot-tbl .sr-trend-dec{color:var(--red)}
+.sec-rot-tbl .sr-trend-flat{color:var(--mut)}
+.sec-rot-tbl .sr-bookcell{color:var(--txt);font-weight:600}
+.sec-rot-tbl .sr-bookcell.long{color:var(--green)}
+.sec-rot-tbl .sr-bookcell.short{color:var(--red)}
+.sec-rot-tbl .sr-bookcell.none{color:var(--mut);font-weight:400}
+.sec-rot-tbl tbody tr.sr-bench{background:rgba(110,153,184,.06)}
+.sec-rot-tbl tbody tr.sr-bench td:first-child{color:var(--mut)}
+.sec-rot-foot{color:var(--mut);font-size:var(--fs-micro);margin-top:var(--s2);line-height:1.4}
+@media (max-width:760px){
+  /* mobile: hide alpha column, reduce paddings; keep the core 5d/20d picture */
+  .sec-rot-tbl th.sr-hide-mob,.sec-rot-tbl td.sr-hide-mob{display:none}
+  .sec-rot-tbl th,.sec-rot-tbl td{padding:6px 5px;font-size:var(--fs-micro)}
+  .sec-rot-tbl .sr-cell{min-width:42px;padding:4px 5px;font-size:var(--fs-micro)}
+  .sec-rot-tbl .sr-nm{font-size:var(--fs-cap)}
+}
+@media (max-width:430px){
+  /* very narrow: also drop the 30d column and 1d to keep table readable */
+  .sec-rot-tbl th.sr-hide-narrow,.sec-rot-tbl td.sr-hide-narrow{display:none}
+}
 @media (max-width:760px){
   .cards{grid-template-columns:repeat(2,1fr)}
   .sectors{grid-template-columns:1fr}
@@ -1247,6 +1288,7 @@ main:focus{outline:none}
 
   <section aria-labelledby="h-sectorview">
   <h2 id="h-sectorview">Sektor-Ansicht <span id="secstand" class="tag"></span></h2>
+  <div class="panel sec-rot" id="sectorrotation" hidden></div>
   <div class="panel sec-hmap" id="sectorheatmap" aria-busy="true" hidden></div>
   <div class="grid sectors" id="sectorview" aria-busy="true"><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div></div>
   </section>
@@ -3001,6 +3043,211 @@ function calibSvg(buckets){
     });
   })();
   root.setAttribute("aria-busy","false");
+})();
+
+// Sektor-Rotation-Matrix (HED-137 Zyklus 97): relative-strength matrix across
+// 5d / 20d / 30d windows, with alpha-vs-SPY and book net-exposure overlays.
+// Answers the PM rotation question: which sector is accelerating, which is
+// fading, and is the book positioned WITH or AGAINST the move?
+//
+//   - returns are equal-weight average of per-ticker pct change over the window,
+//     computed from the 30-day spark of each ticker (spark[-1] = today's close)
+//   - alpha column = sector_avg_20d − SPY_20d (excess return, in pp)
+//   - trend indicator: compares 5d daily rate vs 20d daily rate; ≥1.5× = ↗ accel,
+//     ≤0.5× = ↘ decel, else → flat (also flags a sign flip as inflection)
+//   - book exposure = Σ(conviction × dir_sign) / Σ(conviction) over track-record
+//     theses mapped into the sector
+(function renderSectorRotation(){
+  const sv=D.sector_view, root=$("sectorrotation");
+  if(!sv || !(sv.sectors||[]).length || !root) return;
+  const sectors=sv.sectors.filter(s=>(s.tickers||[]).length>0);
+  if(!sectors.length){ return; }
+  // Window-based avg return over the spark window. spark[-1] = latest close.
+  // pct = (last - prior) / prior * 100, where prior = spark[len-1-N].
+  function _retOverWindow(spark, n){
+    if(!Array.isArray(spark)||spark.length<n+1) return null;
+    const last=spark[spark.length-1], prior=spark[spark.length-1-n];
+    if(!(prior>0)||!isFinite(last)) return null;
+    return (last-prior)/prior*100;
+  }
+  function _avgRet(tickers, n){
+    const vals=[];
+    (tickers||[]).forEach(t=>{
+      const r=_retOverWindow(t.spark, n);
+      if(r!=null && isFinite(r)) vals.push(r);
+    });
+    if(!vals.length) return null;
+    return {avg:vals.reduce((a,b)=>a+b,0)/vals.length, n:vals.length};
+  }
+  const spySpark=((sv.benchmarks||{}).SPY||{}).spark;
+  const qqqSpark=((sv.benchmarks||{}).QQQ||{}).spark;
+  const spy5=_retOverWindow(spySpark,5), spy20=_retOverWindow(spySpark,20), spy30=_retOverWindow(spySpark,29);
+  const spy1=_retOverWindow(spySpark,1);
+  const qqq5=_retOverWindow(qqqSpark,5), qqq20=_retOverWindow(qqqSpark,20), qqq30=_retOverWindow(qqqSpark,29);
+  const qqq1=_retOverWindow(qqqSpark,1);
+  // Book exposure by sector — net conviction-weighted (long − short) / total
+  const SECTOR_MAP={};
+  sectors.forEach(s=>{
+    (s.tickers||[]).forEach(tk=>{
+      const sym=tk&&tk.ticker!=null?String(tk.ticker).toUpperCase():null;
+      if(sym) SECTOR_MAP[sym]=s.id;
+    });
+  });
+  const tr=D.track_record;
+  const theses=(tr&&Array.isArray(tr.theses))?tr.theses:[];
+  // active = not closed/scored
+  const isClosed=t=>{ const v=String(t.verdict||"").toLowerCase(); return v==="hit"||v==="miss"||v==="closed"||v==="exit"; };
+  const active=theses.filter(t=>!isClosed(t));
+  const bookBySec={}; let totalConv=0;
+  active.forEach(t=>{
+    const tk=(t.tickers||[])[0]; if(!tk) return;
+    const sec=SECTOR_MAP[String(tk).toUpperCase()]; if(!sec) return;
+    const conv=t.conviction!=null?+t.conviction:0;
+    if(!(conv>0)) return;
+    const sign=(String(t.direction||"").toLowerCase()==="short")?-1:1;
+    if(!bookBySec[sec]) bookBySec[sec]={net:0, gross:0};
+    bookBySec[sec].net+=sign*conv;
+    bookBySec[sec].gross+=conv;
+    totalConv+=conv;
+  });
+  // Build rows
+  const rows=sectors.map(s=>{
+    const r1 =_avgRet(s.tickers, 1);
+    const r5 =_avgRet(s.tickers, 5);
+    const r20=_avgRet(s.tickers, 20);
+    const r30=_avgRet(s.tickers, 29);
+    const alpha20=(r20&&spy20!=null)?(r20.avg-spy20):null;
+    const book=bookBySec[s.id];
+    const bookNetW=book?(book.net/Math.max(totalConv,1e-9)):0; // share of total conviction, signed
+    // Trend: 5d daily rate vs 20d daily rate
+    let trend="flat";
+    if(r5 && r20 && r5.avg!=null && r20.avg!=null){
+      const d5=r5.avg/5, d20=r20.avg/20;
+      // sign-flip = potential inflection
+      if(Math.sign(d5)!==Math.sign(d20) && Math.abs(d5)>0.1) trend = d5>0?"acc":"dec";
+      else if(d20!==0){
+        const ratio=d5/d20;
+        if(d20>0){ trend = ratio>=1.5?"acc":ratio<=0.5?"dec":"flat"; }
+        else     { trend = ratio>=1.5?"dec":ratio<=0.5?"acc":"flat"; }
+      } else if(Math.abs(d5)>0.1){ trend = d5>0?"acc":"dec"; }
+    }
+    return {id:s.id, name:s.name, r1, r5, r20, r30, alpha20, bookNetW, gross:book?book.gross:0, trend};
+  });
+  // Drop sectors that have no data at all
+  const usable=rows.filter(r=>r.r1||r.r5||r.r20||r.r30);
+  if(!usable.length){ return; }
+  // Sort by 5d desc (rotation leaders first); fall back to 20d, then 30d
+  usable.sort((a,b)=>{
+    const av=(a.r5&&a.r5.avg!=null)?a.r5.avg:((a.r20&&a.r20.avg!=null)?a.r20.avg:((a.r30&&a.r30.avg!=null)?a.r30.avg:-1e9));
+    const bv=(b.r5&&b.r5.avg!=null)?b.r5.avg:((b.r20&&b.r20.avg!=null)?b.r20.avg:((b.r30&&b.r30.avg!=null)?b.r30.avg:-1e9));
+    return bv-av;
+  });
+  // Color tier shared with heatmap (hmap-c-*) — scale by magnitude
+  function _tier(c, scaleMax){
+    if(c==null) return "na";
+    const a=Math.abs(c);
+    const lo=scaleMax*0.06, m1=scaleMax*0.2, m2=scaleMax*0.5, m3=scaleMax*0.9;
+    if(a<lo) return "z";
+    if(c>0)  return a>=m3?"pp3":a>=m2?"pp2":a>=m1?"pp1":"pp0";
+    return            a>=m3?"nn3":a>=m2?"nn2":a>=m1?"nn1":"nn0";
+  }
+  function _cellHtml(rv, scaleMax){
+    if(!rv||rv.avg==null) return '<span class="sr-cell hmap-c-na" title="keine Daten">—</span>';
+    const v=rv.avg, cls=_tier(v, scaleMax);
+    const txt=(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
+    return `<span class="sr-cell hmap-c-${cls}" title="${rv.n} Ticker, Ø ${txt}">${txt}</span>`;
+  }
+  function _alphaHtml(a){
+    if(a==null) return '<span class="sr-cell hmap-c-na" title="kein SPY-Vergleich">—</span>';
+    const cls=_tier(a, 5);
+    const txt=(a>=0?"+":"−")+Math.abs(a).toFixed(2)+"pp";
+    return `<span class="sr-cell hmap-c-${cls}" title="α vs SPY 20d: ${txt}">${txt}</span>`;
+  }
+  function _trendHtml(t){
+    if(t==="acc") return '<span class="sr-trend sr-trend-acc" title="Beschleunigt: 5d-Rate &gt; 20d-Rate (×1.5+)">↗</span>';
+    if(t==="dec") return '<span class="sr-trend sr-trend-dec" title="Verlangsamt sich: 5d-Rate &lt; 20d-Rate (×0.5−)">↘</span>';
+    return '<span class="sr-trend sr-trend-flat" title="Stabiles Tempo: 5d ≈ 20d">→</span>';
+  }
+  function _bookHtml(r){
+    if(!r.gross){ return '<span class="sr-bookcell none" title="keine offene Position in diesem Sektor">—</span>'; }
+    const netPct=r.bookNetW*100;
+    const cls=netPct>0.5?"long":netPct<-0.5?"short":"none";
+    const sign=netPct>=0?"+":"−";
+    const txt=`${sign}${Math.abs(netPct).toFixed(0)}%`;
+    const grossPct=(r.gross/Math.max(totalConv,1e-9))*100;
+    return `<span class="sr-bookcell ${cls}" title="Netto-Exposure: ${txt} der Buch-Conviction (brutto ${grossPct.toFixed(0)}%)">${txt}</span>`;
+  }
+  // Scale picks: 1d uses ±3%, 5d uses ±6%, 20d uses ±12%, 30d uses ±15% so the
+  // heat tiers stay meaningful across windows (one day moves 5× faster than a month).
+  const SC1=3, SC5=6, SC20=12, SC30=15;
+  const tbodyHtml=usable.map(r=>{
+    const tickN=Math.max(...[r.r1,r.r5,r.r20,r.r30].filter(Boolean).map(x=>x.n||0));
+    return `<tr>
+      <td><span class="sr-id">${esc(r.id)}</span></td>
+      <td><span class="sr-nm">${esc(r.name)}</span><span class="sr-n">n=${tickN}</span></td>
+      <td class="sr-hide-narrow">${_cellHtml(r.r1, SC1)}</td>
+      <td>${_cellHtml(r.r5, SC5)}</td>
+      <td>${_cellHtml(r.r20, SC20)}</td>
+      <td class="sr-hide-narrow">${_cellHtml(r.r30, SC30)}</td>
+      <td class="sr-hide-mob">${_alphaHtml(r.alpha20)}</td>
+      <td>${_bookHtml(r)}</td>
+      <td>${_trendHtml(r.trend)}</td>
+    </tr>`;
+  }).join("");
+  // Benchmark rows
+  function _benchRow(label, r1, r5, r20, r30){
+    const cell=(v,sc)=>(v==null)
+      ? '<span class="sr-cell hmap-c-na">—</span>'
+      : `<span class="sr-cell hmap-c-${_tier(v,sc)}" title="${label}: ${(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%"}">${(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%"}</span>`;
+    return `<tr class="sr-bench">
+      <td><span class="sr-id">BM</span></td>
+      <td><span class="sr-nm">${esc(label)}</span></td>
+      <td class="sr-hide-narrow">${cell(r1,SC1)}</td>
+      <td>${cell(r5,SC5)}</td>
+      <td>${cell(r20,SC20)}</td>
+      <td class="sr-hide-narrow">${cell(r30,SC30)}</td>
+      <td class="sr-hide-mob"><span class="sr-cell hmap-c-z" title="Benchmark — keine α-Berechnung">—</span></td>
+      <td><span class="sr-bookcell none">—</span></td>
+      <td><span class="sr-trend sr-trend-flat" title="Benchmark">·</span></td>
+    </tr>`;
+  }
+  const benchHtml=_benchRow("SPY (Markt)", spy1, spy5, spy20, spy30)
+                + _benchRow("QQQ (Nasdaq-100)", qqq1, qqq5, qqq20, qqq30);
+  // Callout: leader and laggard over 5d, with book-context.
+  const lead=usable[0], lag=usable[usable.length-1];
+  let calloutHtml="";
+  function _fmtPct(v){ return v==null?"—":(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%"; }
+  if(lead && lead.r5 && lead.r5.avg!=null){
+    const leadTxt=_fmtPct(lead.r5.avg);
+    const lagTxt =(lag&&lag.r5&&lag.r5.avg!=null)?_fmtPct(lag.r5.avg):"—";
+    calloutHtml=`<div class="sec-rot-callout">5d-Leader: <b>${esc(lead.name)}</b> ${leadTxt}` +
+      ((lag&&lag!==lead)?` · 5d-Schlusslicht: <b>${esc(lag.name)}</b> ${lagTxt}`:"") + `</div>`;
+  }
+  root.hidden=false;
+  root.innerHTML=`
+    <div class="sec-rot-h">
+      <div>
+        <div class="sec-rot-title">Sektor-Rotation — Relative-Stärke-Matrix</div>
+        <div class="sec-rot-sub">Wer beschleunigt, wer fällt zurück · gleichgewichteter Sektor-Avg über 1d/5d/20d/30d · α vs SPY 20d · Buch-Netto-Conviction-Exposure</div>
+      </div>
+      ${calloutHtml}
+    </div>
+    <table class="sec-rot-tbl" role="table" aria-label="Sektor-Rotation-Matrix: Avg-Returns, Alpha und Buch-Exposure">
+      <thead><tr>
+        <th>ID</th>
+        <th>Sektor</th>
+        <th class="sr-hide-narrow" title="Tagesveränderung (Sektor-Avg)">1d</th>
+        <th title="5-Tage-Avg-Return">5d</th>
+        <th title="20-Tage-Avg-Return">20d</th>
+        <th class="sr-hide-narrow" title="30-Tage-Avg-Return">30d</th>
+        <th class="sr-hide-mob" title="Alpha vs SPY über 20d (Sektor − Markt, in Prozentpunkten)">α 20d</th>
+        <th title="Konv.-gewichtetes Netto-Exposure des Buchs in diesem Sektor (+ long / − short)">Buch</th>
+        <th title="Trend-Indikator: ↗ beschleunigt, → stabil, ↘ verliert Tempo (5d-Rate vs 20d-Rate)">Trend</th>
+      </tr></thead>
+      <tbody>${tbodyHtml}${benchHtml}</tbody>
+    </table>
+    <div class="sec-rot-foot">Sortiert nach 5d-Performance. Heat-Skalen pro Spalte: 1d ±3% · 5d ±6% · 20d ±12% · 30d ±15%. Trend-Logik vergleicht 5d-Tagesrate (5d/5) mit 20d-Tagesrate (20d/20); ≥1.5× = ↗, ≤0.5× = ↘. Buch-Netto: + long, − short, leer = keine Position. Equal-weight, nicht Marktkap.</div>
+  `;
 })();
 
 // Sektor-Heatmap (HED-137 Zyklus 93): Bloomberg-/Finviz-style scan of the AI/Tech
