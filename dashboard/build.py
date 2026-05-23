@@ -2146,6 +2146,66 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Earnings-Kalender — Bestätigte Termine (HED-150 Zyklus 167)
+   Real confirmed earnings dates from sector_view.earnings_calendar (Yahoo-driven),
+   cross-referenced with options-tape for implied move + setup verdict. Marks active
+   positions and high-conviction trade-idea candidates with strong visual cues. */
+.pf-er-panel{padding:var(--s3)}
+.pf-er-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-er-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-er-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-er-stats{display:flex;gap:var(--s3);flex-wrap:wrap;flex-shrink:0;align-items:flex-end}
+.pf-er-stat{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:50px}
+.pf-er-stat-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt)}
+.pf-er-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut)}
+.pf-er-stat-warn{color:#e3b341}
+.pf-er-stat-pos{color:#3fb950}
+.pf-er-list{display:flex;flex-direction:column;gap:6px}
+.pf-er-row{display:grid;grid-template-columns:80px 1fr 88px 88px 200px;gap:var(--s2);align-items:center;padding:8px var(--s3);background:rgba(139,148,158,.04);border:1px solid rgba(139,148,158,.1);border-radius:5px;border-left:3px solid rgba(139,148,158,.3);transition:background .12s}
+.pf-er-row:hover{background:rgba(139,148,158,.07)}
+.pf-er-row-active{border-left-color:#3fb950;background:rgba(35,134,54,.04)}
+.pf-er-row-idea-long{border-left-color:var(--blue);background:rgba(88,166,255,.03)}
+.pf-er-row-idea-short{border-left-color:#a855f7;background:rgba(168,85,247,.03)}
+.pf-er-row-urgent{border-left-color:#f85149}
+.pf-er-date{display:flex;flex-direction:column;align-items:flex-start;gap:1px}
+.pf-er-date-day{font-size:9px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;line-height:1}
+.pf-er-date-val{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--txt);line-height:1}
+.pf-er-date-cd{font-size:9px;color:var(--mut);font-variant-numeric:tabular-nums}
+.pf-er-tk-cell{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pf-er-tk-row{display:flex;align-items:center;gap:6px}
+.pf-er-tk{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;font-size:15px;color:var(--txt);letter-spacing:.02em}
+.pf-er-status{display:inline-flex;align-items:center;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.4}
+.pf-er-status-active{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-er-status-idea{background:rgba(88,166,255,.12);color:var(--blue)}
+.pf-er-status-short-idea{background:rgba(168,85,247,.12);color:#a855f7}
+.pf-er-status-watch{background:rgba(139,148,158,.12);color:var(--mut)}
+.pf-er-sec{font-size:9px;color:var(--mut)}
+.pf-er-emove{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;text-align:center}
+.pf-er-emove-hi{color:#f85149}
+.pf-er-emove-mid{color:#e3b341}
+.pf-er-emove-lo{color:var(--txt)}
+.pf-er-emove-na{color:rgba(139,148,158,.4);font-size:11px}
+.pf-er-emove-lbl{display:block;font-size:8px;color:var(--mut);text-align:center;text-transform:uppercase;letter-spacing:.04em;font-weight:600;margin-top:-1px}
+.pf-er-setup{display:flex;justify-content:center}
+.pf-er-setup-pill{display:inline-flex;align-items:center;padding:3px 7px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.4;white-space:nowrap}
+.pf-er-setup-bull{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-er-setup-bear{background:rgba(248,81,73,.18);color:#f85149}
+.pf-er-setup-warn{background:rgba(210,168,80,.15);color:#e3b341}
+.pf-er-setup-neu{background:rgba(139,148,158,.12);color:var(--mut)}
+.pf-er-notes{font-size:11px;color:var(--txt);line-height:1.4}
+.pf-er-notes-warn{color:#e3b341}
+.pf-er-notes-bad{color:#f85149}
+.pf-er-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+.pf-er-empty{padding:var(--s4);text-align:center;color:var(--mut);font-size:var(--fs-cap);background:rgba(139,148,158,.04);border-radius:5px}
+@media(max-width:600px){
+  .pf-er-h{flex-direction:column}
+  .pf-er-stats{width:100%;justify-content:space-between}
+  .pf-er-row{grid-template-columns:60px 1fr 70px;grid-template-rows:auto auto;gap:6px;padding:6px}
+  .pf-er-setup,.pf-er-notes{grid-column:1/-1}
+  .pf-er-tk{font-size:13px}
+  .pf-er-date-val{font-size:14px}
+  .pf-er-emove{font-size:12px}
+}
 /* Heute-Story — Tages-Narrativ (HED-150 Zyklus 166)
    Auto-generated prose paragraph synthesizing the day's portfolio state across
    all panels: regime, P&L, alerts, rotation, ideas, analysis. The "what's
@@ -11318,7 +11378,174 @@ function calibSvg(buckets){
   // Inject anchor spans before each major panel (positioned with scroll-margin via .pf-anchor)
   function _anchor(id){return `<span id="${id}" class="pf-anchor"></span>`;}
 
-  root.innerHTML=`${subNavHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${eventHorizonHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Earnings-Kalender — Bestätigte Termine (HED-150 Zyklus 167).
+  // Real confirmed earnings dates from sector_view.earnings_calendar, cross-referenced
+  // with options-tape for implied move + setup verdict, plus active-position and
+  // trade-idea markers. Complements Event-Horizon (which uses IV-implied catalysts).
+  let earningsCalHtml="";
+  {
+    const cal=((D.sector_view||{}).earnings_calendar)||[];
+    if(cal.length){
+      const _activeTk=new Set(active.flatMap(th=>(th.tickers||[]).map(tk=>String(tk).toUpperCase())));
+      const _activeDir={};
+      active.forEach(th=>{
+        const dir=(th.direction||"long").toLowerCase();
+        (th.tickers||[]).forEach(tk=>_activeDir[String(tk).toUpperCase()]=dir);
+      });
+      const _ot={}, _sv={};
+      ((D.options_tape||{}).tickers||[]).forEach(t=>{if(t&&t.ticker) _ot[t.ticker.toUpperCase()]=t;});
+      ((D.sector_view||{}).sectors||[]).forEach(s=>{(s.tickers||[]).forEach(t=>{if(t&&t.ticker) _sv[t.ticker.toUpperCase()]={...t,sector_name:s.name};});});
+      // Trade-idea set from current-cycle scoring (reuse minimal logic for status)
+      const _ideaLongs=new Set(), _ideaShorts=new Set();
+      Object.entries(_sv).forEach(([tk,d])=>{
+        if(_activeTk.has(tk)) return;
+        const c=d.consensus||{};
+        const o=_ot[tk]||null;
+        let s=0;
+        if(o){if(o.verdict==="bullish_setup") s+=2; else if(o.verdict==="bearish_setup") s-=2; else if(o.verdict==="hedge_bid") s-=1;}
+        const fpe=c.fwd_pe, rev=c.rev_growth_yoy;
+        if(typeof fpe==="number"&&fpe>0&&typeof rev==="number"){
+          const g=rev/fpe;
+          if(g>5) s+=2; else if(g>2) s+=1; else if(g<1&&fpe>30) s-=1;
+        }
+        if(c.rec==="strong_buy") s+=1;
+        else if(c.rec==="sell"||c.rec==="strong_sell") s-=1;
+        const pt=c.pt_mean, price=d.price;
+        if(typeof pt==="number"&&pt>0&&typeof price==="number"&&price>0){
+          const up=(pt-price)/price*100;
+          if(up>30) s+=1; else if(up<-10) s-=1;
+        }
+        if(s>=2) _ideaLongs.add(tk);
+        else if(s<=-2) _ideaShorts.add(tk);
+      });
+
+      const today=new Date(D.built_at_iso||Date.now());
+      today.setHours(0,0,0,0);
+
+      const rows=cal.map(c=>{
+        const TK=String(c.ticker).toUpperCase();
+        const sv=_sv[TK]||{};
+        const ot=_ot[TK]||null;
+        const days=Math.max(0, c.days_out||0);
+        const date=new Date((c.date||"")+"T00:00:00");
+        const dowNames=["So","Mo","Di","Mi","Do","Fr","Sa"];
+        const dow=isNaN(date.getTime())?"":dowNames[date.getDay()];
+        const dateShort=isNaN(date.getTime())?(c.date||""):`${String(date.getDate()).padStart(2,'0')}.${String(date.getMonth()+1).padStart(2,'0')}`;
+        const emove=ot?.emove||null;
+        const verdict=ot?.verdict||null;
+        const isActive=_activeTk.has(TK);
+        const dir=_activeDir[TK]||null;
+        const isLongIdea=_ideaLongs.has(TK);
+        const isShortIdea=_ideaShorts.has(TK);
+
+        // Conflict detection
+        let conflict=false, notesText="", notesCls="";
+        if(isActive){
+          if(dir==="long" && (verdict==="bearish_setup"||verdict==="hedge_bid")){
+            conflict=true;
+            notesText=`Counter-Direction Bias vor Earnings — HEDGE erwägen`;
+            notesCls="pf-er-notes-bad";
+          } else if(dir==="short" && (verdict==="bullish_setup"||verdict==="squeeze_risk")){
+            conflict=true;
+            notesText=`Squeeze-Risk vor Earnings — Position-Risk reduzieren`;
+            notesCls="pf-er-notes-bad";
+          } else {
+            notesText=`Aktive ${dir.toUpperCase()}-Position · ${emove?`Implied Move ±${emove.toFixed(1)}%`:''}`;
+          }
+        } else if(isLongIdea){
+          notesText=`LONG-Kandidat (Trade-Idea-Score ≥+2) · Pre-Print-Entry-Window`;
+          notesCls="pf-er-notes-warn";
+        } else if(isShortIdea){
+          notesText=`SHORT-Kandidat (Trade-Idea-Score ≤−2) · Bearish Setup vor Earnings`;
+          notesCls="pf-er-notes-warn";
+        } else {
+          notesText=`Watchlist · ${sv.consensus?.rec?sv.consensus.rec.toUpperCase().replace("_"," "):''}`;
+        }
+
+        // Row class
+        let rowCls="pf-er-row";
+        if(conflict) rowCls+=" pf-er-row-urgent";
+        else if(isActive) rowCls+=" pf-er-row-active";
+        else if(isLongIdea) rowCls+=" pf-er-row-idea-long";
+        else if(isShortIdea) rowCls+=" pf-er-row-idea-short";
+
+        return {TK, sv, ot, days, date:dateShort, dow, emove, verdict, isActive, dir, isLongIdea, isShortIdea, conflict, notesText, notesCls, rowCls};
+      });
+
+      // Sort by days_out asc
+      rows.sort((a,b)=>a.days-b.days);
+
+      function _emoveDisplay(em){
+        if(em==null) return `<span class="pf-er-emove pf-er-emove-na">—</span><span class="pf-er-emove-lbl">no IV</span>`;
+        const cls=em>=10?"pf-er-emove-hi":em>=5?"pf-er-emove-mid":"pf-er-emove-lo";
+        return `<span class="pf-er-emove ${cls}">±${em.toFixed(1)}%</span><span class="pf-er-emove-lbl">Implied</span>`;
+      }
+      function _setupPill(v){
+        if(!v) return `<span class="pf-er-setup-pill pf-er-setup-neu">—</span>`;
+        const m={
+          "bullish_setup":["BULL","pf-er-setup-bull"],
+          "bearish_setup":["BEAR","pf-er-setup-bear"],
+          "hedge_bid":["HEDGE","pf-er-setup-warn"],
+          "squeeze_risk":["SQUEEZE","pf-er-setup-warn"],
+          "event_pending":["EVENT","pf-er-setup-neu"]
+        };
+        const [lbl,cls]=m[v]||["NEUT","pf-er-setup-neu"];
+        return `<span class="pf-er-setup-pill ${cls}">${lbl}</span>`;
+      }
+      function _statusPill(r){
+        if(r.isActive) return `<span class="pf-er-status pf-er-status-active">▶ ${r.dir.toUpperCase()}</span>`;
+        if(r.isLongIdea) return `<span class="pf-er-status pf-er-status-idea">▲ IDEA</span>`;
+        if(r.isShortIdea) return `<span class="pf-er-status pf-er-status-short-idea">▼ SHORT-IDEA</span>`;
+        return `<span class="pf-er-status pf-er-status-watch">— Watch</span>`;
+      }
+
+      const rowsHtml=rows.map(r=>{
+        const sector=(r.sv.sector_name||"").replace("Compute & Semis","Semis").replace("AI-Software & Apps","AI-SW").replace("Hyperscaler & Big Tech","Hyperscaler").replace("Energy / Power / Infra","Energy");
+        const dayLbl=r.days===0?"Heute":r.days===1?"Morgen":`+${r.days}d`;
+        return `<div class="${r.rowCls}">
+          <div class="pf-er-date">
+            <span class="pf-er-date-day">${esc(r.dow)}</span>
+            <span class="pf-er-date-val">${esc(r.date)}</span>
+            <span class="pf-er-date-cd">${esc(dayLbl)}</span>
+          </div>
+          <div class="pf-er-tk-cell">
+            <div class="pf-er-tk-row">
+              <span class="pf-er-tk">${esc(r.TK)}</span>
+              ${_statusPill(r)}
+            </div>
+            <span class="pf-er-sec">${esc(sector)}</span>
+          </div>
+          <div>${_emoveDisplay(r.emove)}</div>
+          <div class="pf-er-setup">${_setupPill(r.verdict)}</div>
+          <div class="pf-er-notes ${r.notesCls}">${esc(r.notesText)}</div>
+        </div>`;
+      }).join("");
+
+      const totalEvents=rows.length;
+      const activeInZone=rows.filter(r=>r.isActive).length;
+      const conflicts=rows.filter(r=>r.conflict).length;
+      const ideaEvents=rows.filter(r=>r.isLongIdea||r.isShortIdea).length;
+
+      earningsCalHtml=`<div class="panel pf-er-panel">
+        <div class="pf-er-h">
+          <div>
+            <div class="pf-er-title">Earnings-Kalender — Bestätigte Termine</div>
+            <div class="pf-er-sub">Reale Earnings-Daten aus Yahoo-Calendar · Cross-referenced mit Options-Tape (Implied Move + Setup) · Aktive Positionen ▶ und Trade-Ideen ▲▼ markiert</div>
+          </div>
+          <div class="pf-er-stats">
+            <div class="pf-er-stat"><span class="pf-er-stat-val">${totalEvents}</span><span class="pf-er-stat-lbl">Events</span></div>
+            <div class="pf-er-stat"><span class="pf-er-stat-val pf-er-stat-pos">${activeInZone}</span><span class="pf-er-stat-lbl">In Buch</span></div>
+            <div class="pf-er-stat"><span class="pf-er-stat-val pf-er-stat-warn">${ideaEvents}</span><span class="pf-er-stat-lbl">In Ideen</span></div>
+            <div class="pf-er-stat"><span class="pf-er-stat-val${conflicts?' pf-er-stat-warn':''}">${conflicts}</span><span class="pf-er-stat-lbl">Konflikte</span></div>
+          </div>
+        </div>
+        <div class="pf-er-list">${rowsHtml}</div>
+        <div class="pf-er-foot">Quelle: Yahoo-Earnings-Calendar (bestätigte Termine, im Gegensatz zum Event-Horizon-Panel oben das IV-implied catalysts aus Options-Term-Structure ableitet). Cross-Referenz: wenn Ticker im Options-Tape, wird Implied Move (ATM-Straddle) + Setup-Verdict overlay. Konflikt-Detection: aktive LONG-Position mit BEAR-Setup oder aktive SHORT mit BULL/Squeeze vor Earnings.</div>
+      </div>`;
+    }
+  }
+
+  root.innerHTML=`${subNavHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
