@@ -528,6 +528,14 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   padding:1px 6px;border:1px solid var(--line);border-radius:3px;letter-spacing:.02em}
 .rs-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;
   background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+/* 8-cell grid (6 original + Sortino + Calmar) — wrap at 4 on medium, 2 on mobile */
+.rs-grid{grid-template-columns:repeat(8,minmax(0,1fr))}
+@media(max-width:960px){.rs-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* Rolling Sharpe mini-chart — companion to underwater chart, same width */
+.rs-chart-svg{width:100%;height:auto;display:block;margin-top:4px}
+.rs-line{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.rs-line.rs-pos{stroke:var(--green)}.rs-line.rs-neg{stroke:var(--red)}
+.rs-dot-pos{fill:var(--green)}.rs-dot-neg{fill:var(--red)}
 .rs-cell{background:var(--bg);padding:var(--s2) var(--s3);display:flex;flex-direction:column;gap:2px;
   cursor:help;font-variant-numeric:tabular-nums}
 .rs-lbl{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.05em;line-height:1.1}
@@ -536,7 +544,7 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .rs-val.move-dn{color:var(--red)}
 .rs-sub{font-size:var(--fs-micro);line-height:1.2}
 .rs-foot{font-size:var(--fs-micro);margin-top:var(--s2);line-height:1.4}
-@media(max-width:840px){.rs-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:840px){.rs-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:480px){
   .rs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .rs-val{font-size:17px}
@@ -2254,7 +2262,7 @@ function calibSvg(buckets){
     const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
     _curveSrc.push({conv:(t.conviction!=null?t.conviction:0.5), baseline:t.baseline_price, spark:sp, eOff, sign});
   });
-  let curvePanelHtml="", riskStatsPanelHtml="", stressPanelHtml="";
+  let curvePanelHtml="", riskStatsPanelHtml="", stressPanelHtml="", rollSharpeSvg="";
   let _portBeta=null, _portVolAnn=null, _portObs=0;
   if(_curveSrc.length){
     const _incep=Math.max(..._curveSrc.map(s=>s.eOff));
@@ -2376,14 +2384,40 @@ function calibSvg(buckets){
             const corr=(sdB>1e-9 && sdS>1e-9) ? cov/(sdB*sdS) : null;
             const trackErrAnn=sdTE*ANN*100;
             const infoRatio=sdTE>1e-9 ? mTE/sdTE*ANN : null;
+            // Sortino Ratio — downside-deviation-adjusted Sharpe (HED-137 Zyklus 98).
+            // Downside std = sqrt(mean(min(r,0)^2)) over full sample (denominator=n, not dN).
+            let dsSumSq=0;
+            rB.forEach(r=>{ if(r<0) dsSumSq+=r*r; });
+            const dsStd=Math.sqrt(Math.max(dsSumSq/n,0));
+            const sortino=dsStd>1e-9 ? mB/dsStd*ANN : null;
+            // Calmar Ratio — CAGR / |maxDD%|. CAGR estimated from total return + observation days.
+            const calmarMaxDD=Math.min(0,...pcts); // use same pcts as the equity curve
+            const cagr=n>1?((Math.pow(Math.max(1e-9,1+lastPct/100),252/n)-1)*100):null;
+            const calmar=(cagr!=null&&calmarMaxDD<-0.1)?cagr/Math.abs(calmarMaxDD):null;
+            // Rolling 10d Sharpe: slide window across rB, aligned from inception to today.
+            const ROLL_W=Math.max(5,Math.min(10,Math.floor(n/2)));
+            const rollArr=[];
+            if(n>=ROLL_W+1){
+              for(let end=ROLL_W;end<=n;end++){
+                const sl=rB.slice(end-ROLL_W,end);
+                const rm=sl.reduce((a,b)=>a+b,0)/ROLL_W;
+                let rv2=0; sl.forEach(x=>{const e=x-rm;rv2+=e*e;}); rv2/=Math.max(1,ROLL_W-1);
+                const rsd=Math.sqrt(Math.max(rv2,0));
+                rollArr.push({i:end-1, rs:rsd>1e-9?rm/rsd*ANN:null});
+              }
+            }
             const fmtR=v=>(v==null||!isFinite(v))?'—':(v>=0?'+':'−')+Math.abs(v).toFixed(2);
             const fmtP=v=>(v==null||!isFinite(v))?'—':v.toFixed(2)+'%';
             const sharpeBand=v=>v==null?'':v>=2?'exzellent':v>=1?'solide':v>=0?'unterdurchschn.':'negativ';
             const corrBand=v=>v==null?'':Math.abs(v)>=0.7?'stark gekoppelt':Math.abs(v)>=0.3?'moderat':'schwach';
             const betaBand=v=>v==null?'':v>=1.2?'hoch-Beta':v>=0.8?'≈ Markt':v>=0.3?'low-Beta':v>=-0.3?'marktneutral':'invers';
             const irBand=v=>v==null?'':v>=0.5?'starkes Alpha':v>=0?'positiv':'negativ';
+            const sortinoBand=v=>v==null?'':v>=3?'exzellent':v>=2?'stark':v>=1?'solide':v>=0?'neutral':'negativ';
+            const calmarBand=v=>v==null?'':v>=3?'exzellent':v>=1?'stark':v>=0.5?'solide':v>=0?'niedrig':'negativ';
             const sharpeCls=sharpe==null?'':sharpe>=1?'move-up':sharpe<0?'move-dn':'';
             const irCls=infoRatio==null?'':infoRatio>=0.5?'move-up':infoRatio<0?'move-dn':'';
+            const sortinoCls=sortino==null?'':sortino>=2?'move-up':sortino<0?'move-dn':'';
+            const calmarCls=calmar==null?'':calmar>=1?'move-up':calmar<0?'move-dn':'';
             const notice = n<10
               ? `<span class="rs-notice" title="Bei wenigen Beobachtungen sind die Schätzer verrauscht — Werte stabilisieren sich mit jedem Live-Tag">n=${n} · noisy</span>`
               : `<span class="muted" style="font-size:var(--fs-micro);font-variant-numeric:tabular-nums">n=${n} Tagesreturns</span>`;
@@ -2399,9 +2433,46 @@ function calibSvg(buckets){
                 <div class="rs-cell" title="Korrelation zu SPY — Pearson r der Tagesreturns. Niedrige Korrelation = diversifiziertes Alpha."><div class="rs-lbl muted">Korr.</div><div class="rs-val">${fmtR(corr)}</div><div class="rs-sub muted">${corrBand(corr)}</div></div>
                 <div class="rs-cell" title="Tracking Error — Standardabweichung der aktiven Returns (Buch − SPY) × √252."><div class="rs-lbl muted">Tr-Error</div><div class="rs-val">${fmtP(trackErrAnn)}</div><div class="rs-sub muted">ann.</div></div>
                 <div class="rs-cell" title="Information Ratio — annualisiertes Alpha geteilt durch Tracking Error. &gt;0.5 starkes Alpha pro Risikoeinheit."><div class="rs-lbl muted">Info-Ratio</div><div class="rs-val ${irCls}">${fmtR(infoRatio)}</div><div class="rs-sub muted">${irBand(infoRatio)}</div></div>
+                <div class="rs-cell" title="Sortino Ratio — wie Sharpe, aber nur Downside-Volatilität im Nenner. Bestraft ausschließlich negative Returns. &gt;3 exzellent, &gt;2 stark, &gt;1 solide."><div class="rs-lbl muted">Sortino</div><div class="rs-val ${sortinoCls}">${fmtR(sortino)}</div><div class="rs-sub muted">${sortinoBand(sortino)}</div></div>
+                <div class="rs-cell" title="Calmar Ratio — annualisierter Return geteilt durch Max Drawdown. Bewertet Return pro Einheit des schlimmsten Verlusts. &gt;3 exzellent, &gt;1 stark. Nur aussagekräftig wenn Drawdown &gt; 0.1%."><div class="rs-lbl muted">Calmar</div><div class="rs-val ${calmarCls}">${calmar!=null?fmtR(calmar):'—'}</div><div class="rs-sub muted">${calmarBand(calmar)}</div></div>
               </div>
-              <div class="rs-foot muted">Aus täglichen Returns der konv.-gewichteten Buch-Kurve und SPY über den gemeinsamen Beobachtungszeitraum. Standard-Risk-Panel (Bloomberg PORT-Stil). Werte stabilisieren sich mit längerer Live-Historie.</div>
+              <div class="rs-foot muted">Aus täglichen Returns der konv.-gewichteten Buch-Kurve und SPY über den gemeinsamen Beobachtungszeitraum. Sortino: Downside-Std (nur neg. Returns). Calmar: CAGR-Schätzung / |Max-DD|. Standard-Risk-Panel (Bloomberg PORT-Stil). Werte stabilisieren sich mit längerer Live-Historie.</div>
             </div>`;
+            // Rolling Sharpe mini-chart (HED-137 Zyklus 98): time-series consistency view.
+            // Uses the same rB[] daily returns from the risk block, rolling ROLL_W-day windows.
+            // X-axis: same horizontal extent as equity curve (pad.l / pad.r), scaled over rollArr.
+            // Colored by current value (green = positive edge, red = negative).
+            if(rollArr.length>=2){
+              const rsH=56, rsPadT=14, rsPadB=8, rsIH=rsH-rsPadT-rsPadB;
+              const rsIW=W-pad.l-16;
+              const rsVals=rollArr.map(p=>p.rs).filter(v=>v!=null&&isFinite(v));
+              if(rsVals.length>=2){
+                const rsRawLo=Math.min(...rsVals), rsRawHi=Math.max(...rsVals);
+                const rsSpan=Math.max(0.5,rsRawHi-rsRawLo);
+                const rsLo=rsRawLo-rsSpan*0.15, rsHi=rsRawHi+rsSpan*0.15;
+                const _yRS=v=>rsPadT+(rsHi-v)/(rsHi-rsLo)*rsIH;
+                const rsZeroY=_yRS(0);
+                const xS=rollArr.length>1?rsIW/(rollArr.length-1):0;
+                const rsCoords=rollArr.map((p,j)=>[pad.l+j*xS, p.rs!=null&&isFinite(p.rs)?_yRS(p.rs):null]);
+                const rsPts=rsCoords.filter(([,y])=>y!=null).map(([x,y])=>`${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+                const lastRS=rollArr[rollArr.length-1]?.rs;
+                const rsCls=(lastRS!=null&&lastRS>=0)?"rs-pos":"rs-neg";
+                const dotCls=(lastRS!=null&&lastRS>=0)?"rs-dot-pos":"rs-dot-neg";
+                const lastRSfmt=lastRS!=null?((lastRS>=0?"+":"−")+Math.abs(lastRS).toFixed(2)):"—";
+                const lastXY=rsCoords[rsCoords.length-1];
+                const rsZeroLn=`<line class="ec-zero" x1="${pad.l}" y1="${rsZeroY.toFixed(1)}" x2="${(pad.l+rsIW).toFixed(1)}" y2="${rsZeroY.toFixed(1)}"/>`;
+                const rsTitleCls=(lastRS!=null&&lastRS>=0)?'move-up':'move-dn';
+                const rsHiTxt=rsHi.toFixed(1), rsLoTxt=rsLo.toFixed(1);
+                rollSharpeSvg=`<svg class="rs-chart-svg" viewBox="0 0 ${W} ${rsH}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rolling ${ROLL_W}d Sharpe Ratio — aktuell ${lastRSfmt}">
+                  ${rsZeroLn}
+                  ${rsPts?`<polyline class="rs-line ${rsCls}" points="${rsPts}"/>`:""}
+                  ${(lastXY&&lastXY[1]!=null)?`<circle class="rs-dot ${dotCls}" cx="${lastXY[0].toFixed(1)}" cy="${lastXY[1].toFixed(1)}" r="3.5"><title>Rolling Sharpe ${lastRSfmt}</title></circle>`:""}
+                  <text class="dd-title" x="${pad.l}" y="${(rsPadT-3).toFixed(1)}">Rolling Sharpe (${ROLL_W}d) · aktuell <tspan class="${rsTitleCls}">${lastRSfmt}</tspan></text>
+                  <text class="ec-ylab" x="${(pad.l-6).toFixed(1)}" y="${(rsPadT+4).toFixed(1)}" text-anchor="end">${rsHiTxt}</text>
+                  <text class="ec-ylab" x="${(pad.l-6).toFixed(1)}" y="${(rsPadT+rsIH).toFixed(1)}" text-anchor="end">${rsLoTxt}</text>
+                </svg>`;
+              }
+            }
           }
         }
       }
@@ -2483,7 +2554,8 @@ function calibSvg(buckets){
         </div>
         ${svg}
         ${ddSvg}
-        <div class="ec-foot muted">Honestes Inception-Tracking — die Kurve wächst mit jedem Handelstag. Indexiert bei 0% am Entry-Tag, sign-flipped für Shorts. Underwater-Chart zeigt Drawdown vom rollierenden Hoch (immer ≤ 0).</div>
+        ${rollSharpeSvg}
+        <div class="ec-foot muted">Honestes Inception-Tracking — die Kurve wächst mit jedem Handelstag. Indexiert bei 0% am Entry-Tag, sign-flipped für Shorts. Underwater-Chart: Drawdown vom rollierenden Hoch. Rolling Sharpe: rollierendes Fenster über Tagesreturns (annualisiert, rf=0) — zeigt ob die risikoadjustierte Kante konsistent bleibt oder verblasst.</div>
       </div>`;
     }
   }
