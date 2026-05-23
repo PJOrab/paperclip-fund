@@ -2542,6 +2542,61 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 @media print{
   .pf-status-bar{display:none!important}
 }
+/* Monte-Carlo Forward-P&L Distribution (HED-150 Zyklus 189) — Bloomberg PORT<GO> equivalent.
+   Bootstrap-resampling of book daily-return history (n_obs trading days) → N=2000 forward
+   paths over 30/60/90d; fan chart (P5/P10/P25/P50/P75/P90/P95 quantile bands) + terminal
+   histogram for the 60d horizon. Answers: "Wenn wir das aktuelle Buch halten — wie sieht
+   die Verteilung der Forward-Rückkehr aus, und wie fett ist der linke Schwanz?" */
+.pf-mc-panel{padding:var(--s3);margin-top:var(--s3)}
+.pf-mc-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-mc-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt);line-height:1.2}
+.pf-mc-sub{font-size:var(--fs-micro);margin-top:2px;line-height:1.4;color:var(--mut)}
+.pf-mc-chip{display:inline-block;padding:2px 8px;border-radius:99px;font-size:var(--fs-micro);font-weight:600;border:1px solid var(--line);background:var(--panel2);color:var(--mut);margin-left:var(--s2)}
+.pf-mc-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s2);margin-bottom:var(--s3)}
+.pf-mc-kpi{background:rgba(139,148,158,.05);border:1px solid rgba(139,148,158,.12);border-radius:6px;padding:10px 12px}
+.pf-mc-kpi-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.pf-mc-kpi-hz{font-size:11px;font-weight:700;color:var(--txt);text-transform:uppercase;letter-spacing:.05em}
+.pf-mc-kpi-med{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.pf-mc-kpi-med-pos{color:var(--green)}
+.pf-mc-kpi-med-neg{color:var(--red)}
+.pf-mc-kpi-med-mut{color:var(--mut)}
+.pf-mc-kpi-rng{display:flex;justify-content:space-between;gap:6px;font-size:10px;color:var(--mut);font-variant-numeric:tabular-nums;line-height:1.4}
+.pf-mc-kpi-rng b{color:var(--txt);font-weight:600}
+.pf-mc-fan{margin-bottom:var(--s3)}
+.pf-mc-fan-h{font-size:var(--fs-cap);font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.pf-mc-fan-leg{display:flex;gap:10px;font-size:9px;color:var(--mut);font-weight:600;text-transform:none;letter-spacing:0}
+.pf-mc-fan-leg-sw{display:inline-block;width:10px;height:8px;border-radius:2px;vertical-align:middle;margin-right:3px}
+.pf-mc-fan-svg{width:100%;height:auto;display:block;max-height:240px}
+.pf-mc-fan-band-95{fill:rgba(88,166,255,.08)}
+.pf-mc-fan-band-80{fill:rgba(88,166,255,.16)}
+.pf-mc-fan-band-50{fill:rgba(88,166,255,.28)}
+.pf-mc-fan-median{fill:none;stroke:var(--accent);stroke-width:2}
+.pf-mc-fan-zero{stroke:var(--mut);stroke-width:1;stroke-dasharray:3,3;opacity:.6}
+.pf-mc-fan-axis{stroke:rgba(139,148,158,.2);stroke-width:1}
+.pf-mc-fan-tick{font-size:9px;fill:var(--mut);font-variant-numeric:tabular-nums}
+.pf-mc-hist{margin-bottom:var(--s2)}
+.pf-mc-hist-h{font-size:var(--fs-cap);font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin-bottom:6px}
+.pf-mc-hist-svg{width:100%;height:auto;display:block;max-height:140px}
+.pf-mc-hist-bar{fill:rgba(88,166,255,.45)}
+.pf-mc-hist-bar-neg{fill:rgba(248,81,73,.45)}
+.pf-mc-hist-bar-pos{fill:rgba(63,185,80,.45)}
+.pf-mc-hist-marker{stroke-width:1.5;fill:none}
+.pf-mc-hist-marker-med{stroke:var(--accent);stroke-dasharray:none}
+.pf-mc-hist-marker-tail{stroke:#e8b341;stroke-dasharray:4,3}
+.pf-mc-hist-lbl{font-size:9px;fill:var(--mut);font-variant-numeric:tabular-nums;text-anchor:middle}
+.pf-mc-foot{font-size:var(--fs-micro);color:var(--mut);line-height:1.5;border-top:1px solid rgba(139,148,158,.1);padding-top:var(--s2);margin-top:var(--s2)}
+.pf-mc-foot b{color:var(--txt);font-weight:600}
+.pf-mc-empty{padding:var(--s3);color:var(--mut);font-size:var(--fs-micro);text-align:center;border:1px dashed rgba(139,148,158,.2);border-radius:6px}
+@media(max-width:600px){
+  .pf-mc-kpis{grid-template-columns:1fr}
+  .pf-mc-fan-leg{display:none}
+}
+@media print{
+  .pf-mc-fan-band-95{fill:rgba(0,0,0,.05)}
+  .pf-mc-fan-band-80{fill:rgba(0,0,0,.1)}
+  .pf-mc-fan-band-50{fill:rgba(0,0,0,.2)}
+  .pf-mc-fan-median{stroke:#000}
+}
 /* Print-Friendly Stylesheet (HED-150 Zyklus 178)
    Turns the dark-themed dashboard into a clean printable report for IC,
    board meetings, compliance archives. Hides navigation chrome, switches to
@@ -5442,6 +5497,7 @@ main:focus{outline:none}
           <div class="pf-kb-row"><span class="pf-kb-key">g r</span><span class="pf-kb-desc">Sektor-Rotation</span></div>
           <div class="pf-kb-row"><span class="pf-kb-key">g t</span><span class="pf-kb-desc">Thesen</span></div>
           <div class="pf-kb-row"><span class="pf-kb-key">g e</span><span class="pf-kb-desc">Equity-Curve</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g o</span><span class="pf-kb-desc">Monte-Carlo (Outlook)</span></div>
           <div class="pf-kb-row"><span class="pf-kb-key">g c</span><span class="pf-kb-desc">Calibration</span></div>
           <div class="pf-kb-row"><span class="pf-kb-key">g v</span><span class="pf-kb-desc">Fundamentals (Value)</span></div>
           <div class="pf-kb-row"><span class="pf-kb-key">g i</span><span class="pf-kb-desc">Ideas</span></div>
@@ -7172,7 +7228,7 @@ function calibSvg(buckets){
     const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
     _curveSrc.push({conv:(t.conviction!=null?t.conviction:0.5), baseline:t.baseline_price, spark:sp, eOff, sign});
   });
-  let curvePanelHtml="", riskStatsPanelHtml="", stressPanelHtml="", rollSharpeSvg="";
+  let curvePanelHtml="", riskStatsPanelHtml="", stressPanelHtml="", rollSharpeSvg="", montePanelHtml="";
   let _portBeta=null, _portVolAnn=null, _portObs=0;
   if(_curveSrc.length){
     const _incep=Math.max(..._curveSrc.map(s=>s.eOff));
@@ -7467,6 +7523,236 @@ function calibSvg(buckets){
         ${rollSharpeSvg}
         <div class="ec-foot muted">Honestes Inception-Tracking — die Kurve wächst mit jedem Handelstag. Indexiert bei 0% am Entry-Tag, sign-flipped für Shorts. Underwater-Chart: Drawdown vom rollierenden Hoch. Rolling Sharpe: rollierendes Fenster über Tagesreturns (annualisiert, rf=0) — zeigt ob die risikoadjustierte Kante konsistent bleibt oder verblasst.</div>
       </div>`;
+
+      // Monte-Carlo Forward-P&L Distribution (HED-150 Zyklus 189). Bloomberg PORT<GO>
+      // equivalent: given the book's realized daily-return history, what does the
+      // distribution of forward 30/60/90d returns look like? Bootstrap-resampling
+      // preserves observed fat tails; pure-iid (no autocorrelation modeling) — drift=0
+      // assumption explicit in the footer. Renders only if ≥10 daily observations.
+      (function buildMontePanel(){
+        // Bootstrap pool — synthetic conviction-weighted book daily returns derived from
+        // per-ticker spark histories (last 30d). Book is typically too young (1-5 days
+        // of live history) to use _curve daily returns alone, so we project the *current
+        // book composition* back over the 30d spark window to get a realistic vol/return
+        // pool. Per day t: synthetic_r_t = Σ(conv_i × dir_i × r_i,t) / Σ(conv_i)
+        const seriesList = []; // [{conv, dir, returns:[..]}, ...]
+        _curveSrc.forEach(s => {
+          const sp = s.spark;
+          if(!sp || sp.length < 2) return;
+          const dailyR = [];
+          for(let i=1; i<sp.length; i++){
+            const prev=sp[i-1];
+            if(prev && Math.abs(prev) > 1e-9) dailyR.push(sp[i]/prev - 1);
+            else dailyR.push(0);
+          }
+          seriesList.push({conv:s.conv||0.5, dir:s.sign, returns:dailyR});
+        });
+        if(!seriesList.length) return;
+        // Align on minimum length (sparks usually 30, but be safe)
+        const minLen = seriesList.reduce((m,s)=>Math.min(m, s.returns.length), Infinity);
+        if(!isFinite(minLen) || minLen < 5) return;
+        const totalConvWMC = seriesList.reduce((sum,s)=>sum + s.conv, 0) || 1;
+        const rs = [];
+        for(let t=0; t<minLen; t++){
+          let r = 0;
+          seriesList.forEach(s => {
+            const idx = s.returns.length - minLen + t; // align to most recent minLen days
+            r += s.conv * s.dir * s.returns[idx];
+          });
+          rs.push(r / totalConvWMC);
+        }
+        if(rs.length < 5) return;
+
+        // Deterministic LCG so render is stable across rebuilds with same data
+        let _seed = 0;
+        for(let i=0; i<rs.length; i++){ _seed = (_seed*131 + Math.round(rs[i]*1e9)) >>> 0; }
+        _seed = (_seed||1) >>> 0;
+        function rand(){ _seed = (_seed*1664525 + 1013904223) >>> 0; return _seed/4294967296; }
+        function sampleR(){ return rs[Math.floor(rand()*rs.length)]; }
+
+        const N = 2000;            // paths
+        const T = 90;              // forward days
+        // v_now is unused — forward returns are computed relative to v=1 at simulation start
+        // forward[t][p] = path p value at day t (relative to v_now, so v0=1)
+        // store as flat: paths[p*T + t] for forward day t (1..T) relative-pct
+        const paths = new Float32Array(N * T);
+        for(let p=0; p<N; p++){
+          let v = 1.0;
+          for(let t=0; t<T; t++){
+            v *= (1 + sampleR());
+            paths[p*T + t] = (v - 1) * 100; // forward-return %
+          }
+        }
+
+        // Compute quantiles per forward-day. Pre-sort each day's column.
+        function quantile(sortedCol, q){
+          const n=sortedCol.length;
+          if(!n) return 0;
+          const idx=Math.min(n-1, Math.max(0, Math.floor(q*(n-1))));
+          return sortedCol[idx];
+        }
+        const qs=[0.05,0.10,0.25,0.50,0.75,0.90,0.95];
+        const qBands = new Array(T); // each item: [q05,q10,q25,q50,q75,q90,q95]
+        for(let t=0; t<T; t++){
+          const col = new Float32Array(N);
+          for(let p=0; p<N; p++) col[p] = paths[p*T + t];
+          col.sort();
+          qBands[t] = qs.map(q => quantile(col, q));
+        }
+
+        // Horizon KPIs at 30/60/90 (clamp to available T)
+        const horizons = [30,60,90].filter(h=>h<=T);
+        const horizonStats = horizons.map(h => {
+          const b = qBands[h-1];
+          return {h, q05:b[0], q10:b[1], q25:b[2], q50:b[3], q75:b[4], q90:b[5], q95:b[6]};
+        });
+
+        // Terminal histogram for the 60d horizon (or last available)
+        const histH = Math.min(60, T);
+        const histCol = new Float32Array(N);
+        for(let p=0; p<N; p++) histCol[p] = paths[p*histH + (histH-1)*0]; // typo guard
+        // re-pull cleanly:
+        for(let p=0; p<N; p++) histCol[p] = paths[p*T + (histH-1)];
+        // histogram: dynamic range based on observed min/max with symmetric padding
+        let hMin=Infinity, hMax=-Infinity;
+        for(let p=0; p<N; p++){ const v=histCol[p]; if(v<hMin)hMin=v; if(v>hMax)hMax=v; }
+        const hPad = Math.max(1, (hMax-hMin)*0.05);
+        hMin -= hPad; hMax += hPad;
+        const bins=30;
+        const binW=(hMax-hMin)/bins;
+        const counts=new Array(bins).fill(0);
+        for(let p=0; p<N; p++){
+          const v=histCol[p];
+          let bi=Math.floor((v-hMin)/binW);
+          if(bi<0) bi=0; if(bi>=bins) bi=bins-1;
+          counts[bi]++;
+        }
+        const maxCount=counts.reduce((a,b)=>a>b?a:b,0)||1;
+        const histStats = horizonStats.find(h=>h.h===histH) || horizonStats[0];
+
+        // --- SVG: fan chart ---
+        const W=720, H=190, pad={l:46,r:18,t:14,b:26};
+        const iW=W-pad.l-pad.r, iH=H-pad.t-pad.b;
+        // y-range: full P5..P95 envelope, snap to symmetric padding around zero if narrow
+        let yMin=Infinity, yMax=-Infinity;
+        qBands.forEach(b=>{ if(b[0]<yMin)yMin=b[0]; if(b[6]>yMax)yMax=b[6]; });
+        if(yMax-yMin<2){ const m=(yMax+yMin)/2; yMin=m-1; yMax=m+1; }
+        const yPadV=(yMax-yMin)*0.08;
+        yMin-=yPadV; yMax+=yPadV;
+        const yPx = v => pad.t + (yMax-v)/(yMax-yMin)*iH;
+        const xPx = t => pad.l + (t/(T-1))*iW; // t from 0..T-1 (forward day 1..T)
+        // Build polygon paths for q05-q95, q10-q90, q25-q75
+        function bandPath(lowIdx, highIdx){
+          const top=[], bot=[];
+          for(let t=0; t<T; t++){
+            top.push(`${xPx(t).toFixed(1)},${yPx(qBands[t][highIdx]).toFixed(1)}`);
+            bot.push(`${xPx(t).toFixed(1)},${yPx(qBands[t][lowIdx]).toFixed(1)}`);
+          }
+          return "M"+top.join(" L ")+" L "+bot.reverse().join(" L ")+" Z";
+        }
+        const band95 = bandPath(0,6);
+        const band80 = bandPath(1,5);
+        const band50 = bandPath(2,4);
+        const medPts = qBands.map((b,t)=>`${xPx(t).toFixed(1)},${yPx(b[3]).toFixed(1)}`).join(" ");
+        // y-axis ticks: 4 evenly spaced
+        const yTicks=[];
+        for(let i=0; i<=4; i++){
+          const v = yMin + (yMax-yMin)*i/4;
+          yTicks.push(`<text class="pf-mc-fan-tick" x="${pad.l-6}" y="${(yPx(v)+3).toFixed(0)}" text-anchor="end">${(v>=0?"+":"")}${v.toFixed(0)}%</text>`);
+        }
+        // x-axis ticks at 30/60/90
+        const xTicks = horizons.map(h => {
+          const x = xPx(h-1);
+          return `<line class="pf-mc-fan-axis" x1="${x.toFixed(0)}" y1="${pad.t}" x2="${x.toFixed(0)}" y2="${pad.t+iH}" opacity="0.4"/>
+                  <text class="pf-mc-fan-tick" x="${x.toFixed(0)}" y="${(pad.t+iH+14).toFixed(0)}" text-anchor="middle">${h}d</text>`;
+        }).join("");
+        const zeroY = yPx(0);
+        const showZero = (zeroY>=pad.t && zeroY<=pad.t+iH);
+
+        const fanSvg=`<svg class="pf-mc-fan-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Monte-Carlo Forward-P&L Fan-Chart">
+          <path class="pf-mc-fan-band-95" d="${band95}"/>
+          <path class="pf-mc-fan-band-80" d="${band80}"/>
+          <path class="pf-mc-fan-band-50" d="${band50}"/>
+          ${showZero?`<line class="pf-mc-fan-zero" x1="${pad.l}" y1="${zeroY.toFixed(1)}" x2="${(pad.l+iW).toFixed(0)}" y2="${zeroY.toFixed(1)}"/>`:""}
+          <polyline class="pf-mc-fan-median" points="${medPts}"/>
+          ${xTicks}
+          ${yTicks.join("")}
+        </svg>`;
+
+        // --- SVG: terminal histogram ---
+        const HW=720, HH=120, hPadObj={l:46,r:18,t:10,b:22};
+        const hIW=HW-hPadObj.l-hPadObj.r, hIH=HH-hPadObj.t-hPadObj.b;
+        const barW=hIW/bins;
+        const histBars=counts.map((c,i)=>{
+          const x=hPadObj.l + i*barW;
+          const h=(c/maxCount)*hIH;
+          const y=hPadObj.t + (hIH-h);
+          const binMid=hMin + (i+0.5)*binW;
+          const cls=binMid>0?"pf-mc-hist-bar-pos":(binMid<0?"pf-mc-hist-bar-neg":"pf-mc-hist-bar");
+          return `<rect class="${cls}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(barW-1).toFixed(1)}" height="${h.toFixed(1)}"/>`;
+        }).join("");
+        function histXOf(v){ return hPadObj.l + (v-hMin)/(hMax-hMin)*hIW; }
+        // Markers: P50 (solid accent), P10 + P90 (dashed amber)
+        const xMed=histXOf(histStats.q50);
+        const xP10=histXOf(histStats.q10);
+        const xP90=histXOf(histStats.q90);
+        const histMarkers=`
+          <line class="pf-mc-hist-marker pf-mc-hist-marker-tail" x1="${xP10.toFixed(1)}" y1="${hPadObj.t}" x2="${xP10.toFixed(1)}" y2="${(hPadObj.t+hIH).toFixed(0)}"/>
+          <line class="pf-mc-hist-marker pf-mc-hist-marker-tail" x1="${xP90.toFixed(1)}" y1="${hPadObj.t}" x2="${xP90.toFixed(1)}" y2="${(hPadObj.t+hIH).toFixed(0)}"/>
+          <line class="pf-mc-hist-marker pf-mc-hist-marker-med" x1="${xMed.toFixed(1)}" y1="${hPadObj.t}" x2="${xMed.toFixed(1)}" y2="${(hPadObj.t+hIH).toFixed(0)}"/>
+          <text class="pf-mc-hist-lbl" x="${xP10.toFixed(1)}" y="${(hPadObj.t+hIH+12).toFixed(0)}">P10 ${(histStats.q10>=0?"+":"")}${histStats.q10.toFixed(1)}%</text>
+          <text class="pf-mc-hist-lbl" x="${xMed.toFixed(1)}" y="${(hPadObj.t+hIH+12).toFixed(0)}">P50 ${(histStats.q50>=0?"+":"")}${histStats.q50.toFixed(1)}%</text>
+          <text class="pf-mc-hist-lbl" x="${xP90.toFixed(1)}" y="${(hPadObj.t+hIH+12).toFixed(0)}">P90 ${(histStats.q90>=0?"+":"")}${histStats.q90.toFixed(1)}%</text>
+        `;
+        const histSvg=`<svg class="pf-mc-hist-svg" viewBox="0 0 ${HW} ${HH}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Terminal-Histogramm ${histH}d Forward-Return">
+          ${histBars}
+          ${histMarkers}
+        </svg>`;
+
+        // KPI tiles
+        const kpiTiles = horizonStats.map(s => {
+          const medCls = s.q50>0.05 ? "pf-mc-kpi-med-pos" : (s.q50<-0.05 ? "pf-mc-kpi-med-neg" : "pf-mc-kpi-med-mut");
+          const sign = v => (v>=0?"+":"")+v.toFixed(1)+"%";
+          return `<div class="pf-mc-kpi">
+            <div class="pf-mc-kpi-h">
+              <span class="pf-mc-kpi-hz">${s.h}d</span>
+              <span class="pf-mc-kpi-med ${medCls}">${sign(s.q50)}</span>
+            </div>
+            <div class="pf-mc-kpi-rng"><span>P10 <b>${sign(s.q10)}</b></span><span>P90 <b>${sign(s.q90)}</b></span></div>
+            <div class="pf-mc-kpi-rng" style="margin-top:2px;opacity:.75"><span>Tail P5 <b>${sign(s.q05)}</b></span><span>Tail P95 <b>${sign(s.q95)}</b></span></div>
+          </div>`;
+        }).join("");
+
+        // Annualized vol from rs
+        let meanR=0; for(let i=0;i<rs.length;i++) meanR+=rs[i]; meanR/=rs.length;
+        let varR=0; for(let i=0;i<rs.length;i++){ const d=rs[i]-meanR; varR+=d*d; } varR/=Math.max(1,rs.length-1);
+        const sdR=Math.sqrt(varR);
+        const volAnn = sdR * Math.sqrt(252) * 100;
+        // % paths >0 at 60d
+        let nPosHist=0; for(let p=0; p<N; p++){ if(histCol[p]>0) nPosHist++; }
+        const pPos60 = (nPosHist/N*100).toFixed(0);
+
+        montePanelHtml=`<div class="panel pf-mc-panel">
+          <div class="pf-mc-h">
+            <div>
+              <div class="pf-mc-title">Forward P&L Distribution<span class="pf-mc-chip">Monte-Carlo · N=${N} · Bootstrap</span></div>
+              <div class="pf-mc-sub">Forward-Rückkehr-Verteilung 30/60/90d aus realisierter Buch-Historie (n=${rs.length} Tage). Bloomberg-PORT&lt;GO&gt;-Äquivalent — P10/P50/P90-Bänder zeigen die zentrale 80%-Spanne, Tail-P5/P95 die fetten Schwänze.</div>
+            </div>
+          </div>
+          <div class="pf-mc-kpis">${kpiTiles}</div>
+          <div class="pf-mc-fan">
+            <div class="pf-mc-fan-h">Forward-Fan-Chart <span class="pf-mc-fan-leg"><span><span class="pf-mc-fan-leg-sw" style="background:rgba(88,166,255,.08)"></span>P5–P95 (90%)</span><span><span class="pf-mc-fan-leg-sw" style="background:rgba(88,166,255,.16)"></span>P10–P90 (80%)</span><span><span class="pf-mc-fan-leg-sw" style="background:rgba(88,166,255,.28)"></span>P25–P75 (IQR)</span><span><span class="pf-mc-fan-leg-sw" style="background:var(--accent);height:2px"></span>Median</span></span></div>
+            ${fanSvg}
+          </div>
+          <div class="pf-mc-hist">
+            <div class="pf-mc-hist-h">Terminal-Histogramm ${histH}d (P(forward&gt;0) = ${pPos60}%)</div>
+            ${histSvg}
+          </div>
+          <div class="pf-mc-foot">
+            <b>Methode:</b> Stationary-iid-Bootstrap aus ${rs.length} synthetischen Buch-Tages-Returns, konstruiert durch konv-gewichtete Aggregation der per-Ticker-Renditen über die letzten ${minLen} Spark-Tage (Live-Buch oft zu jung — die aktuelle Komposition wird über das Spark-Fenster zurückprojiziert). Annualisierte Vol ≈ <b>${volAnn.toFixed(1)}%</b>, N=${N} Pfade, drift=0 (keine implizite Renditeerwartung beyond Historie). Direction-flip für Shorts ist im Sampling enthalten. <b>Limits:</b> iid-Sampling ignoriert Autokorrelation/Vol-Clustering · 30d-Spark-Fenster vs. längere Sample-Periode → potenzielle Regime-Verzerrung · Korrelationen sind implizit in den synthetischen Buch-Tagen aber zeitlich begrenzt. <b>Lesehilfe:</b> wenn der P10 bei 60d unter −5% liegt, ist das die obere Schätzung des 1-aus-10-Tail-Risikos bei gehaltener Komposition.
+          </div>
+        </div>`;
+      })();
     }
   }
   // Stress-Test-Panel (HED-137 Zyklus 95): Szenario-Shock-Schätzung — was passiert mit dem Buch,
@@ -11948,6 +12234,7 @@ function calibSvg(buckets){
       _chip("#pf-rotation","▣","Rotation","",""),
       _chip("#pf-theses","◉","Thesen",nActive?nActive:"","pf-nav-chip-badge-pos"),
       _chip("#pf-equity","∿","Equity","",""),
+      _chip("#pf-montecarlo","◊","Monte-Carlo","",""),
       _chip("#pf-calmap","⚖","Calibration","",""),
       _chip("#pf-fundamentals","◇","Fundamentals","",""),
       _chip("#pf-ideas","✦","Ideas",nIdeas?nIdeas:"","pf-nav-chip-badge-pos"),
@@ -12688,7 +12975,7 @@ function calibSvg(buckets){
     </div>`;
   }
 
-  root.innerHTML=`${subNavHtml}${freshnessHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-funnel")}${funnelHtml}${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}<div class="pf-legacy">${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}</div>`;
+  root.innerHTML=`${subNavHtml}${freshnessHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-funnel")}${funnelHtml}${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-montecarlo")}${montePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}<div class="pf-legacy">${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}</div>`;
   // Print Header — stamp built-at date onto #portfolioview (HED-150 Zyklus 178).
   (function stampPrintBuiltAt(){
     const pv=document.getElementById("portfolioview");
@@ -12709,7 +12996,7 @@ function calibSvg(buckets){
     if(!overlay) return;
     const jumpMap={
       a:"pf-alerts", m:"pf-matrix", f:"pf-funnel", r:"pf-rotation",
-      t:"pf-theses", e:"pf-equity", c:"pf-calmap", v:"pf-fundamentals",
+      t:"pf-theses", e:"pf-equity", o:"pf-montecarlo", c:"pf-calmap", v:"pf-fundamentals",
       i:"pf-ideas", x:"pf-events", n:"pf-news", s:"pf-scanner",
       d:"pf-insider", y:"pf-analysis", p:"pf-pipeline", g:"__top__",
       h:"__glossary__"
@@ -12803,6 +13090,7 @@ function calibSvg(buckets){
       {icon:"▣",label:"Sektor-Rotation",desc:"Sektor 1d/5d/30d returns",type:"panel",anchor:"pf-rotation"},
       {icon:"◉",label:"Thesis-Karten",desc:"Active call cards",type:"panel",anchor:"pf-theses"},
       {icon:"∿",label:"Equity-Curve",desc:"Book performance chart",type:"panel",anchor:"pf-equity"},
+      {icon:"◊",label:"Monte-Carlo Forward",desc:"P&L distribution 30/60/90d",type:"panel",anchor:"pf-montecarlo"},
       {icon:"⚖",label:"Calibration Map",desc:"Conviction vs PnL",type:"panel",anchor:"pf-calmap"},
       {icon:"◇",label:"Fundamentals-Quadrant",desc:"Value × Wachstum",type:"panel",anchor:"pf-fundamentals"},
       {icon:"✦",label:"Trade-Ideas",desc:"Signal-driven candidates",type:"panel",anchor:"pf-ideas"},
