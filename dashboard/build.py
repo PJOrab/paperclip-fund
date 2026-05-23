@@ -76,6 +76,7 @@ def collect() -> dict:
         "insider_tape": collect_insider_tape(c),
         "macro_pulse": collect_macro_pulse(c),
         "options_tape": collect_options_tape(c),
+        "short_squeeze": collect_short_squeeze(c),
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "built_at_iso": datetime.now(timezone.utc).isoformat(),
     }
@@ -626,6 +627,140 @@ def collect_options_tape(c, lookback_days: int = 4, ticker_cap: int = 22) -> dic
         "n_bullish": n_bullish,
         "n_bearish": n_bearish,
         "n_high_iv": n_high_iv,
+        "stale": stale,
+    }
+
+
+# Short-Squeeze-Pressure (HED-137 Zyklus 110): Bloomberg-SI-equivalent short-interest
+# panel. ShortInterestAdapter emits rows like "[ARM] Short interest: 11.4% of float —
+# elevated short interest = potential squeeze setup on positive catalyst" and optionally
+# "↑65% vs prior month" when the prior month delta is notable. We parse the latest reading
+# per ticker, bucket by SI level (low<5 / elevated 5-10 / high 10-20 / extreme ≥20),
+# surface the MoM trend, and tag the squeeze verdict against open-call direction so a PM
+# sees in one scan: where is the crowded short, and does the book agree or disagree.
+# Together with Options-Tape (gamma/IV), Insider-Tape (corp insiders) and Konsens-Spread
+# (sell-side disagreement), this rounds out the positioning suite — the fourth Bloomberg
+# positioning lens a PM scans every morning.
+_SI_RE = re.compile(
+    r"^\[(?P<ticker>[A-Z][A-Z0-9.\-]{0,9})\]\s+Short\s+interest:\s+"
+    r"(?P<si>[\d.]+)%\s+of\s+float"
+    r"(?:.*?(?P<arrow>[↑↓])(?P<mom>[\d.]+)%\s+vs\s+prior\s+month)?",
+    re.IGNORECASE,
+)
+
+
+def _si_parse(text: str) -> dict | None:
+    m = _SI_RE.search(text or "")
+    if not m:
+        return None
+    try:
+        si = float(m.group("si"))
+    except (TypeError, ValueError):
+        return None
+    mom_pct = None
+    arrow = m.group("arrow")
+    mom = m.group("mom")
+    if arrow and mom:
+        try:
+            v = float(mom)
+            mom_pct = v if arrow == "↑" else -v
+        except ValueError:
+            mom_pct = None
+    return {"ticker": m.group("ticker").upper(), "si": si, "mom_pct": mom_pct}
+
+
+def collect_short_squeeze(c, lookback_days: int = 14, ticker_cap: int = 24) -> dict:
+    """Latest per-ticker short-interest reading, sorted by squeeze-pressure score.
+
+    Score combines absolute SI level (level matters most — a 20% short ratio is
+    structurally different from a 5%) with MoM acceleration (rising SI = building
+    bearish positioning; falling = covering pressure). Returns the same envelope
+    shape as the other positioning panels for consistent rendering.
+    """
+    try:
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=lookback_days)).isoformat()
+        rows = (c.table("raw_items")
+                .select("text,fetched_at")
+                .eq("source", "yahoo_short_interest")
+                .gte("fetched_at", cutoff)
+                .order("fetched_at", desc=True)
+                .limit(400)
+                .execute().data or [])
+    except Exception:
+        rows = []
+
+    latest: dict[str, dict] = {}
+    for r in rows:
+        p = _si_parse(r.get("text"))
+        if not p:
+            continue
+        if p["ticker"] not in latest:
+            p["fetched_at"] = r.get("fetched_at")
+            latest[p["ticker"]] = p
+
+    out = []
+    for tk, p in latest.items():
+        si = p["si"]
+        mom = p.get("mom_pct")
+        if si >= 20:
+            bucket = "extreme"
+        elif si >= 10:
+            bucket = "high"
+        elif si >= 5:
+            bucket = "elevated"
+        else:
+            bucket = "low"
+
+        if bucket == "extreme":
+            verdict, tone = "squeeze_risk", "r"
+        elif bucket == "high" and (mom is None or mom >= -5):
+            verdict, tone = "squeeze_risk", "a"
+        elif mom is not None and mom >= 30:
+            verdict, tone = "building_short", "a"
+        elif mom is not None and mom <= -15:
+            verdict, tone = "covering", "g"
+        elif bucket == "elevated":
+            verdict, tone = "crowded_short", "a"
+        else:
+            verdict, tone = "baseline", "n"
+
+        score = si + (abs(mom) * 0.1 if mom is not None else 0.0)
+
+        out.append({
+            "ticker": tk,
+            "si": si,
+            "mom_pct": mom,
+            "bucket": bucket,
+            "verdict": verdict,
+            "tone": tone,
+            "score": round(score, 3),
+            "fetched_at": p.get("fetched_at"),
+        })
+
+    out.sort(key=lambda r: -r["score"])
+    out = out[:ticker_cap]
+    n_extreme = sum(1 for r in out if r["bucket"] == "extreme")
+    n_high = sum(1 for r in out if r["bucket"] == "high")
+    n_rising = sum(1 for r in out if r.get("mom_pct") is not None and r["mom_pct"] >= 25)
+
+    stale = False
+    if out:
+        try:
+            newest = max(
+                datetime.fromisoformat(str(r["fetched_at"]).replace("Z", "+00:00"))
+                for r in out if r.get("fetched_at")
+            )
+            stale = (datetime.now(timezone.utc) - newest).days > 7
+        except Exception:
+            stale = False
+
+    return {
+        "as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        "lookback_days": lookback_days,
+        "tickers": out,
+        "n_extreme": n_extreme,
+        "n_high": n_high,
+        "n_rising": n_rising,
         "stale": stale,
     }
 
@@ -1982,6 +2117,87 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .iv-vd{font-size:9px;padding:1px 5px}
   .iv-actn{font-size:8px}
 }
+/* Short-Squeeze-Pressure (HED-137 Zyklus 110): Bloomberg-SI-equivalent short-interest
+   panel. Per-ticker row showing SI% of float as a saturating horizontal bar (longer +
+   darker = more crowded short), MoM-change arrow with magnitude colored by direction
+   (↑ red = building bearish positioning, ↓ green = covering), bucket badge (low /
+   elevated / high / extreme) and a verdict tag. Open-call cross-ref: long against a
+   high-SI name = squeeze tailwind (✓ green), short against high-SI = crowded-short
+   risk (⚠ amber). Shares vocabulary with Options-Tape so the positioning panels
+   read as one institutional suite. */
+.ss-panel{padding:var(--s3);margin-top:var(--s3)}
+.ss-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.ss-h-title{font-weight:700;font-size:var(--fs-h2);text-transform:none;letter-spacing:0;color:var(--txt);line-height:1.2}
+.ss-h-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400;margin-top:2px}
+.ss-metrics{display:flex;gap:var(--s4);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.ss-metric{display:flex;flex-direction:column;gap:1px;font-size:var(--fs-micro);text-align:right;min-width:54px}
+.ss-metric .lbl{color:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.ss-metric .val{font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.15;color:var(--txt)}
+.ss-metric .val.pos{color:var(--red)}     /* high SI / squeeze risk = red flag */
+.ss-metric .val.neg{color:var(--green)}   /* covering = green */
+.ss-metric .val.amb{color:var(--amber)}
+.ss-table-wrap{overflow-x:auto;margin:0 calc(-1*var(--s3));padding:0 var(--s3)}
+.ss-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+.ss-table thead th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.ss-table thead th.r{text-align:right}
+.ss-table tbody tr{border-bottom:1px solid var(--line)}
+.ss-table tbody tr:last-child{border-bottom:0}
+.ss-table tbody tr:hover{background:rgba(77,163,255,.05)}
+.ss-table tbody td{padding:7px 8px;vertical-align:middle;line-height:1.25}
+.ss-table tbody td.r{text-align:right}
+.ss-tone-r{box-shadow:inset 3px 0 0 var(--red)}
+.ss-tone-a{box-shadow:inset 3px 0 0 var(--amber)}
+.ss-tone-g{box-shadow:inset 3px 0 0 var(--green)}
+.ss-tone-n{box-shadow:inset 3px 0 0 var(--line)}
+.ss-tk{font-weight:700;font-size:var(--fs-cap);letter-spacing:.02em;color:var(--txt)}
+.ss-tk-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ss-book{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;letter-spacing:.04em;padding:1px 6px;border-radius:3px;text-transform:uppercase;white-space:nowrap;line-height:1.4}
+.ss-book-tailwind{background:rgba(63,185,80,.18);color:var(--green)}
+.ss-book-tailwind::before{content:"✓\00a0"}
+.ss-book-risk{background:rgba(210,153,34,.20);color:var(--amber)}
+.ss-book-risk::before{content:"⚠\00a0"}
+.ss-book-watch{background:var(--panel2);color:var(--mut)}
+.ss-si{font-weight:700;font-size:var(--fs-cap);color:var(--txt);font-variant-numeric:tabular-nums;min-width:48px;text-align:right}
+.ss-si.hi{color:var(--red)}
+.ss-si.mid{color:var(--amber)}
+/* Horizontal bar — width = SI% (cap 25% so >25 still saturates). Color shifts with bucket. */
+.ss-bar-cell{min-width:120px}
+.ss-bar-wrap{position:relative;height:14px;background:var(--panel2);border-radius:3px;overflow:hidden}
+.ss-bar{position:absolute;left:0;top:1px;bottom:1px;border-radius:2px;background:linear-gradient(90deg,rgba(77,163,255,.45),rgba(77,163,255,.85))}
+.ss-bar.b-elevated{background:linear-gradient(90deg,rgba(210,153,34,.45),rgba(210,153,34,.85))}
+.ss-bar.b-high{background:linear-gradient(90deg,rgba(248,81,73,.45),rgba(248,81,73,.85))}
+.ss-bar.b-extreme{background:linear-gradient(90deg,rgba(248,81,73,.65),rgba(248,81,73,1))}
+.ss-mom{display:inline-flex;align-items:center;gap:3px;font-weight:700;font-size:var(--fs-cap);font-variant-numeric:tabular-nums}
+.ss-mom-up{color:var(--red)}
+.ss-mom-dn{color:var(--green)}
+.ss-mom-mute{color:var(--mut);font-weight:500}
+.ss-bk{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.ss-bk-low{background:var(--panel2);color:var(--mut)}
+.ss-bk-elevated{background:rgba(210,153,34,.18);color:var(--amber)}
+.ss-bk-high{background:rgba(248,81,73,.18);color:var(--red)}
+.ss-bk-extreme{background:rgba(248,81,73,.32);color:#fff}
+.ss-vd{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;display:inline-block}
+.ss-vd-squeeze_risk{background:rgba(248,81,73,.22);color:var(--red)}
+.ss-vd-crowded_short{background:rgba(210,153,34,.22);color:var(--amber)}
+.ss-vd-building_short{background:rgba(210,153,34,.18);color:var(--amber)}
+.ss-vd-covering{background:rgba(63,185,80,.22);color:var(--green)}
+.ss-vd-baseline{background:var(--panel2);color:var(--mut)}
+.ss-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+.ss-foot a{color:var(--mut);border-bottom:1px dotted var(--line)}
+.ss-foot a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.ss-empty{display:flex;align-items:center;justify-content:center;padding:var(--s5) var(--s3);background:transparent;border-radius:6px;border:1px dashed var(--line);color:var(--mut);font-size:var(--fs-micro);font-style:italic;text-align:center}
+@media(max-width:640px){
+  .ss-h{flex-direction:column;align-items:stretch;gap:var(--s2)}
+  .ss-metrics{justify-content:space-between;gap:var(--s3)}
+  .ss-metric{text-align:left;min-width:0;flex:1}
+  .ss-metric .val{font-size:16px}
+  .ss-table thead th{font-size:9px;padding:5px 5px}
+  .ss-table tbody td{padding:6px 5px}
+  .ss-table .col-hide-m{display:none}
+  .ss-bar-cell{min-width:80px}
+  .ss-si{min-width:36px}
+  .ss-vd{font-size:9px;padding:1px 5px}
+}
 /* Katalysator-Runway: event-driven timeline (earnings + thesis-horizon) for the next 30 days (HED-137 Zyklus 85) */
 .cat-panel{padding:var(--s3)}
 .cat-svg{width:100%;height:auto;display:block;max-height:160px;margin-top:var(--s2)}
@@ -2684,6 +2900,11 @@ main:focus{outline:none}
   <section aria-labelledby="h-ivrvedge">
   <h2 id="h-ivrvedge">Vol-Edge <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">IV − RV · Premium-Pricing · HVR</span></h2>
   <div id="ivrvedge" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:50%"></div><div class="skel skel-line" style="width:68%"></div><div class="skel skel-line" style="width:58%"></div></div></div>
+  </section>
+
+  <section aria-labelledby="h-shortpress">
+  <h2 id="h-shortpress">Short-Squeeze-Pressure <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Float-Short · MoM-Trend · SI</span></h2>
+  <div id="shortpress" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:52%"></div><div class="skel skel-line" style="width:64%"></div><div class="skel skel-line" style="width:58%"></div></div></div>
   </section>
 
   <section aria-labelledby="h-catalysts">
@@ -6069,6 +6290,141 @@ function calibSvg(buckets){
     </div>
     <div class="iv-foot">
       Vol-Edge identifiziert Pricing-Dislokationen zwischen Markterwartung (Implied) und kürzlich realisierter Bewegung. Methodik: <i>σ<sub>IV</sub> = emove/79.79 · √(252/DTE)</i> (Brenner-Subrahmanyam ATM-Straddle-Approximation) vs <i>σ<sub>RV30</sub> = stdev(log-returns 30d) · √252</i>. <b>Premium teuer</b> (≥+5pp) → Outright-Position bevorzugt, Optionen-Käufer im Hintertreffen; <b>Premium günstig</b> (≤−5pp) → Event-Calls / Put-Schutz attraktiv. <b>L</b>/<b>S</b>-Badge markiert offene Calls; die Aktion-Note koppelt das Pricing-Signal an die Buch-Richtung. Quellen: ATM-Straddle aus <code>OptionsMarketAdapter</code> · 30d-Closes aus <code>sector_view</code>. Bloomberg-Pendant: <a href="https://www.bloomberg.com/professional/" target="_blank" rel="noopener">HVR</a> / IVOL.
+    </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
+// Short-Squeeze-Pressure (HED-137 Zyklus 110): Bloomberg-SI-equivalent short-interest
+// panel. Reads `yahoo_short_interest` raw_items aggregated by collect_short_squeeze and
+// renders one row per ticker, sorted by squeeze-pressure score (SI level + |MoM|).
+// Visual grammar: a horizontal bar shows SI% (saturating at 25%), bucket badge + MoM
+// arrow drive preattentive triage, verdict tag (squeeze_risk / crowded_short /
+// building_short / covering / baseline) gives the synthesized read. Cross-references
+// open calls — a long against a high-SI name is flagged squeeze-tailwind (potential
+// upside catalyst); a short against a high-SI name is flagged crowded-short risk
+// (further downside is what the crowd has already underwritten, asymmetry worse).
+(function renderShortSqueeze(){
+  const root=$("shortpress");
+  if(!root) return;
+  const ss=D.short_squeeze||{};
+  const rows=ss.tickers||[];
+  if(!rows.length){
+    root.innerHTML='<div class="panel ss-panel"><div class="ss-empty">Keine Short-Interest-Lesungen in den letzten '+(ss.lookback_days||14)+'d — der ShortInterestAdapter hat keine Daten emittiert oder der Feed ist still.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  // Direction map of open calls — mirrors Options-Tape so the two panels read together
+  const dirMap={};
+  ((D.track_record||{}).theses||[])
+    .filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date))
+    .forEach(t=>{(t.tickers||[]).forEach(tk=>{
+      const k=String(tk).toUpperCase();
+      if(dirMap[k]&&dirMap[k]!==(t.direction||"").toLowerCase()) dirMap[k]="pair";
+      else if(!dirMap[k]) dirMap[k]=(t.direction||"").toLowerCase();
+    });});
+  function bookBadge(r){
+    const dir=dirMap[r.ticker];
+    if(!dir) return "";
+    const highSI=r.bucket==="high"||r.bucket==="extreme";
+    if(dir==="pair") return '<span class="ss-book ss-book-watch" title="Long+Short Paar im Buch — neutral zur SI-Lesung">Pair</span>';
+    if(dir==="long"&&highSI) return '<span class="ss-book ss-book-tailwind" title="Long auf einem hochgeshorteten Namen — Squeeze-Tailwind, positiver Katalysator wirkt verstärkt">Long ⚡ Squeeze</span>';
+    if(dir==="short"&&highSI) return '<span class="ss-book ss-book-risk" title="Short auf einem bereits hochgeshorteten Namen — Crowded Trade, Risiko/Reward asymmetrisch schlecht">Short crowded</span>';
+    if(dir==="long") return '<span class="ss-book ss-book-watch" title="Aktiver Long-Call im Buch — Short-Interest baseline">Long</span>';
+    if(dir==="short") return '<span class="ss-book ss-book-watch" title="Aktiver Short-Call im Buch — Short-Interest baseline">Short</span>';
+    return "";
+  }
+  function siCell(r){
+    const cls=r.bucket==="high"||r.bucket==="extreme"?"hi":r.bucket==="elevated"?"mid":"";
+    // bar width: percentage of 25% cap (SMCI's 17.9 = 71.6%, ARM 11.4 = 45.6%, etc.)
+    const w=Math.min(100, (r.si/25)*100);
+    return `<div class="ss-bar-cell">
+      <div class="ss-bar-wrap" title="Short Interest ${r.si.toFixed(1)}% of float — bucket: ${esc(r.bucket)}"><div class="ss-bar b-${esc(r.bucket)}" style="width:${w.toFixed(1)}%"></div></div>
+    </div>`;
+  }
+  function momCell(r){
+    if(r.mom_pct==null) return '<span class="ss-mom ss-mom-mute">—</span>';
+    const m=r.mom_pct;
+    const cls=m>=0?"ss-mom-up":"ss-mom-dn";
+    const arr=m>=0?"↑":"↓";
+    return `<span class="ss-mom ${cls}" title="Änderung Short Interest vs Vormonat: ${m>=0?'+':''}${m.toFixed(0)}%">${arr}${Math.abs(m).toFixed(0)}%</span>`;
+  }
+  function bucketBadge(r){
+    const lbl=({low:"Niedrig",elevated:"Erhöht",high:"Hoch",extreme:"Extrem"})[r.bucket]||r.bucket;
+    return `<span class="ss-bk ss-bk-${esc(r.bucket)}" title="SI-Level: low <5%, elevated 5–10%, high 10–20%, extreme ≥20% of float">${esc(lbl)}</span>`;
+  }
+  function vdLabel(v){
+    return ({
+      squeeze_risk:"Squeeze-Risk",
+      crowded_short:"Crowded Short",
+      building_short:"Building Short",
+      covering:"Covering",
+      baseline:"Baseline",
+    })[v]||"Baseline";
+  }
+  function vdTooltip(r){
+    if(r.verdict==="squeeze_risk") return "SI-Level ≥10% mit nicht klar covereinder Bewegung — positiver Katalysator löst überproportionale Aufwärtsbewegung aus";
+    if(r.verdict==="crowded_short") return "5–10% des Floats geshorted — Konsens-Bearish-Setup, Long-Side hat Asymmetrie";
+    if(r.verdict==="building_short") return "MoM ≥+30% Short-Aufbau — bärische Conviction nimmt zu, watch für Triggers";
+    if(r.verdict==="covering") return "MoM ≤−15% Short-Eindeckung — Bears geben auf, mögliches Squeeze-Echo nach Bewegung";
+    return "Baseline Short-Interest, keine notable Asymmetrie";
+  }
+  const headerKpi=`
+    <div class="ss-metrics">
+      <div class="ss-metric" title="Anzahl Ticker mit aktiver SI-Lesung in den letzten ${ss.lookback_days}d">
+        <span class="lbl">Ticker</span><span class="val">${rows.length}</span>
+      </div>
+      <div class="ss-metric" title="Ticker mit ≥20% Short Interest of float — strukturelle Squeeze-Setups">
+        <span class="lbl">Extreme</span><span class="val pos">${ss.n_extreme||0}</span>
+      </div>
+      <div class="ss-metric" title="Ticker mit 10–20% Short Interest of float — institutionelles Squeeze-Risiko">
+        <span class="lbl">High</span><span class="val pos">${ss.n_high||0}</span>
+      </div>
+      <div class="ss-metric" title="Ticker mit ≥+25% MoM-Aufbau der Short-Position — bärische Conviction baut sich auf">
+        <span class="lbl">Building</span><span class="val amb">${ss.n_rising||0}</span>
+      </div>
+    </div>`;
+  const tbody=rows.map(r=>{
+    const book=bookBadge(r);
+    const siClass=r.bucket==="high"||r.bucket==="extreme"?"hi":r.bucket==="elevated"?"mid":"";
+    return `<tr class="ss-tone-${esc(r.tone||'n')}">
+      <td>
+        <div class="ss-tk-row">
+          <span class="ss-tk">${esc(r.ticker)}</span>
+          ${book}
+        </div>
+      </td>
+      <td class="r"><span class="ss-si ${siClass}">${r.si.toFixed(1)}%</span></td>
+      <td>${siCell(r)}</td>
+      <td class="r col-hide-m">${momCell(r)}</td>
+      <td>${bucketBadge(r)}</td>
+      <td><span class="ss-vd ss-vd-${esc(r.verdict)}" title="${esc(vdTooltip(r))}">${esc(vdLabel(r.verdict))}</span></td>
+    </tr>`;
+  }).join("");
+  const staleNote=ss.stale?` · <span style="color:var(--amber)">⚠ Feed >7 Tage alt</span>`:"";
+  root.innerHTML=`<div class="panel ss-panel">
+    <div class="ss-h">
+      <div>
+        <div class="ss-h-title">Short-Squeeze-Pressure — Float-Short-Positionierung</div>
+        <div class="ss-h-sub">SI% of float · MoM-Trend · pro Watchlist-Ticker · sortiert nach |Squeeze-Score| · Pendant zu Bloomberg SI / FINRA bi-monthly settle${staleNote}</div>
+      </div>
+      ${headerKpi}
+    </div>
+    <div class="ss-table-wrap">
+      <table class="ss-table" role="table">
+        <thead><tr>
+          <th scope="col">Ticker</th>
+          <th scope="col" class="r" title="Short Interest in Prozent des Float — der primäre Squeeze-Faktor">SI%</th>
+          <th scope="col" title="SI%-Bar, Skala 0–25% (≥25% saturiert) — visueller Squeeze-Druck">Pressure</th>
+          <th scope="col" class="r col-hide-m" title="Änderung vs Vormonat (positiv = Aufbau, negativ = Eindeckung)">MoM</th>
+          <th scope="col" title="SI-Bucket: low <5%, elevated 5–10%, high 10–20%, extreme ≥20%">Bucket</th>
+          <th scope="col">Verdict</th>
+        </tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>
+    <div class="ss-foot">
+      Short-Interest ist die direkteste Lesung darauf, wie viel <em>strukturelles bärisches Kapital</em> bereits committed ist. <b>Squeeze-Risk</b> (≥10% SI mit stabilem oder steigendem Trend) = positiver Katalysator löst überproportionale Aufwärtsbewegung aus (klassisches Squeeze-Setup à la GME/BBBY/AMC); <b>Crowded Short</b> (5–10%) = Konsens-Bearish, Long-Asymmetrie; <b>Building</b> (MoM ≥+30%) = Bärische Conviction nimmt zu, watch für Triggers; <b>Covering</b> (MoM ≤−15%) = Bears decken ein, Momentum kann beschleunigen. Ein <span class="ss-book ss-book-tailwind">Squeeze</span>-Badge markiert offene Longs auf high-SI Namen (Tailwind), ein <span class="ss-book ss-book-risk">Crowded</span>-Badge offene Shorts auf high-SI Namen (Asymmetrie-Risiko). Quelle: <a href="https://finance.yahoo.com/" target="_blank" rel="noopener">yfinance shortPercentOfFloat / shortPercentOfFloatPriorMonth</a> via <code>ShortInterestAdapter</code>; FINRA-bi-monthly Settle-Daten, Feed-Lag ≤14d.
     </div>
   </div>`;
   root.setAttribute("aria-busy","false");
