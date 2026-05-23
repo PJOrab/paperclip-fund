@@ -310,6 +310,12 @@ SOURCE_RELIABILITY = {
     # Options market data (P/C ratio, IV skew, expected move) from exchange via
     # Yahoo Finance. Exchange-derived pricing: higher signal than editorial.
     "options_market": 0.82,
+    # Sell-side EPS estimate revision velocity (IBES-style # up/down 7d/30d +
+    # numerical EPS drift) per ticker via yfinance. Strongest single forward-
+    # return factor in academic asset pricing (PEAD / estimate-revision factor),
+    # competitor analogue costs six figures/yr from FactSet/Refinitiv. We emit
+    # only when there's clear directional momentum (filtered tug-of-war noise).
+    "eps_revisions": 0.85,
     # Earnings dates from yfinance are authoritative forward-looking events.
     # High reliability: directly from exchange/company filings via Yahoo.
     "earnings_calendar": 0.88,

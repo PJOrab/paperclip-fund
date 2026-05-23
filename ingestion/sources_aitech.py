@@ -1865,3 +1865,213 @@ class OptionsMarketAdapter:
             "url": dedup_url,
             "reliability": self.RELIABILITY,
         }
+
+
+class EpsRevisionsAdapter:
+    """
+    Sell-side analyst EPS estimate revision velocity per watchlist ticker.
+
+    Pulls yfinance `eps_revisions` (# analysts who raised/cut EPS estimates over
+    the last 7d / 30d) and `eps_trend` (the EPS estimate level current vs 30d
+    ago) for the CURRENT quarter (0q) and CURRENT fiscal year (0y). This is the
+    StarMine/IBES-style estimate-revision factor: in academic asset-pricing the
+    single strongest forward-return predictor for individual equities (PEAD;
+    Jegadeesh-Titman-style momentum). Hedge funds buy this signal at six-figure
+    annual cost from FactSet/Refinitiv; we get it free from Yahoo.
+
+    Emits per ticker ONLY when there is directional momentum (one side
+    dominates), filtering out tug-of-war and neutral periods to keep signal
+    density high:
+
+      - Strong 7d direction: |up_7d − down_7d| ≥ 3 AND one side ≥ 3× the other
+      - Strong 30d direction: |up_30d − down_30d| ≥ 5 AND one side ≥ 2× the other
+      - Estimate drift: |current EPS − 30d-ago EPS| / |30d-ago EPS| ≥ 3%
+
+    Text includes 0q revision count, 30d EPS drift %, current consensus EPS,
+    and adds a 0y line when the FY revision direction is also notable. Stable
+    dedup key per (ticker, 0q-direction-bucket, drift-bucket) so re-runs in the
+    same direction collapse to one row.
+
+    Source: 'eps_revisions'. Reliability 0.85 (analyst-consensus aggregated by
+    Yahoo from IBES contributors; high signal but second-order vs primary
+    company filings).
+    """
+
+    SOURCE = "eps_revisions"
+    RELIABILITY = 0.85
+    # Same 17 liquid watchlist names used by OptionsMarketAdapter / ShortInterest
+    TICKERS = [
+        "NVDA", "MSFT", "GOOGL", "META", "AMZN", "AAPL",
+        "AMD", "TSM", "ASML", "ARM", "AVGO", "PLTR",
+        "ORCL", "NOW", "CRM", "SNOW", "CRWD",
+    ]
+    # Thresholds for "directional" — designed to filter out routine churn
+    NET_7D_MIN = 3       # |up_7d - down_7d|
+    NET_30D_MIN = 5      # |up_30d - down_30d|
+    DOMINANCE_7D = 3.0   # one side must be ≥ 3x the other (7d)
+    DOMINANCE_30D = 2.0  # ≥ 2x (30d)
+    DRIFT_PCT_MIN = 0.03  # ≥3% EPS estimate drift vs 30d ago
+
+    def fetch(self) -> list[dict]:
+        try:
+            import yfinance as yf
+        except ImportError:
+            return []
+        out = []
+        for ticker in self.TICKERS:
+            try:
+                item = self._fetch_one(ticker, yf)
+                if item:
+                    out.append(item)
+                time.sleep(0.2)
+            except Exception:
+                pass
+        return out
+
+    @staticmethod
+    def _row(df, period: str):
+        """Safe row lookup — returns dict or None."""
+        if df is None:
+            return None
+        try:
+            if df.empty or period not in df.index:
+                return None
+            row = df.loc[period]
+            return row.to_dict() if hasattr(row, "to_dict") else dict(row)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _direction(up: float, down: float, net_min: float, dominance: float) -> str | None:
+        """Return 'up' / 'down' / None based on count + dominance gates."""
+        try:
+            u = float(up or 0)
+            d = float(down or 0)
+        except (TypeError, ValueError):
+            return None
+        net = u - d
+        if abs(net) < net_min:
+            return None
+        if net > 0:
+            # up side must dominate
+            if d == 0 or u / max(d, 1.0) >= dominance:
+                return "up"
+        else:
+            if u == 0 or d / max(u, 1.0) >= dominance:
+                return "down"
+        return None
+
+    def _fetch_one(self, ticker: str, yf) -> dict | None:
+        t = yf.Ticker(ticker)
+        # yfinance occasionally returns None instead of a DataFrame for sparse tickers
+        try:
+            rev_df = t.eps_revisions
+        except Exception:
+            rev_df = None
+        try:
+            est_df = t.earnings_estimate
+        except Exception:
+            est_df = None
+        try:
+            trend_df = t.eps_trend
+        except Exception:
+            trend_df = None
+
+        q_rev = self._row(rev_df, "0q")
+        q_est = self._row(est_df, "0q")
+        q_trd = self._row(trend_df, "0q")
+        if not (q_rev and q_est and q_trd):
+            return None
+
+        up7 = q_rev.get("upLast7days", 0)
+        # yfinance casing inconsistency: confirmed downLast7Days has capital D
+        down7 = q_rev.get("downLast7Days", q_rev.get("downLast7days", 0))
+        up30 = q_rev.get("upLast30days", 0)
+        down30 = q_rev.get("downLast30days", 0)
+
+        # Direction signals
+        dir_7d = self._direction(up7, down7, self.NET_7D_MIN, self.DOMINANCE_7D)
+        dir_30d = self._direction(up30, down30, self.NET_30D_MIN, self.DOMINANCE_30D)
+
+        # EPS drift current vs 30d ago
+        cur = q_trd.get("current")
+        ago30 = q_trd.get("30daysAgo")
+        drift_pct = None
+        if cur is not None and ago30 is not None:
+            try:
+                cur_f = float(cur)
+                ago_f = float(ago30)
+                if abs(ago_f) > 0.01:  # avoid div-by-near-zero noise
+                    drift_pct = (cur_f - ago_f) / abs(ago_f)
+            except (TypeError, ValueError):
+                pass
+
+        drift_notable = drift_pct is not None and abs(drift_pct) >= self.DRIFT_PCT_MIN
+
+        if not (dir_7d or dir_30d or drift_notable):
+            return None
+
+        # Confirm direction alignment — if drift and revision counts contradict,
+        # downgrade to "mixed" — happens rarely but avoids false reads
+        signs = []
+        if dir_7d:
+            signs.append(1 if dir_7d == "up" else -1)
+        if dir_30d:
+            signs.append(1 if dir_30d == "up" else -1)
+        if drift_notable:
+            signs.append(1 if drift_pct > 0 else -1)
+        if len(set(signs)) > 1:
+            # Mixed signals — skip (tug of war)
+            return None
+
+        direction = "POSITIVE" if (signs and signs[0] > 0) else "NEGATIVE"
+
+        # Build the text
+        parts = [f"[{ticker}] Sell-side EPS revisions {direction} (current quarter)"]
+        parts.append(
+            f"7d: {int(up7 or 0)} up / {int(down7 or 0)} down · "
+            f"30d: {int(up30 or 0)} up / {int(down30 or 0)} down"
+        )
+        if drift_pct is not None:
+            drift_sign = "+" if drift_pct >= 0 else ""
+            parts.append(
+                f"consensus Q-EPS ${cur_f:.2f} ({drift_sign}{drift_pct*100:.1f}% vs 30d ago)"
+            )
+
+        # Optional FY (0y) addendum when also directionally notable AND aligned
+        y_rev = self._row(rev_df, "0y")
+        if y_rev:
+            yup7 = y_rev.get("upLast7days", 0)
+            ydown7 = y_rev.get("downLast7Days", y_rev.get("downLast7days", 0))
+            yup30 = y_rev.get("upLast30days", 0)
+            ydown30 = y_rev.get("downLast30days", 0)
+            y_dir = self._direction(yup30, ydown30, self.NET_30D_MIN, self.DOMINANCE_30D)
+            if y_dir and ((y_dir == "up") == (direction == "POSITIVE")):
+                parts.append(
+                    f"FY-30d: {int(yup30 or 0)} up / {int(ydown30 or 0)} down (aligned)"
+                )
+
+        # Number of contributing analysts gives confidence sizing
+        n_anal = q_est.get("numberOfAnalysts")
+        if n_anal:
+            try:
+                parts.append(f"{int(n_anal)} analysts in consensus")
+            except (TypeError, ValueError):
+                pass
+
+        text = " — ".join(parts)
+
+        # Stable dedup key per (ticker, direction, drift bucket in pp)
+        drift_bucket = "n/a"
+        if drift_pct is not None:
+            drift_bucket = f"{int(round(drift_pct * 100))}"
+        dedup_url = (
+            f"https://finance.yahoo.com/quote/{ticker}/analysis"
+            f"?dir={direction.lower()}&dr={drift_bucket}"
+        )
+        return {
+            "text": text,
+            "source": self.SOURCE,
+            "url": dedup_url,
+            "reliability": self.RELIABILITY,
+        }

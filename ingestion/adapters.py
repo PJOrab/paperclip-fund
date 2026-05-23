@@ -119,6 +119,7 @@ def build_adapters():
         ("FRED (Macro)", S.FREDMacroAdapter()),
         ("Short Interest", S.ShortInterestAdapter()),
         ("Options Market", S.OptionsMarketAdapter()),
+        ("EPS Revisions", S.EpsRevisionsAdapter()),
     ]
     if getattr(m, "NEWSAPI_KEY", ""):
         adapters.append(("NewsAPI AI", S.AITechNewsAPIAdapter()))
