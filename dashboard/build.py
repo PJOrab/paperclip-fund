@@ -743,6 +743,103 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .pf-rd-tbl thead th:last-child{display:none}
   .pf-rd-verd{font-size:var(--fs-micro)}
 }
+/* Tech-Setup — Chart-Konfirmation pro offenem Call (HED-137 Zyklus 101).
+   Bridges fundamental thesis to technical setup: trend (vs MA30), momentum
+   (RSI14), and cycle position (52w range). Answers the PM's first morning
+   question per call: "is the chart still on my side?" */
+.pf-tech{padding:var(--s3);margin-top:var(--s3)}
+.pf-tech-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3)}
+.pf-tech-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-tech-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400;margin-top:2px}
+.pf-tech-chips{display:flex;gap:var(--s2);flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.pf-tech-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;
+  font-size:var(--fs-micro);font-weight:700;border:1px solid var(--line);background:var(--panel2)}
+.pf-tech-chip-confirm{color:var(--green);border-color:rgba(63,185,80,.4)}
+.pf-tech-chip-mixed{color:#e8b341;border-color:rgba(232,179,65,.4)}
+.pf-tech-chip-stretch{color:#f0883e;border-color:rgba(240,136,62,.42)}
+.pf-tech-chip-conflict{color:var(--red);border-color:rgba(248,81,73,.4)}
+.pf-tech-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pf-tech-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+.pf-tech-tbl thead th{font-size:var(--fs-micro);font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--mut);padding:6px 8px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+.pf-tech-tbl thead th.num{text-align:right}
+.pf-tech-tbl thead th.center{text-align:center}
+.pf-tech-tbl tbody td{padding:9px 8px;border-top:1px solid var(--line);vertical-align:middle}
+.pf-tech-tbl tbody tr:hover{background:rgba(77,163,255,.06)}
+.pf-tech-name{display:flex;flex-direction:column;gap:1px;line-height:1.15;min-width:120px}
+.pf-tech-tk{font-weight:700;color:var(--txt);font-size:var(--fs-cap)}
+.pf-tech-lbl{font-size:var(--fs-micro);color:var(--mut);overflow:hidden;text-overflow:ellipsis;max-width:200px;white-space:nowrap}
+.pf-tech-dir{display:inline-block;padding:2px 7px;border-radius:4px;font-size:var(--fs-micro);font-weight:700;letter-spacing:.04em}
+.pf-tech-dir-long{background:rgba(63,185,80,.18);color:var(--green);border:1px solid rgba(63,185,80,.32)}
+.pf-tech-dir-short{background:rgba(248,81,73,.18);color:var(--red);border:1px solid rgba(248,81,73,.32)}
+.pf-tech-ma{text-align:right;font-weight:600}
+.pf-tech-ma .arrow{display:inline-block;margin-right:3px;font-size:11px}
+.pf-tech-rsi{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:80px}
+.pf-tech-rsi-val{font-weight:700;font-size:var(--fs-cap)}
+.pf-tech-rsi-bar{width:78px;height:5px;background:linear-gradient(90deg,
+  rgba(63,185,80,.45) 0%,rgba(63,185,80,.45) 30%,
+  var(--panel2) 30%,var(--panel2) 70%,
+  rgba(248,81,73,.45) 70%,rgba(248,81,73,.45) 100%);
+  border-radius:99px;position:relative;border:1px solid var(--line)}
+.pf-tech-rsi-mark{position:absolute;top:-3px;width:2px;height:11px;background:var(--txt);border-radius:1px}
+.pf-tech-rsi-zone{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.pf-tech-range{min-width:110px}
+.pf-tech-range-bar{position:relative;height:8px;background:linear-gradient(90deg,
+  rgba(248,81,73,.22) 0%,var(--panel2) 50%,rgba(63,185,80,.22) 100%);border-radius:99px;border:1px solid var(--line)}
+.pf-tech-range-mark{position:absolute;top:-3px;width:3px;height:14px;background:var(--txt);border-radius:1px;transform:translateX(-50%)}
+.pf-tech-range-lbl{display:flex;justify-content:space-between;font-size:10px;color:var(--mut);margin-top:3px}
+.pf-tech-range-pct{font-size:var(--fs-micro);color:var(--mut);text-align:center;margin-top:2px;font-variant-numeric:tabular-nums}
+.pf-tech-verd{text-align:center;min-width:96px}
+.pf-tech-verd-pill{display:inline-block;padding:3px 9px;border-radius:99px;font-size:var(--fs-micro);
+  font-weight:700;text-transform:uppercase;letter-spacing:.04em;border:1px solid var(--line);background:var(--panel)}
+.pf-tech-verd-confirm{color:var(--green);border-color:rgba(63,185,80,.4)}
+.pf-tech-verd-mixed{color:#e8b341;border-color:rgba(232,179,65,.4)}
+.pf-tech-verd-stretch{color:#f0883e;border-color:rgba(240,136,62,.42)}
+.pf-tech-verd-conflict{color:var(--red);border-color:rgba(248,81,73,.4)}
+.pf-tech-verd-note{display:block;margin-top:3px;font-size:10px;color:var(--mut);line-height:1.25}
+.pf-tech-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+.pf-tech-na{color:var(--mut);font-style:italic;font-size:var(--fs-micro)}
+@media(max-width:640px){
+  .pf-tech-h{flex-direction:column;align-items:stretch;gap:var(--s2)}
+  .pf-tech-wrap{overflow:visible}
+  .pf-tech-tbl{display:block}
+  .pf-tech-tbl thead{display:none}
+  .pf-tech-tbl tbody{display:block}
+  .pf-tech-tbl tbody tr{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:6px 10px;
+    padding:10px 2px;
+    border-top:1px solid var(--line);
+    align-items:center;
+  }
+  .pf-tech-tbl tbody tr:first-child{border-top:0}
+  .pf-tech-tbl tbody tr:hover{background:transparent}
+  .pf-tech-tbl tbody td{
+    display:flex;align-items:center;gap:6px;
+    padding:0;border:0;font-size:var(--fs-micro);
+  }
+  .pf-tech-tbl tbody td.col-range{display:none}
+  .pf-tech-tbl tbody td[data-label]::before{
+    content:attr(data-label);color:var(--mut);font-size:10px;
+    text-transform:uppercase;letter-spacing:.05em;font-weight:600;
+    margin-right:2px;min-width:54px;
+  }
+  .pf-tech-tbl tbody td.col-name,.pf-tech-tbl tbody td.col-verd{grid-column:1 / -1}
+  .pf-tech-tbl tbody td.col-name::before,.pf-tech-tbl tbody td.col-verd::before{display:none}
+  .pf-tech-tbl tbody td.col-dir{justify-content:flex-end}
+  .pf-tech-tbl tbody td.col-dir::before{display:none}
+  .pf-tech-tbl tbody td.col-verd{justify-content:flex-start;margin-top:4px}
+  .pf-tech-name{min-width:0;flex:1}
+  .pf-tech-tk{font-size:14px}
+  .pf-tech-lbl{max-width:none;font-size:11px}
+  .pf-tech-rsi{flex-direction:row;align-items:center;gap:6px;min-width:0}
+  .pf-tech-rsi-val{font-size:13px;order:1}
+  .pf-tech-rsi-bar{width:60px;order:2}
+  .pf-tech-rsi-zone{order:3;font-size:9px}
+  .pf-tech-verd{text-align:left;min-width:0}
+  .pf-tech-verd-note{display:inline;margin-top:0;margin-left:8px}
+}
 /* Buch-Allokation — Position-Sizing-Stack (HED-137 Zyklus 87): Long/Short side stacks, conviction-weighted widths, P&L-colored segments */
 .pf-alloc{margin-top:var(--s3);padding:var(--s3)}
 .pf-alloc-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
@@ -3293,7 +3390,177 @@ function calibSvg(buckets){
       }
     }
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${riskHtml}`;
+  // Tech-Setup-Panel — Chart-Konfirmation pro offenem Call (HED-137 Zyklus 101).
+  // Bridges fundamental thesis to technical setup. Per active call, evaluates:
+  //   trend filter   = price vs 30-day MA (price above MA = uptrend, below = downtrend)
+  //   momentum       = RSI14 (band: oversold <30, neutral 30-70, overbought >70)
+  //   cycle position = pct_of_52w_high (≥90 = late-cycle, ≤40 = early)
+  // Combines into per-call verdict aligned with call direction:
+  //   Konfirmiert: chart and momentum agree with direction (high-conviction execution window)
+  //   Überdehnt:   trend agrees BUT momentum exhausted in trade direction (late-chase warning)
+  //   Gemischt:    partial confirmation; thesis-driven, not chart-driven
+  //   Konflikt:    chart actively disagrees with direction (re-evaluate or wait for setup)
+  // What a PM does every morning — look at the chart on every position before re-affirming it.
+  let techPanelHtml="";
+  if(active.length){
+    const _techMap={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>{
+      (s.tickers||[]).forEach(t=>{
+        if(!t||!t.ticker) return;
+        _techMap[String(t.ticker).toUpperCase()]={
+          price:t.price, ma30:t.ma30, pct_vs_ma30:t.pct_vs_ma30,
+          rsi14:t.rsi14, w52_high:t.w52_high, w52_low:t.w52_low,
+          pct_of_52w_high:t.pct_of_52w_high
+        };
+      });
+    });
+    const rows=active.map(t=>{
+      const tk=(t.tickers||[])[0]; if(!tk) return null;
+      const TK=String(tk).toUpperCase();
+      const tech=_techMap[TK]; if(!tech) return null;
+      const dir=(t.direction||"").toLowerCase();
+      const isLong=dir==="long", isShort=dir==="short";
+      if(!isLong&&!isShort) return null;
+      const sign=isLong?1:-1;
+      const ma=tech.pct_vs_ma30!=null?tech.pct_vs_ma30:null;
+      const rsi=tech.rsi14!=null?tech.rsi14:null;
+      const w52=tech.pct_of_52w_high!=null?tech.pct_of_52w_high:null;
+      // Trend signal in direction terms: +1 confirms direction, -1 conflicts
+      const trendSig = ma==null?0:(sign*ma>0?1:-1);
+      // Momentum signal: +1 confirms, -1 conflicts, also flag "stretched" if RSI past extreme in trade direction
+      let momSig=0, stretched=false;
+      if(rsi!=null){
+        if(isLong){
+          if(rsi>=70){ momSig=1; stretched=true; }      // long & overbought = late-cycle
+          else if(rsi>=50) momSig=1;
+          else if(rsi>=30) momSig=0;
+          else momSig=1;                                  // oversold = mean-rev long opp
+        }else{ // short
+          if(rsi<=30){ momSig=1; stretched=true; }      // short & oversold = late-cycle
+          else if(rsi<=50) momSig=1;
+          else if(rsi<=70) momSig=0;
+          else momSig=1;                                  // overbought = mean-rev short opp
+        }
+      }
+      // Cycle position signal: long near 52w high = late, long near low = room. Inverse for short.
+      let cycSig=0;
+      if(w52!=null){
+        if(isLong){
+          if(w52>=92) cycSig=-1;       // long but already at top of range
+          else if(w52<=55) cycSig=1;   // long with runway
+        }else{
+          if(w52<=15) cycSig=-1;       // short but already crushed to lows
+          else if(w52>=70) cycSig=1;   // short with downside room
+        }
+      }
+      const score=trendSig+momSig+cycSig;
+      // Verdict priority: stretched > clean-confirm > trend+momentum-conflict > partial-mixed.
+      // Cycle-only-negative or trend-only-negative do not earn Konflikt — only when the two
+      // primary signals (trend & momentum) both run against the call is the chart actively
+      // hostile. Otherwise it's a mix, with a specific note explaining which leg is weak.
+      let verd, vCls, vNote;
+      if(stretched && trendSig>=0){
+        verd="Überdehnt"; vCls="stretch";
+        vNote=isLong?"RSI überkauft — Spät-Einstieg":"RSI überverkauft — Spät-Einstieg";
+      } else if(trendSig===1 && momSig===1 && cycSig>=0){
+        verd="Konfirmiert"; vCls="confirm"; vNote="Trend + Momentum stützen Call";
+      } else if(trendSig===-1 && momSig===-1){
+        verd="Konflikt"; vCls="conflict"; vNote="Trend und Momentum gegen Direction";
+      } else if(trendSig===-1){
+        verd="Gemischt"; vCls="mixed"; vNote=isLong?"Spot unter MA30 — Trend gegen Long":"Spot über MA30 — Trend gegen Short";
+      } else if(cycSig===-1){
+        verd="Gemischt"; vCls="mixed";
+        vNote=isLong?"Nahe 52w-Hoch — wenig Runway":"Nahe 52w-Tief — wenig Downside";
+      } else if(momSig===-1){
+        verd="Gemischt"; vCls="mixed"; vNote="Momentum gegen Direction";
+      } else {
+        verd="Gemischt"; vCls="mixed"; vNote="Teilkonfirmation — thesis-getrieben";
+      }
+      return {
+        t, tk:TK, label:(t.tickers||[]).join("·")||TK, dir, sign,
+        ma, rsi, w52, price:tech.price, w52_high:tech.w52_high, w52_low:tech.w52_low,
+        trendSig, momSig, cycSig, score, verd, vCls, vNote
+      };
+    }).filter(Boolean);
+    if(rows.length){
+      // Aggregate counts for header chips
+      const cConf=rows.filter(r=>r.vCls==="confirm").length;
+      const cMix =rows.filter(r=>r.vCls==="mixed"  ).length;
+      const cStr =rows.filter(r=>r.vCls==="stretch").length;
+      const cCon =rows.filter(r=>r.vCls==="conflict").length;
+      const skipped=active.length-rows.length;
+      const _fmtPct=v=>v==null?"—":(v>=0?"+":"−")+Math.abs(v).toFixed(1)+"%";
+      const _maCell=(r)=>{
+        if(r.ma==null) return `<span class="pf-tech-na">—</span>`;
+        const supports=r.sign*r.ma>0;
+        const cls=supports?"move-up":"move-dn";
+        const arrow=r.ma>=0?"▲":"▼";
+        return `<span class="pf-tech-ma ${cls}" title="Spot ${r.ma>=0?"über":"unter"} MA30 um ${Math.abs(r.ma).toFixed(2)}% · ${supports?"stützt":"konfligiert mit"} ${r.dir.toUpperCase()}"><span class="arrow">${arrow}</span>${_fmtPct(r.ma)}</span>`;
+      };
+      const _rsiCell=(r)=>{
+        if(r.rsi==null) return `<span class="pf-tech-na">—</span>`;
+        const v=Math.max(0,Math.min(100,r.rsi));
+        const zone=r.rsi>=70?"überkauft":r.rsi<=30?"überverkauft":"neutral";
+        const zCls=r.rsi>=70?"move-dn":r.rsi<=30?"move-up":"muted";
+        return `<div class="pf-tech-rsi" title="RSI14 = ${r.rsi.toFixed(1)} · ${zone}">
+          <span class="pf-tech-rsi-val">${r.rsi.toFixed(0)}</span>
+          <div class="pf-tech-rsi-bar"><span class="pf-tech-rsi-mark" style="left:calc(${v.toFixed(1)}% - 1px)"></span></div>
+          <span class="pf-tech-rsi-zone ${zCls}">${zone}</span>
+        </div>`;
+      };
+      const _rangeCell=(r)=>{
+        if(r.w52==null) return `<span class="pf-tech-na">—</span>`;
+        const v=Math.max(0,Math.min(100,r.w52));
+        const tip=`${r.w52.toFixed(0)}% des 52w-Hochs · Spot ${r.price!=null?"$"+r.price.toFixed(2):"—"} · Range ${r.w52_low!=null?"$"+r.w52_low.toFixed(2):"—"} – ${r.w52_high!=null?"$"+r.w52_high.toFixed(2):"—"}`;
+        return `<div class="pf-tech-range" title="${esc(tip)}">
+          <div class="pf-tech-range-bar"><span class="pf-tech-range-mark" style="left:${v.toFixed(1)}%"></span></div>
+          <div class="pf-tech-range-lbl"><span>52w Tief</span><span>Hoch</span></div>
+          <div class="pf-tech-range-pct">${r.w52.toFixed(0)}% Range</div>
+        </div>`;
+      };
+      // Sort: conflicts first, then stretched, then mixed, then confirmed (PM scans risks first)
+      const order={conflict:0,stretch:1,mixed:2,confirm:3};
+      const sorted=rows.slice().sort((a,b)=>(order[a.vCls]-order[b.vCls])||((b.t.conviction||0)-(a.t.conviction||0)));
+      const bodyRows=sorted.map(r=>{
+        const dirChip=`<span class="pf-tech-dir pf-tech-dir-${r.dir}">${r.dir.toUpperCase()}</span>`;
+        return `<tr>
+          <td class="col-name"><div class="pf-tech-name"><span class="pf-tech-tk">${esc(r.label)}</span><span class="pf-tech-lbl" title="${esc(r.t.label||"")}">${esc(r.t.label||"")}</span></div></td>
+          <td class="col-dir">${dirChip}</td>
+          <td class="num col-ma" data-label="vs MA30">${_maCell(r)}</td>
+          <td class="col-rsi" data-label="RSI14">${_rsiCell(r)}</td>
+          <td class="col-range" data-label="52w">${_rangeCell(r)}</td>
+          <td class="pf-tech-verd col-verd"><span class="pf-tech-verd-pill pf-tech-verd-${r.vCls}" title="${esc(r.vNote)}">${r.verd}</span><span class="pf-tech-verd-note">${esc(r.vNote)}</span></td>
+        </tr>`;
+      }).join("");
+      const chip=(n,lbl,cls)=>n>0?`<span class="pf-tech-chip pf-tech-chip-${cls}"><b>${n}</b> ${lbl}</span>`:"";
+      const chips=[chip(cConf,"konfirmiert","confirm"),chip(cStr,"überdehnt","stretch"),chip(cMix,"gemischt","mixed"),chip(cCon,"in Konflikt","conflict")].filter(Boolean).join("");
+      const skipNote=skipped>0?` · ${skipped} Call${skipped===1?"":"s"} ohne Tech-Daten ausgeblendet`:"";
+      techPanelHtml=`<div class="panel pf-tech">
+        <div class="pf-tech-h">
+          <div>
+            <div class="pf-tech-title">Tech-Setup — Chart-Konfirmation pro Call</div>
+            <div class="pf-tech-sub">Bestätigt der Chart die These? Trend (MA30) · Momentum (RSI14) · Cycle-Position (52w-Range)${skipNote}</div>
+          </div>
+          <div class="pf-tech-chips">${chips}</div>
+        </div>
+        <div class="pf-tech-wrap">
+          <table class="pf-tech-tbl" role="table" aria-label="Tech-Setup pro offenem Call">
+            <thead><tr>
+              <th scope="col">Call</th>
+              <th scope="col">Dir</th>
+              <th scope="col" class="num" title="Spot relativ zur 30-Tage-gleitenden Durchschnitt — Trendfilter">vs MA30</th>
+              <th scope="col" class="num" title="Relative Strength Index 14 — Momentum / Über- vs Verkauft">RSI14</th>
+              <th scope="col" class="center col-range" title="Position innerhalb der 52-Wochen-Range">52w-Range</th>
+              <th scope="col" class="center">Verdikt</th>
+            </tr></thead>
+            <tbody>${bodyRows}</tbody>
+          </table>
+        </div>
+        <div class="pf-tech-foot">Konfirmiert = Trend + Momentum stützen die Call-Direction (Chart-Druck im Rücken). Überdehnt = Trend stützt, aber RSI im Extrem in Trade-Richtung (Spät-Einstieg-Warnung). Gemischt = thesis-getrieben, ohne klares Chart-Setup. Konflikt = Chart läuft gegen die Direction — re-evaluieren oder Setup abwarten. Methodik: Trend-Filter + Momentum-Oszillator + Cycle-Position, klassische 3-Faktor-Tech-Setup-Logik.</div>
+      </div>`;
+    }
+  }
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
