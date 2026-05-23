@@ -395,6 +395,17 @@ SOURCE_RELIABILITY = {
     # server assembly demand from NVDA/SMCI/DELL). Bloomberg/Refinitiv users pay
     # for the same series; TWSE publishes it free in structured JSON.
     "tw_semi_revenue": 0.92,
+    # Earnings-call transcripts for the high-conviction core of the watchlist
+    # via discountingcashflows.com (free, no key). STRATEGY.md tier-1 missing
+    # data source: the 8-K Item 2.02 carries the *number*, the conference call
+    # carries the *explanation* — forward guidance ranges, capex plans,
+    # hyperscaler AI-spend colour live in the prepared remarks and Q&A.
+    # Hedge funds buy this via Refinitiv StreetEvents / AlphaSense / Bloomberg
+    # ERN <GO> (mid-five-figures/yr each). Sits at par with eps_revisions
+    # (0.85) and tech_level (0.85): primary source (management on the record)
+    # but the emitted item is an interpretive extraction from natural-language
+    # Q&A, not a parsed regulatory field — below sec_8k (0.95).
+    "earnings_transcript": 0.86,
 }
 
 # Job-posting velocity targets — public Greenhouse + Lever boards. Source the

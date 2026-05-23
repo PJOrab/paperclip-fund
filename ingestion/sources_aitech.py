@@ -3217,3 +3217,218 @@ class TaiwanSemiRevenueAdapter:
             "url": dedup_url,
             "reliability": self.RELIABILITY,
         }
+
+
+class EarningsTranscriptAdapter:
+    """
+    Earnings-call transcript feed — management tone, forward guidance and
+    unexpected formulations from quarterly earnings conferences for watchlist
+    tickers. STRATEGY.md tier-1 missing data source.
+
+    Investor edge:
+      The 8-K Item 2.02 press release carries the *number*; the conference call
+      carries the *explanation*. Forward guidance ranges, capex plans,
+      hyperscaler AI-spend colour and product-cycle commentary live in the
+      prepared remarks and Q&A — not in the press release we already ingest.
+      A miss on the press release with a confident, raised-guidance call is a
+      buy; an in-line print with hedged guidance and capex pull-ins is a sell.
+      Hedge funds buy this signal via Refinitiv StreetEvents, AlphaSense,
+      S&P Cap-IQ or Bloomberg ERN <GO> (mid-five-figures/yr each); the
+      Discounting Cash Flows public API publishes the same transcripts free
+      with no key, 24-48h after the call.
+
+    Source: `https://discountingcashflows.com/api/transcript/{ticker}/`
+    returns a JSON array of {symbol, quarter, year, date, content} objects
+    (most recent first). We take the latest entry per ticker and extract:
+      - one forward-guidance sentence (highest signal: guide/outlook/expect
+        bound to a quarter or fiscal year)
+      - one AI-capex sentence (AI / data-center / GPU / compute spend)
+      - a structured tag-line per item (raised | maintained | cut | n/a)
+
+    Coverage: the high-conviction core of the watchlist. Pulling all 31 names
+    every cycle would be feed noise — most call cycles are quarterly so the
+    same content would repeat for weeks. Dedup key is the (ticker, year,
+    quarter) so re-runs between earnings are idempotent.
+
+    Reliability 0.86 — primary source (company management on the record), but
+    the signal we emit is interpretive extraction from natural-language Q&A,
+    not a parsed regulatory field. Sits just below sec_8k (0.95) and at par
+    with eps_revisions (0.85) / tech_level (0.85).
+    """
+
+    SOURCE = "earnings_transcript"
+    RELIABILITY = 0.86
+    ENDPOINT_TEMPLATE = "https://discountingcashflows.com/api/transcript/{ticker}/"
+
+    # High-conviction core (≈ S1 semis + S2 hyperscalers + S3 AI-software top names).
+    # Restricting coverage keeps the feed signal-dense; Q1/Q2 transcripts repeat for
+    # weeks otherwise. Off-list watchlist names still get 8-K and analyst signals.
+    COVERAGE = (
+        "NVDA", "AMD", "AVGO", "TSM", "ARM", "MU", "ANET",
+        "MSFT", "GOOGL", "AMZN", "META", "AAPL",
+        "PLTR", "ORCL", "NOW", "CRM", "SNOW",
+    )
+
+    # Forward-guidance signal: a verb pattern bound to a forward time window.
+    # The intersection (verb + horizon) is what separates real guidance from
+    # retrospective commentary ("we expected X last quarter" doesn't count).
+    _GUIDE_VERBS = (
+        "expect", "anticipate", "guide", "guidance", "outlook", "forecast",
+        "project", "plan to", "intend to", "target", "see ", "look for",
+    )
+    _GUIDE_HORIZONS = (
+        "next quarter", "this quarter", "second half", "first half",
+        "fiscal year", "full year", "fy20", "fy 20", "next year",
+        "q1", "q2", "q3", "q4",
+    )
+
+    # AI-capex sentinel: spend / capex / investment language bound to AI /
+    # compute / data-center / GPU. This is the single most valuable colour
+    # from a hyperscaler call for the AI-semi book.
+    _AI_TERMS = (
+        "ai ", " ai,", " ai.", " ai;", "artificial intelligence",
+        "data center", "data-center", "gpu", "gpus", "h100", "h200", "b100",
+        "b200", "mi300", "mi325", "blackwell", "hopper", "compute",
+        "training", "inference", "accelerator",
+    )
+    _SPEND_TERMS = (
+        "capex", "capital expenditure", "capital expenditures",
+        "spend", "spending", "invest", "investment", "billion",
+        "buildout", "build-out", "infrastructure",
+    )
+
+    # Tone tag derived from guidance verbs in proximity to direction words.
+    # We do not pretend to do sentiment analysis here — this is a coarse
+    # classification that lets the triage stage cluster items quickly.
+    _RAISE_TERMS = ("raise", "raised", "raising", "increase", "increased",
+                    "above", "higher", "stronger than", "ahead of")
+    _CUT_TERMS = ("lower", "lowered", "lowering", "reduce", "reduced",
+                  "below", "weaker than", "softer", "headwind", "cautious")
+
+    def fetch(self) -> list[dict]:
+        out: list[dict] = []
+        for ticker in self.COVERAGE:
+            item = self._fetch_one(ticker)
+            if item:
+                out.append(item)
+        return out
+
+    def _fetch_one(self, ticker: str) -> dict | None:
+        url = self.ENDPOINT_TEMPLATE.format(ticker=ticker)
+        data = fetch_json(url, headers=UA, timeout=20)
+        if not data:
+            return None
+        # API returns either a list of transcripts or a single dict; normalize.
+        if isinstance(data, dict):
+            entries = [data]
+        elif isinstance(data, list):
+            entries = data
+        else:
+            return None
+        # Pick the most recent entry (highest year, then highest quarter).
+        latest = self._pick_latest(entries)
+        if not latest:
+            return None
+        return self._build_item(ticker, latest)
+
+    @staticmethod
+    def _pick_latest(entries: list) -> dict | None:
+        candidates: list[tuple[int, int, dict]] = []
+        for e in entries:
+            if not isinstance(e, dict):
+                continue
+            try:
+                yr = int(e.get("year") or 0)
+                qt = int(e.get("quarter") or 0)
+            except (TypeError, ValueError):
+                continue
+            content = (e.get("content") or "").strip()
+            if not content or yr <= 0 or qt <= 0:
+                continue
+            candidates.append((yr, qt, e))
+        if not candidates:
+            return None
+        candidates.sort(key=lambda x: (x[0], x[1]), reverse=True)
+        return candidates[0][2]
+
+    @classmethod
+    def _split_sentences(cls, text: str) -> list[str]:
+        # Cheap sentence split — transcripts are conversational, periods and
+        # newlines are reliable boundaries. Keep sentences with real content
+        # only (>=8 words) so we don't surface "Thanks, operator."
+        raw = re.split(r"(?<=[.!?])\s+|\n+", text)
+        return [s.strip() for s in raw if s and len(s.split()) >= 8]
+
+    @classmethod
+    def _find_forward_guidance(cls, sentences: list[str]) -> str | None:
+        for s in sentences:
+            low = s.lower()
+            if any(v in low for v in cls._GUIDE_VERBS) and any(h in low for h in cls._GUIDE_HORIZONS):
+                return s
+        return None
+
+    @classmethod
+    def _find_ai_capex(cls, sentences: list[str]) -> str | None:
+        for s in sentences:
+            low = s.lower()
+            if any(t in low for t in cls._AI_TERMS) and any(sp in low for sp in cls._SPEND_TERMS):
+                return s
+        return None
+
+    @classmethod
+    def _tone_tag(cls, guidance: str | None) -> str:
+        if not guidance:
+            return "n/a"
+        low = guidance.lower()
+        raise_hit = any(t in low for t in cls._RAISE_TERMS)
+        cut_hit = any(t in low for t in cls._CUT_TERMS)
+        if raise_hit and not cut_hit:
+            return "raised"
+        if cut_hit and not raise_hit:
+            return "cut"
+        if raise_hit and cut_hit:
+            return "mixed"
+        return "maintained"
+
+    def _build_item(self, ticker: str, entry: dict) -> dict | None:
+        content = (entry.get("content") or "").strip()
+        try:
+            year = int(entry.get("year"))
+            quarter = int(entry.get("quarter"))
+        except (TypeError, ValueError):
+            return None
+        if not content or year <= 0 or not (1 <= quarter <= 4):
+            return None
+
+        sentences = self._split_sentences(content)
+        guidance = self._find_forward_guidance(sentences)
+        ai_capex = self._find_ai_capex(sentences)
+
+        # If neither signal is extractable, the transcript is still evidence
+        # that the call occurred — surface a thin pointer rather than swallow
+        # the event entirely. Triage can then go read it directly.
+        tone = self._tone_tag(guidance)
+
+        snippets: list[str] = []
+        if guidance:
+            snippets.append(f"Guide: \"{guidance[:240]}\"")
+        if ai_capex:
+            snippets.append(f"AI/capex: \"{ai_capex[:240]}\"")
+        if not snippets:
+            snippets.append("Transcript published; no forward-guidance/AI-capex sentence matched extractors.")
+
+        text = (
+            f"[Earnings Call · {ticker} Q{quarter} {year} · tone={tone}] "
+            + " | ".join(snippets)
+        )
+
+        # Stable per-(ticker, year, quarter) dedup. The transcript URL on the
+        # source site is the canonical public artefact.
+        dedup_url = f"https://discountingcashflows.com/company/{ticker}/transcripts/{year}-Q{quarter}/"
+
+        return {
+            "text": text[:600],
+            "source": self.SOURCE,
+            "url": dedup_url,
+            "reliability": self.RELIABILITY,
+        }
