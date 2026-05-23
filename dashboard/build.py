@@ -1834,6 +1834,82 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .ot-vd{font-size:9px;padding:1px 5px}
   .ot-em{font-size:var(--fs-micro)}
 }
+/* IV-vs-RV Edge (HED-137 Zyklus 108): Bloomberg HVR / IVOL screen equivalent.
+   Pricing-side complement to Options-Tape: where Options-Tape shows institutional
+   *positioning* (P/C, skew), this shows whether options are *expensive vs. realized*.
+   IV-annualized = emove/79.79 × √(252/DTE) (Brenner-Subrahmanyam ATM straddle approx);
+   RV30 = stdev(log-returns 30d) × √252; spread = IV − RV in pp. Positive ≫ → premium
+   bid (sell vol / outright preferred over calls), negative ≫ → premium discount
+   (event-protection cheap, catalyst plays favored). Same row-styling vocabulary as
+   Options-Tape so the two panels read as one institutional vol view. */
+.iv-panel{padding:var(--s3);margin-top:var(--s3)}
+.iv-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.iv-h-title{font-weight:700;font-size:var(--fs-h2);text-transform:none;letter-spacing:0;color:var(--txt);line-height:1.2}
+.iv-h-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400;margin-top:2px}
+.iv-metrics{display:flex;gap:var(--s4);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.iv-metric{display:flex;flex-direction:column;gap:1px;font-size:var(--fs-micro);text-align:right;min-width:54px}
+.iv-metric .lbl{color:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.iv-metric .val{font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.15;color:var(--txt)}
+.iv-metric .val.pos{color:var(--red)}    /* expensive: red flag */
+.iv-metric .val.neg{color:var(--green)}  /* cheap: green opportunity */
+.iv-metric .val.amb{color:var(--amber)}
+.iv-table-wrap{overflow-x:auto;margin:0 calc(-1*var(--s3));padding:0 var(--s3)}
+.iv-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+.iv-table thead th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.iv-table thead th.r{text-align:right}
+.iv-table tbody tr{border-bottom:1px solid var(--line)}
+.iv-table tbody tr:last-child{border-bottom:0}
+.iv-table tbody tr:hover{background:rgba(77,163,255,.05)}
+.iv-table tbody td{padding:7px 8px;vertical-align:middle;line-height:1.25}
+.iv-table tbody td.r{text-align:right}
+.iv-tone-r{box-shadow:inset 3px 0 0 var(--red)}     /* expensive premium */
+.iv-tone-g{box-shadow:inset 3px 0 0 var(--green)}   /* cheap premium */
+.iv-tone-n{box-shadow:inset 3px 0 0 var(--line)}
+.iv-tk{font-weight:700;font-size:var(--fs-cap);letter-spacing:.02em;color:var(--txt)}
+.iv-tk-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.iv-book{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;letter-spacing:.04em;padding:1px 6px;border-radius:3px;text-transform:uppercase;white-space:nowrap;line-height:1.4}
+.iv-book-long{background:rgba(63,185,80,.18);color:var(--green)}
+.iv-book-long::before{content:"L\00a0"}
+.iv-book-short{background:rgba(248,81,73,.18);color:var(--red)}
+.iv-book-short::before{content:"S\00a0"}
+.iv-book-pair{background:var(--panel2);color:var(--mut)}
+.iv-book-pair::before{content:"±\00a0"}
+.iv-num{font-weight:700;font-size:var(--fs-cap);color:var(--txt);font-variant-numeric:tabular-nums}
+.iv-num.mut{color:var(--mut);font-weight:500}
+.iv-bar-cell{min-width:120px}
+/* Symmetric divergent bar: anchor at center, expensive →red→right, cheap →green→left */
+.iv-bar-wrap{position:relative;height:14px;background:var(--panel2);border-radius:3px;overflow:hidden}
+.iv-bar-axis{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line);z-index:1}
+.iv-bar{position:absolute;top:1px;bottom:1px;border-radius:2px}
+.iv-bar-pos{background:linear-gradient(90deg,rgba(248,81,73,.45),rgba(248,81,73,.85));left:50%}
+.iv-bar-neg{background:linear-gradient(270deg,rgba(63,185,80,.45),rgba(63,185,80,.85));right:50%}
+.iv-spr-cell{display:flex;align-items:center;justify-content:flex-end;gap:6px;font-variant-numeric:tabular-nums}
+.iv-spr-val{font-weight:700;min-width:54px;text-align:right}
+.iv-spr-val.pos{color:var(--red)}
+.iv-spr-val.neg{color:var(--green)}
+.iv-vd{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;display:inline-block}
+.iv-vd-exp{background:rgba(248,81,73,.22);color:var(--red)}
+.iv-vd-cheap{background:rgba(63,185,80,.22);color:var(--green)}
+.iv-vd-fair{background:var(--panel2);color:var(--mut)}
+.iv-actn{font-size:9px;color:var(--mut);font-style:italic;display:block;margin-top:2px;letter-spacing:.01em;line-height:1.3}
+.iv-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+.iv-foot a{color:var(--mut);border-bottom:1px dotted var(--line)}
+.iv-foot a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.iv-foot i{font-style:italic}
+.iv-empty{display:flex;align-items:center;justify-content:center;padding:var(--s5) var(--s3);background:transparent;border-radius:6px;border:1px dashed var(--line);color:var(--mut);font-size:var(--fs-micro);font-style:italic;text-align:center}
+@media(max-width:640px){
+  .iv-h{flex-direction:column;align-items:stretch;gap:var(--s2)}
+  .iv-metrics{justify-content:space-between;gap:var(--s3)}
+  .iv-metric{text-align:left;min-width:0;flex:1}
+  .iv-metric .val{font-size:16px}
+  .iv-table thead th{font-size:9px;padding:5px 5px}
+  .iv-table tbody td{padding:6px 5px}
+  .iv-table .col-hide-m{display:none}
+  .iv-bar-cell{min-width:80px}
+  .iv-spr-val{min-width:42px}
+  .iv-vd{font-size:9px;padding:1px 5px}
+  .iv-actn{font-size:8px}
+}
 /* Katalysator-Runway: event-driven timeline (earnings + thesis-horizon) for the next 30 days (HED-137 Zyklus 85) */
 .cat-panel{padding:var(--s3)}
 .cat-svg{width:100%;height:auto;display:block;max-height:160px;margin-top:var(--s2)}
@@ -2487,6 +2563,7 @@ main:focus{outline:none}
     <a href="#h-trackrecord">Track-Record</a>
     <a href="#h-portfolio">Portfolio</a>
     <a href="#h-opttape">Optionen</a>
+    <a href="#h-ivrvedge">Vol-Edge</a>
     <a href="#h-catalysts">Katalysatoren</a>
     <a href="#h-earnplay">Earnings-Playbook</a>
     <a href="#h-scanner">Ideen-Scanner</a>
@@ -2524,6 +2601,11 @@ main:focus{outline:none}
   <section aria-labelledby="h-opttape">
   <h2 id="h-opttape">Options-Tape <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Institutionelles Positioning · OMON</span></h2>
   <div id="opttape" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:52%"></div><div class="skel skel-line" style="width:66%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
+  </section>
+
+  <section aria-labelledby="h-ivrvedge">
+  <h2 id="h-ivrvedge">Vol-Edge <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">IV − RV · Premium-Pricing · HVR</span></h2>
+  <div id="ivrvedge" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:50%"></div><div class="skel skel-line" style="width:68%"></div><div class="skel skel-line" style="width:58%"></div></div></div>
   </section>
 
   <section aria-labelledby="h-catalysts">
@@ -5467,6 +5549,205 @@ function calibSvg(buckets){
   root.setAttribute("aria-busy","false");
 })();
 
+// Vol-Edge (HED-137 Zyklus 108): Bloomberg HVR / IVOL screen equivalent.
+// Pricing-side complement to Options-Tape — joins per-ticker implied vol (from ATM
+// straddle in options_tape) with realized 30-day vol (from sector_view spark) and
+// surfaces the spread. Positive spread = options expensive (prefer outright /
+// short premium / avoid chasing calls); negative spread = options cheap (event
+// protection / catalyst-plays favored). Cross-references the book: open-call rows
+// show L/S badge and an inline directional read on premium pricing.
+//
+//   σ_IV (ann.) = emove/79.79 × √(252/DTE)       [Brenner-Subrahmanyam ATM straddle]
+//   σ_RV30      = stdev(log returns, 30d) × √252
+//   spread (pp) = (σ_IV − σ_RV30) × 100
+//
+// Verdict bands (institutional rule-of-thumb): ≥ +5pp → "Premium teuer"; ≤ −5pp →
+// "Premium günstig"; in-band → "Fair". Sort by signed spread, descending (the most
+// over-priced premiums at top → first place a vol-seller looks).
+(function renderIVRVEdge(){
+  const root=$("ivrvedge");
+  if(!root) return;
+  const ot=D.options_tape||{};
+  const otRows=(ot.tickers||[]).filter(r=>r.emove!=null&&r.exp);
+  // Build spark map from sector_view (sparkline=last 30 closes per ticker)
+  const sparkMap={};
+  ((D.sector_view||{}).sectors||[]).forEach(s=>{
+    (s.tickers||[]).forEach(t=>{
+      if(t&&t.ticker&&Array.isArray(t.spark)&&t.spark.length>=6) sparkMap[String(t.ticker).toUpperCase()]=t.spark;
+    });
+  });
+  // Direction map of open calls — mirrors Options-Tape so the two panels read together
+  const dirMap={};
+  ((D.track_record||{}).theses||[])
+    .filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date))
+    .forEach(t=>{(t.tickers||[]).forEach(tk=>{
+      const k=String(tk).toUpperCase();
+      if(dirMap[k]&&dirMap[k]!==(t.direction||"").toLowerCase()) dirMap[k]="pair";
+      else if(!dirMap[k]) dirMap[k]=(t.direction||"").toLowerCase();
+    });});
+  // Compute realized 30d annualized vol from spark (log returns, sample stdev)
+  function realizedVol(sp){
+    if(!sp||sp.length<6) return null;
+    const closes=sp.slice(-31);  // up to 30 returns
+    const lr=[];
+    for(let i=1;i<closes.length;i++){
+      const p0=closes[i-1], p1=closes[i];
+      if(p0>0&&p1>0) lr.push(Math.log(p1/p0));
+    }
+    if(lr.length<5) return null;
+    const mean=lr.reduce((a,b)=>a+b,0)/lr.length;
+    const v=lr.reduce((s,x)=>s+(x-mean)*(x-mean),0)/Math.max(1,lr.length-1);
+    return Math.sqrt(v)*Math.sqrt(252);  // annualized decimal
+  }
+  // Days to expiry (calendar days, floored to ≥1)
+  const today=new Date(); today.setUTCHours(0,0,0,0);
+  function dteOf(exp){
+    const [y,m,d]=String(exp).split("-").map(Number);
+    if(!y||!m||!d) return null;
+    const ex=new Date(Date.UTC(y,m-1,d));
+    return Math.max(1, Math.round((ex.getTime()-today.getTime())/86400000));
+  }
+  // Build joined rows
+  const joined=[];
+  otRows.forEach(r=>{
+    const tk=String(r.ticker).toUpperCase();
+    const dte=dteOf(r.exp);
+    if(dte==null) return;
+    const sp=sparkMap[tk];
+    const rv=realizedVol(sp);
+    if(rv==null) return;
+    // Brenner-Subrahmanyam: straddle/spot ≈ σ√(T/252)·√(2/π) ≈ 0.7979·σ√(T/252)
+    const iv=(r.emove/100)/0.7979/Math.sqrt(dte/252);  // annualized decimal
+    if(!isFinite(iv)||iv<=0) return;
+    const spreadPp=(iv-rv)*100;
+    joined.push({
+      ticker: tk,
+      iv, rv, dte,
+      spread: spreadPp,
+      emove: r.emove,
+      exp: r.exp,
+      dir: dirMap[tk]||null,
+    });
+  });
+  if(!joined.length){
+    root.innerHTML='<div class="panel iv-panel"><div class="iv-empty">Keine Ticker mit gleichzeitig vorhandenen Optionsdaten (Straddle-Implied-Move) und 30d-Spark-Returns — Vol-Edge benötigt beide Inputs.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  // Sort by signed spread descending (most over-priced premiums first)
+  joined.sort((a,b)=>b.spread-a.spread);
+  // Aggregate metrics
+  const nExp=joined.filter(x=>x.spread>=5).length;
+  const nCheap=joined.filter(x=>x.spread<=-5).length;
+  const avgSpread=joined.reduce((s,x)=>s+x.spread,0)/joined.length;
+  // Bar scale: cap visualization at ±25pp for compact rendering; clip beyond
+  const BAR_CAP=25;
+  function bookBadge(dir){
+    if(!dir) return "";
+    if(dir==="pair") return '<span class="iv-book iv-book-pair" title="Long+Short Paar im Buch — neutral zur Richtung">Pair</span>';
+    if(dir==="long") return '<span class="iv-book iv-book-long" title="Aktiver Long-Call im Buch">Long</span>';
+    if(dir==="short") return '<span class="iv-book iv-book-short" title="Aktiver Short-Call im Buch">Short</span>';
+    return "";
+  }
+  function actionText(row){
+    // Cross-reference: directional implication of premium pricing for the open call
+    if(!row.dir||row.dir==="pair") return "";
+    if(row.spread>=5){
+      if(row.dir==="long")  return "Outright Long bevorzugt — Calls überteuert";
+      if(row.dir==="short") return "Outright Short bevorzugt — Puts überteuert";
+    }else if(row.spread<=-5){
+      if(row.dir==="long")  return "Call-Replacement / Event-Calls günstig";
+      if(row.dir==="short") return "Put-Schutz günstig — Hedge attraktiv";
+    }
+    return "";
+  }
+  const tbody=joined.map(r=>{
+    const tone=r.spread>=5?"r":r.spread<=-5?"g":"n";
+    const verdict=r.spread>=5?"exp":r.spread<=-5?"cheap":"fair";
+    const verdLbl=verdict==="exp"?"Premium teuer":verdict==="cheap"?"Premium günstig":"Fair";
+    const spreadCls=r.spread>=5?"pos":r.spread<=-5?"neg":"mut";
+    const sprSign=r.spread>=0?"+":"−";
+    const sprAbs=Math.abs(r.spread).toFixed(1);
+    // Divergent bar: % of cap
+    const barPct=Math.min(100, Math.abs(r.spread)/BAR_CAP*50);  // half-width usage
+    const bar=r.spread>0
+      ? `<div class="iv-bar iv-bar-pos" style="width:${barPct.toFixed(1)}%"></div>`
+      : r.spread<0
+        ? `<div class="iv-bar iv-bar-neg" style="width:${barPct.toFixed(1)}%"></div>`
+        : "";
+    const actn=actionText(r);
+    const actnHtml=actn?`<span class="iv-actn">${actn}</span>`:"";
+    return `<tr class="iv-tone-${tone}">
+      <td>
+        <div class="iv-tk-row">
+          <span class="iv-tk">${esc(r.ticker)}</span>
+          ${bookBadge(r.dir)}
+        </div>
+      </td>
+      <td class="r"><span class="iv-num">${(r.iv*100).toFixed(1)}%</span></td>
+      <td class="r col-hide-m"><span class="iv-num mut">${(r.rv*100).toFixed(1)}%</span></td>
+      <td class="iv-bar-cell">
+        <div class="iv-bar-wrap" title="IV − RV30 Spread: ${sprSign}${sprAbs}pp · bar capped at ±${BAR_CAP}pp">
+          <div class="iv-bar-axis"></div>
+          ${bar}
+        </div>
+      </td>
+      <td class="r">
+        <div class="iv-spr-cell">
+          <span class="iv-spr-val ${spreadCls}">${sprSign}${sprAbs}pp</span>
+        </div>
+      </td>
+      <td class="r col-hide-m"><span class="iv-num mut">${r.dte}d</span></td>
+      <td>
+        <span class="iv-vd iv-vd-${verdict}" title="IV (annualisiert): ${(r.iv*100).toFixed(1)}% · RV30: ${(r.rv*100).toFixed(1)}% · Spread: ${sprSign}${sprAbs}pp">${verdLbl}</span>
+        ${actnHtml}
+      </td>
+    </tr>`;
+  }).join("");
+  const headerKpi=`
+    <div class="iv-metrics">
+      <div class="iv-metric" title="Anzahl Ticker mit beiden Inputs (Options-Straddle und 30d Spark)">
+        <span class="lbl">Ticker</span><span class="val">${joined.length}</span>
+      </div>
+      <div class="iv-metric" title="Ticker mit IV deutlich über RV30 (Spread ≥ +5pp) — Optionsprämien institutionell als teuer eingepreist">
+        <span class="lbl">Teuer</span><span class="val pos">${nExp}</span>
+      </div>
+      <div class="iv-metric" title="Ticker mit IV deutlich unter RV30 (Spread ≤ −5pp) — Optionsprämien günstig im Vergleich zur kürzlich realisierten Vol">
+        <span class="lbl">Günstig</span><span class="val neg">${nCheap}</span>
+      </div>
+      <div class="iv-metric" title="Durchschnittlicher IV − RV30 Spread über alle Ticker in pp">
+        <span class="lbl">⌀ Spread</span><span class="val ${avgSpread>=5?"pos":avgSpread<=-5?"neg":""}">${avgSpread>=0?"+":"−"}${Math.abs(avgSpread).toFixed(1)}pp</span>
+      </div>
+    </div>`;
+  root.innerHTML=`<div class="panel iv-panel">
+    <div class="iv-h">
+      <div>
+        <div class="iv-h-title">Vol-Edge — IV vs. realisierte Vol</div>
+        <div class="iv-h-sub">Implied (Straddle, annualisiert) − Realized 30d · sortiert nach Spread · positive Spread = Optionen relativ teuer · negativ = relativ günstig</div>
+      </div>
+      ${headerKpi}
+    </div>
+    <div class="iv-table-wrap">
+      <table class="iv-table" role="table" aria-label="IV vs. Realized-Vol Edge pro Ticker">
+        <thead><tr>
+          <th scope="col">Ticker</th>
+          <th scope="col" class="r" title="Annualisierte Implied Vol aus ATM-Straddle (Brenner-Subrahmanyam-Approximation)">IV (ann.)</th>
+          <th scope="col" class="r col-hide-m" title="Annualisierte realisierte 30-Tage-Vol aus log-Returns">RV 30d</th>
+          <th scope="col" title="Visueller Spread (IV − RV); rot/rechts = teuer, grün/links = günstig">Bar</th>
+          <th scope="col" class="r" title="Spread (pp) = IV − RV30; ≥ +5 = Premium teuer, ≤ −5 = Premium günstig">Spread</th>
+          <th scope="col" class="r col-hide-m" title="Days-to-Expiry der Straddle-Quotierung">DTE</th>
+          <th scope="col">Verdict</th>
+        </tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>
+    <div class="iv-foot">
+      Vol-Edge identifiziert Pricing-Dislokationen zwischen Markterwartung (Implied) und kürzlich realisierter Bewegung. Methodik: <i>σ<sub>IV</sub> = emove/79.79 · √(252/DTE)</i> (Brenner-Subrahmanyam ATM-Straddle-Approximation) vs <i>σ<sub>RV30</sub> = stdev(log-returns 30d) · √252</i>. <b>Premium teuer</b> (≥+5pp) → Outright-Position bevorzugt, Optionen-Käufer im Hintertreffen; <b>Premium günstig</b> (≤−5pp) → Event-Calls / Put-Schutz attraktiv. <b>L</b>/<b>S</b>-Badge markiert offene Calls; die Aktion-Note koppelt das Pricing-Signal an die Buch-Richtung. Quellen: ATM-Straddle aus <code>OptionsMarketAdapter</code> · 30d-Closes aus <code>sector_view</code>. Bloomberg-Pendant: <a href="https://www.bloomberg.com/professional/" target="_blank" rel="noopener">HVR</a> / IVOL.
+    </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 // Katalysator-Runway (HED-137 Zyklus 85): 30-day event timeline combining earnings calendar
 // and active-thesis horizon-resolution dates. Distinguishes positions im Buch (direkter P&L-Impact)
 // from Watchlist (re-entry signal). Bloomberg ECO/ER equivalent, customised to our actual book.
@@ -6143,7 +6424,7 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 })();
 
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
-["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","insidertape"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","insidertape","opttape","ivrvedge"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
 // Section nav: highlight the anchor pill whose section is currently most in view
 (function(){
