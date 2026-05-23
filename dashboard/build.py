@@ -2146,6 +2146,31 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Data-Freshness Indicator (HED-150 Zyklus 171)
+   Compact strip showing per-source data age. A Bloomberg PM must know if a
+   panel reflects 10-minute-old or 24-hour-old data — staleness invalidates
+   decisions. Hover for full timestamps. */
+.pf-fr-panel{padding:8px var(--s3);margin-bottom:var(--s3);background:rgba(139,148,158,.04);border:1px solid rgba(139,148,158,.1);border-radius:5px}
+.pf-fr-row{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;font-size:var(--fs-cap)}
+.pf-fr-lbl{font-size:9px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.pf-fr-built{font-variant-numeric:tabular-nums;color:var(--txt);font-weight:600;font-size:12px}
+.pf-fr-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#3fb950;animation:pf-fr-pulse 2s ease-in-out infinite;box-shadow:0 0 6px rgba(63,185,80,.5)}
+@keyframes pf-fr-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.pf-fr-srcs{display:flex;gap:5px;flex-wrap:wrap;align-items:center;flex:1;min-width:0}
+.pf-fr-src{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:3px;font-size:10px;background:rgba(139,148,158,.06);border:1px solid rgba(139,148,158,.1);font-variant-numeric:tabular-nums;cursor:help}
+.pf-fr-src-fresh{background:rgba(35,134,54,.06);border-color:rgba(35,134,54,.2)}
+.pf-fr-src-aging{background:rgba(210,168,80,.06);border-color:rgba(210,168,80,.2)}
+.pf-fr-src-stale{background:rgba(248,81,73,.08);border-color:rgba(248,81,73,.3)}
+.pf-fr-src-name{font-weight:600;color:var(--txt)}
+.pf-fr-src-age{color:var(--mut);font-size:9px}
+.pf-fr-src-fresh .pf-fr-src-age{color:#3fb950}
+.pf-fr-src-aging .pf-fr-src-age{color:#e3b341}
+.pf-fr-src-stale .pf-fr-src-age{color:#f85149;font-weight:600}
+@media(max-width:600px){
+  .pf-fr-row{gap:var(--s2)}
+  .pf-fr-built{font-size:11px}
+  .pf-fr-src{font-size:9px;padding:1px 5px}
+}
 /* Idea-to-Position Pipeline Funnel (HED-150 Zyklus 170)
    Process-meta-view: visualizes the fund's conversion funnel from raw universe
    → trade-ideas → research-pipeline → active book. Shows research discipline
@@ -11514,9 +11539,11 @@ function calibSvg(buckets){
     const chips=[
       _chip("#pf-alerts","⚠","Alerts",critCount||warnCount||"",critCount?"":warnCount?"pf-nav-chip-badge-warn":""),
       _chip("#pf-matrix","◧","Matrix",actionsNeeded?actionsNeeded:"",actionsNeeded?"":""),
+      _chip("#pf-funnel","⏚","Funnel","",""),
       _chip("#pf-rotation","▣","Rotation","",""),
       _chip("#pf-theses","◉","Thesen",nActive?nActive:"","pf-nav-chip-badge-pos"),
       _chip("#pf-equity","∿","Equity","",""),
+      _chip("#pf-calmap","⚖","Calibration","",""),
       _chip("#pf-fundamentals","◇","Fundamentals","",""),
       _chip("#pf-ideas","✦","Ideas",nIdeas?nIdeas:"","pf-nav-chip-badge-pos"),
       _chip("#pf-events","◷","Events",nEvents?nEvents:"","pf-nav-chip-badge-warn"),
@@ -12149,7 +12176,63 @@ function calibSvg(buckets){
     </div>`;
   }
 
-  root.innerHTML=`${subNavHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-funnel")}${funnelHtml}${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Data-Freshness Indicator (HED-150 Zyklus 171).
+  // Per-source data-age badge strip. Sits below sub-nav, above story. PM must know
+  // if panels reflect 10-min-old vs 24h-old data — staleness invalidates decisions.
+  let freshnessHtml="";
+  {
+    const built=new Date(D.built_at_iso||Date.now());
+    const builtStr=`${String(built.getDate()).padStart(2,'0')}.${String(built.getMonth()+1).padStart(2,'0')}.${built.getFullYear()} ${String(built.getHours()).padStart(2,'0')}:${String(built.getMinutes()).padStart(2,'0')} UTC`;
+    function _ageStr(iso){
+      if(!iso) return null;
+      const t=new Date(iso);
+      if(isNaN(t.getTime())) return null;
+      const mins=(Date.now()-t.getTime())/60000;
+      if(mins<60) return `${Math.round(mins)}m`;
+      const h=mins/60;
+      if(h<24) return `${h.toFixed(0)}h`;
+      const d=h/24;
+      return `${d.toFixed(0)}d`;
+    }
+    function _ageCls(iso, freshHrs, staleHrs){
+      if(!iso) return "";
+      const t=new Date(iso);
+      if(isNaN(t.getTime())) return "";
+      const h=(Date.now()-t.getTime())/3600000;
+      if(h<=freshHrs) return "pf-fr-src-fresh";
+      if(h<=staleHrs) return "pf-fr-src-aging";
+      return "pf-fr-src-stale";
+    }
+    // Per-source ages
+    const sources=[
+      {name:"Options",iso:(D.options_tape||{}).as_of_iso||(D.options_tape||{}).tickers?.[0]?.fetched_at, fresh:24, stale:72},
+      {name:"Insider",iso:(D.insider_tape||{}).as_of_iso||(D.insider_tape||{}).tickers?.[0]?.fetched_at||null, fresh:48, stale:168},
+      {name:"Sektoren",iso:(D.sector_view||{}).as_of_iso, fresh:24, stale:72},
+      {name:"Macro",iso:(D.macro_pulse||{}).as_of_iso, fresh:72, stale:168},
+      {name:"Squeeze",iso:(D.short_squeeze||{}).as_of_iso||(D.short_squeeze||{}).tickers?.[0]?.fetched_at, fresh:48, stale:168},
+      {name:"Briefing",iso:(D.briefing||{}).created_at, fresh:24, stale:72},
+    ];
+
+    const srcsHtml=sources.map(s=>{
+      const age=_ageStr(s.iso);
+      const cls=_ageCls(s.iso, s.fresh, s.stale);
+      const ageDisp=age||"—";
+      const title=s.iso?`Stand: ${new Date(s.iso).toLocaleString('de-DE')}`:"Keine Quelle";
+      return `<span class="pf-fr-src ${cls}" title="${esc(title)}"><span class="pf-fr-src-name">${esc(s.name)}</span><span class="pf-fr-src-age">${esc(ageDisp)}</span></span>`;
+    }).join("");
+
+    freshnessHtml=`<div class="pf-fr-panel">
+      <div class="pf-fr-row">
+        <span class="pf-fr-lbl">Stand</span>
+        <span class="pf-fr-dot" title="Live"></span>
+        <span class="pf-fr-built">${esc(builtStr)}</span>
+        <span class="pf-fr-lbl" style="margin-left:auto">Quellen-Alter</span>
+        <div class="pf-fr-srcs">${srcsHtml}</div>
+      </div>
+    </div>`;
+  }
+
+  root.innerHTML=`${subNavHtml}${freshnessHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-funnel")}${funnelHtml}${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
