@@ -247,15 +247,9 @@ def gen_sector_view() -> dict:
         sectors.append({"id": s["id"], "name": s["name"],
                         "note": s.get("note"), "tickers": enriched})
     earnings_cal = _earnings_calendar()
-    benchmarks = {}
-    for bm in ["SPY", "QQQ"]:
-        q = _yahoo_quote(bm)
-        if q and q.get("spark"):
-            benchmarks[bm] = {"ticker": bm, "price": q["price"], "spark": q["spark"]}
     return {"as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
             "as_of_iso": datetime.now(timezone.utc).isoformat(),
             "sectors": sectors,
-            "benchmarks": benchmarks,
             "earnings_calendar": earnings_cal}
 
 
@@ -506,15 +500,6 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .ec-ylab{font-size:10px;fill:var(--mut);font-variant-numeric:tabular-nums;font-family:inherit}
 .ec-xlab{font-size:10px;fill:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-family:inherit}
 .ec-foot{font-size:var(--fs-micro);margin-top:6px;line-height:1.4}
-.ec-bm{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:4 3;opacity:.75}
-.ec-bm-spy{stroke:var(--mut)}
-.ec-bm-qqq{stroke:#9b8cf4}
-.ec-legend{display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap;margin-top:6px}
-.ec-leg-item{display:flex;align-items:center;gap:4px;color:var(--mut)}
-.ec-leg-line{display:inline-block;width:18px;height:2px;border-radius:1px;flex-shrink:0}
-.ec-leg-book{background:currentColor}
-.ec-leg-spy{background:var(--mut)}
-.ec-leg-qqq{background:#9b8cf4}
 @media(max-width:640px){
   .ec-h{flex-direction:column;align-items:stretch;gap:var(--s2)}
   .ec-kpis{justify-content:space-between;gap:var(--s3)}
@@ -551,6 +536,39 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .pf-pnl-row > .pf-pnl-dir{display:none}
   .pf-pnl-row > .pf-pnl-track{grid-area:bar}
   .pf-pnl-row > .pf-pnl-val{grid-area:val}
+}
+/* Sector Performance Attribution — Brinson-style "where is my book working?" (HED-137 cycle 83) */
+.pf-attrib{margin-top:var(--s3);padding:var(--s3)}
+.pf-attrib-h{font-size:var(--fs-cap);color:var(--mut);margin-bottom:var(--s2);display:flex;
+  justify-content:space-between;align-items:baseline;gap:var(--s3)}
+.pf-attrib-h .pf-attrib-foot{font-size:var(--fs-micro)}
+.pf-attrib-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+.pf-attrib-tbl thead th{font-size:var(--fs-micro);font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--mut);padding:4px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.pf-attrib-tbl thead th:first-child{text-align:left;padding-left:0}
+.pf-attrib-tbl thead th.pf-attrib-bar-col{text-align:left;width:32%}
+.pf-attrib-tbl tbody td{padding:6px;border-top:1px solid var(--line);text-align:right;vertical-align:middle}
+.pf-attrib-tbl tbody td:first-child{text-align:left;padding-left:0}
+.pf-attrib-tbl tbody tr:first-child td{border-top:0}
+.pf-attrib-tbl tbody tr:hover{background:rgba(77,163,255,.06)}
+.pf-attrib-sec{display:flex;align-items:center;gap:6px;min-width:0}
+.pf-attrib-sec .id{font-size:var(--fs-micro);color:var(--mut);font-weight:600;font-variant-numeric:tabular-nums;
+  background:var(--panel2);padding:1px 5px;border-radius:3px;flex-shrink:0}
+.pf-attrib-sec .nm{color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-attrib-tbl tfoot td{padding:6px;border-top:2px solid var(--line);font-weight:700;text-align:right}
+.pf-attrib-tbl tfoot td:first-child{text-align:left;padding-left:0;color:var(--mut);font-weight:600;font-size:var(--fs-micro);
+  text-transform:uppercase;letter-spacing:.05em}
+/* contribution bar: diverging around 0, half-track each side */
+.pf-attrib-ctrack{position:relative;height:8px;background:transparent;border-left:1px solid var(--line);
+  border-right:1px solid var(--line);min-width:60px}
+.pf-attrib-ctrack::before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--line)}
+.pf-attrib-cbar{position:absolute;top:1px;bottom:1px;border-radius:2px}
+.pf-attrib-cbar-pos{background:var(--green);left:50%}
+.pf-attrib-cbar-neg{background:var(--red);right:50%}
+@media(max-width:560px){
+  .pf-attrib-tbl thead th.pf-attrib-hide-mob,.pf-attrib-tbl tbody td.pf-attrib-hide-mob,.pf-attrib-tbl tfoot td.pf-attrib-hide-mob{display:none}
+  .pf-attrib-tbl thead th,.pf-attrib-tbl tbody td{padding:5px 4px}
+  .pf-attrib-tbl thead th.pf-attrib-bar-col{width:30%}
 }
 /* conviction color ramp */
 .conv-lo{color:var(--mut)}
@@ -1420,6 +1438,7 @@ function calibSvg(buckets){
   }
   function _entryIdx(spark, baseline, dateStr){
     if(!spark||!spark.length||baseline==null) return -1;
+    // 1) Prefer date-derived index from thesis.date when within 5% of baseline
     if(dateStr && _asOfDateStr){
       const back=_bdaysBack(dateStr, _asOfDateStr);
       if(back!=null){
@@ -1427,6 +1446,7 @@ function calibSvg(buckets){
         if(idx>=0 && idx<spark.length && Math.abs(spark[idx]-baseline)/baseline<0.05) return idx;
       }
     }
+    // 2) Tight auto-snap within last 5 closes — avoids snapping to look-alike prices weeks back
     const start=Math.max(0, spark.length-6);
     let best=-1, bestDiff=Infinity;
     for(let i=start;i<spark.length;i++){
@@ -1470,19 +1490,7 @@ function calibSvg(buckets){
       const pad={l:42,r:16,t:14,b:24};
       const iW=W-pad.l-pad.r, iH=H-pad.t-pad.b;
       const pcts=_curve.map(c=>c.pct);
-      // Benchmark curves: SPY/QQQ normalized to same inception day (off=_incep → 0%)
-      const _bmRaw=(D.sector_view||{}).benchmarks||{};
-      const _bmCurves={};
-      ["SPY","QQQ"].forEach(bm=>{
-        const bd=_bmRaw[bm]; if(!bd||!Array.isArray(bd.spark)||bd.spark.length<2) return;
-        const sp=bd.spark, inceptIdx=sp.length-1-_incep;
-        if(inceptIdx<0) return;
-        const base=sp[inceptIdx]; if(!base) return;
-        const bc=[]; for(let off=_incep;off>=0;off--){ const idx=sp.length-1-off; if(idx>=0&&idx<sp.length) bc.push((sp[idx]/base-1)*100); }
-        if(bc.length>=2) _bmCurves[bm]=bc;
-      });
-      const _bmAllPcts=Object.values(_bmCurves).flat();
-      let lo=Math.min(0,...pcts,..._bmAllPcts), hi=Math.max(0,...pcts,..._bmAllPcts);
+      let lo=Math.min(0,...pcts), hi=Math.max(0,...pcts);
       if(hi-lo<1){ const mid=(hi+lo)/2; lo=mid-0.5; hi=mid+0.5; }
       const yPad=(hi-lo)*0.15; lo-=yPad; hi+=yPad;
       const yPct=v=>pad.t+(hi-v)/(hi-lo)*iH;
@@ -1492,10 +1500,12 @@ function calibSvg(buckets){
       const linePts=ptCoords.map(([x,y])=>`${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
       const lastPct=_curve[_curve.length-1].pct;
       const lineCls=lastPct>=0?"ec-pos":"ec-neg";
+      // Area between line and zero baseline (clipped to chart area visually via the polyline shape)
       const areaPath = ptCoords.length>1
         ? `M ${pad.l},${yZero.toFixed(1)} ` + ptCoords.map(([x,y])=>`L ${x.toFixed(1)},${y.toFixed(1)}`).join(" ") + ` L ${(pad.l+(ptCoords.length-1)*xStep).toFixed(1)},${yZero.toFixed(1)} Z`
         : "";
       const fmt=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
+      // Y-axis: top and bottom labels; zero label only if zero is well inside the band
       const showZeroLab = (yZero>pad.t+8 && yZero<pad.t+iH-8);
       const yLabHtml = [
         `<text class="ec-ylab" x="${pad.l-6}" y="${(pad.t+4).toFixed(1)}" text-anchor="end">${fmt(hi)}</text>`,
@@ -1504,21 +1514,18 @@ function calibSvg(buckets){
       ].filter(Boolean).join("");
       const xLabHtml = `<text class="ec-xlab" x="${pad.l}" y="${(H-7).toFixed(1)}">Inception</text>`+
                        `<text class="ec-xlab" x="${(pad.l+iW).toFixed(1)}" y="${(H-7).toFixed(1)}" text-anchor="end">Heute</text>`;
-      const zeroLine = `<line class="ec-zero" x1="${pad.l}" y1="${yZero.toFixed(1)}" x2="${(pad.l+iW).toFixed(1)}" y2="${yZero.toFixed(1)}"/>`;
+      const zeroLine = showZeroLab
+        ? `<line class="ec-zero" x1="${pad.l}" y1="${yZero.toFixed(1)}" x2="${(pad.l+iW).toFixed(1)}" y2="${yZero.toFixed(1)}"/>`
+        : `<line class="ec-zero" x1="${pad.l}" y1="${yZero.toFixed(1)}" x2="${(pad.l+iW).toFixed(1)}" y2="${yZero.toFixed(1)}"/>`;
       const lastP=ptCoords[ptCoords.length-1];
       const lastDot = `<circle class="ec-dot ${lineCls}" cx="${lastP[0].toFixed(1)}" cy="${lastP[1].toFixed(1)}" r="4"/>`;
+      // Daily markers — tick + tooltip on each point (Recognition>Recall: hovering reveals exact value)
       const dots = ptCoords.map(([x,y],i)=>{
         const c=_curve[i];
         return `<circle class="ec-tick" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5"><title>Tag −${c.off}: ${fmt(c.pct)} (${c.n} aktive Calls)</title></circle>`;
       }).join("");
-      const _bmSvg=Object.entries(_bmCurves).map(([bm,bc])=>{
-        if(bc.length<2) return "";
-        const pts=bc.map((v,i)=>`${(pad.l+i*xStep).toFixed(1)},${yPct(v).toFixed(1)}`).join(" ");
-        return `<polyline class="ec-bm ec-bm-${bm.toLowerCase()}" points="${pts}"><title>${bm} normiert auf Inception (${fmt(bc[bc.length-1])} seit Entry)</title></polyline>`;
-      }).join("");
       const svg = `<svg class="ec-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Buch-Equity-Kurve seit Inception als Liniendiagramm — aktuell ${fmt(lastPct)}">
         ${zeroLine}
-        ${_bmSvg}
         ${areaPath?`<path class="ec-area ${lineCls}" d="${areaPath}"/>`:""}
         ${_curve.length>1?`<polyline class="ec-line ${lineCls}" points="${linePts}"/>`:""}
         ${dots}
@@ -1526,6 +1533,7 @@ function calibSvg(buckets){
         ${yLabHtml}
         ${xLabHtml}
       </svg>`;
+      // Peak / max-drawdown stats over the live window
       const daysLive=_curve.length-1;
       const peakPct=Math.max(0,...pcts);
       let runMax=-Infinity, maxDD=0;
@@ -1541,25 +1549,101 @@ function calibSvg(buckets){
             ${inceptDate?`<div class="ec-h-sub muted">Erste Position: ${esc(inceptDate)} · ${daysLive} Handelstag${daysLive===1?"":"e"} live · ${_curveSrc.length} Calls</div>`:""}
           </div>
           <div class="ec-kpis">
-            <div class="ec-kpi" title="Konviktions-gewichtete Buch-Performance seit Inception"><span class="muted">Buch</span><b class="${lastCls}">${fmt(lastPct)}</b></div>
+            <div class="ec-kpi" title="Aktuelle konviktions-gewichtete Buch-Performance"><span class="muted">Aktuell</span><b class="${lastCls}">${fmt(lastPct)}</b></div>
             <div class="ec-kpi" title="Höchster Buch-Stand seit Inception"><span class="muted">Hoch</span><b class="${peakCls}">${fmt(peakPct)}</b></div>
             <div class="ec-kpi" title="Größter Rückgang vom Hoch (Drawdown)"><span class="muted">Max DD</span><b class="${ddCls}">${maxDD<-0.005?fmt(maxDD):"0.00%"}</b></div>
-            ${Object.entries(_bmCurves).map(([bm,bc])=>{ const v=bc[bc.length-1]; const vc=v>=0?"move-up":"move-dn"; return `<div class="ec-kpi" title="${bm} — normiert auf selben Inception-Tag, Benchmark-Vergleich"><span class="muted">${bm}</span><b class="${vc}">${fmt(v)}</b></div>`; }).join("")}
           </div>
         </div>
         ${svg}
-        <div class="ec-foot muted">
-          <div class="ec-legend">
-            <span class="ec-leg-item ${lastPct>=0?"move-up":"move-dn"}"><span class="ec-leg-line ec-leg-book"></span>Buch (konv-gewichtet)</span>
-            ${_bmCurves.SPY?`<span class="ec-leg-item"><span class="ec-leg-line ec-leg-spy"></span>SPY (normiert)</span>`:""}
-            ${_bmCurves.QQQ?`<span class="ec-leg-item"><span class="ec-leg-line ec-leg-qqq"></span>QQQ (normiert)</span>`:""}
-          </div>
-          Inception-Tracking: 0% = Entry-Tag, sign-flip bei Shorts. Benchmarks normiert auf denselben Tag.
-        </div>
+        <div class="ec-foot muted">Honestes Inception-Tracking — die Kurve wächst mit jedem Handelstag. Indexiert bei 0% am Entry-Tag, sign-flipped für Shorts.</div>
       </div>`;
     }
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${riskHtml}`;
+  // Sector Performance Attribution — "where is my book working?" Brinson-style.
+  // Per sector: conviction-weighted P&L of priced calls in that sector,
+  // and contribution to book = sector_weight × sector_pnl.
+  // Sum of contributions reconciles to bookPnl (within rounding).
+  let attribPanelHtml="";
+  if(priced.length){
+    const _secAgg={}; // sec → {nCalls, conv, pnlW, calls:[]}
+    pnlRows.forEach(r=>{
+      const tk=(r.t.tickers||[])[0];
+      if(!tk) return;
+      const sec=SECTOR_MAP[String(tk).toUpperCase()]||"Other";
+      const g=_secAgg[sec]||(_secAgg[sec]={nCalls:0,nPriced:0,conv:0,pnlW:0,convPriced:0});
+      g.nCalls++;
+      g.conv+=(r.t.conviction||0);
+      if(r.pnl!=null){ g.nPriced++; g.convPriced+=(r.t.conviction||0); g.pnlW+=(r.t.conviction||0)*r.pnl; }
+    });
+    const _attribRows=Object.entries(_secAgg).map(([sec,g])=>{
+      const weight=totalConv>0?g.conv/totalConv*100:0;
+      const secPnl=g.convPriced>0?g.pnlW/g.convPriced:null;
+      const contrib=secPnl!=null?(g.conv/totalConv)*secPnl:null; // weight as decimal × secPnl
+      return {sec, nCalls:g.nCalls, nPriced:g.nPriced, weight, secPnl, contrib};
+    });
+    // Sort by absolute contribution descending — biggest movers (positive or negative) first.
+    // Unpriced sectors (contrib=null) trail.
+    _attribRows.sort((a,b)=>{
+      if((a.contrib==null)!==(b.contrib==null)) return a.contrib==null?1:-1;
+      if(a.contrib==null) return b.weight-a.weight;
+      return Math.abs(b.contrib)-Math.abs(a.contrib);
+    });
+    const maxAbsC=Math.max(...(_attribRows.map(r=>r.contrib!=null?Math.abs(r.contrib):0)),0.25); // floor at 0.25% so small contribs still register
+    const fmtPct=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
+    const fmtWt=v=>v.toFixed(0)+"%";
+    const cls=v=>v==null?"muted":v>=0.05?"move-up":v<=-0.05?"move-dn":"muted";
+    const totContrib=_attribRows.reduce((s,r)=>s+(r.contrib||0),0);
+    const totWeight=_attribRows.reduce((s,r)=>s+r.weight,0);
+    const bodyRows=_attribRows.map(r=>{
+      const secParts=String(r.sec).split(/\s+/);
+      const secId=secParts[0]||"—";
+      const secName=secParts.slice(1).join(" ")||r.sec;
+      const callsCell=r.nPriced<r.nCalls?`${r.nCalls} <span class="muted" title="${r.nCalls-r.nPriced} ohne Live-Kurs">(${r.nPriced} live)</span>`:`${r.nCalls}`;
+      const pnlCell=r.secPnl!=null?`<span class="${cls(r.secPnl)}">${fmtPct(r.secPnl)}</span>`:'<span class="muted">—</span>';
+      const contribCell=r.contrib!=null?`<span class="${cls(r.contrib)}"><b>${fmtPct(r.contrib)}</b></span>`:'<span class="muted">—</span>';
+      let barCell='<span class="muted" aria-hidden="true">—</span>';
+      if(r.contrib!=null){
+        const w=Math.min(48,Math.abs(r.contrib)/maxAbsC*48);
+        const barCls=r.contrib>=0?"pf-attrib-cbar-pos":"pf-attrib-cbar-neg";
+        barCell=`<div class="pf-attrib-ctrack" aria-label="Beitrag ${fmtPct(r.contrib)}"><div class="pf-attrib-cbar ${barCls}" style="width:${w}%"></div></div>`;
+      }
+      return `<tr>
+        <td><div class="pf-attrib-sec"><span class="id">${esc(secId)}</span><span class="nm">${esc(secName)}</span></div></td>
+        <td class="pf-attrib-hide-mob">${callsCell}</td>
+        <td>${fmtWt(r.weight)}</td>
+        <td>${pnlCell}</td>
+        <td>${contribCell}</td>
+        <td class="pf-attrib-hide-mob">${barCell}</td>
+      </tr>`;
+    }).join("");
+    const reconNote=Math.abs(totContrib-(bookPnl||0))>0.05?` <span class="muted" title="Differenz zwischen Beitrags-Summe und Buch-P&amp;L entsteht durch unpriced Calls">(Rundung)</span>`:"";
+    attribPanelHtml=`<div class="panel pf-attrib">
+      <div class="pf-attrib-h">
+        <span>Performance-Attribution nach Sektor (unrealisiert)</span>
+        <span class="pf-attrib-foot muted">Beitrag = Sektor-Gewicht × Sektor-P&amp;L${reconNote}</span>
+      </div>
+      <table class="pf-attrib-tbl" role="table" aria-label="Performance-Attribution nach Sektor">
+        <thead><tr>
+          <th>Sektor</th>
+          <th class="pf-attrib-hide-mob" title="Anzahl aktive Calls in diesem Sektor">Calls</th>
+          <th title="Anteil am Buch (konviktions-gewichtet)">Gewicht</th>
+          <th title="Konviktions-gewichtete Performance der Calls in diesem Sektor">Sektor-P&amp;L</th>
+          <th title="Beitrag zum Gesamt-Buch-P&L = Gewicht × Sektor-P&L">Beitrag</th>
+          <th class="pf-attrib-hide-mob pf-attrib-bar-col" aria-hidden="true"></th>
+        </tr></thead>
+        <tbody>${bodyRows}</tbody>
+        <tfoot><tr>
+          <td>Buch gesamt</td>
+          <td class="pf-attrib-hide-mob"></td>
+          <td>${fmtWt(totWeight)}</td>
+          <td></td>
+          <td><span class="${cls(bookPnl)}">${bookPnl!=null?fmtPct(bookPnl):"—"}</span></td>
+          <td class="pf-attrib-hide-mob"></td>
+        </tr></tfoot>
+      </table>
+    </div>`;
+  }
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${riskHtml}`;
   root.setAttribute("aria-busy","false");
 })();
 
