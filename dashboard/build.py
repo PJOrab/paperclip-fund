@@ -11813,6 +11813,43 @@ function calibSvg(buckets){
       }
     }
 
+    // 7. Forward catalyst (HED-150 Zyklus 186): next-up earnings event
+    // Surface the nearest meaningful earnings catalyst from sector_view.earnings_calendar,
+    // weighted by whether the ticker is active or a high-conviction idea.
+    {
+      const cal=((D.sector_view||{}).earnings_calendar)||[];
+      if(cal.length){
+        const _activeTk=new Set(active.flatMap(th=>(th.tickers||[]).map(tk=>String(tk).toUpperCase())));
+        const _ot2={};
+        ((D.options_tape||{}).tickers||[]).forEach(t=>{if(t&&t.ticker) _ot2[t.ticker.toUpperCase()]=t;});
+        // Find first earnings event that is either in-book OR has options coverage with meaningful IV-move
+        const upcoming=cal.slice().sort((a,b)=>(a.days_out||0)-(b.days_out||0));
+        let pick=null;
+        for(const c of upcoming){
+          const tk=String(c.ticker).toUpperCase();
+          const isActive=_activeTk.has(tk);
+          const opt=_ot2[tk];
+          const emove=opt?opt.emove:null;
+          // Score: prioritize active positions, then high-IV-move
+          if(isActive){
+            pick={...c, tk, isActive:true, emove, opt};
+            break;
+          }
+          if(emove && emove>=5 && !pick){
+            pick={...c, tk, isActive:false, emove, opt};
+          }
+        }
+        if(pick){
+          const d=Math.max(0, pick.days_out||0);
+          const dayLbl=d===0?"heute":d===1?"morgen":`in ${d}d`;
+          const tagCls=pick.isActive?"pf-st-tag-warn":"pf-st-tag-neu";
+          const moveStr=pick.emove?` (IV-Move ±${pick.emove.toFixed(1)}%)`:"";
+          const ctxStr=pick.isActive?"aktive Position":"hohes Implied-Move-Setup";
+          parts.push(`Nächster Buch-relevanter Catalyst: <span class="pf-st-tk">${esc(pick.tk)}</span>-Earnings <span class="${tagCls}">${dayLbl}</span> (${pick.date.slice(5)})${moveStr} — ${ctxStr}.`);
+        }
+      }
+    }
+
     if(parts.length){
       const today=new Date(D.built_at_iso||Date.now());
       const dateStr=`${String(today.getDate()).padStart(2,'0')}.${String(today.getMonth()+1).padStart(2,'0')}.${today.getFullYear()}`;
