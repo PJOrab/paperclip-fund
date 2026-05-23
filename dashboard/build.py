@@ -2146,6 +2146,81 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Position-Comparison Matrix — Side-by-Side Active Calls (HED-150 Zyklus 162)
+   Bloomberg-PORT-equivalent: one row per active position with consolidated metrics
+   (price, return, conviction, tech, options, insider, catalyst, devil) plus a
+   COMPUTED action verdict (HOLD/ADD/REDUCE/HEDGE/CUT) based on signal aggregation. */
+.pf-pm-panel{padding:var(--s3)}
+.pf-pm-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-pm-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-pm-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-pm-tally{display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
+.pf-pm-tally-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:14px;font-size:11px;font-weight:700;letter-spacing:.02em}
+.pf-pm-tally-add{background:rgba(35,134,54,.18);color:#3fb950;border:1px solid rgba(35,134,54,.3)}
+.pf-pm-tally-hold{background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3)}
+.pf-pm-tally-red{background:rgba(210,168,80,.15);color:#e3b341;border:1px solid rgba(210,168,80,.3)}
+.pf-pm-tally-cut{background:rgba(248,81,73,.15);color:#f85149;border:1px solid rgba(248,81,73,.3)}
+.pf-pm-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pf-pm-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--fs-cap);font-variant-numeric:tabular-nums;min-width:880px}
+.pf-pm-tbl thead th{position:sticky;top:0;background:var(--bg);padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut);border-bottom:1px solid rgba(139,148,158,.15);white-space:nowrap}
+.pf-pm-tbl thead th.pf-pm-th-r{text-align:right}
+.pf-pm-tbl thead th.pf-pm-th-c{text-align:center}
+.pf-pm-tbl tbody tr{border-bottom:1px solid rgba(139,148,158,.08)}
+.pf-pm-tbl tbody tr.pf-pm-row-add{background:rgba(35,134,54,.04)}
+.pf-pm-tbl tbody tr.pf-pm-row-cut{background:rgba(248,81,73,.04)}
+.pf-pm-tbl tbody tr.pf-pm-row-red{background:rgba(210,168,80,.04)}
+.pf-pm-tbl td{padding:8px;vertical-align:middle;border-bottom:1px solid rgba(139,148,158,.08)}
+.pf-pm-pos{display:flex;flex-direction:column;gap:3px;min-width:120px}
+.pf-pm-pos-tk{display:flex;align-items:center;gap:6px}
+.pf-pm-tk{font-weight:700;font-size:14px;color:var(--txt);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em}
+.pf-pm-dir{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.pf-pm-dir-long{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-pm-dir-short{background:rgba(248,81,73,.18);color:#f85149}
+.pf-pm-sec{font-size:9px;color:var(--mut)}
+.pf-pm-conv-row{display:flex;align-items:center;gap:4px;font-size:10px}
+.pf-pm-conv-bar{width:48px;height:3px;background:rgba(139,148,158,.1);border-radius:2px;overflow:hidden}
+.pf-pm-conv-fill{height:100%;background:linear-gradient(90deg,#f85149,#e3b341,#3fb950);border-radius:2px}
+.pf-pm-conv-val{color:var(--mut);font-weight:600;font-size:10px}
+.pf-pm-spark-cell{padding:5px 8px!important;min-width:80px}
+.pf-pm-price{font-weight:600;color:var(--txt);font-size:12px}
+.pf-pm-price-base{font-size:9px;color:var(--mut)}
+.pf-pm-ret-pos{color:#3fb950;font-weight:700}
+.pf-pm-ret-neg{color:#f85149;font-weight:700}
+.pf-pm-ret-flat{color:var(--mut)}
+.pf-pm-tech{display:flex;flex-direction:column;gap:2px;font-size:10px}
+.pf-pm-tech-rsi{font-weight:700;font-size:12px}
+.pf-pm-tech-rsi-ob{color:#f85149}
+.pf-pm-tech-rsi-os{color:#3fb950}
+.pf-pm-tech-rsi-neu{color:var(--txt)}
+.pf-pm-tech-pos{font-size:9px;color:var(--mut)}
+.pf-pm-sig{display:flex;flex-direction:column;gap:3px;align-items:flex-start;min-width:96px}
+.pf-pm-sig-pill{display:inline-flex;align-items:center;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;line-height:1.4}
+.pf-pm-sig-bull{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-pm-sig-bear{background:rgba(248,81,73,.18);color:#f85149}
+.pf-pm-sig-neu{background:rgba(139,148,158,.12);color:var(--mut)}
+.pf-pm-sig-warn{background:rgba(210,168,80,.15);color:#e3b341}
+.pf-pm-devil{display:flex;flex-direction:column;gap:3px;max-width:200px}
+.pf-pm-devil-verd{display:inline-block;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;align-self:flex-start;line-height:1.4}
+.pf-pm-devil-verd-proceed{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-pm-devil-verd-caution{background:rgba(210,168,80,.18);color:#e3b341}
+.pf-pm-devil-verd-reject{background:rgba(248,81,73,.18);color:#f85149}
+.pf-pm-devil-note{font-size:10px;color:var(--mut);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pf-pm-verd{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:88px}
+.pf-pm-verd-badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 12px;border-radius:5px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1}
+.pf-pm-verd-add{background:rgba(35,134,54,.20);color:#3fb950;border:1px solid rgba(35,134,54,.4)}
+.pf-pm-verd-hold{background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3)}
+.pf-pm-verd-red{background:rgba(210,168,80,.18);color:#e3b341;border:1px solid rgba(210,168,80,.35)}
+.pf-pm-verd-hedge{background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
+.pf-pm-verd-cut{background:rgba(248,81,73,.20);color:#f85149;border:1px solid rgba(248,81,73,.4)}
+.pf-pm-verd-score{font-size:9px;color:var(--mut);font-variant-numeric:tabular-nums;font-weight:600}
+.pf-pm-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+@media(max-width:600px){
+  .pf-pm-h{flex-direction:column}
+  .pf-pm-tally{width:100%}
+  .pf-pm-tbl{font-size:11px}
+  .pf-pm-tbl td{padding:6px 5px}
+  .pf-pm-tk{font-size:13px}
+}
 /* Sektor-Rotation Heatmap — Relative Performance (HED-150 Zyklus 161)
    Per-sector aggregated returns (1d/5d/30d) + breadth + leader/laggard.
    Bloomberg SECF-equivalent: instant sector flow visibility. */
@@ -10307,7 +10382,240 @@ function calibSvg(buckets){
     }
   }
 
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${alertsPanelHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${sectorRotationHtml}${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${insiderFlowHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Position-Comparison Matrix — Side-by-Side Active Calls (HED-150 Zyklus 162).
+  // One row per active position with consolidated metrics + computed action verdict.
+  // Bloomberg-PORT-equivalent: scan all positions in one view, signal-aggregated
+  // recommendation per call (HOLD/ADD/REDUCE/HEDGE/CUT).
+  let positionMatrixHtml="";
+  if(active.length){
+    const _ot={}, _it={}, _ss={}, _ec={}, _sv={};
+    ((D.options_tape||{}).tickers||[]).forEach(t=>{if(t&&t.ticker) _ot[t.ticker.toUpperCase()]=t;});
+    ((D.insider_tape||{}).tickers||[]).forEach(t=>{if(t&&t.ticker) _it[t.ticker.toUpperCase()]=t;});
+    ((D.short_squeeze||{}).tickers||[]).forEach(t=>{if(t&&t.ticker) _ss[t.ticker.toUpperCase()]=t;});
+    ((D.sector_view||{}).earnings_calendar||[]).forEach(t=>{if(t&&t.ticker) _ec[t.ticker.toUpperCase()]=t;});
+    ((D.sector_view||{}).sectors||[]).forEach(s=>{
+      (s.tickers||[]).forEach(t=>{if(t&&t.ticker) _sv[t.ticker.toUpperCase()]={...t,sector_name:s.name};});
+    });
+
+    function _fmtM(v){
+      const a=Math.abs(v);
+      if(a>=1e9) return `$${(v/1e9).toFixed(1)}B`;
+      if(a>=1e6) return `$${(v/1e6).toFixed(a>=10e6?0:1)}M`;
+      return `$${(v/1e3).toFixed(0)}K`;
+    }
+
+    const rows=active.map(t=>{
+      const tk=String((t.tickers||[])[0]||"").toUpperCase();
+      const dir=String(t.direction||"long").toLowerCase();
+      const isLong=dir==="long";
+      const sign=isLong?1:-1;
+      const sv=_sv[tk]||{};
+      const ot=_ot[tk]||null;
+      const it=_it[tk]||null;
+      const ss=_ss[tk]||null;
+      const ec=_ec[tk]||null;
+      const price=sv.price||t.current_price;
+      const baseline=t.baseline_price;
+      const ret=(price!=null&&baseline)?((price-baseline)/baseline*100*sign):null;
+      const dateBaseline=t.date?new Date(t.date+"T00:00:00Z"):null;
+      const days=dateBaseline?Math.max(0,Math.floor((Date.now()-dateBaseline)/86400000)):null;
+
+      // Signal scoring
+      let score=0;
+      const flagsFor=[], flagsAgainst=[];
+      if(ot){
+        if(isLong && ot.verdict==="bullish_setup"){ score+=1; flagsFor.push("Opt-BULL"); }
+        else if(isLong && (ot.verdict==="bearish_setup"||ot.verdict==="hedge_bid")){ score-=1; flagsAgainst.push("Opt-BEAR"); }
+        else if(!isLong && (ot.verdict==="bearish_setup"||ot.verdict==="hedge_bid")){ score+=1; flagsFor.push("Opt-BEAR"); }
+        else if(!isLong && (ot.verdict==="bullish_setup"||ot.verdict==="squeeze_risk")){ score-=1; flagsAgainst.push("Opt-BULL"); }
+      }
+      if(it && it.net_dollar!=null){
+        if(it.net_dollar>1e6 && isLong){ score+=1; flagsFor.push("Insider-BUY"); }
+        else if(it.net_dollar<-1e6 && isLong){ score-=1; flagsAgainst.push("Insider-SELL"); }
+        else if(it.net_dollar<-1e6 && !isLong){ score+=1; flagsFor.push("Insider-SELL"); }
+        else if(it.net_dollar>1e6 && !isLong){ score-=1; flagsAgainst.push("Insider-BUY"); }
+      }
+      if(ss && (ss.bucket==="high"||ss.bucket==="extreme")){
+        if(!isLong){ score-=1; flagsAgainst.push("Squeeze-Risk"); }
+      }
+      const devil=t.devil||{};
+      const devilVerd=String(devil.verdict||"").toLowerCase();
+      if(devilVerd==="proceed"){ score+=1; flagsFor.push("Devil-OK"); }
+      else if(devilVerd==="reject"){ score-=2; flagsAgainst.push("Devil-REJECT"); }
+      // caution is neutral (0)
+      // RSI extreme - oversold supports LONG, overbought supports SHORT (mean reversion read)
+      if(sv.rsi14!=null){
+        if(sv.rsi14<30 && isLong){ score+=0.5; flagsFor.push("Oversold"); }
+        else if(sv.rsi14>70 && !isLong){ score+=0.5; flagsFor.push("Overbought"); }
+        else if(sv.rsi14>75 && isLong){ score-=0.5; flagsAgainst.push("Overbought"); }
+        else if(sv.rsi14<25 && !isLong){ score-=0.5; flagsAgainst.push("Oversold"); }
+      }
+
+      // Verdict mapping
+      let verdLbl, verdCls, rowCls;
+      if(score>=2){ verdLbl="ADD"; verdCls="pf-pm-verd-add"; rowCls="pf-pm-row-add"; }
+      else if(score>=0){ verdLbl="HOLD"; verdCls="pf-pm-verd-hold"; rowCls=""; }
+      else if(score>=-1){ verdLbl="REDUCE"; verdCls="pf-pm-verd-red"; rowCls="pf-pm-row-red"; }
+      else if(score>=-2){ verdLbl="HEDGE"; verdCls="pf-pm-verd-hedge"; rowCls="pf-pm-row-red"; }
+      else { verdLbl="CUT"; verdCls="pf-pm-verd-cut"; rowCls="pf-pm-row-cut"; }
+
+      return {tk, dir, isLong, sv, ot, it, ss, ec, price, baseline, ret, days, t, devil, devilVerd, score, flagsFor, flagsAgainst, verdLbl, verdCls, rowCls};
+    });
+
+    // Sort: worst verdict (cut) first → so PM sees actions needed
+    const verdOrder={CUT:0,HEDGE:1,REDUCE:2,HOLD:3,ADD:4};
+    rows.sort((a,b)=>verdOrder[a.verdLbl]-verdOrder[b.verdLbl]||a.score-b.score);
+
+    // Tally
+    const tally={ADD:0,HOLD:0,REDUCE:0,HEDGE:0,CUT:0};
+    rows.forEach(r=>tally[r.verdLbl]++);
+
+    function _miniSpark(spark,baseline,sign){
+      if(!spark||spark.length<2) return `<svg width="76" height="22"><line x1="0" y1="11" x2="76" y2="11" stroke="rgba(139,148,158,.2)"/></svg>`;
+      const mn=Math.min(...spark), mx=Math.max(...spark);
+      const rng=mx-mn||1;
+      const n=spark.length;
+      const pts=spark.map((v,i)=>{
+        const x=(i/(n-1))*74+1;
+        const y=20-((v-mn)/rng)*18;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(" ");
+      const last=spark[n-1];
+      const col=(sign*(last-baseline))>=0?"#3fb950":"#f85149";
+      const baselineY=20-((baseline-mn)/rng)*18;
+      return `<svg width="76" height="22" viewBox="0 0 76 22"><line x1="0" y1="${baselineY.toFixed(1)}" x2="76" y2="${baselineY.toFixed(1)}" stroke="rgba(139,148,158,.25)" stroke-dasharray="2,2" stroke-width="0.5"/><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+    }
+
+    const rowsHtml=rows.map(r=>{
+      const sparkSvg=_miniSpark(r.sv.spark,r.baseline,r.sign||(r.isLong?1:-1));
+      const retCls=r.ret==null?"pf-pm-ret-flat":r.ret>=0.01?"pf-pm-ret-pos":r.ret<=-0.01?"pf-pm-ret-neg":"pf-pm-ret-flat";
+      const retStr=r.ret==null?"—":(r.ret>=0?"+":"−")+Math.abs(r.ret).toFixed(2)+"%";
+      const priceStr=r.price!=null?"$"+r.price.toFixed(2):"—";
+      const baseStr=r.baseline?"vs $"+r.baseline.toFixed(2):"";
+
+      // RSI cell
+      const rsi=r.sv.rsi14;
+      const rsiCls=rsi==null?"pf-pm-tech-rsi-neu":rsi>=70?"pf-pm-tech-rsi-ob":rsi<=30?"pf-pm-tech-rsi-os":"pf-pm-tech-rsi-neu";
+      const ma30=r.sv.pct_vs_ma30;
+      const pos52=r.sv.pct_of_52w_high;
+      const techCell=`<div class="pf-pm-tech">
+        <span class="pf-pm-tech-rsi ${rsiCls}">RSI ${rsi!=null?rsi.toFixed(0):"—"}</span>
+        <span class="pf-pm-tech-pos">${ma30!=null?(ma30>=0?'+':'−')+Math.abs(ma30).toFixed(1)+'% vs MA30':"—"}</span>
+        <span class="pf-pm-tech-pos">${pos52!=null?pos52.toFixed(0)+'% 52w-Hoch':""}</span>
+      </div>`;
+
+      // Setup cell (options badge)
+      let optBadge=`<span class="pf-pm-sig-pill pf-pm-sig-neu">Opt —</span>`;
+      if(r.ot){
+        const v=r.ot.verdict;
+        if(v==="bullish_setup") optBadge=`<span class="pf-pm-sig-pill pf-pm-sig-bull">Opt BULL${r.ot.emove?` ±${r.ot.emove.toFixed(1)}%`:''}</span>`;
+        else if(v==="bearish_setup") optBadge=`<span class="pf-pm-sig-pill pf-pm-sig-bear">Opt BEAR${r.ot.emove?` ±${r.ot.emove.toFixed(1)}%`:''}</span>`;
+        else if(v==="hedge_bid") optBadge=`<span class="pf-pm-sig-pill pf-pm-sig-warn">Opt HEDGE-BID</span>`;
+        else if(v==="squeeze_risk") optBadge=`<span class="pf-pm-sig-pill pf-pm-sig-warn">Opt SQUEEZE</span>`;
+        else if(v==="event_pending") optBadge=`<span class="pf-pm-sig-pill pf-pm-sig-neu">Opt EVENT</span>`;
+        else optBadge=`<span class="pf-pm-sig-pill pf-pm-sig-neu">Opt NEUT</span>`;
+      }
+
+      // Insider badge
+      let insBadge=`<span class="pf-pm-sig-pill pf-pm-sig-neu">Ins —</span>`;
+      if(r.it && r.it.net_dollar!=null && Math.abs(r.it.net_dollar)>=1e5){
+        const nd=r.it.net_dollar;
+        const sign=nd>0?"+":"−";
+        const cls=nd>0?"pf-pm-sig-bull":"pf-pm-sig-bear";
+        insBadge=`<span class="pf-pm-sig-pill ${cls}">Ins ${sign}${_fmtM(Math.abs(nd)).replace("$","")}</span>`;
+      }
+
+      const setupCell=`<div class="pf-pm-sig">${optBadge}${insBadge}</div>`;
+
+      // Catalyst cell
+      let catCell="—";
+      if(r.ec && r.ec.date){
+        const d=Math.max(0,r.ec.days_out||0);
+        const emove=r.ot?.emove;
+        catCell=`<div style="font-size:11px"><b>${r.ec.date.slice(5)}</b><div style="font-size:9px;color:var(--mut)">in ${d}d${emove?` · ±${emove.toFixed(1)}%`:""}</div></div>`;
+      } else if(r.ot && (r.ot.signals||[]).some(s=>typeof s==="string"&&s.indexOf("Event")>=0)){
+        catCell=`<div style="font-size:10px;color:var(--mut)">IV-Event${r.ot.exp?` ${r.ot.exp.slice(5)}`:""}${r.ot.emove?` · ±${r.ot.emove.toFixed(1)}%`:""}</div>`;
+      }
+
+      // Devil cell
+      const devilCls=r.devilVerd==="proceed"?"pf-pm-devil-verd-proceed":r.devilVerd==="reject"?"pf-pm-devil-verd-reject":"pf-pm-devil-verd-caution";
+      const devilLbl=r.devilVerd?r.devilVerd.toUpperCase():"—";
+      const devilNote=r.devil.note?`<div class="pf-pm-devil-note">${esc(r.devil.note)}</div>`:"";
+      const devilCell=`<div class="pf-pm-devil"><span class="pf-pm-devil-verd ${devilCls}">${devilLbl}</span>${devilNote}</div>`;
+
+      // Position cell
+      const conv=r.t.conviction||0;
+      const convPct=Math.round(conv*100);
+      const dirCls=r.isLong?"pf-pm-dir-long":"pf-pm-dir-short";
+      const sector=r.sv.sector_name?r.sv.sector_name.split(/[\s&/]/)[0]:"";
+      const positionCell=`<div class="pf-pm-pos">
+        <div class="pf-pm-pos-tk">
+          <span class="pf-pm-tk">${esc(r.tk)}</span>
+          <span class="pf-pm-dir ${dirCls}">${r.dir.toUpperCase()}</span>
+        </div>
+        <div class="pf-pm-sec">${esc(sector)}${r.days!=null?` · ${r.days}d in trade`:""}</div>
+        <div class="pf-pm-conv-row"><span class="pf-pm-conv-val">Conv</span><div class="pf-pm-conv-bar"><div class="pf-pm-conv-fill" style="width:${convPct}%"></div></div><span class="pf-pm-conv-val">${conv.toFixed(2)}</span></div>
+      </div>`;
+
+      // Price + Return
+      const priceCell=`<div style="text-align:right">
+        <div class="pf-pm-price">${priceStr}</div>
+        <div class="pf-pm-price-base">${esc(baseStr)}</div>
+        <div class="${retCls}">${retStr}</div>
+      </div>`;
+
+      // Verdict cell
+      const flagsStr=r.flagsFor.length||r.flagsAgainst.length
+        ? `<span class="pf-pm-verd-score">${r.flagsFor.length}↑ ${r.flagsAgainst.length}↓ · Score ${r.score>=0?'+':''}${r.score.toFixed(1)}</span>`
+        : `<span class="pf-pm-verd-score">Score ${r.score>=0?'+':''}${r.score.toFixed(1)}</span>`;
+      const verdictCell=`<div class="pf-pm-verd"><span class="pf-pm-verd-badge ${r.verdCls}">${r.verdLbl}</span>${flagsStr}</div>`;
+
+      return `<tr class="${r.rowCls}">
+        <td>${positionCell}</td>
+        <td class="pf-pm-spark-cell">${sparkSvg}</td>
+        <td>${priceCell}</td>
+        <td>${techCell}</td>
+        <td>${setupCell}</td>
+        <td>${catCell}</td>
+        <td>${devilCell}</td>
+        <td>${verdictCell}</td>
+      </tr>`;
+    }).join("");
+
+    positionMatrixHtml=`<div class="panel pf-pm-panel">
+      <div class="pf-pm-h">
+        <div>
+          <div class="pf-pm-title">Position-Comparison Matrix — Aktive Calls auf einen Blick</div>
+          <div class="pf-pm-sub">Konsolidierte Per-Position-View · Setup · Tech · Catalyst · Devil + <b>computed Action-Verdict</b> aus Signal-Aggregation. Sortiert: dringendste Aktion zuerst.</div>
+        </div>
+        <div class="pf-pm-tally">
+          ${tally.CUT?`<span class="pf-pm-tally-pill pf-pm-tally-cut">${tally.CUT} CUT</span>`:""}
+          ${tally.HEDGE?`<span class="pf-pm-tally-pill pf-pm-tally-cut">${tally.HEDGE} HEDGE</span>`:""}
+          ${tally.REDUCE?`<span class="pf-pm-tally-pill pf-pm-tally-red">${tally.REDUCE} REDUCE</span>`:""}
+          ${tally.HOLD?`<span class="pf-pm-tally-pill pf-pm-tally-hold">${tally.HOLD} HOLD</span>`:""}
+          ${tally.ADD?`<span class="pf-pm-tally-pill pf-pm-tally-add">${tally.ADD} ADD</span>`:""}
+        </div>
+      </div>
+      <div class="pf-pm-wrap">
+        <table class="pf-pm-tbl">
+          <thead><tr>
+            <th>Position</th>
+            <th class="pf-pm-th-c">30d</th>
+            <th class="pf-pm-th-r">Preis · Return</th>
+            <th>Tech</th>
+            <th>Setup</th>
+            <th>Catalyst</th>
+            <th>Devil</th>
+            <th class="pf-pm-th-c">Verdict</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+      <div class="pf-pm-foot">Action-Verdict-Algorithmus aggregiert: Options-Verdict (±1 für aligned/counter), Insider-Net-Flow (±1), Squeeze-Risk (−1 für Shorts), Devil-Verdict (+1 PROCEED, 0 CAUTION, −2 REJECT), RSI-Extreme (±0.5). ADD ≥+2 · HOLD ≥0 · REDUCE ≥−1 · HEDGE ≥−2 · CUT &lt;−2. Tech: RSI 14d (Overbought ≥70 rot, Oversold ≤30 grün), Position vs 30-Day-MA, % vom 52w-Hoch. Sortiert nach Verdict-Dringlichkeit.</div>
+    </div>`;
+  }
+
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${alertsPanelHtml}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${sectorRotationHtml}${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${insiderFlowHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
