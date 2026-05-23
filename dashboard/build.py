@@ -2146,6 +2146,67 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Sektor-Rotation Heatmap — Relative Performance (HED-150 Zyklus 161)
+   Per-sector aggregated returns (1d/5d/30d) + breadth + leader/laggard.
+   Bloomberg SECF-equivalent: instant sector flow visibility. */
+.pf-sr-panel{padding:var(--s3)}
+.pf-sr-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-sr-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-sr-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-sr-stats{display:flex;gap:var(--s3);flex-wrap:wrap;flex-shrink:0;align-items:flex-end}
+.pf-sr-stat{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:54px}
+.pf-sr-stat-val{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.pf-sr-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut)}
+.pf-sr-stat-val-pos{color:#3fb950}
+.pf-sr-stat-val-neg{color:#f85149}
+.pf-sr-grid{display:grid;grid-template-columns:1fr;gap:6px}
+.pf-sr-head,.pf-sr-row{display:grid;grid-template-columns:1.5fr 50px 80px 80px 80px 100px 1.3fr;gap:var(--s2);align-items:center;padding:8px 10px;border-radius:5px}
+.pf-sr-head{background:rgba(139,148,158,.05);font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--mut)}
+.pf-sr-row{background:rgba(139,148,158,.03);border:1px solid rgba(139,148,158,.08);position:relative;overflow:hidden;font-size:var(--fs-cap);transition:background .12s}
+.pf-sr-row:hover{background:rgba(139,148,158,.06)}
+.pf-sr-row::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--bar-color,rgba(139,148,158,.3))}
+.pf-sr-row-strong-up{--bar-color:#3fb950}
+.pf-sr-row-up{--bar-color:rgba(63,185,80,.55)}
+.pf-sr-row-flat{--bar-color:rgba(139,148,158,.4)}
+.pf-sr-row-dn{--bar-color:rgba(248,81,73,.55)}
+.pf-sr-row-strong-dn{--bar-color:#f85149}
+.pf-sr-sec{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pf-sr-sec-name{font-weight:700;font-size:13px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-sr-sec-tickers{font-size:9px;color:var(--mut)}
+.pf-sr-active-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#3fb950;margin-right:5px;vertical-align:middle;box-shadow:0 0 4px #3fb950}
+.pf-sr-n{font-variant-numeric:tabular-nums;text-align:right;color:var(--mut);font-size:11px}
+.pf-sr-ret{font-variant-numeric:tabular-nums;font-weight:700;text-align:right;padding:3px 7px;border-radius:3px;font-size:12px;display:inline-block;min-width:60px}
+.pf-sr-ret-pos{color:#3fb950;background:rgba(35,134,54,.10)}
+.pf-sr-ret-pos-strong{color:#3fb950;background:rgba(35,134,54,.22)}
+.pf-sr-ret-neg{color:#f85149;background:rgba(248,81,73,.10)}
+.pf-sr-ret-neg-strong{color:#f85149;background:rgba(248,81,73,.22)}
+.pf-sr-ret-flat{color:var(--mut);background:rgba(139,148,158,.06)}
+.pf-sr-breadth{display:flex;align-items:center;gap:5px;font-size:11px;font-variant-numeric:tabular-nums}
+.pf-sr-breadth-bar{flex:1;height:5px;background:rgba(139,148,158,.1);border-radius:3px;overflow:hidden;min-width:30px}
+.pf-sr-breadth-fill{height:100%;border-radius:3px}
+.pf-sr-breadth-fill-hi{background:#3fb950}
+.pf-sr-breadth-fill-mid{background:#e3b341}
+.pf-sr-breadth-fill-lo{background:#f85149}
+.pf-sr-lead{display:flex;flex-direction:column;gap:2px;font-size:10px;min-width:0}
+.pf-sr-lead-row{display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden}
+.pf-sr-lead-tk{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;font-size:10px;letter-spacing:.02em;padding:1px 4px;background:rgba(139,148,158,.1);border-radius:2px;flex-shrink:0}
+.pf-sr-lead-pct{font-variant-numeric:tabular-nums;font-weight:600}
+.pf-sr-lead-pct-pos{color:#3fb950}
+.pf-sr-lead-pct-neg{color:#f85149}
+.pf-sr-lead-lbl{font-size:8px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.pf-sr-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+@media(max-width:600px){
+  .pf-sr-h{flex-direction:column}
+  .pf-sr-stats{width:100%;justify-content:space-between}
+  .pf-sr-head{display:none}
+  .pf-sr-row{grid-template-columns:1fr auto;gap:6px;padding:8px;grid-template-rows:auto auto auto;grid-template-areas:"sec n" "rets rets" "lead lead"}
+  .pf-sr-sec{grid-area:sec;min-width:0}
+  .pf-sr-n{grid-area:n;text-align:right}
+  .pf-sr-rets-wrap{grid-area:rets;display:flex;gap:6px;flex-wrap:wrap}
+  .pf-sr-breadth-wrap{grid-area:rets;display:none}
+  .pf-sr-lead{grid-area:lead;flex-direction:row;justify-content:space-between;font-size:9px}
+  .pf-sr-ret{min-width:0;font-size:11px;padding:2px 5px}
+}
 /* Portfolio-Alerts — Cross-Panel Signal Aggregation (HED-150 Zyklus 160)
    Synthesis layer that aggregates warnings across all panels (event-horizon conflicts,
    insider distribution, research correlation, macro regime) into a single priority-sorted
@@ -10109,7 +10170,144 @@ function calibSvg(buckets){
     </div>`;
   }
 
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${alertsPanelHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${insiderFlowHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Sektor-Rotation Heatmap — Relative Performance (HED-150 Zyklus 161).
+  // Per-sector aggregated returns (1d / 5d / 30d) computed from per-ticker sparks,
+  // plus breadth (% of tickers up) and leader/laggard per sector. Bloomberg SECF
+  // equivalent for instant sector-flow visibility. Active positions marked.
+  let sectorRotationHtml="";
+  {
+    const _sv=D.sector_view||{};
+    const sectors=_sv.sectors||[];
+    const _activeTk=new Set(active.flatMap(th=>(th.tickers||[]).map(tk=>String(tk).toUpperCase())));
+
+    const rows=[];
+    sectors.forEach(s=>{
+      const name=s.name||"";
+      const tks=s.tickers||[];
+      const rets1d=[],rets5d=[],rets30d=[],perTk=[];
+      tks.forEach(t=>{
+        const sp=t.spark||[];
+        if(sp.length<2) return;
+        const last=sp[sp.length-1];
+        if(last<=0) return;
+        const r30=((last-sp[0])/sp[0])*100;
+        const r5=sp.length>=6?((last-sp[sp.length-6])/sp[sp.length-6])*100:null;
+        const r1=((last-sp[sp.length-2])/sp[sp.length-2])*100;
+        rets1d.push(r1); rets30d.push(r30); if(r5!=null) rets5d.push(r5);
+        perTk.push({ticker:String(t.ticker).toUpperCase(),r1,r5,r30,price:last});
+      });
+      if(!perTk.length) return;
+      const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:null;
+      const breadth=rets1d.length?rets1d.filter(r=>r>0).length/rets1d.length*100:0;
+      // Sort to find leaders/laggards based on 30d return
+      perTk.sort((a,b)=>(b.r30||0)-(a.r30||0));
+      const leader=perTk[0];
+      const laggard=perTk[perTk.length-1];
+      // Active count in this sector
+      const activeInSec=perTk.filter(t=>_activeTk.has(t.ticker)).length;
+      rows.push({
+        name, n:perTk.length,
+        r1:avg(rets1d), r5:avg(rets5d), r30:avg(rets30d),
+        breadth, leader, laggard, activeInSec
+      });
+    });
+
+    if(rows.length){
+      // Sort by 30d return desc
+      rows.sort((a,b)=>(b.r30||0)-(a.r30||0));
+
+      function _retCell(r){
+        if(r==null) return `<span class="pf-sr-ret pf-sr-ret-flat">—</span>`;
+        const abs=Math.abs(r);
+        let cls="pf-sr-ret-flat";
+        if(r>=5) cls="pf-sr-ret-pos-strong";
+        else if(r>=0.5) cls="pf-sr-ret-pos";
+        else if(r<=-5) cls="pf-sr-ret-neg-strong";
+        else if(r<=-0.5) cls="pf-sr-ret-neg";
+        const sign=r>=0?"+":"−";
+        const fmt=abs>=10?abs.toFixed(0):abs.toFixed(1);
+        return `<span class="pf-sr-ret ${cls}">${sign}${fmt}%</span>`;
+      }
+      function _stripeCls(r){
+        if(r==null) return "pf-sr-row-flat";
+        if(r>=20) return "pf-sr-row-strong-up";
+        if(r>=2) return "pf-sr-row-up";
+        if(r>=-2) return "pf-sr-row-flat";
+        if(r>=-20) return "pf-sr-row-dn";
+        return "pf-sr-row-strong-dn";
+      }
+      function _breadthCell(b){
+        const cls=b>=70?"pf-sr-breadth-fill-hi":b>=40?"pf-sr-breadth-fill-mid":"pf-sr-breadth-fill-lo";
+        return `<div class="pf-sr-breadth"><div class="pf-sr-breadth-bar"><div class="pf-sr-breadth-fill ${cls}" style="width:${Math.max(2,b).toFixed(0)}%"></div></div><span>${b.toFixed(0)}%</span></div>`;
+      }
+      function _leadCell(leader,laggard){
+        const lP=leader.r30||0, lG=laggard.r30||0;
+        return `<div class="pf-sr-lead">
+          <div class="pf-sr-lead-row">
+            <span class="pf-sr-lead-lbl">▲</span>
+            <span class="pf-sr-lead-tk">${esc(leader.ticker)}</span>
+            <span class="pf-sr-lead-pct ${lP>=0?'pf-sr-lead-pct-pos':'pf-sr-lead-pct-neg'}">${lP>=0?'+':'−'}${Math.abs(lP).toFixed(0)}%</span>
+          </div>
+          <div class="pf-sr-lead-row">
+            <span class="pf-sr-lead-lbl">▼</span>
+            <span class="pf-sr-lead-tk">${esc(laggard.ticker)}</span>
+            <span class="pf-sr-lead-pct ${lG>=0?'pf-sr-lead-pct-pos':'pf-sr-lead-pct-neg'}">${lG>=0?'+':'−'}${Math.abs(lG).toFixed(0)}%</span>
+          </div>
+        </div>`;
+      }
+
+      // Top stats
+      const bestSec=rows[0], worstSec=rows[rows.length-1];
+      const avg30=rows.reduce((s,r)=>s+(r.r30||0),0)/rows.length;
+      const totalTks=rows.reduce((s,r)=>s+r.n,0);
+      const avg5d=rows.reduce((s,r)=>s+(r.r5||0),0)/rows.length;
+
+      const head=`<div class="pf-sr-head">
+        <div>Sektor</div>
+        <div class="pf-sr-n">Tk</div>
+        <div style="text-align:right">1d</div>
+        <div style="text-align:right">5d</div>
+        <div style="text-align:right">30d</div>
+        <div>Breadth 1d</div>
+        <div>Leader / Laggard</div>
+      </div>`;
+
+      const rowsHtml=rows.map(r=>{
+        const activeDot=r.activeInSec>0?`<span class="pf-sr-active-dot" title="${r.activeInSec} aktive Position${r.activeInSec===1?"":"en"}"></span>`:"";
+        return `<div class="pf-sr-row ${_stripeCls(r.r30)}">
+          <div class="pf-sr-sec">
+            <div class="pf-sr-sec-name">${activeDot}${esc(r.name)}</div>
+            ${r.activeInSec>0?`<div class="pf-sr-sec-tickers">${r.activeInSec} aktiv${r.activeInSec===1?"":"e"} Position${r.activeInSec===1?"":"en"}</div>`:''}
+          </div>
+          <div class="pf-sr-n">${r.n}</div>
+          <div style="text-align:right">${_retCell(r.r1)}</div>
+          <div style="text-align:right">${_retCell(r.r5)}</div>
+          <div style="text-align:right">${_retCell(r.r30)}</div>
+          <div class="pf-sr-breadth-wrap">${_breadthCell(r.breadth)}</div>
+          ${_leadCell(r.leader,r.laggard)}
+        </div>`;
+      }).join("");
+
+      sectorRotationHtml=`<div class="panel pf-sr-panel">
+        <div class="pf-sr-h">
+          <div>
+            <div class="pf-sr-title">Sektor-Rotation — Relative Performance</div>
+            <div class="pf-sr-sub">Aggregierte Returns über ${rows.length} Sektor${rows.length===1?"":"en"} (${totalTks} Ticker) · Breadth = % Ticker positiv 1d · Sortiert nach 30d-Return absteigend</div>
+          </div>
+          <div class="pf-sr-stats">
+            <div class="pf-sr-stat"><span class="pf-sr-stat-val ${avg30>=0?'pf-sr-stat-val-pos':'pf-sr-stat-val-neg'}">${avg30>=0?'+':'−'}${Math.abs(avg30).toFixed(1)}%</span><span class="pf-sr-stat-lbl">Ø 30d</span></div>
+            <div class="pf-sr-stat"><span class="pf-sr-stat-val ${avg5d>=0?'pf-sr-stat-val-pos':'pf-sr-stat-val-neg'}">${avg5d>=0?'+':'−'}${Math.abs(avg5d).toFixed(1)}%</span><span class="pf-sr-stat-lbl">Ø 5d</span></div>
+            <div class="pf-sr-stat"><span class="pf-sr-stat-val pf-sr-stat-val-pos">${esc(bestSec.name.split(/[\s&/]/)[0])}</span><span class="pf-sr-stat-lbl">Top-Sektor</span></div>
+            <div class="pf-sr-stat"><span class="pf-sr-stat-val pf-sr-stat-val-neg">${esc(worstSec.name.split(/[\s&/]/)[0])}</span><span class="pf-sr-stat-lbl">Schlusslicht</span></div>
+          </div>
+        </div>
+        <div class="pf-sr-grid">${head}${rowsHtml}</div>
+        <div class="pf-sr-foot">Returns aus 30d Daily-Sparks per Ticker, gleichgewichtet je Sektor. Breadth-Bars zeigen Verteilung (≥70% grün, 40-70% gelb, <40% rot). Leader/Laggard = beste/schlechteste 30d-Performance im Sektor. Aktive Positionen mit ● markiert. Sektor-Rotation-Read: hohe Streuung der 30d-Returns + niedrige 5d-Breadth = Leadership-Wechsel im Gange.</div>
+      </div>`;
+    }
+  }
+
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${alertsPanelHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${sectorRotationHtml}${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${insiderFlowHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
