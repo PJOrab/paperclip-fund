@@ -2166,6 +2166,16 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-fr-src-fresh .pf-fr-src-age{color:#3fb950}
 .pf-fr-src-aging .pf-fr-src-age{color:#e3b341}
 .pf-fr-src-stale .pf-fr-src-age{color:#f85149;font-weight:600}
+/* Market-Hours Indicator (HED-150 Zyklus 173) */
+.pf-mh{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:14px;font-size:11px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums;border:1px solid rgba(139,148,158,.15)}
+.pf-mh-dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.pf-mh-open{background:rgba(35,134,54,.10);color:#3fb950;border-color:rgba(35,134,54,.3)}
+.pf-mh-open .pf-mh-dot{background:#3fb950;animation:pf-fr-pulse 2s ease-in-out infinite;box-shadow:0 0 6px rgba(63,185,80,.5)}
+.pf-mh-closed{background:rgba(139,148,158,.08);color:var(--mut);border-color:rgba(139,148,158,.2)}
+.pf-mh-closed .pf-mh-dot{background:var(--mut)}
+.pf-mh-pre,.pf-mh-post{background:rgba(210,168,80,.10);color:#e3b341;border-color:rgba(210,168,80,.3)}
+.pf-mh-pre .pf-mh-dot,.pf-mh-post .pf-mh-dot{background:#e3b341}
+.pf-mh-meta{color:var(--mut);font-weight:500;margin-left:2px}
 @media(max-width:600px){
   .pf-fr-row{gap:var(--s2)}
   .pf-fr-built{font-size:11px}
@@ -12270,6 +12280,7 @@ function calibSvg(buckets){
         <span class="pf-fr-lbl">Stand</span>
         <span class="pf-fr-dot" title="Live"></span>
         <span class="pf-fr-built">${esc(builtStr)}</span>
+        <span id="pf-mh-badge" class="pf-mh pf-mh-closed" title="US-Markt (NYSE/NASDAQ, RTH 09:30-16:00 ET Mo-Fr; Wartet auf Live-Update)"><span class="pf-mh-dot"></span><span id="pf-mh-state">Markt</span><span id="pf-mh-meta" class="pf-mh-meta"></span></span>
         <span class="pf-fr-lbl" style="margin-left:auto">Quellen-Alter</span>
         <div class="pf-fr-srcs">${srcsHtml}</div>
       </div>
@@ -12277,6 +12288,79 @@ function calibSvg(buckets){
   }
 
   root.innerHTML=`${subNavHtml}${freshnessHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-funnel")}${funnelHtml}${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Market-Hours Indicator — live JS update (HED-150 Zyklus 173).
+  // NYSE/NASDAQ RTH = 09:30-16:00 ET, Mon-Fri. Updates badge every 30 s with
+  // current state + countdown to next transition. US Eastern handled via toLocaleString.
+  (function initMarketHours(){
+    const badge=document.getElementById("pf-mh-badge");
+    const stateEl=document.getElementById("pf-mh-state");
+    const metaEl=document.getElementById("pf-mh-meta");
+    if(!badge||!stateEl||!metaEl) return;
+    function _etParts(){
+      // Get current US/Eastern wall clock via toLocaleString trick
+      const now=new Date();
+      const str=now.toLocaleString("en-US",{timeZone:"America/New_York",weekday:"short",hour12:false,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+      // Parse: "Sat, 05/23/2026, 18:11:32"
+      const m=str.match(/(\w{3}),\s*(\d{2})\/(\d{2})\/(\d{4}),\s*(\d{2}):(\d{2}):(\d{2})/);
+      if(!m) return null;
+      const dows={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6};
+      return {dow:dows[m[1]], mm:+m[2], dd:+m[3], yyyy:+m[4], hh:+m[5], mi:+m[6], ss:+m[7]};
+    }
+    function _fmtDelta(mins){
+      if(mins<60) return `${Math.round(mins)}m`;
+      const h=Math.floor(mins/60), m=Math.round(mins%60);
+      if(h<24) return m>0?`${h}h ${m}m`:`${h}h`;
+      const d=Math.floor(h/24);
+      return `${d}d ${h%24}h`;
+    }
+    function _dowLbl(d){return ["So","Mo","Di","Mi","Do","Fr","Sa"][d];}
+    function _update(){
+      const et=_etParts();
+      if(!et){return;}
+      const minsOfDay=et.hh*60+et.mi+et.ss/60;
+      const openMin=9*60+30, closeMin=16*60, preStart=4*60, postEnd=20*60;
+      const isWeekday=et.dow>=1 && et.dow<=5;
+      let state="closed", lblDe="Markt zu";
+      if(isWeekday){
+        if(minsOfDay>=openMin && minsOfDay<closeMin){state="open"; lblDe="Markt OFFEN";}
+        else if(minsOfDay>=preStart && minsOfDay<openMin){state="pre"; lblDe="Pre-Market";}
+        else if(minsOfDay>=closeMin && minsOfDay<postEnd){state="post"; lblDe="Post-Market";}
+      }
+      // Compute time-to-next-transition
+      let metaText="";
+      function _nextOpen(){
+        // Find next weekday Mon-Fri at 09:30 ET
+        let d=et.dow, deltaMin=openMin-minsOfDay;
+        if(deltaMin<0||!isWeekday||minsOfDay>=openMin){
+          // roll to next weekday
+          deltaMin=(1440-minsOfDay)+openMin;
+          d=(d+1)%7;
+          while(d===0||d===6){deltaMin+=1440;d=(d+1)%7;}
+        }
+        return {mins:deltaMin, dow:d};
+      }
+      if(state==="open"){
+        metaText=`schließt in ${_fmtDelta(closeMin-minsOfDay)}`;
+      } else if(state==="pre"){
+        metaText=`öffnet in ${_fmtDelta(openMin-minsOfDay)}`;
+      } else if(state==="post"){
+        const no=_nextOpen();
+        metaText=`Post · öffnet in ${_fmtDelta(no.mins)}`;
+      } else {
+        const no=_nextOpen();
+        metaText=`öffnet ${_dowLbl(no.dow)} 09:30 ET (in ${_fmtDelta(no.mins)})`;
+      }
+      // Update DOM
+      badge.classList.remove("pf-mh-open","pf-mh-closed","pf-mh-pre","pf-mh-post");
+      badge.classList.add("pf-mh-"+state);
+      stateEl.textContent=lblDe;
+      metaEl.textContent=" · "+metaText;
+      badge.title=`US-Markt (NYSE/NASDAQ, RTH 09:30-16:00 ET Mo-Fr) · ${lblDe} · ${metaText} · ET ${String(et.hh).padStart(2,'0')}:${String(et.mi).padStart(2,'0')}`;
+    }
+    _update();
+    setInterval(_update, 30000);
+  })();
+
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
