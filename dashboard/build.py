@@ -3111,6 +3111,17 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-us-score-lo{background:rgba(139,148,158,.1);color:var(--mut);border:1.5px solid rgba(139,148,158,.2)}
 .pf-us-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
 .pf-us-col-sort{color:var(--txt)!important}
+/* Universe-Scanner Filter (HED-150 Zyklus 179) */
+.pf-us-filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:var(--s2);padding-top:var(--s2);border-top:1px solid rgba(139,148,158,.06)}
+.pf-us-filter-lbl{font-size:9px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.pf-us-filter-input{flex:1;min-width:140px;max-width:200px;padding:5px 10px;border-radius:14px;font-size:11px;background:rgba(139,148,158,.08);border:1px solid rgba(139,148,158,.18);color:var(--txt);font-family:inherit;transition:border-color .12s}
+.pf-us-filter-input:focus{outline:none;border-color:rgba(88,166,255,.5);background:rgba(139,148,158,.12)}
+.pf-us-filter-input::placeholder{color:var(--mut);font-style:italic}
+.pf-us-filter-pill{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:14px;font-size:10px;font-weight:600;color:var(--mut);background:rgba(139,148,158,.06);border:1px solid rgba(139,148,158,.15);cursor:pointer;flex-shrink:0;transition:all .12s;font-family:inherit;white-space:nowrap}
+.pf-us-filter-pill:hover{background:rgba(139,148,158,.15);color:var(--txt);border-color:rgba(139,148,158,.3)}
+.pf-us-filter-pill-active{background:rgba(88,166,255,.15);color:var(--blue);border-color:rgba(88,166,255,.4)}
+.pf-us-filter-count{font-size:10px;color:var(--mut);font-variant-numeric:tabular-nums;margin-left:auto;font-weight:600}
+.pf-us-tbl tbody tr.pf-us-hidden{display:none}
 @media(max-width:600px){
   .pf-us-h{flex-direction:column}
   .pf-us-stats{flex-direction:row;width:100%;justify-content:space-between}
@@ -9964,6 +9975,16 @@ function calibSvg(buckets){
           <div class="pf-us-stat"><span class="pf-us-stat-lbl">Ins-Cov</span><span class="pf-us-stat-val pf-us-stat-neu">${nIns}</span></div>
         </div>
       </div>
+      <div class="pf-us-filter-row" id="pf-us-filter-row">
+        <span class="pf-us-filter-lbl">Filter</span>
+        <input type="text" class="pf-us-filter-input" id="pf-us-filter-input" placeholder="Ticker eingeben…" aria-label="Ticker filter">
+        <button class="pf-us-filter-pill pf-us-filter-pill-active" data-pf-us-flt="all" type="button">Alle</button>
+        <button class="pf-us-filter-pill" data-pf-us-flt="active" type="button">▶ Im Buch</button>
+        <button class="pf-us-filter-pill" data-pf-us-flt="bull" type="button">↑ BULL Opt</button>
+        <button class="pf-us-filter-pill" data-pf-us-flt="bear" type="button">↓ BEAR Opt</button>
+        <button class="pf-us-filter-pill" data-pf-us-flt="hiscore" type="button">|Score| ≥ 1</button>
+        <span class="pf-us-filter-count" id="pf-us-filter-count"></span>
+      </div>
       <div class="pf-us-wrap">
         <table class="pf-us-tbl" id="pf-us-tbl">
           <thead><tr>
@@ -12388,6 +12409,67 @@ function calibSvg(buckets){
       const str=`${String(built.getDate()).padStart(2,'0')}.${String(built.getMonth()+1).padStart(2,'0')}.${built.getFullYear()} ${String(built.getHours()).padStart(2,'0')}:${String(built.getMinutes()).padStart(2,'0')} UTC`;
       pv.setAttribute("data-built", str);
     }catch(e){}
+  })();
+
+  // Universe-Scanner Filter (HED-150 Zyklus 179).
+  // Text-input + filter-pills that hide/show table rows in real-time. Counter
+  // shows "X of N visible". Pill categories: all, active-positions, BULL/BEAR
+  // options setups, high-conviction (|score| >= 1).
+  (function initUsFilter(){
+    const tbl=document.getElementById("pf-us-tbl");
+    const input=document.getElementById("pf-us-filter-input");
+    const counter=document.getElementById("pf-us-filter-count");
+    const row=document.getElementById("pf-us-filter-row");
+    if(!tbl||!input||!row) return;
+    const rows=Array.from(tbl.querySelectorAll("tbody tr"));
+    const pills=Array.from(row.querySelectorAll("[data-pf-us-flt]"));
+    let activeCategory="all";
+    function _rowMatches(tr, searchText, category){
+      const txt=tr.textContent.toUpperCase();
+      const tk=(tr.querySelector(".pf-us-tk")?.textContent||"").toUpperCase();
+      // Search filter
+      if(searchText && !tk.includes(searchText) && !txt.includes(searchText)) return false;
+      // Category filter
+      if(category==="all") return true;
+      if(category==="active"){
+        return !!tr.querySelector(".pf-us-active-dot");
+      }
+      if(category==="bull"){
+        return /BULL/.test(tr.querySelector("td:nth-child(5)")?.textContent||"");
+      }
+      if(category==="bear"){
+        return /BEAR/.test(tr.querySelector("td:nth-child(5)")?.textContent||"");
+      }
+      if(category==="hiscore"){
+        const scoreTxt=(tr.querySelector(".pf-us-score")?.textContent||"").trim();
+        const m=scoreTxt.match(/^([+\-−]?)([\d.]+)/);
+        if(!m) return false;
+        let v=parseFloat(m[2]);
+        if(m[1]==="-"||m[1]==="−") v=-v;
+        return Math.abs(v)>=1;
+      }
+      return true;
+    }
+    function _refresh(){
+      const search=input.value.trim().toUpperCase();
+      let visibleCount=0;
+      rows.forEach(tr=>{
+        const show=_rowMatches(tr, search, activeCategory);
+        tr.classList.toggle("pf-us-hidden", !show);
+        if(show) visibleCount++;
+      });
+      counter.textContent=`${visibleCount} von ${rows.length} sichtbar`;
+    }
+    input.addEventListener("input", _refresh);
+    pills.forEach(p=>{
+      p.addEventListener("click", function(){
+        pills.forEach(q=>q.classList.remove("pf-us-filter-pill-active"));
+        p.classList.add("pf-us-filter-pill-active");
+        activeCategory=p.getAttribute("data-pf-us-flt");
+        _refresh();
+      });
+    });
+    _refresh();
   })();
 
   // Snapshot-Save (HED-150 Zyklus 177).
