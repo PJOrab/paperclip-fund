@@ -2146,6 +2146,73 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Event-Horizon — Anstehende Katalysator-Termine (HED-150 Zyklus 156)
+   Timeline visualization of upcoming binary events (earnings) per ticker.
+   Implied moves from options-term-structure (ATM straddle). Catalyst-zone risk
+   per active call. Answers: "What blows up the book in the next 7 days?" */
+.pf-eh-panel{padding:var(--s3)}
+.pf-eh-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-eh-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-eh-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-eh-stats{display:flex;gap:var(--s4);flex-wrap:wrap;flex-shrink:0}
+.pf-eh-stat{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.pf-eh-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
+.pf-eh-stat-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt)}
+.pf-eh-stat-warn{color:#e3b341}
+.pf-eh-stat-bad{color:var(--red)}
+/* Timeline strip */
+.pf-eh-strip{position:relative;background:rgba(139,148,158,.05);border-radius:6px;padding:var(--s3);margin-bottom:var(--s3)}
+.pf-eh-strip-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;position:relative}
+.pf-eh-day{background:rgba(139,148,158,.07);border-radius:4px;padding:8px 4px;text-align:center;min-height:64px;position:relative;border:1px solid rgba(139,148,158,.08)}
+.pf-eh-day-today{background:rgba(88,166,255,.08);border-color:rgba(88,166,255,.25)}
+.pf-eh-day-events{background:linear-gradient(180deg,rgba(248,81,73,.04) 0%,rgba(248,81,73,.18) 100%);border-color:rgba(248,81,73,.35)}
+.pf-eh-day-lbl{font-size:9px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;line-height:1.2}
+.pf-eh-day-date{font-size:11px;color:var(--txt);font-weight:700;margin-top:1px;font-variant-numeric:tabular-nums}
+.pf-eh-day-cnt{margin-top:6px;font-size:20px;font-weight:700;color:var(--red);line-height:1}
+.pf-eh-day-cnt-lbl{font-size:8px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.pf-eh-day-mute{color:rgba(139,148,158,.5);font-size:13px;margin-top:8px;font-weight:600}
+/* Event cards */
+.pf-eh-cards-h{font-size:var(--fs-cap);font-weight:700;color:var(--txt);text-transform:uppercase;letter-spacing:.04em;margin:var(--s3) 0 var(--s2);display:flex;align-items:center;gap:6px}
+.pf-eh-cards-h-pill{display:inline-flex;align-items:center;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;background:rgba(248,81,73,.15);color:#f85149;letter-spacing:.04em}
+.pf-eh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:var(--s2)}
+.pf-eh-card{background:rgba(139,148,158,.04);border:1px solid rgba(139,148,158,.12);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:6px;transition:border-color .15s}
+.pf-eh-card:hover{border-color:rgba(139,148,158,.25)}
+.pf-eh-card-active{border-color:rgba(88,166,255,.35);background:rgba(88,166,255,.04)}
+.pf-eh-card-warn{border-color:rgba(248,81,73,.4);background:rgba(248,81,73,.04)}
+.pf-eh-card-warn .pf-eh-tk{color:#f85149}
+.pf-eh-card-hdr{display:flex;justify-content:space-between;align-items:center;gap:4px}
+.pf-eh-tk{font-weight:700;font-size:15px;color:var(--txt);text-decoration:none;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em}
+.pf-eh-tk:hover{color:var(--blue)}
+.pf-eh-active-tag{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 4px var(--green)}
+.pf-eh-emove{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt)}
+.pf-eh-emove-mid{color:#e3b341}
+.pf-eh-emove-hi{color:#f85149}
+.pf-eh-emove-lbl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;font-weight:600;margin-top:-2px}
+.pf-eh-bar{height:4px;background:rgba(139,148,158,.1);border-radius:2px;overflow:hidden;margin:2px 0}
+.pf-eh-bar-fill{height:100%;background:linear-gradient(90deg,#e3b341,#f85149);border-radius:2px}
+.pf-eh-setup{display:inline-flex;align-items:center;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;line-height:1.4;align-self:flex-start}
+.pf-eh-setup-bull{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-eh-setup-bear{background:rgba(248,81,73,.18);color:#f85149}
+.pf-eh-setup-hedge{background:rgba(210,168,80,.15);color:#e3b341}
+.pf-eh-setup-event{background:rgba(139,148,158,.15);color:var(--mut)}
+.pf-eh-setup-sqz{background:rgba(168,85,247,.15);color:#a855f7}
+.pf-eh-meta{font-size:9px;color:var(--mut);display:flex;justify-content:space-between;gap:4px;font-variant-numeric:tabular-nums}
+.pf-eh-warning{margin-top:var(--s3);padding:var(--s2) var(--s3);background:rgba(248,81,73,.08);border-left:3px solid #f85149;border-radius:4px;font-size:var(--fs-cap);color:var(--txt);line-height:1.5}
+.pf-eh-warning-h{font-weight:700;color:#f85149;text-transform:uppercase;letter-spacing:.04em;font-size:9px;margin-bottom:2px}
+.pf-eh-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+@media(max-width:600px){
+  .pf-eh-h{flex-direction:column}
+  .pf-eh-stats{flex-direction:row;width:100%;justify-content:space-between;gap:var(--s2)}
+  .pf-eh-stat{align-items:flex-start}
+  .pf-eh-stat-val{font-size:16px}
+  .pf-eh-strip-grid{grid-template-columns:repeat(5,1fr);grid-auto-rows:auto}
+  .pf-eh-day{min-height:56px}
+  .pf-eh-day-cnt{font-size:18px}
+  .pf-eh-grid{grid-template-columns:repeat(2,1fr);gap:6px}
+  .pf-eh-card{padding:8px}
+  .pf-eh-emove{font-size:18px}
+  .pf-eh-tk{font-size:13px}
+}
 /* Universe Scanner — Signal-Konvergenz 30 Ticker (HED-150 Zyklus 155)
    Full in-universe watchlist with options/insider/squeeze signals per ticker.
    Sorted by net signal conviction. Bloomberg EQSCRN-Stil für Portfolio-Manager. */
@@ -9072,7 +9139,173 @@ function calibSvg(buckets){
     </div>`;
   }
 
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${universPanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Event-Horizon — Anstehende Katalysator-Termine (HED-150 Zyklus 156).
+  // Extracts upcoming binary events (earnings) from options-tape implied moves.
+  // A ticker has a real catalyst iff its options signals contain "Event ±X%" —
+  // i.e. ATM straddle pricing shows IV-term-structure event premium.
+  // Shows a 10-day timeline strip + per-event cards + warning for active calls
+  // facing a bearish options setup at earnings.
+  let eventHorizonHtml="";
+  {
+    const _ot=(D.options_tape||{}).tickers||[];
+    const _activeTk=new Set(active.flatMap(th=>(th.tickers||[]).map(tk=>String(tk).toUpperCase())));
+    const _activeDir={};
+    active.forEach(th=>{
+      const dir=(th.direction||"").toLowerCase();
+      (th.tickers||[]).forEach(tk=>_activeDir[String(tk).toUpperCase()]=dir);
+    });
+    const today=new Date(D.built_at_iso||Date.now());
+    today.setHours(0,0,0,0);
+
+    // Filter to tickers with actual Event signal
+    const events=[];
+    _ot.forEach(t=>{
+      const sigs=t.signals||[];
+      const hasEvent=sigs.some(s=>typeof s==="string"&&s.indexOf("Event")>=0);
+      if(!hasEvent||!t.exp||!t.emove) return;
+      const expDate=new Date(t.exp+"T00:00:00");
+      if(isNaN(expDate.getTime())) return;
+      const daysOut=Math.round((expDate-today)/86400000);
+      if(daysOut<0||daysOut>14) return; // only show next 2 weeks
+      const TK=String(t.ticker).toUpperCase();
+      events.push({
+        ticker:TK, exp:t.exp, expDate, daysOut, emove:t.emove,
+        pc:t.pc, skew:t.skew, verdict:t.verdict||"event_pending",
+        signals:sigs, isActive:_activeTk.has(TK),
+        activeDir:_activeDir[TK]||null
+      });
+    });
+
+    if(events.length){
+      // Sort: days asc, then emove desc
+      events.sort((a,b)=>a.daysOut-b.daysOut||b.emove-a.emove);
+      const maxEmove=Math.max(...events.map(e=>e.emove));
+
+      // Conflict detection: active call (LONG) + bearish_setup at earnings = warning
+      const conflicts=events.filter(e=>{
+        if(!e.isActive) return false;
+        if(e.activeDir==="long" && (e.verdict==="bearish_setup"||e.verdict==="hedge_bid")) return true;
+        if(e.activeDir==="short" && (e.verdict==="bullish_setup"||e.verdict==="squeeze_risk")) return true;
+        return false;
+      });
+
+      // Day strip — 10 days from today
+      const dayLbls=["So","Mo","Di","Mi","Do","Fr","Sa"];
+      const evByDay={};
+      events.forEach(e=>{
+        evByDay[e.daysOut]=(evByDay[e.daysOut]||0)+1;
+      });
+      const dayCells=[];
+      for(let d=0;d<10;d++){
+        const dt=new Date(today.getTime()+d*86400000);
+        const dow=dt.getDay();
+        const isWeekend=(dow===0||dow===6);
+        const cnt=evByDay[d]||0;
+        const isToday=(d===0);
+        let cls="pf-eh-day";
+        if(isToday) cls+=" pf-eh-day-today";
+        if(cnt>0) cls+=" pf-eh-day-events";
+        const dateStr=`${dt.getDate()}.${dt.getMonth()+1}`;
+        const dowLbl=isToday?"Heute":dayLbls[dow];
+        const body=cnt>0
+          ? `<div class="pf-eh-day-cnt">${cnt}</div><div class="pf-eh-day-cnt-lbl">Event${cnt===1?"":"s"}</div>`
+          : `<div class="pf-eh-day-mute">${isWeekend?"·":"—"}</div>`;
+        dayCells.push(`<div class="${cls}"><div class="pf-eh-day-lbl">${dowLbl}</div><div class="pf-eh-day-date">${dateStr}</div>${body}</div>`);
+      }
+
+      // Event cards
+      function _setupBadge(v){
+        const m={
+          "bullish_setup":["BULL","pf-eh-setup-bull"],
+          "bearish_setup":["BEAR","pf-eh-setup-bear"],
+          "hedge_bid":["HEDGE-BID","pf-eh-setup-hedge"],
+          "squeeze_risk":["SQUEEZE","pf-eh-setup-sqz"],
+          "event_pending":["EVENT","pf-eh-setup-event"]
+        };
+        const [lbl,cls]=m[v]||["—","pf-eh-setup-event"];
+        return `<span class="pf-eh-setup ${cls}">${lbl}</span>`;
+      }
+      function _emoveCls(em){
+        if(em>=10) return "pf-eh-emove-hi";
+        if(em>=5) return "pf-eh-emove-mid";
+        return "";
+      }
+      function _dayLabel(daysOut,expDate){
+        if(daysOut===0) return "Heute";
+        if(daysOut===1) return "Morgen";
+        const dow=expDate.getDay();
+        return `${dayLbls[dow]} +${daysOut}d`;
+      }
+      const cards=events.map(e=>{
+        // Conflict check repeated for card highlight
+        const isConflict=e.isActive&&(
+          (e.activeDir==="long"&&(e.verdict==="bearish_setup"||e.verdict==="hedge_bid"))||
+          (e.activeDir==="short"&&(e.verdict==="bullish_setup"||e.verdict==="squeeze_risk"))
+        );
+        const cls="pf-eh-card"+(isConflict?" pf-eh-card-warn":e.isActive?" pf-eh-card-active":"");
+        const activeTag=e.isActive?`<span class="pf-eh-active-tag" title="Aktiver ${e.activeDir.toUpperCase()}-Call"></span>`:"";
+        const barW=Math.min(100,(e.emove/maxEmove)*100);
+        return `<div class="${cls}">
+          <div class="pf-eh-card-hdr">
+            <a class="pf-eh-tk" href="https://finance.yahoo.com/quote/${e.ticker}" target="_blank" rel="noopener">${esc(e.ticker)}</a>
+            ${activeTag}
+          </div>
+          <div>
+            <div class="pf-eh-emove ${_emoveCls(e.emove)}">±${e.emove.toFixed(1)}%</div>
+            <div class="pf-eh-emove-lbl">Implied Move</div>
+          </div>
+          <div class="pf-eh-bar"><div class="pf-eh-bar-fill" style="width:${barW}%"></div></div>
+          ${_setupBadge(e.verdict)}
+          <div class="pf-eh-meta">
+            <span>${_dayLabel(e.daysOut,e.expDate)}</span>
+            <span>${e.exp.slice(5)}</span>
+          </div>
+        </div>`;
+      }).join("");
+
+      // Conflict warning block
+      let warningHtml="";
+      if(conflicts.length){
+        const conflictTickers=conflicts.map(c=>{
+          const setupLbl=c.verdict==="bearish_setup"?"BEAR-Setup":c.verdict==="hedge_bid"?"Hedge-Bid":c.verdict==="bullish_setup"?"BULL-Setup":"Squeeze";
+          return `<b>${esc(c.ticker)}</b> (${c.activeDir.toUpperCase()}-Call, ${setupLbl}, ±${c.emove.toFixed(1)}%)`;
+        }).join(" · ");
+        warningHtml=`<div class="pf-eh-warning">
+          <div class="pf-eh-warning-h">⚠ Position-Catalyst-Konflikt</div>
+          ${conflictTickers} — Options-Pricing signalisiert Counter-Direction Bias am Earnings-Termin. Pre-Event-Risk-Reduktion oder Hedge erwägen.
+        </div>`;
+      }
+
+      const totalEvents=events.length;
+      const activeInZone=events.filter(e=>e.isActive).length;
+      const highEmove=events.filter(e=>e.emove>=10).length;
+      const daysSpan=Math.max(...events.map(e=>e.daysOut));
+
+      eventHorizonHtml=`<div class="panel pf-eh-panel">
+        <div class="pf-eh-h">
+          <div>
+            <div class="pf-eh-title">Event-Horizon — Anstehende Katalysator-Termine</div>
+            <div class="pf-eh-sub">${totalEvents} Earnings-Events in nächsten ${daysSpan}d · Implied Moves aus Options-Term-Structure · ATM-Straddle-Pricing</div>
+          </div>
+          <div class="pf-eh-stats">
+            <div class="pf-eh-stat"><span class="pf-eh-stat-lbl">Events</span><span class="pf-eh-stat-val">${totalEvents}</span></div>
+            <div class="pf-eh-stat"><span class="pf-eh-stat-lbl">In Buch</span><span class="pf-eh-stat-val ${activeInZone?'pf-eh-stat-warn':''}">${activeInZone}</span></div>
+            <div class="pf-eh-stat"><span class="pf-eh-stat-lbl">Konflikte</span><span class="pf-eh-stat-val ${conflicts.length?'pf-eh-stat-bad':''}">${conflicts.length}</span></div>
+            <div class="pf-eh-stat"><span class="pf-eh-stat-lbl">≥10%</span><span class="pf-eh-stat-val ${highEmove?'pf-eh-stat-bad':''}">${highEmove}</span></div>
+          </div>
+        </div>
+        <div class="pf-eh-strip">
+          <div class="pf-eh-strip-grid">${dayCells.join("")}</div>
+        </div>
+        ${warningHtml}
+        <div class="pf-eh-cards-h">Event-Details <span class="pf-eh-cards-h-pill">${totalEvents}</span></div>
+        <div class="pf-eh-grid">${cards}</div>
+        <div class="pf-eh-foot">Events identifiziert über "Event ±X%"-Signal in Options-Tape (IV-Term-Structure-Erhöhung am Expiry-Datum, deutet auf Earnings hin). Implied Move = ATM-Straddle ÷ Underlying-Spot, der vom Markt eingepreiste 1σ-Bereich bis Verfall. Setup-Klassifikation: BULL (P/C<0.5), BEAR (P/C>1.5), HEDGE-BID (Put-Skew), SQUEEZE (hohes Short-Interest), EVENT-PENDING (kein Direction-Bias). Position-Konflikt = Active Call gegen Options-Setup-Richtung am Event-Tag.</div>
+      </div>`;
+    }
+  }
+
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
