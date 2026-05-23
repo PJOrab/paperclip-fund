@@ -738,6 +738,47 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .th-rr-lbl{font-weight:600;white-space:nowrap}
 .th-rr-lbl-r{text-align:right}
 .th-rr-cur-lbl{color:var(--txt);font-weight:700;white-space:nowrap}
+/* Szenario-Korridor (HED-137 Zyklus 94): Bear→Base→Bull price-target bracket per thesis.
+   Probability-weighted E[R] makes "what does this trade pay if it works / costs if it doesn't" visible at a glance — the PM-grade complement to the Street R/R panel. */
+.th-sc{margin:var(--s2) 0 var(--s3);background:var(--panel2);
+  border:1px solid var(--line);border-radius:8px;padding:8px 10px 9px}
+.th-sc-h{display:flex;justify-content:space-between;align-items:baseline;
+  font-size:9px;font-weight:700;letter-spacing:.05em;color:var(--mut);
+  text-transform:uppercase;margin-bottom:8px;gap:8px;flex-wrap:wrap}
+.th-sc-h-r{font-size:11px;font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0;font-weight:700;color:var(--txt)}
+.th-sc-er-up{color:var(--green)}
+.th-sc-er-dn{color:#f78166}
+.th-sc-er-flat{color:var(--mut)}
+.th-sc-bar{position:relative;height:10px;background:rgba(255,255,255,.04);
+  border-radius:3px;border:1px solid rgba(255,255,255,.05);margin:18px 0 4px}
+.th-sc-span{position:absolute;top:0;height:100%;background:linear-gradient(90deg,rgba(248,81,73,.22) 0%,rgba(255,193,7,.18) 50%,rgba(63,185,80,.22) 100%);border-radius:2px}
+.th-sc-mk{position:absolute;top:50%;width:10px;height:10px;border-radius:50%;
+  transform:translate(-50%,-50%);box-shadow:0 0 0 2px var(--panel2);cursor:help}
+.th-sc-mk-bear{background:#f78166}
+.th-sc-mk-base{background:var(--amber)}
+.th-sc-mk-bull{background:var(--green)}
+.th-sc-base-tick{position:absolute;top:-4px;bottom:-4px;width:1px;background:var(--amber);opacity:.55}
+.th-sc-cur{position:absolute;top:-5px;width:2px;height:20px;background:var(--txt);
+  transform:translateX(-1px);box-shadow:0 0 0 2px rgba(11,15,23,.7);pointer-events:none}
+.th-sc-prob{position:absolute;top:-16px;font-size:9px;color:var(--mut);font-variant-numeric:tabular-nums;
+  transform:translateX(-50%);white-space:nowrap;letter-spacing:.02em;font-weight:600}
+.th-sc-cap{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;
+  color:var(--mut);font-variant-numeric:tabular-nums;margin-top:8px;letter-spacing:.02em;flex-wrap:wrap}
+.th-sc-cap b{color:var(--txt);font-weight:700}
+.th-sc-cap-now{color:var(--txt);font-weight:700}
+.th-sc-cap-entry{color:var(--amber);font-weight:600}
+.th-sc-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:10px;margin-top:6px;
+  font-variant-numeric:tabular-nums;color:var(--mut)}
+.th-sc-cell{display:flex;flex-direction:column;line-height:1.25}
+.th-sc-cell-base{text-align:center}
+.th-sc-cell-bull{text-align:right}
+.th-sc-cell-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.th-sc-cell-lbl-bear{color:#f78166}
+.th-sc-cell-lbl-base{color:var(--amber)}
+.th-sc-cell-lbl-bull{color:var(--green)}
+.th-sc-cell-px{color:var(--txt);font-weight:700}
+.th-sc-cell-trig{color:var(--mut);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;font-weight:500}
+.th-sc-foot{font-size:9px;color:var(--mut);margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 @media(max-width:430px){
   .th-mkt{flex-wrap:wrap}
   .th-mkt-cell{flex:1 1 46%;min-width:80px;padding:4px var(--s2)}
@@ -749,6 +790,11 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .th-rr-h{font-size:8px}
   .th-rr-rr{font-size:10px}
   .th-rr-labels{font-size:9px}
+  .th-sc{padding:7px 8px 8px}
+  .th-sc-h{font-size:8px}
+  .th-sc-h-r{font-size:10px}
+  .th-sc-row{font-size:9px}
+  .th-sc-cell-trig{display:none}
 }
 @media(max-width:560px){
   .pf-pnl-row{grid-template-columns:1fr 50px;grid-template-areas:"tk val" "bar bar";row-gap:3px}
@@ -1493,6 +1539,123 @@ else{
       </div>
     </div>`;
   }
+  // Szenario-Korridor (HED-137 Zyklus 94): Bear→Base→Bull price-target bracket with
+  // probability-weighted E[R]. Parses scenario.target ("$260 (+19%)" / "$240" / "+15%"),
+  // anchors to baseline (entry) so % targets work even without live price.
+  // Falls back to "" when fewer than 2 scenarios are parseable — caller then renders text line.
+  function thScenarioCorridor(t){
+    const sc=t.scenarios; if(!sc) return "";
+    const tks=(t.tickers||[]).map(x=>String(x).toUpperCase()).filter(Boolean);
+    const tk=tks[0]||null;
+    const m=tk?_mktMap[tk]:null;
+    const cur=(m&&m.price!=null)?m.price:null;
+    const baseline=t.baseline_price!=null?t.baseline_price:((tk&&_baseMap[tk])?_baseMap[tk].bp:null);
+    const anchor=baseline!=null?baseline:cur;
+    function parseTgt(str){
+      if(str==null) return null;
+      const s=String(str).trim(); if(!s) return null;
+      const pm=s.match(/\$\s*(\d{1,3}(?:[, ]\d{3})*(?:[.,]\d+)?|\d+(?:[.,]\d+)?)/);
+      if(pm){const num=parseFloat(pm[1].replace(/[, ]/g,"").replace(",",".")); if(isFinite(num)&&num>0) return num;}
+      const ppm=s.match(/([+-]?\d+(?:[.,]\d+)?)\s*%/);
+      if(ppm && anchor!=null){const p=parseFloat(ppm[1].replace(",",".")); if(isFinite(p)) return anchor*(1+p/100);}
+      const bn=s.match(/^([+-]?\d+(?:[.,]\d+)?)$/);
+      if(bn){const n=parseFloat(bn[1].replace(",",".")); if(isFinite(n)&&n>=1) return n;}
+      return null;
+    }
+    const dir=(t.direction||(tk&&_baseMap[tk]&&_baseMap[tk].dir)||"long").toLowerCase();
+    const sign=dir==="short"?-1:1;
+    const rows=[
+      {k:"bear",lbl:"Bear",obj:sc.bear},
+      {k:"base",lbl:"Base",obj:sc.base},
+      {k:"bull",lbl:"Bull",obj:sc.bull},
+    ].map(r=>{
+      const px=r.obj?parseTgt(r.obj.target):null;
+      const prob=r.obj&&r.obj.prob!=null?Math.max(0,Math.min(1,Number(r.obj.prob))):null;
+      const trig=r.obj&&r.obj.trigger?String(r.obj.trigger):"";
+      return Object.assign({},r,{px:px,prob:prob,trig:trig});
+    });
+    const parsed=rows.filter(r=>r.px!=null);
+    if(parsed.length<2) return "";
+    const axisVals=parsed.map(r=>r.px).concat(baseline!=null?[baseline]:[]).concat(cur!=null?[cur]:[]);
+    let lo=Math.min.apply(null,axisVals), hi=Math.max.apply(null,axisVals);
+    if(hi<=lo){const pad0=Math.abs(lo)*0.02||1;lo-=pad0;hi+=pad0;}
+    const padR=(hi-lo)*0.08; lo-=padR; hi+=padR;
+    const range=hi-lo;
+    const pos=v=>((v-lo)/range)*100;
+    const refPx=baseline!=null?baseline:cur;
+    let er=null, sd=null;
+    if(refPx!=null && refPx>0){
+      const r=parsed.filter(x=>x.prob!=null).map(x=>({p:x.prob,ret:sign*((x.px-refPx)/refPx)}));
+      const totalP=r.reduce((a,c)=>a+c.p,0);
+      if(r.length && totalP>0.05){
+        const norm=r.map(x=>({p:x.p/totalP,ret:x.ret}));
+        er=norm.reduce((a,c)=>a+c.p*c.ret,0);
+        const v=norm.reduce((a,c)=>a+c.p*Math.pow(c.ret-er,2),0);
+        sd=Math.sqrt(v);
+      }
+    }
+    const fmt$=v=>v<10?v.toFixed(2):v<100?v.toFixed(1):Math.round(v).toString();
+    const fmtP=p=>`${p>=0?"+":"−"}${Math.abs(p*100).toFixed(1)}%`;
+    const erCls=er==null?"th-sc-er-flat":er>=0.005?"th-sc-er-up":er<=-0.005?"th-sc-er-dn":"th-sc-er-flat";
+    const erTxt=er!=null?`E[R] ${fmtP(er)}`:"E[R] —";
+    const sdTxt=sd!=null?` · σ ${(sd*100).toFixed(1)}%`:"";
+    const lefts=parsed.map(r=>pos(r.px));
+    const spanL=Math.min.apply(null,lefts), spanR=Math.max.apply(null,lefts);
+    const spanBar=`<div class="th-sc-span" style="left:${spanL.toFixed(1)}%;width:${(spanR-spanL).toFixed(1)}%"></div>`;
+    const mks=parsed.map(r=>{
+      const x=pos(r.px);
+      const retPct=refPx!=null&&refPx>0?sign*((r.px-refPx)/refPx)*100:null;
+      const retLbl=retPct!=null?` (${retPct>=0?"+":"−"}${Math.abs(retPct).toFixed(1)}%)`:"";
+      const probTxt=r.prob!=null?`P=${Math.round(r.prob*100)}%`:"";
+      const probBadge=probTxt?`<span class="th-sc-prob" style="left:${x.toFixed(1)}%">${probTxt}</span>`:"";
+      const tip=`${r.lbl}: $${fmt$(r.px)}${retLbl}${r.prob!=null?` · P=${Math.round(r.prob*100)}%`:""}${r.trig?` — ${r.trig}`:""}`;
+      return `${probBadge}<span class="th-sc-mk th-sc-mk-${r.k}" style="left:${x.toFixed(1)}%" title="${esc(tip)}"></span>`;
+    }).join("");
+    let baseEl="";
+    if(baseline!=null && baseline>=lo && baseline<=hi){
+      const bx=pos(baseline);
+      baseEl=`<div class="th-sc-base-tick" style="left:${bx.toFixed(1)}%" title="Entry $${fmt$(baseline)}"></div>`;
+    }
+    let curEl="";
+    if(cur!=null && cur>=lo && cur<=hi){
+      const cx=pos(cur);
+      curEl=`<div class="th-sc-cur" style="left:${cx.toFixed(1)}%" title="aktuell $${fmt$(cur)}"></div>`;
+    }
+    // caption row under the bar — Now / Entry / vs-Entry, no overlap with marker probabilities
+    let capL="", capR="";
+    if(cur!=null) capL=`<span class="th-sc-cap-now">Now <b>$${fmt$(cur)}</b></span>`;
+    if(baseline!=null) capL+=`${cur!=null?'<span style="opacity:.5"> · </span>':''}<span class="th-sc-cap-entry">Entry $${fmt$(baseline)}</span>`;
+    if(cur!=null && baseline!=null && baseline>0){
+      const livePct=sign*((cur-baseline)/baseline)*100;
+      const cls=livePct>=0.05?"move-up":livePct<=-0.05?"move-dn":"muted";
+      capR=`<span class="${cls}" style="font-weight:700">vs Entry ${livePct>=0?"+":"−"}${Math.abs(livePct).toFixed(2)}%</span>`;
+    }
+    const capRow=(capL||capR)?`<div class="th-sc-cap"><span>${capL||""}</span><span>${capR||""}</span></div>`:"";
+    const cellHtml=(r,clsSuffix)=>{
+      if(!r.obj) return `<div class="th-sc-cell th-sc-cell-${clsSuffix}"><span class="th-sc-cell-lbl th-sc-cell-lbl-${r.k}">${r.lbl}</span><span class="muted">—</span></div>`;
+      const retPct=(r.px!=null&&refPx!=null&&refPx>0)?(sign*((r.px-refPx)/refPx)*100):null;
+      const retLbl=retPct!=null?`<span class="${retPct>=0?'move-up':'move-dn'}" style="font-size:10px;font-weight:600">${retPct>=0?'+':'−'}${Math.abs(retPct).toFixed(1)}%</span>`:'<span class="muted">—</span>';
+      const pxLbl=r.px!=null?`<span class="th-sc-cell-px">$${fmt$(r.px)}</span>`:'<span class="muted">—</span>';
+      const probLbl=r.prob!=null?` <span class="muted">· P=${Math.round(r.prob*100)}%</span>`:"";
+      return `<div class="th-sc-cell th-sc-cell-${clsSuffix}">
+        <span class="th-sc-cell-lbl th-sc-cell-lbl-${r.k}">${r.lbl}${probLbl}</span>
+        <span>${pxLbl} ${retLbl}</span>
+        ${r.trig?`<span class="th-sc-cell-trig" title="${esc(r.trig)}">${esc(r.trig)}</span>`:""}
+      </div>`;
+    };
+    const detRow=`<div class="th-sc-row">${cellHtml(rows[0],"bear")}${cellHtml(rows[1],"base")}${cellHtml(rows[2],"bull")}</div>`;
+    const totalP=parsed.filter(x=>x.prob!=null).reduce((a,c)=>a+c.prob,0);
+    const probNote=totalP>0 && Math.abs(totalP-1)>0.02 ? ` · Σp=${Math.round(totalP*100)}% (re-normalisiert)` : "";
+    const refTxt=baseline!=null?`Entry $${fmt$(baseline)}`:(cur!=null?`Live $${fmt$(cur)}`:"keine Referenz");
+    const foot=`<div class="th-sc-foot">Erwartungswert bezogen auf ${refTxt}, prob.-gewichtet${probNote}.${dir==="short"?" Richtung: SHORT — Returns invertiert.":""}</div>`;
+    return `<div class="th-sc" role="img" aria-label="Szenario-Korridor: ${erTxt}${sdTxt}">
+      <div class="th-sc-h"><span>Szenarien · Bear / Base / Bull</span><span class="th-sc-h-r ${erCls}">${erTxt}${sdTxt}</span></div>
+      <div class="th-sc-bar">${spanBar}${mks}${baseEl}${curEl}</div>
+      ${capRow}
+      ${detRow}
+      ${foot}
+    </div>`;
+  }
   if(theses.length){
     html+='<div class="brief-aside"><h2 class="brief-aside-h2">Thesen & Devil\'s Advocate</h2>';
     html+=theses.map((t,i)=>{
@@ -1506,7 +1669,7 @@ else{
         ${thRiskReward(t)}
         <div lang="en" style="margin-top:4px">${esc(t.thesis||"")}</div>
         ${t.edge&&t.is_differentiated?`<div class="edge-line">🎯 ${esc(t.edge)}</div>`:""}
-        ${t.scenarios?(()=>{const s=t.scenarios;const fmtS=(k,c)=>{if(!c)return null;const tgt=c.target?` → ${esc(c.target)}`:"";const p=c.prob!=null?` (P=${Math.round(c.prob*100)}%)`:"";return `${k}${c.trigger?" "+esc(c.trigger):""}${tgt}${p}`;};const parts=[fmtS("Bull",s.bull),fmtS("Base",s.base),fmtS("Bear",s.bear)].filter(Boolean);return parts.length?`<div class="sc-line">📐 ${parts.join(" | ")}</div>`:""})():""}
+        ${(()=>{const corr=thScenarioCorridor(t); if(corr) return corr; if(!t.scenarios) return ""; const s=t.scenarios;const fmtS=(k,c)=>{if(!c)return null;const tgt=c.target?` → ${esc(c.target)}`:"";const p=c.prob!=null?` (P=${Math.round(c.prob*100)}%)`:"";return `${k}${c.trigger?" "+esc(c.trigger):""}${tgt}${p}`;};const parts=[fmtS("Bull",s.bull),fmtS("Base",s.base),fmtS("Bear",s.bear)].filter(Boolean);return parts.length?`<div class="sc-line">📐 ${parts.join(" | ")}</div>`:""})()}
         ${t.exit_trigger?`<div class="exit-trigger">🚪 Exit: ${esc(t.exit_trigger)}</div>`:""}
         ${(()=>{const pro=Array.isArray(t.bull_case)?t.bull_case.filter(Boolean):[];const con=Array.isArray(t.bear_case)?t.bear_case.filter(Boolean):[];const cat=Array.isArray(t.catalysts)?t.catalysts.filter(Boolean):[];if(!pro.length&&!con.length&&!cat.length)return"";const sect=(cls,icon,label,items)=>items.length?`<div class="ta-sect ta-sect--${cls}"><div class="ta-h"><span aria-hidden="true">${icon}</span> ${label} <span class="ta-n">${items.length}</span></div><ul class="ta-list" lang="en">${items.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:"";return `<div class="ta">${sect("pro","✅","Pro-These",pro)}${sect("contra","⚠️","Risiken",con)}${sect("cat","🗓","Katalysatoren",cat)}</div>`;})()}
         ${c.strongest_counter?`<div class="devil" lang="en"><span class="v">⚖️ Devil's Advocate (${c.verdict||"?"})</span><br>${esc(c.strongest_counter)}
