@@ -2146,6 +2146,27 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Heute-Story — Tages-Narrativ (HED-150 Zyklus 166)
+   Auto-generated prose paragraph synthesizing the day's portfolio state across
+   all panels: regime, P&L, alerts, rotation, ideas, analysis. The "what's
+   the story" view — a Bloomberg-PM elevator-pitch in one paragraph. */
+.pf-st-panel{padding:var(--s3);background:linear-gradient(135deg,rgba(88,166,255,.04) 0%,rgba(139,148,158,.03) 100%);border-left:3px solid var(--blue);position:relative}
+.pf-st-h{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s2);flex-wrap:wrap}
+.pf-st-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt);line-height:1.2}
+.pf-st-date{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums;letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+.pf-st-prose{font-size:14px;line-height:1.65;color:var(--txt)}
+.pf-st-prose b{color:var(--txt);font-weight:700}
+.pf-st-tag-crit{color:#f85149;font-weight:700}
+.pf-st-tag-warn{color:#e3b341;font-weight:700}
+.pf-st-tag-pos{color:#3fb950;font-weight:700}
+.pf-st-tag-neg{color:#f85149;font-weight:700}
+.pf-st-tag-neu{color:var(--blue);font-weight:600}
+.pf-st-tk{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;font-weight:700;padding:1px 5px;background:rgba(139,148,158,.1);border-radius:3px;letter-spacing:.02em}
+.pf-st-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s2);line-height:1.5;font-style:italic}
+@media(max-width:600px){
+  .pf-st-prose{font-size:13px;line-height:1.6}
+  .pf-st-title{font-size:var(--fs-h3)}
+}
 /* Portfolio-Sub-Navigation — Mobile-First Quick-Jump Strip (HED-150 Zyklus 165)
    Sticky horizontal chip strip with anchor links to each major portfolio panel.
    Critical for the now-long page on mobile during market open: thumb-reach jumps
@@ -11085,6 +11106,162 @@ function calibSvg(buckets){
     }
   }
 
+  // Heute-Story — Tages-Narrativ (HED-150 Zyklus 166).
+  // Auto-generates a prose paragraph synthesizing the day's state across all
+  // panels: regime, P&L, alerts, sector rotation, ideas. The "elevator pitch" view.
+  let storyHtml="";
+  {
+    const parts=[];
+
+    // 1. Regime sentence
+    const mp=D.macro_pulse||{};
+    const verdict=mp.verdict||{};
+    if(verdict.label){
+      const tech=verdict.tech_read?` (${esc(String(verdict.tech_read).slice(0,140))})`:"";
+      parts.push(`Markt-Regime <span class="pf-st-tag-neu">${esc(String(verdict.label))}</span>${tech}.`);
+    }
+
+    // 2. Book status
+    if(active.length){
+      // Compute book P&L
+      const _pf={};
+      ((D.sector_view||{}).sectors||[]).forEach(s=>{
+        (s.tickers||[]).forEach(t=>{if(t&&t.ticker&&t.price!=null) _pf[String(t.ticker).toUpperCase()]=t.price;});
+      });
+      const priced=active.filter(t=>{
+        const tk=(t.tickers||[])[0]; return tk&&t.baseline_price!=null&&_pf[String(tk).toUpperCase()]!=null;
+      });
+      const wConv=priced.reduce((s,t)=>s+(t.conviction||0),0);
+      const bookPnl=wConv>0?priced.reduce((s,t)=>{
+        const tk=String((t.tickers||[])[0]).toUpperCase();
+        const cur=_pf[tk]; const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+        return s+(t.conviction||0)*((cur-t.baseline_price)/t.baseline_price*100)*sign;
+      },0)/wConv:null;
+
+      const longs=active.filter(t=>(t.direction||"").toLowerCase()==="long").length;
+      const shorts=active.filter(t=>(t.direction||"").toLowerCase()==="short").length;
+      const bookCls=bookPnl==null?"pf-st-tag-neu":bookPnl>=0?"pf-st-tag-pos":"pf-st-tag-neg";
+      const bookStr=bookPnl==null?"—":(bookPnl>=0?"+":"−")+Math.abs(bookPnl).toFixed(2)+"%";
+      parts.push(`Portfolio-Status: <b>${active.length}</b> aktive Calls (${longs}L${shorts?" / "+shorts+"S":""}), kombinierte unrealisierte Performance <span class="${bookCls}">${bookStr}</span>.`);
+    }
+
+    // 3. Critical alerts (most important)
+    {
+      const _ot={}, _it={};
+      ((D.options_tape||{}).tickers||[]).forEach(t=>{if(t&&t.ticker) _ot[t.ticker.toUpperCase()]=t;});
+      ((D.insider_tape||{}).tickers||[]).forEach(t=>{if(t&&t.ticker) _it[t.ticker.toUpperCase()]=t;});
+      const conflicts=[];
+      active.forEach(th=>{
+        const tk=String((th.tickers||[])[0]||"").toUpperCase();
+        const dir=String(th.direction||"long").toLowerCase();
+        const ot=_ot[tk], it=_it[tk];
+        const flags=[];
+        if(ot){
+          if(dir==="long" && (ot.verdict==="bearish_setup"||ot.verdict==="hedge_bid")){
+            flags.push(`BEAR-Options${ot.emove?` ±${ot.emove.toFixed(1)}%`:""}`);
+          } else if(dir==="short" && (ot.verdict==="bullish_setup"||ot.verdict==="squeeze_risk")){
+            flags.push("BULL-Options");
+          }
+        }
+        if(it && it.net_dollar!=null){
+          if(dir==="long" && it.net_dollar<-1e6) flags.push(`Insider-Verkauf ${(Math.abs(it.net_dollar)/1e6).toFixed(0)}M`);
+          else if(dir==="short" && it.net_dollar>1e6) flags.push("Insider-Käufe");
+        }
+        if(flags.length>=2) conflicts.push({tk,dir,flags});
+      });
+      if(conflicts.length){
+        const main=conflicts[0];
+        parts.push(`🔴 <span class="pf-st-tag-crit">${conflicts.length} CRITICAL</span>: <span class="pf-st-tk">${main.tk}</span> trifft auf ${main.flags.join(" + ")} — HEDGE oder Pre-Event-Risk-Reduktion empfohlen${conflicts.length>1?" (+"+(conflicts.length-1)+" weitere Multi-Source-Konflikte)":""}.`);
+      }
+    }
+
+    // 4. Sector rotation
+    {
+      const sectors=(D.sector_view||{}).sectors||[];
+      const secRets=[];
+      sectors.forEach(s=>{
+        const tks=s.tickers||[];
+        const rets30=[], rets5=[];
+        tks.forEach(t=>{
+          const sp=t.spark||[];
+          if(sp.length>=2 && sp[0]>0) rets30.push((sp[sp.length-1]-sp[0])/sp[0]*100);
+          if(sp.length>=6 && sp[sp.length-6]>0) rets5.push((sp[sp.length-1]-sp[sp.length-6])/sp[sp.length-6]*100);
+        });
+        if(rets30.length) secRets.push({
+          name:s.name,
+          r30:rets30.reduce((a,b)=>a+b,0)/rets30.length,
+          r5:rets5.length?rets5.reduce((a,b)=>a+b,0)/rets5.length:null
+        });
+      });
+      secRets.sort((a,b)=>b.r30-a.r30);
+      if(secRets.length>=2){
+        const top=secRets[0], bottom=secRets[secRets.length-1];
+        // Detect leadership rotation: top sec still +30d but weak 5d, while another sector strong 5d
+        const eroding=secRets.find(s=>s.r30>10 && s.r5!=null && s.r5<0);
+        let secText=`Sektor-Rotation: <span class="pf-st-tag-pos">${esc(top.name)}</span> führt mit +${top.r30.toFixed(0)}%/30d`;
+        if(eroding && eroding!==top){
+          secText+=`, aber <span class="pf-st-tag-warn">${esc(eroding.name)}</span>-Leadership erodiert (+${eroding.r30.toFixed(0)}%/30d aber ${eroding.r5.toFixed(1)}%/5d)`;
+        }
+        secText+=".";
+        parts.push(secText);
+      }
+    }
+
+    // 5. Top trade idea
+    {
+      const _activeTk=new Set(active.flatMap(th=>(th.tickers||[]).map(tk=>String(tk).toUpperCase())));
+      const sv={};
+      ((D.sector_view||{}).sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{if(t&&t.ticker) sv[t.ticker.toUpperCase()]={...t,sector_name:s.name};}));
+      const ot={};((D.options_tape||{}).tickers||[]).forEach(t=>{if(t&&t.ticker) ot[t.ticker.toUpperCase()]=t;});
+      // Score quick non-active tickers for top LONG idea
+      const longCands=[];
+      Object.entries(sv).forEach(([tk,d])=>{
+        if(_activeTk.has(tk)) return;
+        const c=d.consensus||{};
+        const o=ot[tk]||null;
+        let score=0; const flags=[];
+        if(o && o.verdict==="bullish_setup"){ score+=2; flags.push("Opt BULL"); }
+        if(c.rec==="strong_buy"){ score+=1; flags.push("Strong-Buy"); }
+        const pt=c.pt_mean, price=d.price;
+        if(pt && price && (pt-price)/price>0.3){ score+=1; flags.push(`PT +${((pt-price)/price*100).toFixed(0)}%`); }
+        const fpe=c.fwd_pe, rev=c.rev_growth_yoy;
+        if(fpe && rev && rev/fpe>5){ score+=2; flags.push(`GARP P/E ${fpe.toFixed(0)} Rev +${rev.toFixed(0)}%`); }
+        else if(fpe && rev && rev/fpe>2){ score+=1; flags.push(`Value P/E ${fpe.toFixed(0)}`); }
+        if(score>=3) longCands.push({tk, score, flags});
+      });
+      longCands.sort((a,b)=>b.score-a.score);
+      if(longCands.length){
+        const top=longCands[0];
+        parts.push(`Beste neue Idee: <span class="pf-st-tk">${esc(top.tk)}</span> (LONG, Score <span class="pf-st-tag-pos">+${top.score}</span>: ${esc(top.flags.slice(0,3).join(" + "))}).`);
+      }
+    }
+
+    // 6. Insider broad signal
+    {
+      const it=D.insider_tape||{};
+      const tickers=it.tickers||[];
+      const totalBuy=tickers.reduce((s,t)=>s+(t.buy_dollar||0),0);
+      const totalSell=tickers.reduce((s,t)=>s+(t.sell_dollar||0),0);
+      if(totalBuy<totalSell*0.05 && totalSell>50e6){
+        const noBuyers=tickers.filter(t=>(t.n_buy_execs||0)===0).length;
+        parts.push(`⚠ Sektor-weite Insider-Distribution: ${noBuyers}/${tickers.length} Ticker ohne einen Insider-Käufer in ${it.lookback_days||30}d (Verhältnis ${(totalSell/Math.max(1,totalBuy)).toFixed(0)}:1).`);
+      }
+    }
+
+    if(parts.length){
+      const today=new Date(D.built_at_iso||Date.now());
+      const dateStr=`${String(today.getDate()).padStart(2,'0')}.${String(today.getMonth()+1).padStart(2,'0')}.${today.getFullYear()}`;
+      storyHtml=`<div class="panel pf-st-panel">
+        <div class="pf-st-h">
+          <div class="pf-st-title">Heute-Story — Tages-Narrativ</div>
+          <div class="pf-st-date">${dateStr}</div>
+        </div>
+        <div class="pf-st-prose">${parts.join(" ")}</div>
+        <div class="pf-st-foot">Auto-synthetisiert aus Macro · Portfolio · Alerts · Sektor-Rotation · Ideen · Insider — die Headline-View aller Panels in einem Absatz.</div>
+      </div>`;
+    }
+  }
+
   // Portfolio-Sub-Navigation — Mobile-First Quick-Jump Strip (HED-150 Zyklus 165).
   // Sticky chip strip with anchor jumps to each major panel. Counts pulled live
   // from the alert/matrix data already computed above. Mobile-critical UX.
@@ -11141,7 +11318,7 @@ function calibSvg(buckets){
   // Inject anchor spans before each major panel (positioned with scroll-margin via .pf-anchor)
   function _anchor(id){return `<span id="${id}" class="pf-anchor"></span>`;}
 
-  root.innerHTML=`${subNavHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${eventHorizonHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  root.innerHTML=`${subNavHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${eventHorizonHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
