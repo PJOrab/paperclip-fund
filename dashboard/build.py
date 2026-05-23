@@ -2415,6 +2415,12 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-st-tag-neu{color:var(--blue);font-weight:600}
 .pf-st-tk{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;font-weight:700;padding:1px 5px;background:rgba(139,148,158,.1);border-radius:3px;letter-spacing:.02em}
 .pf-st-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s2);line-height:1.5;font-style:italic}
+.pf-st-actions{display:flex;gap:6px;align-items:center}
+.pf-st-copy{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:14px;font-size:10px;font-weight:600;color:var(--mut);background:rgba(139,148,158,.08);border:1px solid rgba(139,148,158,.15);cursor:pointer;transition:all .12s;font-family:inherit}
+.pf-st-copy:hover{background:rgba(88,166,255,.12);color:var(--blue);border-color:rgba(88,166,255,.3)}
+.pf-st-copy:active{transform:scale(.96)}
+.pf-st-copy-success{background:rgba(35,134,54,.18)!important;color:#3fb950!important;border-color:rgba(35,134,54,.4)!important}
+.pf-st-copy-icon{font-size:11px}
 @media(max-width:600px){
   .pf-st-prose{font-size:13px;line-height:1.6}
   .pf-st-title{font-size:var(--fs-h3)}
@@ -11508,9 +11514,14 @@ function calibSvg(buckets){
       storyHtml=`<div class="panel pf-st-panel">
         <div class="pf-st-h">
           <div class="pf-st-title">Heute-Story — Tages-Narrativ</div>
-          <div class="pf-st-date">${dateStr}</div>
+          <div class="pf-st-actions">
+            <button class="pf-st-copy" id="pf-st-copy-btn" type="button" aria-label="Narrativ in Zwischenablage kopieren" title="Klick — kopiert Narrativ als Plain-Text">
+              <span class="pf-st-copy-icon">⧉</span><span class="pf-st-copy-lbl">Copy</span>
+            </button>
+            <div class="pf-st-date">${dateStr}</div>
+          </div>
         </div>
-        <div class="pf-st-prose">${parts.join(" ")}</div>
+        <div class="pf-st-prose" id="pf-st-prose">${parts.join(" ")}</div>
         <div class="pf-st-foot">Auto-synthetisiert aus Macro · Portfolio · Alerts · Sektor-Rotation · Ideen · Insider — die Headline-View aller Panels in einem Absatz.</div>
       </div>`;
     }
@@ -12290,6 +12301,43 @@ function calibSvg(buckets){
   }
 
   root.innerHTML=`${subNavHtml}${freshnessHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-funnel")}${funnelHtml}${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Heute-Story Copy-to-Clipboard (HED-150 Zyklus 175).
+  // PM clicks to grab narrative as plain text for IC emails / Slack sharing.
+  (function initStoryCopy(){
+    const btn=document.getElementById("pf-st-copy-btn");
+    const prose=document.getElementById("pf-st-prose");
+    if(!btn||!prose) return;
+    const dateEl=document.querySelector(".pf-st-date");
+    btn.addEventListener("click",async function(){
+      // Build clean plain-text version
+      const dateStr=dateEl?dateEl.textContent.trim():"";
+      const text=prose.textContent.trim().replace(/\s+/g," ");
+      const fullText=`Hedging Alpha · Heute-Story${dateStr?` (${dateStr})`:""}\n\n${text}`;
+      try{
+        await navigator.clipboard.writeText(fullText);
+        // Show success feedback
+        const origLbl=btn.querySelector(".pf-st-copy-lbl").textContent;
+        const origIcon=btn.querySelector(".pf-st-copy-icon").textContent;
+        btn.classList.add("pf-st-copy-success");
+        btn.querySelector(".pf-st-copy-icon").textContent="✓";
+        btn.querySelector(".pf-st-copy-lbl").textContent="Kopiert!";
+        setTimeout(()=>{
+          btn.classList.remove("pf-st-copy-success");
+          btn.querySelector(".pf-st-copy-icon").textContent=origIcon;
+          btn.querySelector(".pf-st-copy-lbl").textContent=origLbl;
+        }, 1800);
+      }catch(e){
+        // Fallback for older browsers: select + execCommand
+        const sel=window.getSelection(); const range=document.createRange();
+        range.selectNodeContents(prose); sel.removeAllRanges(); sel.addRange(range);
+        try{document.execCommand("copy");}catch(e2){}
+        sel.removeAllRanges();
+        btn.querySelector(".pf-st-copy-lbl").textContent="Selektiert!";
+        setTimeout(()=>{btn.querySelector(".pf-st-copy-lbl").textContent="Copy";}, 1800);
+      }
+    });
+  })();
+
   // Sub-Nav Scroll-Spy (HED-150 Zyklus 174).
   // IntersectionObserver watches each .pf-anchor; when one enters the viewport,
   // the matching chip in the sticky nav-strip is highlighted. Falls back gracefully
