@@ -679,6 +679,31 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .th-ch-pnl-dn{color:#f78166}
 .th-ch-pnl-flat{color:var(--mut)}
 .th-ch-empty{padding:18px;text-align:center;font-size:var(--fs-micro);color:var(--mut)}
+/* Risk/Reward-Barometer (HED-137 Zyklus 89): current price vs Street PT-Low/Mean/High range,
+   call-perspective R/R ratio. Forward-looking complement to the 30D mini-chart. */
+.th-rr{margin:var(--s2) 0 var(--s3);background:var(--panel2);
+  border:1px solid var(--line);border-radius:8px;padding:8px 10px 7px}
+.th-rr-h{display:flex;justify-content:space-between;align-items:baseline;
+  font-size:9px;font-weight:700;letter-spacing:.05em;color:var(--mut);
+  text-transform:uppercase;margin-bottom:6px}
+.th-rr-rr{font-size:11px;font-variant-numeric:tabular-nums;letter-spacing:.02em;text-transform:none;font-weight:700}
+.th-rr-rr-good{color:var(--green)}
+.th-rr-rr-warn{color:var(--amber)}
+.th-rr-rr-bad{color:#f78166}
+.th-rr-bar{position:relative;height:12px;background:rgba(255,255,255,.04);
+  border-radius:3px;border:1px solid rgba(255,255,255,.05)}
+.th-rr-up{position:absolute;top:0;height:100%;background:rgba(63,185,80,.28);border-radius:2px}
+.th-rr-dn{position:absolute;top:0;height:100%;background:rgba(248,81,73,.28);border-radius:2px}
+.th-rr-cur{position:absolute;top:-3px;width:2px;height:18px;background:var(--txt);
+  transform:translateX(-1px);box-shadow:0 0 0 2px rgba(11,15,23,.7);pointer-events:none}
+.th-rr-mean{position:absolute;top:50%;width:6px;height:6px;background:var(--amber);
+  border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 1px rgba(11,15,23,.6)}
+.th-rr-tick{position:absolute;top:0;width:1px;height:100%;background:rgba(255,255,255,.18)}
+.th-rr-labels{display:flex;justify-content:space-between;font-size:9.5px;margin-top:5px;
+  color:var(--mut);font-variant-numeric:tabular-nums;letter-spacing:.01em;gap:6px}
+.th-rr-lbl{font-weight:600;white-space:nowrap}
+.th-rr-lbl-r{text-align:right}
+.th-rr-cur-lbl{color:var(--txt);font-weight:700;white-space:nowrap}
 @media(max-width:430px){
   .th-mkt{flex-wrap:wrap}
   .th-mkt-cell{flex:1 1 46%;min-width:80px;padding:4px var(--s2)}
@@ -686,6 +711,10 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .th-mkt-cell:nth-child(odd):not(:last-child){border-right:1px solid var(--line)}
   .th-ch{height:60px}
   .th-ch-tag,.th-ch-cur,.th-ch-base-lbl,.th-ch-pnl{font-size:9px}
+  .th-rr{padding:7px 8px 6px}
+  .th-rr-h{font-size:8px}
+  .th-rr-rr{font-size:10px}
+  .th-rr-labels{font-size:9px}
 }
 @media(max-width:560px){
   .pf-pnl-row{grid-template-columns:1fr 50px;grid-template-areas:"tk val" "bar bar";row-gap:3px}
@@ -1315,6 +1344,63 @@ else{
         ${dot}
       </svg>${overlays}</div>`;
   }
+  // thRiskReward: Street-consensus Risk/Reward barometer (PT-Low | current | PT-High).
+  // Shows call-perspective reward (toward target) vs risk (toward stop) and the R/R ratio.
+  // Long: pt_high = target/green, pt_low = risk/red. Short: inverted.
+  function thRiskReward(t){
+    const tks=(t.tickers||[]).map(x=>String(x).toUpperCase()).filter(Boolean);
+    if(!tks.length) return "";
+    const tk=tks[0];
+    const m=_mktMap[tk];
+    if(!m||!m.consensus||m.price==null) return "";
+    const c=m.consensus;
+    const lo=c.pt_low, hi=c.pt_high, mean=c.pt_mean;
+    if(lo==null||hi==null||hi<=lo) return "";
+    const cur=m.price;
+    const dir=(t.direction||(_baseMap[tk]&&_baseMap[tk].dir)||"long").toLowerCase();
+    const rngLo=Math.min(lo,cur,mean!=null?mean:cur),rngHi=Math.max(hi,cur,mean!=null?mean:cur);
+    const span=rngHi-rngLo; if(span<=0) return "";
+    const pos=v=>((v-rngLo)/span*100);
+    const posCur=pos(cur),posLo=pos(lo),posHi=pos(hi);
+    const posMean=mean!=null?pos(mean):null;
+    const dLo=((cur-lo)/cur)*100;  // % drop to reach pt_low
+    const dHi=((hi-cur)/cur)*100;  // % rise to reach pt_high
+    const reward=dir==="short"?dLo:dHi;
+    const risk  =dir==="short"?dHi:dLo;
+    const rr=risk>0.5?reward/risk:null;
+    const rrCls=rr==null?"muted":rr>=2?"th-rr-rr-good":rr>=1?"th-rr-rr-warn":"th-rr-rr-bad";
+    const fmtP=v=>v.toFixed(0);
+    const fmt$=v=>v<10?v.toFixed(2):v<100?v.toFixed(1):v.toFixed(0);
+    const leftIsReward=dir==="short";
+    const leftClass=leftIsReward?"th-rr-up":"th-rr-dn";
+    const rightClass=leftIsReward?"th-rr-dn":"th-rr-up";
+    const leftW=Math.max(0,posCur-posLo);
+    const rightW=Math.max(0,posHi-posCur);
+    const meanMarker=posMean!=null?`<div class="th-rr-mean" style="left:${posMean.toFixed(1)}%" title="Street PT-Mean $${fmt$(mean)}"></div>`:"";
+    const tickLo=`<div class="th-rr-tick" style="left:${posLo.toFixed(1)}%" aria-hidden="true"></div>`;
+    const tickHi=`<div class="th-rr-tick" style="left:${posHi.toFixed(1)}%" aria-hidden="true"></div>`;
+    const aCount=c.analyst_count?` · n=${c.analyst_count}`:"";
+    const recTxt=c.rec?` · ${esc(String(c.rec).replace(/_/g," "))}`:"";
+    const tip=`Street PT-Range $${fmt$(lo)} → $${fmt$(hi)}${mean!=null?` · Mean $${fmt$(mean)}`:""}${aCount}${recTxt}`;
+    const leftLbl=leftIsReward?`Ziel −${fmtP(Math.abs(dLo))}%`:`Risiko −${fmtP(Math.abs(dLo))}%`;
+    const rightLbl=leftIsReward?`Risiko +${fmtP(Math.abs(dHi))}%`:`Ziel +${fmtP(Math.abs(dHi))}%`;
+    const rrLbl=rr!=null?`R/R ${rr.toFixed(1)} : 1`:"R/R —";
+    return `<div class="th-rr" role="img" aria-label="${esc(tip)}" title="${esc(tip)}">
+      <div class="th-rr-h"><span>R/R · Street${aCount}${recTxt}</span>
+        <span class="th-rr-rr ${rrCls}">${rrLbl}</span></div>
+      <div class="th-rr-bar">
+        <div class="${leftClass}" style="left:${posLo.toFixed(1)}%;width:${leftW.toFixed(1)}%"></div>
+        <div class="${rightClass}" style="left:${posCur.toFixed(1)}%;width:${rightW.toFixed(1)}%"></div>
+        ${tickLo}${tickHi}${meanMarker}
+        <div class="th-rr-cur" style="left:${posCur.toFixed(1)}%" title="aktuell $${fmt$(cur)}"></div>
+      </div>
+      <div class="th-rr-labels">
+        <span class="th-rr-lbl">$${fmt$(lo)} · ${leftLbl}</span>
+        <span class="th-rr-cur-lbl">$${fmt$(cur)} jetzt</span>
+        <span class="th-rr-lbl th-rr-lbl-r">$${fmt$(hi)} · ${rightLbl}</span>
+      </div>
+    </div>`;
+  }
   if(theses.length){
     html+='<div class="brief-aside"><h2 class="brief-aside-h2">Thesen & Devil\'s Advocate</h2>';
     html+=theses.map((t,i)=>{
@@ -1325,6 +1411,7 @@ else{
         ${t.horizon?`<span class="th-horizon" title="Zeithorizont der These">${esc(t.horizon)}</span>`:""}</div>
         ${thMktHtml(t)}
         ${thChart(t)}
+        ${thRiskReward(t)}
         <div lang="en" style="margin-top:4px">${esc(t.thesis||"")}</div>
         ${t.edge&&t.is_differentiated?`<div class="edge-line">🎯 ${esc(t.edge)}</div>`:""}
         ${t.scenarios?(()=>{const s=t.scenarios;const fmtS=(k,c)=>{if(!c)return null;const tgt=c.target?` → ${esc(c.target)}`:"";const p=c.prob!=null?` (P=${Math.round(c.prob*100)}%)`:"";return `${k}${c.trigger?" "+esc(c.trigger):""}${tgt}${p}`;};const parts=[fmtS("Bull",s.bull),fmtS("Base",s.base),fmtS("Bear",s.bear)].filter(Boolean);return parts.length?`<div class="sc-line">📐 ${parts.join(" | ")}</div>`:""})():""}
