@@ -2439,6 +2439,12 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-nav-chip:focus{outline:1px solid var(--blue);outline-offset:1px}
 .pf-nav-chip-active{background:rgba(88,166,255,.15);color:var(--txt);border-color:rgba(88,166,255,.45);box-shadow:0 0 0 1px rgba(88,166,255,.25)}
 .pf-nav-chip-active .pf-nav-chip-icon{color:var(--blue)}
+/* Snapshot-Save Button (HED-150 Zyklus 177) */
+.pf-nav-snap{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:14px;font-size:10px;font-weight:600;color:var(--mut);background:rgba(139,148,158,.06);border:1px solid rgba(139,148,158,.15);cursor:pointer;flex-shrink:0;transition:all .12s;font-family:inherit;white-space:nowrap}
+.pf-nav-snap:hover{background:rgba(35,134,54,.10);color:#3fb950;border-color:rgba(35,134,54,.3)}
+.pf-nav-snap:active{transform:scale(.96)}
+.pf-nav-snap-icon{font-size:11px;line-height:1}
+.pf-nav-snap-success{background:rgba(35,134,54,.18)!important;color:#3fb950!important;border-color:rgba(35,134,54,.4)!important}
 /* Compact-Mode Toggle (HED-150 Zyklus 176) */
 .pf-nav-toggle{margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:14px;font-size:10px;font-weight:600;color:var(--mut);background:rgba(139,148,158,.06);border:1px solid rgba(139,148,158,.15);cursor:pointer;flex-shrink:0;transition:all .12s;font-family:inherit;white-space:nowrap}
 .pf-nav-toggle:hover{background:rgba(139,148,158,.15);color:var(--txt);border-color:rgba(139,148,158,.3)}
@@ -11591,6 +11597,9 @@ function calibSvg(buckets){
       <button id="pf-compact-toggle" class="pf-nav-toggle" type="button" aria-pressed="false" title="Compact Mode — versteckt 19 Legacy-Risiko/Analytics-Panels (Risk-Stats, Stress, Alloc, Kelly, Crowding, etc.) — fokussiert auf die HED-150 Synthese-Layer">
         <span class="pf-nav-toggle-icon">⊞</span><span class="pf-nav-toggle-lbl">Compact</span>
       </button>
+      <button id="pf-snap-btn" class="pf-nav-snap" type="button" title="Snapshot speichern — lädt das gesamte Dashboard als self-contained HTML-Datei herunter (compliance / IC-Archiv)">
+        <span class="pf-nav-snap-icon">⤓</span><span class="pf-nav-snap-lbl">Save</span>
+      </button>
     </nav>`;
   }
 
@@ -12312,6 +12321,41 @@ function calibSvg(buckets){
   }
 
   root.innerHTML=`${subNavHtml}${freshnessHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-funnel")}${funnelHtml}${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}<div class="pf-legacy">${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}</div>`;
+  // Snapshot-Save (HED-150 Zyklus 177).
+  // Downloads the current dashboard as a self-contained HTML file. Useful for
+  // IC archival, daily compliance snapshots, audit trail. Filename includes date.
+  (function initSnapSave(){
+    const btn=document.getElementById("pf-snap-btn");
+    if(!btn) return;
+    btn.addEventListener("click",function(){
+      const html="<!DOCTYPE html>\n"+document.documentElement.outerHTML;
+      const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+      const url=URL.createObjectURL(blob);
+      const now=new Date();
+      const yyyy=now.getFullYear();
+      const mm=String(now.getMonth()+1).padStart(2,"0");
+      const dd=String(now.getDate()).padStart(2,"0");
+      const hh=String(now.getHours()).padStart(2,"0");
+      const mi=String(now.getMinutes()).padStart(2,"0");
+      const filename=`hedging-alpha-snapshot-${yyyy}-${mm}-${dd}-${hh}${mi}.html`;
+      const a=document.createElement("a");
+      a.href=url; a.download=filename; a.style.display="none";
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{document.body.removeChild(a); URL.revokeObjectURL(url);}, 100);
+      // Success feedback
+      const origLbl=btn.querySelector(".pf-nav-snap-lbl").textContent;
+      const origIcon=btn.querySelector(".pf-nav-snap-icon").textContent;
+      btn.classList.add("pf-nav-snap-success");
+      btn.querySelector(".pf-nav-snap-icon").textContent="✓";
+      btn.querySelector(".pf-nav-snap-lbl").textContent="Saved!";
+      setTimeout(()=>{
+        btn.classList.remove("pf-nav-snap-success");
+        btn.querySelector(".pf-nav-snap-icon").textContent=origIcon;
+        btn.querySelector(".pf-nav-snap-lbl").textContent=origLbl;
+      }, 1800);
+    });
+  })();
+
   // Compact-Mode Toggle (HED-150 Zyklus 176).
   // Lets PM hide the 19 legacy bottom-half analytics panels to focus on the
   // HED-150 synthesis layer. Choice persists via localStorage across sessions.
