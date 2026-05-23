@@ -541,6 +541,61 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .rs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .rs-val{font-size:17px}
 }
+/* Open Calls Live-Monitor — sortable positions table (HED-137 Zyklus 96) */
+.lm-panel{margin-top:var(--s3);padding:var(--s3)}
+.lm-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:var(--s3);margin-bottom:var(--s3)}
+.lm-title{font-weight:700;font-size:var(--fs-h2);text-transform:none;letter-spacing:0;color:var(--txt);line-height:1.2}
+.lm-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400;margin-top:2px}
+.lm-hint{font-size:var(--fs-micro);color:var(--mut);display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:1px solid var(--line);border-radius:4px;cursor:default;letter-spacing:.02em;white-space:nowrap}
+.lm-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:6px}
+.lm-tbl{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;font-size:var(--fs-cap);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.lm-tbl thead th{background:var(--panel2);color:var(--mut);font-size:var(--fs-micro);font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:6px 10px;white-space:nowrap;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;position:sticky;top:0}
+.lm-tbl thead th:hover{color:var(--txt)}
+.lm-tbl thead th.lm-sorted{color:var(--accent)}
+.lm-sort-ind{display:inline-block;margin-left:3px;opacity:.55;font-size:9px}
+.lm-tbl tbody tr{background:var(--bg)}
+.lm-tbl tbody tr:nth-child(even){background:rgba(138,160,189,.04)}
+.lm-tbl tbody tr:hover{background:var(--panel2)}
+.lm-tbl td{padding:7px 10px;border-bottom:1px solid rgba(138,160,189,.1);vertical-align:middle}
+.lm-tbl tbody tr:last-child td{border-bottom:0}
+.lm-tk{font-weight:700;color:var(--txt);font-size:13px;letter-spacing:-.01em}
+.lm-lbl{display:block;font-weight:400;color:var(--mut);font-size:var(--fs-micro);margin-top:1px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lm-dir{display:inline-block;padding:1px 5px;border-radius:3px;font-size:var(--fs-micro);font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.lm-dir-long{background:rgba(63,185,80,.18);color:#3fb950;border:1px solid rgba(63,185,80,.3)}
+.lm-dir-short{background:rgba(248,81,73,.18);color:#f85149;border:1px solid rgba(248,81,73,.3)}
+.lm-date{color:var(--txt);white-space:nowrap}
+.lm-days{color:var(--mut);font-size:var(--fs-micro);white-space:nowrap}
+.lm-price{color:var(--txt);white-space:nowrap}
+.lm-price-base{color:var(--mut)}
+.lm-arrow{color:var(--mut);font-size:10px;margin:0 3px}
+.lm-pnl{font-weight:700;white-space:nowrap}
+.lm-spy{white-space:nowrap}
+.lm-alpha{font-weight:600;white-space:nowrap}
+.lm-conv-wrap{display:flex;align-items:center;gap:5px}
+.lm-conv-bar{flex:0 0 44px;height:5px;background:var(--panel2);border-radius:3px;overflow:hidden}
+.lm-conv-fill{height:100%;border-radius:3px;background:var(--accent)}
+.lm-exit{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mut);font-size:var(--fs-micro);cursor:help}
+.lm-na{color:var(--mut)}
+.lm-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s2);line-height:1.5}
+/* Mobile: collapse to cards */
+@media(max-width:760px){
+  .lm-wrap{overflow-x:visible}
+  .lm-tbl,.lm-tbl thead,.lm-tbl tbody,.lm-tbl th,.lm-tbl td,.lm-tbl tr{display:block}
+  .lm-tbl{border:none;background:transparent}
+  .lm-tbl thead{display:none}
+  .lm-tbl tbody tr{border:1px solid var(--line);border-radius:6px;margin-bottom:var(--s2);padding:var(--s2) var(--s3);display:grid;grid-template-columns:1fr auto;row-gap:4px;background:var(--bg)}
+  .lm-tbl td{border:none;padding:0}
+  .lm-tbl td[data-col="ticker"]{grid-column:1/2;grid-row:1}
+  .lm-tbl td[data-col="dir"]{grid-column:2/3;grid-row:1;text-align:right}
+  .lm-tbl td[data-col="pnl"]{grid-column:1/3;grid-row:2;font-size:20px}
+  .lm-tbl td[data-col="alpha"]{grid-column:1/2;grid-row:3}
+  .lm-tbl td[data-col="spy"]{grid-column:2/3;grid-row:3;text-align:right}
+  .lm-tbl td[data-col="date"]{grid-column:1/2;grid-row:4}
+  .lm-tbl td[data-col="conv"]{grid-column:2/3;grid-row:4;text-align:right}
+  .lm-tbl td[data-col="exit"],.lm-tbl td[data-col="baseline"]{display:none}
+  .lm-pnl{font-size:inherit}
+  .lm-hint{display:none}
+}
 /* Stress-Test-Panel — szenario shocks (HED-137 Zyklus 95): bookwise Impact-Schätzung pro Standard-Shock */
 .st-panel{margin-top:var(--s3);padding:var(--s3)}
 .st-h{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);margin-bottom:var(--s3);flex-wrap:wrap}
@@ -2109,6 +2164,7 @@ function calibSvg(buckets){
   ((D.sector_view||{}).sectors||[]).forEach(s=>{
     (s.tickers||[]).forEach(t=>{ if(t&&t.ticker&&Array.isArray(t.spark)&&t.spark.length>=2) _sparkMap[String(t.ticker).toUpperCase()]=t.spark; });
   });
+  const _portSpySpark=((D.sector_view||{}).benchmarks||{})?.SPY?.spark||null;
   // Map thesis entry date → spark index. Spark[-1] = last close before sv.as_of (today).
   // Count business days between entry-date and as_of-date to derive the offset.
   // Verify against baseline_price within 5% (slack: baselines sometimes set at prior-day close).
@@ -2480,6 +2536,125 @@ function calibSvg(buckets){
       <div class="st-foot">${_methodNote} · Tech-Shock = Netto-Exposure S1–S4 × Shock · Single-Stock = Top-Conviction-Position × Shock · Schätzer, keine echte Korrelations-Matrix.</div>
     </div>`;
   }
+  // Open Calls Live-Monitor (HED-137 Zyklus 96): sortierbare PM-Positions-Tabelle.
+  // Morgen-Scan: Ticker | Richtung | Entry-Datum | Tage live | Baseline → Aktuell | P&L% | vs-SPY% | α | Conviction | Exit-Trigger.
+  // vs-SPY = SPY-Return über die gleiche Haltedauer (entry-date bis heute), abgeleitet aus SPY-Spark.
+  // α = P&L% − vs-SPY% (excess return der Position über Benchmark-Periode).
+  // Sortierbar: Klick auf Spaltenheader sortiert ab/aufsteigend; aktuelle Spalte zeigt Pfeil-Indikator.
+  // Mobile: Karten-Layout (Label, P&L groß, α/vs-SPY, Datum/Conv in 2 Zeilen; Baseline/Exit versteckt).
+  let liveMonitorHtml="";
+  if(active.length){
+    // SPY holding-period return for each call (entry → today)
+    function _spyReturnForCall(dateStr){
+      if(!_portSpySpark||_portSpySpark.length<2||!dateStr||!_asOfDateStr) return null;
+      const back=_bdaysBack(dateStr, _asOfDateStr);
+      if(back==null||back<1) return null;
+      const eIdx=_portSpySpark.length-1-back;
+      if(eIdx<0) return null; // older than spark history
+      const base=_portSpySpark[eIdx];
+      const last=_portSpySpark[_portSpySpark.length-1];
+      if(!base||base<=0) return null;
+      return (last-base)/base*100;
+    }
+    // Build rows
+    const lmRows=pnlRows.map(r=>{
+      const t=r.t;
+      const tks=(t.tickers||[]).join("·")||"?";
+      const dir=(t.direction||"").toLowerCase();
+      const conv=t.conviction!=null?t.conviction:null;
+      const dateStr=t.date||null;
+      const daysLive=dateStr&&_asOfDateStr?_bdaysBack(dateStr,_asOfDateStr):null;
+      const pnl=r.pnl; // already sign-flipped for shorts
+      const spyRet=dateStr?_spyReturnForCall(dateStr):null;
+      // For alpha: pnl is the call's return already sign-aware. SPY return is always raw (long-only bench).
+      // For short calls: alpha = -(pnl_signed_for_short) - (-spyRet) ? No:
+      // pnl here is already direction-aware (short P&L positive when price falls).
+      // alpha = call_excess = pnl (dir-aware) - spyRet (raw SPY long return for same period)
+      // This is correct: long 10% when SPY +5% = alpha +5. Short +8% when SPY +5% = alpha +3.
+      const alpha=(pnl!=null&&spyRet!=null)?(pnl-spyRet):null;
+      const curPrice=r.pnl!=null ? (() => {
+        // Back-calculate current price from baseline + pnl% (or read from _pricePf)
+        const tk=(t.tickers||[])[0];
+        return tk?_pricePf[String(tk).toUpperCase()]||null:null;
+      })() : null;
+      return {t, tks, dir, conv, dateStr, daysLive, pnl, spyRet, alpha, curPrice};
+    });
+    // Default sort: P&L desc (winners first — PM scan for best/worst)
+    let _lmSort="pnl", _lmAsc=false;
+    function _sortRows(rows, col, asc){
+      const vOf=r=>col==="pnl"?r.pnl:col==="alpha"?r.alpha:col==="spy"?r.spyRet:col==="days"?r.daysLive:col==="conv"?r.conv:r.pnl;
+      return rows.slice().sort((a,b)=>{
+        const va=vOf(a), vb=vOf(b);
+        if(va==null&&vb==null) return 0;
+        if(va==null) return 1; if(vb==null) return -1;
+        return asc?(va-vb):(vb-va);
+      });
+    }
+    const sortedRows=_sortRows(lmRows, _lmSort, _lmAsc);
+    const fmtPct=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
+    const fmtPctCls=v=>v==null?"lm-na":v>=0.05?"move-up":v<=-0.05?"move-dn":"muted";
+    const fmtPrice=v=>v==null?"—":"$"+v.toFixed(2);
+    const fmtDays=v=>v==null?"—":v===0?"heute":v===1?"1 Tag":`${v} Tage`;
+    const cols=[
+      {key:"ticker", label:"Call / Ticker", tip:"Ticker(s) und Thesis-Label"},
+      {key:"dir",    label:"Dir",           tip:"Richtung: Long oder Short"},
+      {key:"date",   label:"Entry",         tip:"Entry-Datum und Handelstage seit Einstieg"},
+      {key:"baseline", label:"Basis → Kurs", tip:"Baseline (Entry-Preis) → aktueller Kurs"},
+      {key:"pnl",    label:"P&L%",          tip:"Unrealisierte Performance seit Entry (sign-flipped für Shorts)"},
+      {key:"spy",    label:"SPY%",           tip:"SPY-Return über dieselbe Haltedauer (benchmark)"},
+      {key:"alpha",  label:"α",             tip:"Alpha = P&L% − SPY% (Excess-Return über Benchmark-Periode)"},
+      {key:"conv",   label:"Conv",          tip:"Conviction-Score (0–1)"},
+      {key:"exit",   label:"Exit-Trigger",  tip:"Definierter Exit-Auslöser"},
+    ];
+    const hdr=cols.map(c=>{
+      const isSorted=c.key===_lmSort;
+      const sortArrow=isSorted?(_lmAsc?"▲":"▼"):"";
+      const sortable=["pnl","spy","alpha","days","conv"].includes(c.key);
+      return `<th scope="col" title="${esc(c.tip)}" ${sortable?`data-sort="${c.key}"`:""}class="${isSorted?"lm-sorted":""}">${esc(c.label)}${sortable?`<span class="lm-sort-ind">${sortArrow}</span>`:""}</th>`;
+    }).join("");
+    const bodyRows=sortedRows.map(r=>{
+      const dir=r.dir, long=dir==="long";
+      const dirChip=`<span class="lm-dir ${long?"lm-dir-long":"lm-dir-short"}">${long?"LONG":"SHORT"}</span>`;
+      const convBarW=r.conv!=null?Math.round(r.conv*100):0;
+      const convDisp=r.conv!=null?r.conv.toFixed(2):'—';
+      const convCell=`<div class="lm-conv-wrap"><div class="lm-conv-bar"><div class="lm-conv-fill" style="width:${convBarW}%"></div></div><span>${convDisp}</span></div>`;
+      const exitCell=r.t.exit_trigger
+        ? `<span class="lm-exit" title="${esc("Exit wenn: "+r.t.exit_trigger)}">${esc(r.t.exit_trigger)}</span>`
+        : `<span class="lm-na">—</span>`;
+      const baseTxt=r.t.baseline_price!=null?`<span class="lm-price-base">$${r.t.baseline_price.toFixed(2)}</span><span class="lm-arrow">→</span>${fmtPrice(r.curPrice)}`:'<span class="lm-na">—</span>';
+      return `<tr>
+        <td data-col="ticker"><span class="lm-tk">${esc(r.tks)}</span><span class="lm-lbl" title="${esc(r.t.label||"")}">${esc(r.t.label||"")}</span></td>
+        <td data-col="dir">${dirChip}</td>
+        <td data-col="date"><span class="lm-date">${esc(r.dateStr||"—")}</span><span class="lm-days">${fmtDays(r.daysLive)}</span></td>
+        <td data-col="baseline"><span class="lm-price">${baseTxt}</span></td>
+        <td data-col="pnl"><span class="lm-pnl ${fmtPctCls(r.pnl)}">${r.pnl!=null?fmtPct(r.pnl):'<span class="lm-na">—</span>'}</span></td>
+        <td data-col="spy"><span class="lm-spy ${fmtPctCls(r.spyRet)}">${r.spyRet!=null?fmtPct(r.spyRet):'<span class="lm-na">—</span>'}</span></td>
+        <td data-col="alpha"><span class="lm-alpha ${fmtPctCls(r.alpha)}">${r.alpha!=null?fmtPct(r.alpha):'<span class="lm-na">—</span>'}</span></td>
+        <td data-col="conv">${convCell}</td>
+        <td data-col="exit">${exitCell}</td>
+      </tr>`;
+    }).join("");
+    // Summary chips: how many positive alpha calls
+    const nAlpha=lmRows.filter(r=>r.alpha!=null&&r.alpha>0).length;
+    const nPricedLm=lmRows.filter(r=>r.pnl!=null).length;
+    const alphaTxt=nPricedLm?`${nAlpha} von ${nPricedLm} Calls mit positivem Alpha`:"";
+    liveMonitorHtml=`<div class="panel lm-panel">
+      <div class="lm-h">
+        <div>
+          <div class="lm-title">Open Calls — Live-Monitor</div>
+          <div class="lm-sub">Positions-Tabelle · P&L und Alpha per Call · ${alphaTxt?`${alphaTxt} ·`:""} täglich mit Sector-View-Refresh</div>
+        </div>
+        <span class="lm-hint" title="Klick auf Spaltenheader zum Sortieren (P&L, SPY, α, Conv)">sortierbar</span>
+      </div>
+      <div class="lm-wrap">
+        <table class="lm-tbl" id="lm-tbl">
+          <thead><tr>${hdr}</tr></thead>
+          <tbody>${bodyRows}</tbody>
+        </table>
+      </div>
+      <div class="lm-foot">P&L sign-flipped für Shorts (Short +X% = Preis fiel um X%). vs-SPY = SPY-Return über dieselbe Haltedauer aus dem Spark. α = Excess Return. Klick auf P&L / α / Conv / SPY zum Sortieren.</div>
+    </div>`;
+  }
   // Sector Performance Attribution — "where is my book working?" Brinson-style.
   // Per sector: conviction-weighted P&L of priced calls in that sector,
   // and contribution to book = sector_weight × sector_pnl.
@@ -2775,7 +2950,56 @@ function calibSvg(buckets){
       </div>`;
     }
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskHtml}`;
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskHtml}`;
+  // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
+  // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
+  (function initLmSort(){
+    const tbl=document.getElementById("lm-tbl");
+    if(!tbl) return;
+    function parseValSigned(el){
+      if(!el) return null;
+      const raw=(el.textContent||"").trim();
+      if(!raw||raw==="—") return null;
+      const neg=raw.startsWith("−");
+      const num=parseFloat(raw.replace("−","").replace(/[^0-9.]/g,""));
+      return isNaN(num)?null:(neg?-num:num);
+    }
+    // Stamp sort keys on each row
+    tbl.querySelectorAll("tbody tr").forEach(tr=>{
+      tr.dataset.pnl  = parseValSigned(tr.querySelector("[data-col='pnl'] .lm-pnl")) ?? "";
+      tr.dataset.spy  = parseValSigned(tr.querySelector("[data-col='spy'] .lm-spy"))  ?? "";
+      tr.dataset.alpha= parseValSigned(tr.querySelector("[data-col='alpha'] .lm-alpha")) ?? "";
+      const cs=tr.querySelector("[data-col='conv'] .lm-conv-wrap span:last-child");
+      tr.dataset.conv = cs?parseFloat(cs.textContent)||"":"";
+      const dt=tr.querySelector("[data-col='date'] .lm-days");
+      const dm=(dt?.textContent||"").match(/\d+/);
+      tr.dataset.days = dm?dm[0]:"";
+    });
+    let _col="pnl", _asc=false;
+    function resort(){
+      const tbody=tbl.querySelector("tbody");
+      const rows=Array.from(tbody.querySelectorAll("tr"));
+      rows.sort((a,b)=>{
+        const va=parseFloat(a.dataset[_col]), vb=parseFloat(b.dataset[_col]);
+        const na=isNaN(va), nb=isNaN(vb);
+        if(na&&nb) return 0; if(na) return 1; if(nb) return -1;
+        return _asc?(va-vb):(vb-va);
+      });
+      rows.forEach(r=>tbody.appendChild(r));
+    }
+    tbl.querySelectorAll("thead th[data-sort]").forEach(th=>{
+      th.addEventListener("click",()=>{
+        const col=th.dataset.sort;
+        if(col===_col) _asc=!_asc; else {_col=col;_asc=false;}
+        resort();
+        tbl.querySelectorAll("thead th").forEach(h=>{
+          h.classList.toggle("lm-sorted",h.dataset.sort===_col);
+          const ind=h.querySelector(".lm-sort-ind");
+          if(ind) ind.textContent=h.dataset.sort===_col?(_asc?"▲":"▼"):"";
+        });
+      });
+    });
+  })();
   root.setAttribute("aria-busy","false");
 })();
 
