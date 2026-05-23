@@ -2146,6 +2146,56 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Heutige Analyse — Schlüssel-Lesungen aus aktuellem Briefing (HED-150 Zyklus 158)
+   Surfaces the qualitative synthesis from the latest briefing: per-analysis title,
+   bull/bear/mixed read, magnitude, numbered key facts, and explicit key_uncertainty.
+   This is the institutional research narrative that drives thesis generation. */
+.pf-an-panel{padding:var(--s3)}
+.pf-an-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-an-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-an-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-an-tally{display:flex;gap:var(--s3);flex-wrap:wrap;flex-shrink:0;align-items:flex-end}
+.pf-an-tally-cell{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:50px;padding:5px 10px;border-radius:6px;background:rgba(139,148,158,.05);border:1px solid rgba(139,148,158,.1)}
+.pf-an-tally-val{font-size:18px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:var(--txt)}
+.pf-an-tally-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut)}
+.pf-an-tally-bull .pf-an-tally-val{color:#3fb950}
+.pf-an-tally-bear .pf-an-tally-val{color:#f85149}
+.pf-an-tally-mix .pf-an-tally-val{color:#e3b341}
+.pf-an-grid{display:grid;grid-template-columns:1fr;gap:var(--s3)}
+.pf-an-card{background:rgba(139,148,158,.04);border:1px solid rgba(139,148,158,.12);border-radius:6px;padding:var(--s3);display:flex;flex-direction:column;gap:var(--s2);border-left:3px solid rgba(139,148,158,.3)}
+.pf-an-card-bull{border-left-color:#3fb950}
+.pf-an-card-bear{border-left-color:#f85149}
+.pf-an-card-mix{border-left-color:#e3b341}
+.pf-an-card-hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s2);flex-wrap:wrap}
+.pf-an-card-title{font-weight:700;font-size:var(--fs-h3);color:var(--txt);line-height:1.3;flex:1;min-width:240px}
+.pf-an-card-meta{display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
+.pf-an-tk{font-weight:700;font-size:12px;color:var(--txt);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em;padding:2px 6px;background:rgba(139,148,158,.1);border-radius:4px}
+.pf-an-meta-pill{display:inline-flex;align-items:center;padding:3px 7px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;line-height:1.4}
+.pf-an-meta-pill-bull{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-an-meta-pill-bear{background:rgba(248,81,73,.18);color:#f85149}
+.pf-an-meta-pill-mix{background:rgba(210,168,80,.18);color:#e3b341}
+.pf-an-meta-pill-hor{background:rgba(88,166,255,.12);color:var(--blue)}
+.pf-an-meta-pill-mag{background:rgba(139,148,158,.12);color:var(--mut)}
+.pf-an-meta-pill-mag-h{background:rgba(248,81,73,.15);color:#f85149}
+.pf-an-meta-pill-mag-m{background:rgba(210,168,80,.12);color:#e3b341}
+.pf-an-facts-h{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--mut);margin-top:var(--s2);margin-bottom:3px}
+.pf-an-facts{display:flex;flex-direction:column;gap:5px;padding-left:0;margin:0;list-style:none;counter-reset:fact}
+.pf-an-fact{position:relative;padding-left:24px;font-size:var(--fs-cap);line-height:1.55;color:var(--txt);counter-increment:fact}
+.pf-an-fact::before{content:counter(fact);position:absolute;left:0;top:1px;width:18px;height:18px;border-radius:50%;background:rgba(139,148,158,.1);color:var(--mut);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.pf-an-unc{margin-top:var(--s2);padding:var(--s2) var(--s3);background:rgba(210,168,80,.06);border-left:2px solid #e3b341;border-radius:4px;font-size:var(--fs-cap);line-height:1.5;color:var(--txt)}
+.pf-an-unc-h{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:#e3b341;margin-bottom:2px;display:flex;align-items:center;gap:4px}
+.pf-an-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+@media(max-width:600px){
+  .pf-an-h{flex-direction:column}
+  .pf-an-tally{width:100%;justify-content:space-between;gap:6px}
+  .pf-an-tally-cell{flex:1;min-width:0;padding:5px 4px}
+  .pf-an-tally-val{font-size:16px}
+  .pf-an-card{padding:var(--s2)}
+  .pf-an-card-hdr{flex-direction:column;align-items:stretch}
+  .pf-an-card-title{font-size:var(--fs-body);min-width:0;width:100%}
+  .pf-an-card-meta{width:100%}
+  .pf-an-fact{padding-left:22px;font-size:var(--fs-micro)}
+}
 /* Research Pipeline — Thesis-Funnel + Red-Team Verdikte (HED-150 Zyklus 157)
    Surfaces the institutional research process: thesis candidates currently being
    analyzed, their devil's-advocate critique (verdict / blind spot / falsification),
@@ -9504,7 +9554,81 @@ function calibSvg(buckets){
     }
   }
 
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Heutige Analyse — Schlüssel-Lesungen aus aktuellem Briefing (HED-150 Zyklus 158).
+  // Surfaces briefing.analysis.analyses[] — the qualitative synthesis layer that
+  // sits between raw data feeds and thesis generation. Each analysis card carries
+  // title, tickers, read (bull/bear/mixed), magnitude, numbered key_facts, and
+  // explicit key_uncertainty. Investment-grade reading material.
+  let analysisPanelHtml="";
+  {
+    const an=((D.briefing||{}).analysis||{});
+    const analyses=an.analyses||[];
+    if(analyses.length){
+      function _esc2(s){return esc(String(s||""));}
+      function _readCls(read){
+        const r=String(read||"").toLowerCase();
+        if(r==="bull"||r==="bullish") return ["BULL","pf-an-meta-pill-bull","pf-an-card-bull"];
+        if(r==="bear"||r==="bearish") return ["BEAR","pf-an-meta-pill-bear","pf-an-card-bear"];
+        return ["MIXED","pf-an-meta-pill-mix","pf-an-card-mix"];
+      }
+      function _magCls(mag){
+        const m=String(mag||"").toLowerCase();
+        if(m==="high") return ["HIGH","pf-an-meta-pill-mag-h"];
+        if(m==="medium"||m==="med") return ["MEDIUM","pf-an-meta-pill-mag-m"];
+        if(m==="low") return ["LOW","pf-an-meta-pill-mag"];
+        return [m.toUpperCase()||"—","pf-an-meta-pill-mag"];
+      }
+
+      const tally={bull:0,bear:0,mix:0};
+      analyses.forEach(a=>{
+        const r=String(a.read||"").toLowerCase();
+        if(r==="bull"||r==="bullish") tally.bull++;
+        else if(r==="bear"||r==="bearish") tally.bear++;
+        else tally.mix++;
+      });
+
+      const cardsHtml=analyses.map(a=>{
+        const [readLbl,readPill,readBorder]=_readCls(a.read);
+        const [magLbl,magPill]=_magCls(a.magnitude);
+        const tickersHtml=(a.tickers||[]).map(tk=>`<span class="pf-an-tk">${_esc2(tk)}</span>`).join("");
+        const horizonPill=a.horizon?`<span class="pf-an-meta-pill pf-an-meta-pill-hor">${_esc2(a.horizon)}</span>`:"";
+        const factsHtml=(a.key_facts||[]).map(f=>`<li class="pf-an-fact">${_esc2(f)}</li>`).join("");
+        const uncHtml=a.key_uncertainty?`<div class="pf-an-unc"><div class="pf-an-unc-h">⚠ Schlüssel-Unsicherheit</div>${_esc2(a.key_uncertainty)}</div>`:"";
+        return `<div class="pf-an-card ${readBorder}">
+          <div class="pf-an-card-hdr">
+            <div class="pf-an-card-title">${_esc2(a.title)}</div>
+            <div class="pf-an-card-meta">
+              ${tickersHtml}
+              <span class="pf-an-meta-pill ${readPill}">${readLbl}</span>
+              ${horizonPill}
+              <span class="pf-an-meta-pill ${magPill}">Magnitude ${magLbl}</span>
+            </div>
+          </div>
+          ${factsHtml?`<div><div class="pf-an-facts-h">Key Facts</div><ul class="pf-an-facts">${factsHtml}</ul></div>`:""}
+          ${uncHtml}
+        </div>`;
+      }).join("");
+
+      const briefingDate=((D.briefing||{}).created_at)?String((D.briefing||{}).created_at).slice(0,10):"—";
+      analysisPanelHtml=`<div class="panel pf-an-panel">
+        <div class="pf-an-h">
+          <div>
+            <div class="pf-an-title">Heutige Analyse — Schlüssel-Lesungen</div>
+            <div class="pf-an-sub">Aus Briefing ${briefingDate} · ${analyses.length} Analyse${analyses.length===1?"":"n"} · Bull/Bear/Mixed-Read · Numerierte Key-Facts pro Lesung · Schlüssel-Unsicherheit explizit ausgewiesen</div>
+          </div>
+          <div class="pf-an-tally">
+            <div class="pf-an-tally-cell pf-an-tally-bull"><span class="pf-an-tally-val">${tally.bull}</span><span class="pf-an-tally-lbl">Bull</span></div>
+            <div class="pf-an-tally-cell pf-an-tally-mix"><span class="pf-an-tally-val">${tally.mix}</span><span class="pf-an-tally-lbl">Mixed</span></div>
+            <div class="pf-an-tally-cell pf-an-tally-bear"><span class="pf-an-tally-val">${tally.bear}</span><span class="pf-an-tally-lbl">Bear</span></div>
+          </div>
+        </div>
+        <div class="pf-an-grid">${cardsHtml}</div>
+        <div class="pf-an-foot">Lesungen sind die qualitative Synthese zwischen Rohdaten-Feeds und Thesis-Generierung. Read-Klassifikation: BULL (positive Direction-Bias), BEAR (negative Bias), MIXED (Beweise gehen in beide Richtungen). Magnitude: HIGH (markt-bewegend), MEDIUM (positions-relevant), LOW (background). Schlüssel-Unsicherheit identifiziert, was wir noch nicht wissen — die nächste Recherche-Anforderung.</div>
+      </div>`;
+    }
+  }
+
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
