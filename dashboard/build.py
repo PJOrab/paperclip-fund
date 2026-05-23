@@ -476,6 +476,29 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-pnl-empty{font-size:var(--fs-micro);color:var(--mut);padding:var(--s2) 0}
 .kpi--pos{color:var(--green)}
 .kpi--neg{color:var(--red)}
+/* Thesis price-context bar: Bloomberg-style market data row embedded in each call card */
+.th-mkt{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin:var(--s2) 0 var(--s3);
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-variant-numeric:tabular-nums}
+.th-mkt-cell{display:flex;flex-direction:column;justify-content:center;padding:5px var(--s3);
+  border-right:1px solid var(--line);min-width:0;flex:1 1 auto}
+.th-mkt-cell:last-child{border-right:none}
+.th-mkt-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.th-mkt-val{font-size:var(--fs-cap);font-weight:700;white-space:nowrap}
+.th-mkt-val.up{color:var(--green)}
+.th-mkt-val.dn{color:var(--red)}
+.th-mkt-val.flat{color:var(--mut)}
+/* 52w range bar: compact horizontal thermometer showing price position within 52-week band */
+.th-52w-bar{margin-top:3px;height:4px;background:var(--line);border-radius:2px;position:relative;width:100%;min-width:40px}
+.th-52w-fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--accent);min-width:3px}
+/* call-direction confirm/diverge tint on the since-call cell */
+.th-mkt-cell.mkt-confirm{background:rgba(63,185,80,.08);border-bottom:2px solid var(--green)}
+.th-mkt-cell.mkt-against{background:rgba(248,81,73,.08);border-bottom:2px solid var(--red)}
+@media(max-width:430px){
+  .th-mkt{flex-wrap:wrap}
+  .th-mkt-cell{flex:1 1 46%;min-width:80px;padding:4px var(--s2)}
+  .th-mkt-cell:nth-child(even){border-right:none}
+  .th-mkt-cell:nth-child(odd):not(:last-child){border-right:1px solid var(--line)}
+}
 @media(max-width:560px){
   .pf-pnl-row{grid-template-columns:1fr 50px;grid-template-areas:"tk val" "bar bar";row-gap:3px}
   .pf-pnl-row > .pf-pnl-tk{grid-area:tk;min-width:0}
@@ -954,14 +977,72 @@ else{
     html+=`<div class="brief">${briefHtml}</div>`;
   }
   html+=`</div>`; // .brief-main
+  // Price-context map: ticker → sector_view data for embedding in thesis cards
+  const _mktMap={};
+  ((D.sector_view||{}).sectors||[]).forEach(s=>{
+    (s.tickers||[]).forEach(tk=>{if(tk&&tk.ticker)_mktMap[String(tk.ticker).toUpperCase()]=tk;});
+  });
+  // Track-record baseline map: ticker → {bp, dir} from highest-conviction active thesis per ticker
+  const _baseMap={};
+  ((D.track_record||{}).theses||[]).forEach(t=>{
+    if(t.baseline_price==null) return;
+    (t.tickers||[]).forEach(tk=>{
+      const key=String(tk).toUpperCase();
+      if(!_baseMap[key]||(_baseMap[key].conv||0)<(t.conviction||0))
+        _baseMap[key]={bp:t.baseline_price,dir:(t.direction||"").toLowerCase(),conv:t.conviction||0};
+    });
+  });
+  // thMktHtml: returns the Bloomberg-style price-context bar for a thesis card
+  function thMktHtml(t){
+    const tks=(t.tickers||[]).map(x=>String(x).toUpperCase()).filter(Boolean);
+    if(!tks.length) return "";
+    const cells=tks.map(tk=>{
+      const m=_mktMap[tk]; if(!m||m.price==null) return "";
+      const up1=(m.change_pct||0)>0.005,dn1=(m.change_pct||0)<-0.005;
+      const sign1=up1?"+":"−",cls1=up1?"up":dn1?"dn":"flat";
+      const chgTip=`${tk} — heute ${sign1}${Math.abs(m.change_pct||0).toFixed(2)}%`;
+      const priceCell=`<div class="th-mkt-cell"><div class="th-mkt-lbl">${esc(tk)}</div><div class="th-mkt-val ${cls1}" title="${esc(chgTip)}">$${m.price.toFixed(2)} <span style="font-weight:500;opacity:.8">${sign1}${Math.abs(m.change_pct||0).toFixed(1)}%</span></div></div>`;
+      let callCell="";
+      const base=_baseMap[tk];
+      if(base){
+        const dir=(t.direction||base.dir||"").toLowerCase();
+        const rawPct=((m.price-base.bp)/base.bp)*100;
+        const pnl=dir==="short"?-rawPct:rawPct;
+        const up=pnl>=0.1,dn=pnl<=-0.1;
+        const confCls=up?"mkt-confirm":dn?"mkt-against":"";
+        const clsPnl=up?"up":dn?"dn":"flat";
+        const pnlTip=`Baseline $${base.bp} → $${m.price.toFixed(2)} — ${up?"+":"−"}${Math.abs(pnl).toFixed(2)}% seit Call (${dir.toUpperCase()})`;
+        callCell=`<div class="th-mkt-cell ${confCls}"><div class="th-mkt-lbl">seit Call</div><div class="th-mkt-val ${clsPnl}" title="${esc(pnlTip)}">${up?"+":"−"}${Math.abs(pnl).toFixed(2)}%</div></div>`;
+      }
+      let rangeCell="";
+      if(m.pct_of_52w_high!=null){
+        const pct52=Math.min(100,Math.max(2,m.pct_of_52w_high));
+        const rTip=`52W Hoch $${m.w52_high??'?'} · Tief $${m.w52_low??'?'} · ${pct52.toFixed(0)}% vom Jahreshoch`;
+        rangeCell=`<div class="th-mkt-cell" title="${esc(rTip)}"><div class="th-mkt-lbl">52W-Position</div><div class="th-mkt-val flat">${pct52.toFixed(0)}%</div><div class="th-52w-bar" aria-hidden="true"><div class="th-52w-fill" style="width:${pct52}%"></div></div></div>`;
+      }
+      let techCell="";
+      if(m.rsi14!=null||m.pct_vs_ma30!=null){
+        const rsiCls=m.rsi14>70?"up":m.rsi14<30?"dn":"flat";
+        const rsiTip=(m.rsi14!=null?`RSI14: ${m.rsi14} (${m.rsi14>70?"overbought":m.rsi14<30?"oversold":"neutral"})`:"")+
+          (m.pct_vs_ma30!=null?(m.rsi14!=null?" · ":"")+`MA30: ${m.pct_vs_ma30>=0?"+":""}${m.pct_vs_ma30?.toFixed(1)}%`:"");
+        const techLbl=m.rsi14!=null&&m.pct_vs_ma30!=null?"RSI · MA30":m.rsi14!=null?"RSI14":"MA30";
+        const techVal=m.rsi14!=null&&m.pct_vs_ma30!=null?`${m.rsi14} / ${m.pct_vs_ma30>=0?"+":""}${m.pct_vs_ma30?.toFixed(1)}%`:
+          m.rsi14!=null?String(m.rsi14):`${m.pct_vs_ma30>=0?"+":""}${m.pct_vs_ma30?.toFixed(1)}%`;
+        techCell=`<div class="th-mkt-cell"><div class="th-mkt-lbl">${techLbl}</div><div class="th-mkt-val ${rsiCls}" title="${esc(rsiTip)}">${techVal}</div></div>`;
+      }
+      return priceCell+callCell+rangeCell+techCell;
+    }).filter(Boolean).join("");
+    return cells?`<div class="th-mkt">${cells}</div>`:"";
+  }
   if(theses.length){
     html+='<div class="brief-aside"><h2 class="brief-aside-h2">Thesen & Devil\'s Advocate</h2>';
     html+=theses.map((t,i)=>{
       const c=cmap[t.id]||{};
-      return `<div class="thesis" id="thesis-${i+1}" tabindex="-1"><div class="h"><span class="idx-badge" aria-label="These ${i+1}">${i+1}</span>${(t.tickers||[]).join(", ")}
+      return `<div class="thesis" id="thesis-${i+1}" tabindex="-1"><div class="h"><span class="idx-badge" aria-label="Diese ${i+1}">${i+1}</span>${(t.tickers||[]).join(", ")}
         <span class="cd ${dirClass(t.direction)}">${t.direction||""}</span>
         <span class="${t.conviction!=null?convCls(t.conviction):'muted'}" title="${t.conviction!=null?convTip(t.conviction):''}">· Conv ${t.conviction!=null?t.conviction.toFixed(2):"—"}</span>
         ${t.horizon?`<span class="th-horizon" title="Zeithorizont der These">${esc(t.horizon)}</span>`:""}</div>
+        ${thMktHtml(t)}
         <div lang="en" style="margin-top:4px">${esc(t.thesis||"")}</div>
         ${t.edge&&t.is_differentiated?`<div class="edge-line">🎯 ${esc(t.edge)}</div>`:""}
         ${t.scenarios?(()=>{const s=t.scenarios;const fmtS=(k,c)=>{if(!c)return null;const tgt=c.target?` → ${esc(c.target)}`:"";const p=c.prob!=null?` (P=${Math.round(c.prob*100)}%)`:"";return `${k}${c.trigger?" "+esc(c.trigger):""}${tgt}${p}`;};const parts=[fmtS("Bull",s.bull),fmtS("Base",s.base),fmtS("Bear",s.bear)].filter(Boolean);return parts.length?`<div class="sc-line">📐 ${parts.join(" | ")}</div>`:""})():""}
