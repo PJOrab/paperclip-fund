@@ -63,6 +63,24 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-23 — HED-136 (DE Loop): **EpsRevisionsAdapter — sell-side IBES estimate-revision velocity**
+  (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`, `agents/prompts.py`).
+  Strategy.md gap #1 (datentiefe): pulls per-ticker IBES/StarMine-equivalent estimate-revision data
+  free from yfinance — the single strongest forward-return factor in academic asset pricing (PEAD /
+  Jegadeesh-Titman estimate-revision factor; competitors pay FactSet/Refinitiv six-figures/yr for it).
+  `eps_revisions`: # analysts who raised/cut EPS for current quarter (0q) and current fiscal year (0y)
+  over last 7d / 30d. `eps_trend`: numerical EPS estimate now vs 30d ago = drift %. Emits items ONLY
+  when directionally clear (filtered tug-of-war noise): |net 7d| ≥ 3 with ≥3x dominance, OR |net 30d|
+  ≥ 5 with ≥2x dominance, OR |drift| ≥ 3%; signs must align — contradictions drop. Same 17 liquid
+  watchlist tickers (NVDA/MSFT/GOOGL/META/AMZN/AAPL/AMD/TSM/ASML/ARM/AVGO/PLTR/ORCL/NOW/CRM/SNOW/CRWD).
+  **Live test: 11 directional items.** Strongest reads: PLTR (+14.3% Q-EPS drift, 21 up / 0 down 30d),
+  AMD (+13.2%, 34 up / 1 down), NOW (-10.8%, 0 up / 34 down — major bearish repricing the briefing
+  would otherwise miss), AAPL (+9.6%, 24 up / 0 down), ARM (+9.3%, 18 up / 3 down), NVDA (+7.1%,
+  7 up / 0 down). Stable dedup per (ticker, direction, drift-bucket-pp). source=eps_revisions,
+  reliability=0.85. Triage prompt: category='earnings', conviction tier rules with NOW-style major
+  repricing = importance 4. Analyst prompt: POSITIVE+bull cluster = +0.05-0.10 conviction; NEGATIVE
+  on a stock that hasn't dropped = differentiated bearish (multiple compression). py_compile clean,
+  test_dedup + test_watchlist_sync pass, adapter count 17 → 18.
 - 2026-05-22 — HED-129 (DE Loop): **OptionsMarketAdapter — P/C ratio, IV skew, expected move**
   (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`, `agents/prompts.py`,
   pushed `8f02a21`). Strategy.md #2 gap: institutional options positioning was completely dark.
