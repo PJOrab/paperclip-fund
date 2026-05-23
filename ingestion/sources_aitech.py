@@ -8,14 +8,16 @@ list[{text, source, url?, reliability?}].
 """
 import hashlib
 import html
+import json as _json
 import re
 import time
+import urllib.request
 from datetime import datetime, timezone, timedelta
 from email.utils import parsedate_to_datetime
 from urllib.parse import quote
 
 from . import watchlist as W
-from .adapters import _load_macro, fetch_json, fetch_url
+from .adapters import _DEFAULT_UA, _load_macro, fetch_json, fetch_url
 
 
 def _parse_rss_date(s: str):
@@ -117,12 +119,8 @@ def _fmt_dollar(v: float) -> str:
     return f"${v:.0f}"
 
 
-def _summarize_form4(xml: str) -> str:
-    """
-    Verdichtet eine Form-4-Ownership-XML zu einer bull/bear-lesbaren Zeile:
-    Richtung (BUY/SELL/MIXED/routine), Shares, Preis je Code, Holdings danach.
-    Gibt '' zurück, wenn keine nonDerivative-Transaktion gefunden wird.
-    """
+def _parse_form4_txns(xml: str) -> list[tuple[str, float, float, str, str]]:
+    """Return structured Form-4 non-derivative txns: [(code, shares, price, ad, post), ...]."""
     txns = []
     for blk in _F4_TXN_RE.findall(xml):
         cm = _F4_CODE_RE.search(blk)
@@ -138,6 +136,16 @@ def _summarize_form4(xml: str) -> str:
         ad = _f4_val(blk, "transactionAcquiredDisposedCode")
         post = _f4_val(blk, "sharesOwnedFollowingTransaction")
         txns.append((code, shares, price, ad, post))
+    return txns
+
+
+def _summarize_form4(xml: str) -> str:
+    """
+    Verdichtet eine Form-4-Ownership-XML zu einer bull/bear-lesbaren Zeile:
+    Richtung (BUY/SELL/MIXED/routine), Shares, Preis je Code, Holdings danach.
+    Gibt '' zurück, wenn keine nonDerivative-Transaktion gefunden wird.
+    """
+    txns = _parse_form4_txns(xml)
     if not txns:
         return ""
 
@@ -177,6 +185,78 @@ def _summarize_form4(xml: str) -> str:
     dollar_tag = f" {_fmt_dollar(om_vol)}" if om_vol > 0 else ""
 
     return f"{signal}{dollar_tag} — " + "; ".join(parts) + holds
+
+
+def _build_insider_cluster_item(ticker: str, company: str, cluster: dict) -> dict | None:
+    """
+    Aggregate open-market (P/S) Form-4 transactions over the EDGAR lookback
+    window into ONE cluster signal per ticker. Returns a raw_item dict on
+    qualifying clusters, else None.
+
+    Bar: ≥2 distinct execs in the same direction OR |net flow| ≥ 0K.
+    Single isolated P/S filings below the bar fall through — they were already
+    emitted as their own sec_form4 item.
+
+    Verdict labels (most-bullish first): CLUSTER BUY (multi-exec same-side
+    buys), STRONG BUY (single exec ≥ 0K), BUY (lone buy crossing dollar
+    bar), MIXED (both sides active), SELL/STRONG SELL/CLUSTER SELL mirrored,
+    NET BUY/SELL fallbacks when the dollar bar is crossed but the exec-count
+    bar is not.
+    """
+    buy_d = cluster.get("buy_dollars", 0.0)
+    sell_d = cluster.get("sell_dollars", 0.0)
+    buy_execs = cluster.get("buy_execs", set())
+    sell_execs = cluster.get("sell_execs", set())
+    n_buy = len(buy_execs)
+    n_sell = len(sell_execs)
+    net = buy_d - sell_d
+    DOLLAR_BAR = 500_000.0
+    has_buy = buy_d > 0
+    has_sell = sell_d > 0
+
+    if (n_buy < 2 and n_sell < 2 and abs(net) < DOLLAR_BAR):
+        return None
+
+    if has_buy and has_sell and (n_buy >= 2 or n_sell >= 2):
+        verdict = "MIXED"
+    elif n_buy >= 2 and not has_sell:
+        verdict = "CLUSTER BUY"
+    elif n_sell >= 2 and not has_buy:
+        verdict = "CLUSTER SELL"
+    elif n_buy >= 2 and n_buy > n_sell:
+        verdict = "MIXED (buy-heavy)"
+    elif n_sell >= 2 and n_sell > n_buy:
+        verdict = "MIXED (sell-heavy)"
+    elif net >= DOLLAR_BAR:
+        verdict = "NET BUY"
+    elif net <= -DOLLAR_BAR:
+        verdict = "NET SELL"
+    else:
+        return None
+
+    parts = []
+    if buy_d > 0:
+        parts.append(f"buys {_fmt_dollar(buy_d)} across {n_buy} exec{'s' if n_buy != 1 else ''}")
+    if sell_d > 0:
+        parts.append(f"sells {_fmt_dollar(sell_d)} across {n_sell} exec{'s' if n_sell != 1 else ''}")
+    body = "; ".join(parts) if parts else "no open-market activity"
+    net_tag = (
+        f"net {'+' if net >= 0 else '-'}{_fmt_dollar(abs(net))}"
+        if (buy_d > 0 and sell_d > 0)
+        else ""
+    )
+    tail = f" ({net_tag})" if net_tag else ""
+
+    text = (
+        f"[INSIDER CLUSTER {verdict}] {ticker} {company}: {body}{tail} "
+        f"over last {W.EDGAR_LOOKBACK_DAYS}d"
+    )
+    return {
+        "text": text,
+        "source": "insider_cluster",
+        "url": f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={ticker}&type=4",
+        "reliability": W.SOURCE_RELIABILITY.get("insider_cluster", 0.92),
+    }
 
 
 _8K_ITEM_RE = re.compile(r"Item\s+(\d+\.\d+)", re.IGNORECASE)
@@ -467,6 +547,19 @@ class EDGARAdapter:
             time.sleep(0.2)  # SEC: max 10 req/s
             if not data:
                 continue
+            # Per-ticker insider-cluster accumulator. Sums open-market (P/S)
+            # dollar volume across all Form-4 filings within EDGAR_LOOKBACK_DAYS
+            # so triage sees ONE aggregated cluster signal per ticker instead of
+            # 5-10 separate single-filing items lost in the noise. Academic
+            # cluster-buying signal (Cohen-Malloy-Pomorski) is among the strongest
+            # insider-activity factors.
+            cluster: dict = {
+                "buy_dollars": 0.0,
+                "sell_dollars": 0.0,
+                "buy_execs": set(),
+                "sell_execs": set(),
+                "filings": 0,
+            }
             recent = data.get("filings", {}).get("recent", {})
             form_l = recent.get("form", [])
             date_l = recent.get("filingDate", [])
@@ -502,12 +595,29 @@ class EDGARAdapter:
                         time.sleep(0.15)  # SEC: max 10 req/s
                         if xml:
                             summary = _summarize_form4(xml)
+                            owner_m = _F4_OWNER_RE.search(xml)
+                            owner = html.unescape(owner_m.group(1).strip()) if owner_m else ""
                             if summary:
-                                owner_m = _F4_OWNER_RE.search(xml)
-                                owner = html.unescape(owner_m.group(1).strip()) if owner_m else ""
                                 role = _f4_role(xml)
                                 who = owner + (f" ({role})" if role else "")
                                 detail = f"{who} — {summary}" if who else summary
+                            # Feed the cluster accumulator with open-market txns
+                            # (P=buy, S=sell). Routine codes (A/M/F/G/C/X) are
+                            # comp/exercise/tax and explicitly excluded — the
+                            # cluster signal is about discretionary trading.
+                            for code, shares, price, _ad, _post in _parse_form4_txns(xml):
+                                if code not in ("P", "S") or shares <= 0 or price <= 0:
+                                    continue
+                                dvol = shares * price
+                                if code == "P":
+                                    cluster["buy_dollars"] += dvol
+                                    if owner:
+                                        cluster["buy_execs"].add(owner)
+                                else:
+                                    cluster["sell_dollars"] += dvol
+                                    if owner:
+                                        cluster["sell_execs"].add(owner)
+                                cluster["filings"] += 1
                     except Exception:
                         pass
                 item_num = ""
@@ -571,6 +681,14 @@ class EDGARAdapter:
                     "url": doc_url,
                     "reliability": reliability,
                 })
+            # Per-ticker insider-cluster emit: turn the scattered Form-4 stream
+            # over the lookback window into one aggregated, dollar-weighted
+            # cluster verdict. Bar: ≥2 distinct execs in the same direction OR
+            # |net flow| ≥ 0K. Single-filing-only clusters fall back to the
+            # individual Form-4 items already emitted above.
+            cluster_item = _build_insider_cluster_item(tk, title, cluster)
+            if cluster_item:
+                out.append(cluster_item)
         return out
 
 

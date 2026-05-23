@@ -288,6 +288,12 @@ PRESS_WIRE_RSS_FEEDS = {
 
 SOURCE_RELIABILITY = {
     "sec_8k": 0.95, "sec_form4": 0.90, "sec_registration": 0.92,
+    # Aggregated insider-cluster signal: dollar-weighted P/S Form-4 roll-up per
+    # ticker over the EDGAR lookback window. Higher than single sec_form4
+    # (0.90) because multi-exec/multi-filing convergence is the academic
+    # cluster-buying signal (Cohen-Malloy-Pomorski) — a stronger conviction
+    # read than any one filing in isolation.
+    "insider_cluster": 0.92,
     # SC 13D/G = beneficial-ownership filings (>5% stake / activist position).
     # Authoritative SEC source; activist 13Ds are high-signal catalysts.
     "sec_13dg": 0.93,
