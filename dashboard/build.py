@@ -2647,6 +2647,10 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-pm-tally-hold{background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3)}
 .pf-pm-tally-red{background:rgba(210,168,80,.15);color:#e3b341;border:1px solid rgba(210,168,80,.3)}
 .pf-pm-tally-cut{background:rgba(248,81,73,.15);color:#f85149;border:1px solid rgba(248,81,73,.3)}
+.pf-pm-csv{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:14px;font-size:10px;font-weight:600;color:var(--mut);background:rgba(139,148,158,.06);border:1px solid rgba(139,148,158,.15);cursor:pointer;flex-shrink:0;transition:all .12s;font-family:inherit;white-space:nowrap;margin-left:8px}
+.pf-pm-csv:hover{background:rgba(35,134,54,.10);color:#3fb950;border-color:rgba(35,134,54,.3)}
+.pf-pm-csv:active{transform:scale(.96)}
+.pf-pm-csv-success{background:rgba(35,134,54,.18)!important;color:#3fb950!important;border-color:rgba(35,134,54,.4)!important}
 .pf-pm-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .pf-pm-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--fs-cap);font-variant-numeric:tabular-nums;min-width:880px}
 .pf-pm-tbl thead th{position:sticky;top:0;background:var(--bg);padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut);border-bottom:1px solid rgba(139,148,158,.15);white-space:nowrap}
@@ -11078,7 +11082,21 @@ function calibSvg(buckets){
         : `<span class="pf-pm-verd-score">Score ${r.score>=0?'+':''}${r.score.toFixed(1)}</span>`;
       const verdictCell=`<div class="pf-pm-verd"><span class="pf-pm-verd-badge ${r.verdCls}">${r.verdLbl}</span>${flagsStr}</div>`;
 
-      return `<tr class="${r.rowCls}">
+      // Structured CSV data per row — used by CSV export
+      const csvData={
+        ticker:r.tk, direction:r.dir, conviction:r.t.conviction||0,
+        sector:r.sv.sector_name||"", days_in_trade:r.days||0,
+        baseline:r.baseline||"", current:r.price||"", ret_pct:r.ret==null?"":r.ret.toFixed(2),
+        rsi14:r.sv.rsi14||"", pct_vs_ma30:r.sv.pct_vs_ma30||"", pct_52w_high:r.sv.pct_of_52w_high||"",
+        opt_verdict:r.ot?r.ot.verdict||"":"", opt_emove:r.ot?(r.ot.emove||""):"",
+        insider_net_m:r.it?((r.it.net_dollar||0)/1e6).toFixed(2):"",
+        squeeze_bucket:r.ss?r.ss.bucket||"":"",
+        earnings_date:r.ec?r.ec.date||"":"", earnings_days_out:r.ec?(r.ec.days_out||""):"",
+        devil_verdict:r.devilVerd||"", devil_note:(r.devil.note||"").replace(/"/g,'""'),
+        score:r.score, verdict:r.verdLbl
+      };
+      const csvAttr=encodeURIComponent(JSON.stringify(csvData));
+      return `<tr class="${r.rowCls}" data-pf-pm-csv="${csvAttr}">
         <td>${positionCell}</td>
         <td class="pf-pm-spark-cell">${sparkSvg}</td>
         <td>${priceCell}</td>
@@ -11102,6 +11120,9 @@ function calibSvg(buckets){
           ${tally.REDUCE?`<span class="pf-pm-tally-pill pf-pm-tally-red">${tally.REDUCE} REDUCE</span>`:""}
           ${tally.HOLD?`<span class="pf-pm-tally-pill pf-pm-tally-hold">${tally.HOLD} HOLD</span>`:""}
           ${tally.ADD?`<span class="pf-pm-tally-pill pf-pm-tally-add">${tally.ADD} ADD</span>`:""}
+          <button id="pf-pm-csv-btn" class="pf-pm-csv" type="button" title="Export Position-Matrix als CSV — kompatibel mit Excel/Sheets für weitere Analyse">
+            <span>⇩</span><span class="pf-pm-csv-lbl">CSV</span>
+          </button>
         </div>
       </div>
       <div class="pf-pm-wrap">
@@ -12409,6 +12430,54 @@ function calibSvg(buckets){
       const str=`${String(built.getDate()).padStart(2,'0')}.${String(built.getMonth()+1).padStart(2,'0')}.${built.getFullYear()} ${String(built.getHours()).padStart(2,'0')}:${String(built.getMinutes()).padStart(2,'0')} UTC`;
       pv.setAttribute("data-built", str);
     }catch(e){}
+  })();
+
+  // Position-Matrix CSV Export (HED-150 Zyklus 180).
+  // Reads embedded JSON data attributes from each row, builds RFC-4180 CSV,
+  // triggers download. Useful for PM Excel/Sheets analysis + IC archival.
+  (function initPmCsv(){
+    const btn=document.getElementById("pf-pm-csv-btn");
+    if(!btn) return;
+    btn.addEventListener("click",function(){
+      const rows=document.querySelectorAll("[data-pf-pm-csv]");
+      if(!rows.length) return;
+      const records=Array.from(rows).map(tr=>{
+        try{return JSON.parse(decodeURIComponent(tr.getAttribute("data-pf-pm-csv")));}
+        catch(e){return null;}
+      }).filter(Boolean);
+      if(!records.length) return;
+      // Build CSV (RFC-4180 quote rules)
+      const cols=["ticker","direction","conviction","sector","days_in_trade","baseline","current","ret_pct","rsi14","pct_vs_ma30","pct_52w_high","opt_verdict","opt_emove","insider_net_m","squeeze_bucket","earnings_date","earnings_days_out","devil_verdict","devil_note","score","verdict"];
+      function _cell(v){
+        if(v==null) return "";
+        const s=String(v);
+        if(/[",\n\r]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
+        return s;
+      }
+      const lines=[cols.join(",")];
+      records.forEach(r=>{
+        lines.push(cols.map(c=>_cell(r[c])).join(","));
+      });
+      // Add UTF-8 BOM for Excel-friendly opening
+      const csv="﻿"+lines.join("\r\n");
+      const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+      const url=URL.createObjectURL(blob);
+      const now=new Date();
+      const dateStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+      const filename=`hedging-alpha-positions-${dateStr}.csv`;
+      const a=document.createElement("a");
+      a.href=url; a.download=filename; a.style.display="none";
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{document.body.removeChild(a); URL.revokeObjectURL(url);}, 100);
+      // Feedback
+      const origLbl=btn.querySelector(".pf-pm-csv-lbl").textContent;
+      btn.classList.add("pf-pm-csv-success");
+      btn.querySelector(".pf-pm-csv-lbl").textContent="Saved!";
+      setTimeout(()=>{
+        btn.classList.remove("pf-pm-csv-success");
+        btn.querySelector(".pf-pm-csv-lbl").textContent=origLbl;
+      }, 1800);
+    });
   })();
 
   // Universe-Scanner Filter (HED-150 Zyklus 179).
