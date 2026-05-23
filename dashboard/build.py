@@ -2146,6 +2146,50 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Portfolio-Alerts — Cross-Panel Signal Aggregation (HED-150 Zyklus 160)
+   Synthesis layer that aggregates warnings across all panels (event-horizon conflicts,
+   insider distribution, research correlation, macro regime) into a single priority-sorted
+   alert strip. PM-grade decision support: what needs attention RIGHT NOW. */
+.pf-al-panel{padding:var(--s3);margin-top:var(--s3)}
+.pf-al-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s2)}
+.pf-al-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt);line-height:1.2}
+.pf-al-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-al-tally{display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
+.pf-al-tally-cell{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:14px;font-size:var(--fs-cap);font-weight:700;letter-spacing:.02em}
+.pf-al-tally-crit{background:rgba(248,81,73,.12);color:#f85149;border:1px solid rgba(248,81,73,.3)}
+.pf-al-tally-warn{background:rgba(210,168,80,.12);color:#e3b341;border:1px solid rgba(210,168,80,.3)}
+.pf-al-tally-info{background:rgba(88,166,255,.10);color:var(--blue);border:1px solid rgba(88,166,255,.25)}
+.pf-al-tally-quiet{background:rgba(35,134,54,.10);color:#3fb950;border:1px solid rgba(35,134,54,.25)}
+.pf-al-list{display:flex;flex-direction:column;gap:6px;margin-top:var(--s2)}
+.pf-al-card{display:flex;align-items:stretch;gap:0;border-radius:5px;overflow:hidden;background:rgba(139,148,158,.04);border:1px solid rgba(139,148,158,.1)}
+.pf-al-card-stripe{width:5px;flex-shrink:0}
+.pf-al-card-crit .pf-al-card-stripe{background:#f85149}
+.pf-al-card-crit{border-color:rgba(248,81,73,.3)}
+.pf-al-card-warn .pf-al-card-stripe{background:#e3b341}
+.pf-al-card-warn{border-color:rgba(210,168,80,.3)}
+.pf-al-card-info .pf-al-card-stripe{background:var(--blue)}
+.pf-al-card-info{border-color:rgba(88,166,255,.25)}
+.pf-al-card-body{flex:1;display:grid;grid-template-columns:auto auto 1fr auto;gap:var(--s2);align-items:center;padding:8px var(--s3);min-width:0}
+.pf-al-sev{display:inline-flex;align-items:center;justify-content:center;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.06em;line-height:1.4;text-transform:uppercase;flex-shrink:0}
+.pf-al-sev-crit{background:rgba(248,81,73,.18);color:#f85149}
+.pf-al-sev-warn{background:rgba(210,168,80,.18);color:#e3b341}
+.pf-al-sev-info{background:rgba(88,166,255,.15);color:var(--blue)}
+.pf-al-tk{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;font-size:12px;color:var(--txt);padding:2px 6px;background:rgba(139,148,158,.12);border-radius:3px;letter-spacing:.02em;flex-shrink:0}
+.pf-al-tk-multi{font-family:inherit;letter-spacing:.04em;text-transform:uppercase;font-size:10px}
+.pf-al-msg{font-size:var(--fs-cap);color:var(--txt);line-height:1.45;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-al-msg-wrap{white-space:normal}
+.pf-al-srcs{display:flex;gap:3px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.pf-al-src{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);padding:2px 5px;background:rgba(139,148,158,.08);border-radius:3px;line-height:1.4}
+.pf-al-empty{padding:var(--s3);text-align:center;color:#3fb950;font-size:var(--fs-cap);background:rgba(35,134,54,.05);border-left:3px solid #3fb950;border-radius:4px}
+.pf-al-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s2);line-height:1.5}
+@media(max-width:600px){
+  .pf-al-h{flex-direction:column}
+  .pf-al-tally{width:100%;justify-content:space-between}
+  .pf-al-tally-cell{flex:1;justify-content:center;font-size:10px;padding:3px 6px}
+  .pf-al-card-body{grid-template-columns:auto auto 1fr;gap:6px;padding:6px var(--s2)}
+  .pf-al-msg{white-space:normal;font-size:11px}
+  .pf-al-srcs{grid-column:1/-1;justify-content:flex-start;margin-top:2px}
+}
 /* Insider-Flow Intelligence — Smart-Money Distribution (HED-150 Zyklus 159)
    Deep dive on insider activity: WHO is buying/selling, in what role, and how much.
    Per-ticker net flow bars + top individual transactions table. Universe Scanner
@@ -9841,7 +9885,231 @@ function calibSvg(buckets){
     }
   }
 
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${insiderFlowHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Portfolio-Alerts — Cross-Panel Signal Aggregation (HED-150 Zyklus 160).
+  // Synthesis layer that aggregates warnings across all panels into a single
+  // priority-sorted strip. Crit > Warn > Info. Cross-source confirmations
+  // (e.g. TSM with BEAR options AND insider sell) get bumped to CRIT.
+  let alertsPanelHtml="";
+  {
+    const _activeTk=new Set(active.flatMap(th=>(th.tickers||[]).map(tk=>String(tk).toUpperCase())));
+    const _activeDir={};
+    active.forEach(th=>{
+      const dir=(th.direction||"").toLowerCase();
+      (th.tickers||[]).forEach(tk=>_activeDir[String(tk).toUpperCase()]=dir);
+    });
+
+    // Build per-ticker signal map across sources
+    const tkSig={};
+    function _ensureTk(tk){
+      if(!tkSig[tk]) tkSig[tk]={ticker:tk,opt:null,ins:null,squeeze:null,emove:null};
+      return tkSig[tk];
+    }
+    ((D.options_tape||{}).tickers||[]).forEach(t=>{
+      if(!t||!t.ticker) return;
+      const sigs=t.signals||[];
+      const hasEvent=sigs.some(s=>typeof s==="string"&&s.indexOf("Event")>=0);
+      _ensureTk(String(t.ticker).toUpperCase()).opt={verdict:t.verdict,hasEvent,emove:t.emove,exp:t.exp};
+      if(hasEvent) _ensureTk(String(t.ticker).toUpperCase()).emove=t.emove;
+    });
+    ((D.insider_tape||{}).tickers||[]).forEach(t=>{
+      if(!t||!t.ticker) return;
+      _ensureTk(String(t.ticker).toUpperCase()).ins={net:t.net_dollar,n_buy:t.n_buy_execs,n_sell:t.n_sell_execs};
+    });
+    ((D.short_squeeze||{}).tickers||[]).forEach(t=>{
+      if(!t||!t.ticker) return;
+      _ensureTk(String(t.ticker).toUpperCase()).squeeze={bucket:t.bucket,verdict:t.verdict,si:t.si};
+    });
+
+    function _fmtM(amt){
+      const abs=Math.abs(amt);
+      if(abs>=1e9) return `$${(amt/1e9).toFixed(1)}B`;
+      if(abs>=1e6) return `$${(amt/1e6).toFixed(amt>=10e6||amt<=-10e6?0:1)}M`;
+      if(abs>=1e3) return `$${(amt/1e3).toFixed(0)}K`;
+      return `$${amt.toFixed(0)}`;
+    }
+
+    // Build alert list
+    const alerts=[];
+
+    // 1. Active-position catalyst-conflict alerts (CRIT for multi-source)
+    Array.from(_activeTk).forEach(TK=>{
+      const sig=tkSig[TK];
+      const dir=_activeDir[TK];
+      if(!sig||!dir) return;
+      const sources=[];
+      let critical=false, msg=[];
+
+      // Options conflict
+      if(sig.opt){
+        if(dir==="long" && (sig.opt.verdict==="bearish_setup"||sig.opt.verdict==="hedge_bid")){
+          sources.push("Options");
+          msg.push(`Options-Setup BEAR${sig.opt.emove?` ±${sig.opt.emove.toFixed(1)}%`:""}`);
+        } else if(dir==="short" && (sig.opt.verdict==="bullish_setup"||sig.opt.verdict==="squeeze_risk")){
+          sources.push("Options");
+          msg.push(`Options-Setup BULL${sig.opt.emove?` ±${sig.opt.emove.toFixed(1)}%`:""}`);
+        }
+      }
+      // Insider conflict (sell on LONG call or buy on SHORT call)
+      if(sig.ins && sig.ins.net && Math.abs(sig.ins.net)>=1e6){
+        if(dir==="long" && sig.ins.net<-1e6){
+          sources.push("Insider");
+          msg.push(`Insider-Verkauf ${_fmtM(Math.abs(sig.ins.net))} (${sig.ins.n_sell} Exec${sig.ins.n_sell===1?"":"s"})`);
+        } else if(dir==="short" && sig.ins.net>1e6){
+          sources.push("Insider");
+          msg.push(`Insider-Käufe ${_fmtM(sig.ins.net)} (${sig.ins.n_buy} Exec${sig.ins.n_buy===1?"":"s"})`);
+        }
+      }
+      // Squeeze conflict for shorts
+      if(sig.squeeze && dir==="short" && (sig.squeeze.bucket==="extreme"||sig.squeeze.bucket==="high")){
+        sources.push("Squeeze");
+        msg.push(`Short-Squeeze-Risiko (${sig.squeeze.bucket.toUpperCase()}, SI ${sig.squeeze.si?.toFixed(1)||"?"}%)`);
+      }
+
+      if(sources.length===0) return;
+      // Multi-source on active position = CRIT
+      const sev=sources.length>=2?"crit":"warn";
+      const action=sources.length>=2
+        ? `Multi-Source-Warnung gegen ${dir.toUpperCase()}-Call. Pre-Event-Risk-Reduktion oder Hedge erwägen.`
+        : `Counter-Direction-Signal gegen ${dir.toUpperCase()}-Call.`;
+      alerts.push({
+        sev, tickers:[TK], srcs:sources,
+        msg:`${msg.join(" · ")} — ${action}`,
+        score:sources.length>=2?100:60
+      });
+    });
+
+    // 2. Research-Pipeline correlation warning (if all theses share underlying)
+    {
+      const tlist=((D.briefing||{}).theses||{}).theses||[];
+      const corrNote=((D.briefing||{}).devils_advocate||{}).correlation_note||"";
+      const allReject=tlist.length>=2 && tlist.every(t=>{
+        const c=((D.briefing||{}).devils_advocate||{}).critiques?.find(x=>x.id===t.id);
+        return c && (c.verdict==="caution"||c.verdict==="reject");
+      });
+      const tkCount={};
+      tlist.forEach(t=>(t.tickers||[]).forEach(tk=>{const T=String(tk).toUpperCase(); tkCount[T]=(tkCount[T]||0)+1;}));
+      const shared=Object.entries(tkCount).filter(([_,n])=>n>=2);
+      if(shared.length){
+        const [tk,n]=shared[0];
+        // If we have an active position in this ticker AND the theses are all caution/reject = potential conviction conflict
+        const ourDir=_activeDir[tk];
+        let msg=`${n} parallele Thesen auf <b>${tk}</b> — selber Underlying, selber Risk-Factor, kein unabhängiges Signal.`;
+        let sev="info";
+        if(ourDir && allReject){
+          msg=`${n} Bear/Caution-Thesen auf <b>${tk}</b> während wir es ${ourDir.toUpperCase()} halten — Position vs Research-Divergenz prüfen.`;
+          sev="warn";
+        }
+        alerts.push({sev, tickers:[tk], srcs:["Research"], msg, score:sev==="warn"?70:40});
+      } else if(corrNote && tlist.length){
+        alerts.push({sev:"info", tickers:tlist[0].tickers||[], srcs:["Research"], msg:String(corrNote).slice(0,180)+(corrNote.length>180?"…":""), score:30});
+      }
+    }
+
+    // 3. Sektor-wide insider distribution signal
+    {
+      const it2=D.insider_tape||{};
+      const tk=it2.tickers||[];
+      const totalBuy=tk.reduce((s,t)=>s+(t.buy_dollar||0),0);
+      const totalSell=tk.reduce((s,t)=>s+(t.sell_dollar||0),0);
+      if(totalBuy<totalSell*0.05 && totalSell>50e6){
+        const ratio=(totalSell/Math.max(1,totalBuy)).toFixed(0);
+        alerts.push({
+          sev:"warn", tickers:["SEKTOR"], srcs:["Insider"],
+          msg:`Insider-Distribution sektorweit — Verkäufe ${_fmtM(totalSell)} gegen ${_fmtM(totalBuy)} Käufe (Verhältnis ${ratio}:1, ${tk.length} Ticker, ${it2.lookback_days||30}d).`,
+          score:50
+        });
+      }
+    }
+
+    // 4. Macro-Pulse regime info
+    {
+      const mp=D.macro_pulse||{};
+      const v=mp.verdict||{};
+      if(v.label){
+        const sev=v.label.toLowerCase()==="bullish"||v.label.toLowerCase()==="risk-on"?"info":
+                  v.label.toLowerCase()==="bearish"||v.label.toLowerCase()==="risk-off"?"warn":"info";
+        const tech=v.tech_read?` — ${String(v.tech_read).slice(0,140)}`:"";
+        alerts.push({
+          sev, tickers:["MACRO"], srcs:["Macro"],
+          msg:`Regime-Verdikt: <b>${esc(String(v.label))}</b>${v.score!=null?` (Score ${Number(v.score).toFixed(2)})`:""}${esc(tech)}`,
+          score:20
+        });
+      }
+    }
+
+    // 5. Event-Horizon: catalysts in the next 3 days (any active position)
+    {
+      const today=new Date(D.built_at_iso||Date.now());
+      today.setHours(0,0,0,0);
+      const events=((D.options_tape||{}).tickers||[]).filter(t=>{
+        const sigs=t.signals||[];
+        const hasEvent=sigs.some(s=>typeof s==="string"&&s.indexOf("Event")>=0);
+        if(!hasEvent||!t.exp) return false;
+        const d=new Date(t.exp+"T00:00:00");
+        if(isNaN(d.getTime())) return false;
+        const days=Math.round((d-today)/86400000);
+        return days>=0 && days<=3 && _activeTk.has(String(t.ticker).toUpperCase());
+      });
+      events.forEach(e=>{
+        const TK=String(e.ticker).toUpperCase();
+        const days=Math.round((new Date(e.exp+"T00:00:00")-today)/86400000);
+        // Skip if already alerted under #1 (conflict) — heuristic: only add if NO conflict found
+        const conflictExists=alerts.some(a=>a.tickers.includes(TK) && a.sev==="crit");
+        if(conflictExists) return;
+        alerts.push({
+          sev:"info", tickers:[TK], srcs:["Catalyst"],
+          msg:`Earnings-Catalyst ${e.exp} (in ${days===0?"Heute":days+"d"}) · Implied Move ±${e.emove?.toFixed(1)||"?"}%`,
+          score:25
+        });
+      });
+    }
+
+    // Sort by score desc, then severity order crit>warn>info
+    const sevRank={crit:3,warn:2,info:1};
+    alerts.sort((a,b)=>(sevRank[b.sev]-sevRank[a.sev])||(b.score-a.score));
+
+    const counts={crit:0,warn:0,info:0};
+    alerts.forEach(a=>{counts[a.sev]++;});
+
+    const cardsHtml=alerts.length
+      ? alerts.map(a=>{
+          const sevCls=`pf-al-card-${a.sev}`;
+          const sevLbl=a.sev==="crit"?"CRITICAL":a.sev==="warn"?"WARNING":"INFO";
+          const sevPill=`pf-al-sev-${a.sev}`;
+          const tkChip=a.tickers.length===1
+            ? `<span class="pf-al-tk${a.tickers[0]==="SEKTOR"||a.tickers[0]==="MACRO"?' pf-al-tk-multi':''}">${esc(a.tickers[0])}</span>`
+            : `<span class="pf-al-tk pf-al-tk-multi">${a.tickers.length} Tk</span>`;
+          const srcsHtml=`<div class="pf-al-srcs">${a.srcs.map(s=>`<span class="pf-al-src">${esc(s)}</span>`).join("")}</div>`;
+          return `<div class="pf-al-card ${sevCls}">
+            <div class="pf-al-card-stripe"></div>
+            <div class="pf-al-card-body">
+              <span class="pf-al-sev ${sevPill}">${sevLbl}</span>
+              ${tkChip}
+              <span class="pf-al-msg">${a.msg}</span>
+              ${srcsHtml}
+            </div>
+          </div>`;
+        }).join("")
+      : `<div class="pf-al-empty">✓ Keine aktiven Warnungen — Buch in normaler Verfassung.</div>`;
+
+    alertsPanelHtml=`<div class="panel pf-al-panel">
+      <div class="pf-al-h">
+        <div>
+          <div class="pf-al-title">Portfolio-Alerts — Cross-Panel Signal-Synthese</div>
+          <div class="pf-al-sub">Aggregiert Multi-Source-Signale (Options · Insider · Squeeze · Research · Macro) je aktiver Position. Multi-Source-Konflikte werden zu CRITICAL escaliert.</div>
+        </div>
+        <div class="pf-al-tally">
+          <div class="pf-al-tally-cell ${counts.crit?'pf-al-tally-crit':'pf-al-tally-quiet'}">${counts.crit} Critical</div>
+          <div class="pf-al-tally-cell ${counts.warn?'pf-al-tally-warn':'pf-al-tally-quiet'}">${counts.warn} Warning</div>
+          <div class="pf-al-tally-cell pf-al-tally-info">${counts.info} Info</div>
+        </div>
+      </div>
+      <div class="pf-al-list">${cardsHtml}</div>
+      <div class="pf-al-foot">Severity-Ranking: CRITICAL = ≥2 unabhängige Quellen gegen eine aktive Position · WARNING = einzelne Counter-Direction-Quelle oder Sektor-weites Signal · INFO = Regime-Verdikt, Earnings-Catalyst-Reminder, Research-Korrelations-Notiz. Quellen: Options-Tape (Verdict + IV-Move), Insider-Tape (Form-4 Netto-Flow), Short-Squeeze, Research-Pipeline, Makro-Pulse.</div>
+    </div>`;
+  }
+
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${alertsPanelHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${insiderFlowHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
