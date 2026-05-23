@@ -2146,6 +2146,53 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Idea-to-Position Pipeline Funnel (HED-150 Zyklus 170)
+   Process-meta-view: visualizes the fund's conversion funnel from raw universe
+   → trade-ideas → research-pipeline → active book. Shows research discipline
+   in one image. Conversion rates per stage make the filter ratio visible. */
+.pf-fn-panel{padding:var(--s3)}
+.pf-fn-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-fn-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-fn-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-fn-stats{display:flex;gap:var(--s3);flex-wrap:wrap;flex-shrink:0;align-items:flex-end}
+.pf-fn-stat{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:62px}
+.pf-fn-stat-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt)}
+.pf-fn-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut)}
+.pf-fn-stat-val-pos{color:#3fb950}
+.pf-fn-stat-val-warn{color:#e3b341}
+.pf-fn-funnel{display:flex;flex-direction:column;gap:8px;margin:0 auto;max-width:780px}
+.pf-fn-stage{position:relative;display:grid;grid-template-columns:1fr auto;gap:var(--s2);align-items:center;padding:14px var(--s3);border-radius:6px;border:1px solid rgba(139,148,158,.15);transition:all .12s;cursor:pointer;text-decoration:none;color:var(--txt)}
+.pf-fn-stage:hover{border-color:rgba(139,148,158,.35);text-decoration:none;color:var(--txt)}
+.pf-fn-stage-bar{position:absolute;left:0;top:0;bottom:0;border-radius:5px 0 0 5px;background:linear-gradient(90deg,rgba(88,166,255,.10),rgba(88,166,255,.04));z-index:0}
+.pf-fn-stage-1 .pf-fn-stage-bar{background:linear-gradient(90deg,rgba(139,148,158,.12),rgba(139,148,158,.04))}
+.pf-fn-stage-2 .pf-fn-stage-bar{background:linear-gradient(90deg,rgba(88,166,255,.15),rgba(88,166,255,.04))}
+.pf-fn-stage-3 .pf-fn-stage-bar{background:linear-gradient(90deg,rgba(210,168,80,.15),rgba(210,168,80,.04))}
+.pf-fn-stage-4 .pf-fn-stage-bar{background:linear-gradient(90deg,rgba(168,85,247,.15),rgba(168,85,247,.04))}
+.pf-fn-stage-5 .pf-fn-stage-bar{background:linear-gradient(90deg,rgba(35,134,54,.18),rgba(35,134,54,.04))}
+.pf-fn-stage-info{position:relative;z-index:1;display:flex;flex-direction:column;gap:3px;min-width:0}
+.pf-fn-stage-row{display:flex;align-items:center;gap:8px}
+.pf-fn-stage-num{font-size:11px;font-weight:700;color:var(--mut);font-variant-numeric:tabular-nums}
+.pf-fn-stage-lbl{font-weight:700;font-size:15px;color:var(--txt)}
+.pf-fn-stage-desc{font-size:11px;color:var(--mut);line-height:1.4}
+.pf-fn-stage-cnt{position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.pf-fn-stage-cnt-val{font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt)}
+.pf-fn-stage-5 .pf-fn-stage-cnt-val{color:#3fb950}
+.pf-fn-stage-cnt-unit{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut)}
+.pf-fn-arrow{display:flex;align-items:center;justify-content:center;height:14px;margin:-2px 0}
+.pf-fn-arrow-line{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--mut);font-variant-numeric:tabular-nums}
+.pf-fn-arrow-rate{display:inline-flex;align-items:center;padding:1px 6px;border-radius:3px;background:rgba(139,148,158,.08);font-weight:700;font-size:10px;letter-spacing:.02em}
+.pf-fn-arrow-rate-warn{background:rgba(210,168,80,.12);color:#e3b341}
+.pf-fn-arrow-rate-low{background:rgba(248,81,73,.12);color:#f85149}
+.pf-fn-arrow-rate-good{background:rgba(35,134,54,.12);color:#3fb950}
+.pf-fn-arrow-icon{font-size:14px;color:var(--mut);line-height:1}
+.pf-fn-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+@media(max-width:600px){
+  .pf-fn-h{flex-direction:column}
+  .pf-fn-stats{width:100%;justify-content:space-between}
+  .pf-fn-stage{padding:10px 12px}
+  .pf-fn-stage-lbl{font-size:13px}
+  .pf-fn-stage-cnt-val{font-size:24px}
+}
 /* Conviction-Performance Kalibrierungs-Map (HED-150 Zyklus 169)
    2D scatter: X = Conviction (0-1), Y = current unrealized PnL %. Quadrants test
    the fundamental calibration question — does my conviction predict outcomes?
@@ -11997,7 +12044,112 @@ function calibSvg(buckets){
     }
   }
 
-  root.innerHTML=`${subNavHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Idea-to-Position Pipeline Funnel (HED-150 Zyklus 170).
+  // Process-meta-view: visualizes the fund's conversion funnel from universe →
+  // ideas → research-pipeline → red-team-survivors → active book. Shows the filter
+  // discipline as a single visual; conversion rates per stage make ratios explicit.
+  let funnelHtml="";
+  {
+    // Stage counts
+    const _univCount=((D.sector_view||{}).sectors||[]).reduce((s,sec)=>s+(sec.tickers||[]).length,0);
+    // Count ideas from trade-idea generation (recompute minimal)
+    const _activeTk=new Set(active.flatMap(th=>(th.tickers||[]).map(tk=>String(tk).toUpperCase())));
+    const _sv={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{if(t&&t.ticker) _sv[t.ticker.toUpperCase()]={...t,sector_name:s.name};}));
+    const _ot={};((D.options_tape||{}).tickers||[]).forEach(t=>{if(t&&t.ticker) _ot[t.ticker.toUpperCase()]=t;});
+    let _ideaCount=0;
+    Object.entries(_sv).forEach(([tk,d])=>{
+      if(_activeTk.has(tk)) return;
+      const c=d.consensus||{}; const o=_ot[tk]||null;
+      let s=0;
+      if(o){if(o.verdict==="bullish_setup") s+=2; else if(o.verdict==="bearish_setup") s-=2; else if(o.verdict==="hedge_bid") s-=1;}
+      const fpe=c.fwd_pe, rev=c.rev_growth_yoy;
+      if(typeof fpe==="number"&&fpe>0&&typeof rev==="number"){
+        const g=rev/fpe;
+        if(g>5) s+=2; else if(g>2) s+=1; else if(g<1&&fpe>30) s-=1;
+      }
+      if(c.rec==="strong_buy") s+=1; else if(c.rec==="sell"||c.rec==="strong_sell") s-=1;
+      const pt=c.pt_mean, price=d.price;
+      if(typeof pt==="number"&&pt>0&&typeof price==="number"&&price>0){
+        const up=(pt-price)/price*100;
+        if(up>30) s+=1; else if(up<-10) s-=1;
+      }
+      if(Math.abs(s)>=2) _ideaCount++;
+    });
+
+    const _pipelineCount=(((D.briefing||{}).theses||{}).theses||[]).length;
+    const critiques=((D.briefing||{}).devils_advocate||{}).critiques||[];
+    const _survivorCount=critiques.filter(c=>(c.verdict||"").toLowerCase()==="proceed").length;
+    const _bookCount=active.length;
+
+    function _rate(curr,prev){
+      if(!prev||prev<=0) return null;
+      return curr/prev*100;
+    }
+    function _rateCls(r){
+      if(r==null) return "pf-fn-arrow-rate";
+      if(r>=50) return "pf-fn-arrow-rate pf-fn-arrow-rate-good";
+      if(r>=20) return "pf-fn-arrow-rate";
+      if(r>=5) return "pf-fn-arrow-rate pf-fn-arrow-rate-warn";
+      return "pf-fn-arrow-rate pf-fn-arrow-rate-low";
+    }
+    function _rateLbl(r){
+      if(r==null) return "—";
+      return `${r.toFixed(0)}% pass`;
+    }
+    function _arrow(curr,prev){
+      const r=_rate(curr,prev);
+      return `<div class="pf-fn-arrow"><div class="pf-fn-arrow-line">
+        <span class="pf-fn-arrow-icon">↓</span>
+        <span class="${_rateCls(r)}">${_rateLbl(r)}</span>
+        <span>${prev||0} → ${curr||0}</span>
+      </div></div>`;
+    }
+    function _stage(num,cls,href,lbl,desc,cnt,unit){
+      return `<a class="pf-fn-stage ${cls}" href="${href}">
+        <span class="pf-fn-stage-bar"></span>
+        <div class="pf-fn-stage-info">
+          <div class="pf-fn-stage-row"><span class="pf-fn-stage-num">${num}</span><span class="pf-fn-stage-lbl">${lbl}</span></div>
+          <span class="pf-fn-stage-desc">${desc}</span>
+        </div>
+        <div class="pf-fn-stage-cnt">
+          <span class="pf-fn-stage-cnt-val">${cnt}</span>
+          <span class="pf-fn-stage-cnt-unit">${unit}</span>
+        </div>
+      </a>`;
+    }
+
+    // Overall conversion: universe → book
+    const overallConv=_rate(_bookCount,_univCount);
+
+    funnelHtml=`<div class="panel pf-fn-panel">
+      <div class="pf-fn-h">
+        <div>
+          <div class="pf-fn-title">Idea-to-Position Pipeline Funnel</div>
+          <div class="pf-fn-sub">Process-Meta-View: Conversion vom Universe → Trade-Ideas → Research-Pipeline → Red-Team-Überlebende → Aktives Buch · Filter-Disziplin als 1-Bild-Story</div>
+        </div>
+        <div class="pf-fn-stats">
+          <div class="pf-fn-stat"><span class="pf-fn-stat-val">${_univCount}</span><span class="pf-fn-stat-lbl">Universe</span></div>
+          <div class="pf-fn-stat"><span class="pf-fn-stat-val pf-fn-stat-val-pos">${_bookCount}</span><span class="pf-fn-stat-lbl">Im Buch</span></div>
+          <div class="pf-fn-stat"><span class="pf-fn-stat-val ${overallConv==null||overallConv<10?'pf-fn-stat-val-warn':''}">${overallConv==null?'—':overallConv.toFixed(0)+'%'}</span><span class="pf-fn-stat-lbl">Gesamt-Conv</span></div>
+        </div>
+      </div>
+      <div class="pf-fn-funnel">
+        ${_stage(1,"pf-fn-stage-1","#pf-scanner","Universe","Getrackte Ticker mit Konsens-Daten + Signal-Coverage",_univCount,"Ticker")}
+        ${_arrow(_ideaCount,_univCount)}
+        ${_stage(2,"pf-fn-stage-2","#pf-ideas","Trade-Ideas","Cross-Signal-Score |≥2| (Options + Insider + Fundamentals + Tech + Konsensus)",_ideaCount,"Kandidaten")}
+        ${_arrow(_pipelineCount,_ideaCount)}
+        ${_stage(3,"pf-fn-stage-3","#pf-pipeline","Research-Pipeline","Vom Strategist analysiert (volle Bull/Bear-Case + Devil's-Advocate)",_pipelineCount,"Analysen")}
+        ${_arrow(_survivorCount,_pipelineCount)}
+        ${_stage(4,"pf-fn-stage-4","#pf-pipeline","Red-Team-Survivors","Verdict PROCEED — Position-fähig (CAUTION/REJECT herausgefiltert)",_survivorCount,"OK")}
+        ${_arrow(_bookCount,_survivorCount)}
+        ${_stage(5,"pf-fn-stage-5","#pf-matrix","Aktives Buch","CEO-genehmigt + entered, Calls im Track-Record (verdict=too_early/scored)",_bookCount,"Calls")}
+      </div>
+      <div class="pf-fn-foot">Pass-Rates pro Stufe = Output ÷ Input · Niedrigere Pass-Rates = strenger Filter (Quality > Quantity). Bloomberg-Terminals zeigen Positionen, aber selten den <b>Filter-Tunnel</b>. Diese Sicht macht institutionelle Discipline messbar: 100 % Pass-Rates wären ein Warnsignal (zero red-team filter); 0 % bedeutet \"alles abgelehnt\" — die <b>Filter funktionieren</b>. Heutige Conversion ${overallConv==null?'—':overallConv.toFixed(0)+'%'} (${_bookCount}/${_univCount} Universe-Ticker im Buch) reflektiert einen konzentrierten, high-conviction Approach. Klick auf eine Stage scrollt zum Detail-Panel.</div>
+    </div>`;
+  }
+
+  root.innerHTML=`${subNavHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-funnel")}${funnelHtml}${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
