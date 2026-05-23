@@ -3126,10 +3126,12 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-us-stat-neu{color:var(--txt)}
 .pf-us-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 calc(-1*var(--s3));padding:0 var(--s3)}
 .pf-us-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-cap);font-variant-numeric:tabular-nums;white-space:nowrap}
-.pf-us-tbl thead th{position:sticky;top:0;z-index:2;background:var(--bg);padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut);border-bottom:1px solid rgba(139,148,158,.15);cursor:pointer;user-select:none}
-.pf-us-tbl thead th:hover{color:var(--txt)}
-.pf-us-tbl thead th.pf-us-sort-asc::after{content:" ▲";font-size:8px}
-.pf-us-tbl thead th.pf-us-sort-desc::after{content:" ▼";font-size:8px}
+.pf-us-tbl thead th{position:sticky;top:0;z-index:2;background:var(--bg);padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut);border-bottom:1px solid rgba(139,148,158,.15);cursor:pointer;user-select:none;transition:color .12s}
+.pf-us-tbl thead th:hover{color:var(--txt);background:rgba(139,148,158,.05)}
+.pf-us-tbl thead th.pf-us-sort-asc{color:var(--blue)}
+.pf-us-tbl thead th.pf-us-sort-desc{color:var(--blue)}
+.pf-us-tbl thead th.pf-us-sort-asc::after{content:" ▲";font-size:8px;color:var(--blue)}
+.pf-us-tbl thead th.pf-us-sort-desc::after{content:" ▼";font-size:8px;color:var(--blue)}
 .pf-us-tbl thead th.pf-us-th-r{text-align:right}
 .pf-us-tbl tbody tr{border-bottom:1px solid rgba(139,148,158,.08);transition:background .12s}
 .pf-us-tbl tbody tr:hover{background:rgba(139,148,158,.06)}
@@ -10085,14 +10087,14 @@ function calibSvg(buckets){
       <div class="pf-us-wrap">
         <table class="pf-us-tbl" id="pf-us-tbl">
           <thead><tr>
-            <th style="width:72px">Spark 30d</th>
-            <th>Ticker / Sektor</th>
-            <th class="pf-us-th-r">Kurs / Ret</th>
-            <th class="pf-us-hide-mobile">Konsensus / PT</th>
-            <th>Optionen</th>
-            <th class="pf-us-hide-mobile">Insider</th>
-            <th class="pf-us-hide-mobile">Short-SI</th>
-            <th class="pf-us-th-r">Score</th>
+            <th style="width:72px" data-pf-us-sort="none" title="Nicht sortierbar">Spark 30d</th>
+            <th data-pf-us-sort="text" data-pf-us-col-idx="1" title="Click — alphabetisch nach Ticker sortieren">Ticker / Sektor</th>
+            <th class="pf-us-th-r" data-pf-us-sort="numeric" data-pf-us-col-idx="2" title="Click — nach Kurs/Return sortieren">Kurs / Ret</th>
+            <th class="pf-us-hide-mobile" data-pf-us-sort="text" data-pf-us-col-idx="3" title="Click — nach Konsensus sortieren">Konsensus / PT</th>
+            <th data-pf-us-sort="text" data-pf-us-col-idx="4" title="Click — nach Options-Setup sortieren">Optionen</th>
+            <th class="pf-us-hide-mobile" data-pf-us-sort="numeric" data-pf-us-col-idx="5" title="Click — nach Insider-Flow sortieren">Insider</th>
+            <th class="pf-us-hide-mobile" data-pf-us-sort="text" data-pf-us-col-idx="6" title="Click — nach Short-Squeeze sortieren">Short-SI</th>
+            <th class="pf-us-th-r pf-us-sort-desc" data-pf-us-sort="numeric" data-pf-us-col-idx="7" title="Click — nach Score sortieren (default)">Score</th>
           </tr></thead>
           <tbody>${rowsHtml}</tbody>
         </table>
@@ -12715,6 +12717,64 @@ function calibSvg(buckets){
         btn.classList.remove("pf-pm-csv-success");
         btn.querySelector(".pf-pm-csv-lbl").textContent=origLbl;
       }, 1800);
+    });
+  })();
+
+  // Universe-Scanner Column Sort (HED-150 Zyklus 183).
+  // Click any column header to sort. Cycle: desc → asc → reset to original score-sort.
+  (function initUsSort(){
+    const tbl=document.getElementById("pf-us-tbl");
+    if(!tbl) return;
+    const tbody=tbl.querySelector("tbody");
+    if(!tbody) return;
+    const headers=Array.from(tbl.querySelectorAll("thead th[data-pf-us-sort]"));
+    const originalOrder=Array.from(tbody.querySelectorAll("tr"));
+    function _parseCell(td, type){
+      if(!td) return type==="numeric"?0:"";
+      const txt=(td.textContent||"").trim();
+      if(type==="numeric"){
+        // Extract signed number — accept "+1.5%", "−128M", "$215.33", etc.
+        const cleaned=txt.replace(/−/g,"-").replace(/[+%$BMK]/g,"").replace(/[^\d.\-]/g," ");
+        const m=cleaned.match(/-?\d+(\.\d+)?/);
+        if(!m) return -Infinity;
+        let v=parseFloat(m[0]);
+        // Apply magnitude multipliers from text
+        if(/\bB\b/.test(txt)) v*=1000;
+        if(/\bM\b/.test(txt)) v*=1;
+        if(/\bK\b/.test(txt)) v*=0.001;
+        return isNaN(v)?-Infinity:v;
+      }
+      return txt.toUpperCase();
+    }
+    headers.forEach(th=>{
+      const type=th.getAttribute("data-pf-us-sort");
+      if(type==="none") return;
+      th.addEventListener("click",function(){
+        const colIdx=parseInt(th.getAttribute("data-pf-us-col-idx"),10);
+        const isAsc=th.classList.contains("pf-us-sort-asc");
+        const isDesc=th.classList.contains("pf-us-sort-desc");
+        // Clear sort indicators on all
+        headers.forEach(h=>{h.classList.remove("pf-us-sort-asc","pf-us-sort-desc");});
+        let newDir;
+        if(!isAsc&&!isDesc){newDir="desc";}
+        else if(isDesc){newDir="asc";}
+        else{newDir="reset";}
+        const rows=Array.from(tbody.querySelectorAll("tr"));
+        if(newDir==="reset"){
+          // Restore original order (score desc)
+          originalOrder.forEach(tr=>tbody.appendChild(tr));
+          return;
+        }
+        th.classList.add("pf-us-sort-"+newDir);
+        rows.sort((a,b)=>{
+          const va=_parseCell(a.children[colIdx], type);
+          const vb=_parseCell(b.children[colIdx], type);
+          if(va<vb) return newDir==="asc"?-1:1;
+          if(va>vb) return newDir==="asc"?1:-1;
+          return 0;
+        });
+        rows.forEach(tr=>tbody.appendChild(tr));
+      });
     });
   })();
 
