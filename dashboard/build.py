@@ -2146,6 +2146,28 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Portfolio-Sub-Navigation — Mobile-First Quick-Jump Strip (HED-150 Zyklus 165)
+   Sticky horizontal chip strip with anchor links to each major portfolio panel.
+   Critical for the now-long page on mobile during market open: thumb-reach jumps
+   to Alerts/Matrix/Catalysts/etc. without manual scroll. */
+.pf-nav-strip{position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0;margin:0 calc(-1*var(--s3)) var(--s3);padding-left:var(--s3);padding-right:var(--s3);border-bottom:1px solid rgba(139,148,158,.08);display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.pf-nav-strip::-webkit-scrollbar{height:3px}
+.pf-nav-strip::-webkit-scrollbar-thumb{background:rgba(139,148,158,.2);border-radius:2px}
+.pf-nav-strip::-webkit-scrollbar-track{background:transparent}
+.pf-nav-lbl{display:inline-flex;align-items:center;padding:4px 8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);flex-shrink:0;border-right:1px solid rgba(139,148,158,.12);margin-right:3px}
+.pf-nav-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:14px;font-size:11px;font-weight:600;color:var(--mut);background:rgba(139,148,158,.06);border:1px solid rgba(139,148,158,.12);white-space:nowrap;text-decoration:none;flex-shrink:0;transition:background .12s,color .12s,border-color .12s;cursor:pointer;font-family:inherit}
+.pf-nav-chip:hover{background:rgba(139,148,158,.15);color:var(--txt);border-color:rgba(139,148,158,.25);text-decoration:none}
+.pf-nav-chip:focus{outline:1px solid var(--blue);outline-offset:1px}
+.pf-nav-chip-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:14px;padding:0 4px;border-radius:7px;font-size:9px;font-weight:700;background:rgba(248,81,73,.18);color:#f85149;line-height:1;letter-spacing:0}
+.pf-nav-chip-badge-warn{background:rgba(210,168,80,.18);color:#e3b341}
+.pf-nav-chip-badge-pos{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-nav-chip-icon{font-size:11px;line-height:1}
+.pf-anchor{position:relative;top:-50px;visibility:hidden;height:0;display:block}
+@media(max-width:600px){
+  .pf-nav-strip{margin:0 calc(-1*var(--s2)) var(--s3);padding:5px var(--s2);gap:4px}
+  .pf-nav-chip{padding:3px 8px;font-size:10px}
+  .pf-nav-lbl{font-size:8px;padding:3px 6px}
+}
 /* Trade-Idea Generator — Signal-driven Candidate Pipeline (HED-150 Zyklus 164)
    Scans non-active universe tickers, scores them via cross-signal aggregation
    (Options + Insider + Fundamentals + Tech + Consensus), surfaces top LONG and
@@ -11063,7 +11085,63 @@ function calibSvg(buckets){
     }
   }
 
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${alertsPanelHtml}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${sectorRotationHtml}${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${fundQuadHtml}${tradeIdeaHtml}${eventHorizonHtml}${universPanelHtml}${insiderFlowHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Portfolio-Sub-Navigation — Mobile-First Quick-Jump Strip (HED-150 Zyklus 165).
+  // Sticky chip strip with anchor jumps to each major panel. Counts pulled live
+  // from the alert/matrix data already computed above. Mobile-critical UX.
+  let subNavHtml="";
+  {
+    // Counts to badge chips with
+    let critCount=0, warnCount=0, infoCount=0;
+    if(typeof alertsPanelHtml==="string"){
+      const cm=alertsPanelHtml.match(/pf-al-card-crit/g); critCount=cm?cm.length:0;
+      const wm=alertsPanelHtml.match(/pf-al-card-warn/g); warnCount=wm?wm.length:0;
+      const im=alertsPanelHtml.match(/pf-al-card-info/g); infoCount=im?im.length:0;
+    }
+    let cutCount=0, hedgeCount=0, reduceCount=0;
+    if(typeof positionMatrixHtml==="string"){
+      const cm=positionMatrixHtml.match(/pf-pm-verd-cut">CUT/g); cutCount=cm?cm.length:0;
+      const hm=positionMatrixHtml.match(/pf-pm-verd-hedge">HEDGE/g); hedgeCount=hm?hm.length:0;
+      const rm=positionMatrixHtml.match(/pf-pm-verd-red">REDUCE/g); reduceCount=rm?rm.length:0;
+    }
+    const actionsNeeded=cutCount+hedgeCount+reduceCount;
+    let nLongIdeas=0, nShortIdeas=0;
+    if(typeof tradeIdeaHtml==="string"){
+      const lm=tradeIdeaHtml.match(/pf-ti-card-long/g); nLongIdeas=lm?lm.length:0;
+      const sm=tradeIdeaHtml.match(/pf-ti-card-short/g); nShortIdeas=sm?sm.length:0;
+    }
+    const nIdeas=nLongIdeas+nShortIdeas;
+    const nEvents=((D.options_tape||{}).tickers||[]).filter(t=>(t.signals||[]).some(s=>typeof s==="string"&&s.indexOf("Event")>=0)).length;
+    const nActive=active.length;
+
+    function _chip(href,icon,label,badge,badgeCls){
+      const b=badge?`<span class="pf-nav-chip-badge ${badgeCls||""}">${badge}</span>`:"";
+      return `<a class="pf-nav-chip" href="${href}"><span class="pf-nav-chip-icon">${icon}</span>${label}${b}</a>`;
+    }
+    const chips=[
+      _chip("#pf-alerts","⚠","Alerts",critCount||warnCount||"",critCount?"":warnCount?"pf-nav-chip-badge-warn":""),
+      _chip("#pf-matrix","◧","Matrix",actionsNeeded?actionsNeeded:"",actionsNeeded?"":""),
+      _chip("#pf-rotation","▣","Rotation","",""),
+      _chip("#pf-theses","◉","Thesen",nActive?nActive:"","pf-nav-chip-badge-pos"),
+      _chip("#pf-equity","∿","Equity","",""),
+      _chip("#pf-fundamentals","◇","Fundamentals","",""),
+      _chip("#pf-ideas","✦","Ideas",nIdeas?nIdeas:"","pf-nav-chip-badge-pos"),
+      _chip("#pf-events","◷","Events",nEvents?nEvents:"","pf-nav-chip-badge-warn"),
+      _chip("#pf-scanner","⋮⋮","Scanner","",""),
+      _chip("#pf-insider","►","Insider","",""),
+      _chip("#pf-analysis","✎","Analyse","",""),
+      _chip("#pf-pipeline","⛏","Pipeline","",""),
+    ];
+
+    subNavHtml=`<nav class="pf-nav-strip" aria-label="Portfolio-Sub-Navigation">
+      <span class="pf-nav-lbl">Jump-to</span>
+      ${chips.join("")}
+    </nav>`;
+  }
+
+  // Inject anchor spans before each major panel (positioned with scroll-margin via .pf-anchor)
+  function _anchor(id){return `<span id="${id}" class="pf-anchor"></span>`;}
+
+  root.innerHTML=`${subNavHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${eventHorizonHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
