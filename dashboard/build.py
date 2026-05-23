@@ -2439,6 +2439,64 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-nav-chip:focus{outline:1px solid var(--blue);outline-offset:1px}
 .pf-nav-chip-active{background:rgba(88,166,255,.15);color:var(--txt);border-color:rgba(88,166,255,.45);box-shadow:0 0 0 1px rgba(88,166,255,.25)}
 .pf-nav-chip-active .pf-nav-chip-icon{color:var(--blue)}
+/* Print-Friendly Stylesheet (HED-150 Zyklus 178)
+   Turns the dark-themed dashboard into a clean printable report for IC,
+   board meetings, compliance archives. Hides navigation chrome, switches to
+   light backgrounds, ensures page-break-inside: avoid on panels. */
+@media print{
+  /* Hide all interactive / navigation elements */
+  .pf-nav-strip,
+  .pf-fr-panel,
+  .sec-nav,
+  .calls-strip,
+  .wf-details,
+  #todays-tape,
+  button,
+  .pf-st-actions,
+  .pf-nav-toggle,
+  .pf-nav-snap,
+  .pf-st-copy{display:none!important}
+  /* Light theme for print */
+  html,body{background:white!important;color:#111!important;font-size:11pt}
+  .panel,
+  div[class*="-panel"]{
+    background:white!important;
+    border:1px solid #999!important;
+    box-shadow:none!important;
+    page-break-inside:avoid;
+    break-inside:avoid;
+    margin-bottom:6mm!important;
+    color:#111!important
+  }
+  /* Headings + text */
+  h1,h2,h3,h4,h5,h6{color:#111!important;page-break-after:avoid;break-after:avoid}
+  .muted,.mut,[class*="-mut"],[class*="-sub"]{color:#555!important}
+  /* Color overrides — keep semantic but printable */
+  [class*="-pos"],[class*="up"],[class*="bull"]{color:#0a7a2a!important}
+  [class*="-neg"],[class*="dn"],[class*="bear"],[class*="-crit"]{color:#a01010!important}
+  [class*="-warn"]{color:#9a6b0a!important}
+  /* Reduce padding for tighter print layout */
+  .pf-st-panel,.pf-al-panel,.pf-pm-panel,.pf-sr-panel,.panel{padding:4mm!important}
+  /* SVG charts: keep, prints vector */
+  svg{max-width:100%;height:auto}
+  /* Page break hints between major sections */
+  .pf-anchor{page-break-before:auto}
+  /* Hide hover-only details */
+  :hover{background:inherit!important}
+  /* Add print-only fund header */
+  #portfolioview::before{
+    content:"Hedging Alpha · Portfolio · Stand " attr(data-built);
+    display:block;
+    font-size:14pt;
+    font-weight:700;
+    margin-bottom:6mm;
+    padding-bottom:3mm;
+    border-bottom:2px solid #111;
+    color:#111
+  }
+  /* Avoid orphans and widows in body text */
+  p,div{orphans:3;widows:3}
+}
 /* Snapshot-Save Button (HED-150 Zyklus 177) */
 .pf-nav-snap{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:14px;font-size:10px;font-weight:600;color:var(--mut);background:rgba(139,148,158,.06);border:1px solid rgba(139,148,158,.15);cursor:pointer;flex-shrink:0;transition:all .12s;font-family:inherit;white-space:nowrap}
 .pf-nav-snap:hover{background:rgba(35,134,54,.10);color:#3fb950;border-color:rgba(35,134,54,.3)}
@@ -12321,6 +12379,17 @@ function calibSvg(buckets){
   }
 
   root.innerHTML=`${subNavHtml}${freshnessHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-funnel")}${funnelHtml}${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}<div class="pf-legacy">${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}</div>`;
+  // Print Header — stamp built-at date onto #portfolioview (HED-150 Zyklus 178).
+  (function stampPrintBuiltAt(){
+    const pv=document.getElementById("portfolioview");
+    if(!pv) return;
+    try{
+      const built=new Date(D.built_at_iso||Date.now());
+      const str=`${String(built.getDate()).padStart(2,'0')}.${String(built.getMonth()+1).padStart(2,'0')}.${built.getFullYear()} ${String(built.getHours()).padStart(2,'0')}:${String(built.getMinutes()).padStart(2,'0')} UTC`;
+      pv.setAttribute("data-built", str);
+    }catch(e){}
+  })();
+
   // Snapshot-Save (HED-150 Zyklus 177).
   // Downloads the current dashboard as a self-contained HTML file. Useful for
   // IC archival, daily compliance snapshots, audit trail. Filename includes date.
