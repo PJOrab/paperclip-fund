@@ -2146,6 +2146,66 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Universe Scanner — Signal-Konvergenz 30 Ticker (HED-150 Zyklus 155)
+   Full in-universe watchlist with options/insider/squeeze signals per ticker.
+   Sorted by net signal conviction. Bloomberg EQSCRN-Stil für Portfolio-Manager. */
+.pf-us-panel{padding:var(--s3)}
+.pf-us-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-us-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-us-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-us-stats{display:flex;gap:var(--s4);flex-wrap:wrap;flex-shrink:0;align-items:flex-start}
+.pf-us-stat{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.pf-us-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
+.pf-us-stat-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.pf-us-stat-bull{color:var(--green)}
+.pf-us-stat-bear{color:var(--red)}
+.pf-us-stat-neu{color:var(--txt)}
+.pf-us-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 calc(-1*var(--s3));padding:0 var(--s3)}
+.pf-us-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-cap);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pf-us-tbl thead th{position:sticky;top:0;z-index:2;background:var(--bg);padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut);border-bottom:1px solid rgba(139,148,158,.15);cursor:pointer;user-select:none}
+.pf-us-tbl thead th:hover{color:var(--txt)}
+.pf-us-tbl thead th.pf-us-sort-asc::after{content:" ▲";font-size:8px}
+.pf-us-tbl thead th.pf-us-sort-desc::after{content:" ▼";font-size:8px}
+.pf-us-tbl thead th.pf-us-th-r{text-align:right}
+.pf-us-tbl tbody tr{border-bottom:1px solid rgba(139,148,158,.08);transition:background .12s}
+.pf-us-tbl tbody tr:hover{background:rgba(139,148,158,.06)}
+.pf-us-tbl td{padding:5px 8px;vertical-align:middle}
+.pf-us-td-r{text-align:right}
+.pf-us-td-spark{width:64px;padding:4px 8px}
+.pf-us-spark-svg{display:block;overflow:visible}
+.pf-us-tk{font-weight:700;font-size:var(--fs-body);color:var(--txt);text-decoration:none;cursor:pointer}
+.pf-us-tk:hover{color:var(--blue);text-decoration:underline}
+.pf-us-active-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-left:4px;vertical-align:middle;box-shadow:0 0 4px var(--green)}
+.pf-us-sec{font-size:9px;color:var(--mut);margin-top:1px;line-height:1}
+.pf-us-price{font-weight:600;color:var(--txt)}
+.pf-us-chg-pos{color:var(--green);font-weight:600}
+.pf-us-chg-neg{color:var(--red);font-weight:600}
+.pf-us-chg-neu{color:var(--mut)}
+.pf-us-rec{display:inline-block;padding:2px 5px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.4}
+.pf-us-rec-sb{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-us-rec-b{background:rgba(35,134,54,.10);color:#3fb950}
+.pf-us-rec-h{background:rgba(139,148,158,.12);color:var(--mut)}
+.pf-us-rec-s{background:rgba(248,81,73,.12);color:#f85149}
+.pf-us-pt{font-size:9px;color:var(--mut);margin-top:1px}
+.pf-us-pt-pos{color:var(--green)}
+.pf-us-pt-neg{color:var(--red)}
+.pf-us-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.4;white-space:nowrap}
+.pf-us-badge-bull{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-us-badge-bear{background:rgba(248,81,73,.15);color:#f85149}
+.pf-us-badge-warn{background:rgba(210,168,80,.15);color:#e3b341}
+.pf-us-badge-neu{background:rgba(139,148,158,.10);color:rgba(139,148,158,.5)}
+.pf-us-score{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;font-weight:700;flex-shrink:0}
+.pf-us-score-hi{background:rgba(35,134,54,.2);color:#3fb950;border:1.5px solid rgba(35,134,54,.4)}
+.pf-us-score-mid{background:rgba(88,166,255,.12);color:var(--blue);border:1.5px solid rgba(88,166,255,.3)}
+.pf-us-score-lo{background:rgba(139,148,158,.1);color:var(--mut);border:1.5px solid rgba(139,148,158,.2)}
+.pf-us-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+.pf-us-col-sort{color:var(--txt)!important}
+@media(max-width:600px){
+  .pf-us-h{flex-direction:column}
+  .pf-us-stats{flex-direction:row;width:100%;justify-content:space-between}
+  .pf-us-stat{align-items:flex-start}
+  .pf-us-tbl th.pf-us-hide-mobile,.pf-us-tbl td.pf-us-hide-mobile{display:none}
+}
 /* Makro-Portfolio-Kontext — Regime-Einbettung (HED-150 Zyklus 153) */
 .pf-mpc{margin-top:var(--s3);padding:var(--s3);border-left:3px solid rgba(139,148,158,.3)}
 .pf-mpc-hd{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:var(--s3);margin-bottom:var(--s3)}
@@ -8839,7 +8899,180 @@ function calibSvg(buckets){
     }
   }
 
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Universe Scanner — Signal-Konvergenz 30 Ticker (HED-150 Zyklus 155).
+  // Full in-universe watchlist grid. Aggregates options, insider, short-squeeze signals
+  // per ticker and ranks by signal conviction. Bloomberg EQSCRN-equivalent for PM.
+  let universPanelHtml="";
+  {
+    const _sv=D.sector_view||{};
+    // Build lookup maps from signal sources
+    const _optMap={};
+    ((D.options_tape||{}).tickers||[]).forEach(t=>{
+      if(t&&t.ticker) _optMap[t.ticker.toUpperCase()]={verdict:t.verdict,pc:t.pc,skew:t.skew,score:t.score,signals:t.signals||[]};
+    });
+    const _insMap={};
+    ((D.insider_tape||{}).tickers||[]).forEach(t=>{
+      if(t&&t.ticker) _insMap[t.ticker.toUpperCase()]={net:t.net_dollar,buy_execs:t.n_buy_execs,sell_execs:t.n_sell_execs};
+    });
+    const _ssMap={};
+    ((D.short_squeeze||{}).tickers||[]).forEach(t=>{
+      if(t&&t.ticker) _ssMap[t.ticker.toUpperCase()]={verdict:t.verdict,bucket:t.bucket,si:t.si};
+    });
+    // Active thesis set for active-dot indicator
+    const _activeSet=new Set(active.flatMap(th=>(th.tickers||[]).map(tk=>String(tk).toUpperCase())));
+
+    // Build per-ticker rows across all sectors
+    const _rows=[];
+    (_sv.sectors||[]).forEach(sec=>{
+      (sec.tickers||[]).forEach(tk=>{
+        if(!tk||!tk.ticker) return;
+        const TK=String(tk.ticker).toUpperCase();
+        const opt=_optMap[TK]||null;
+        const ins=_insMap[TK]||null;
+        const ss=_ssMap[TK]||null;
+        const con=tk.consensus||{};
+        const price=tk.price;
+        const spark=tk.spark||[];
+
+        // Signal score: options bull=+2, bear=-2; insider buy=+1, sell=-1; squeeze=-0.5 (risk)
+        let score=0;
+        if(opt){
+          if(opt.verdict==="bullish_setup") score+=2;
+          else if(opt.verdict==="bearish_setup") score-=2;
+        }
+        if(ins){
+          if(ins.net>0) score+=1;
+          else if(ins.net<0) score-=1;
+        }
+        if(ss) score-=0.5; // short squeeze = elevated risk, slight negative
+
+        // PT upside vs current price
+        const ptMean=con.pt_mean||null;
+        const ptUpside=(ptMean&&price&&price>0)?((ptMean-price)/price*100):null;
+
+        // 30d return from spark
+        const ret30=(spark.length>=2&&spark[0]>0)?((spark[spark.length-1]-spark[0])/spark[0]*100):null;
+
+        _rows.push({
+          ticker:TK, sector:sec.name, price, ret30,
+          rsi14:tk.rsi14, pct_vs_ma30:tk.pct_vs_ma30,
+          rec:con.rec||"", ptMean, ptUpside, analystCount:con.analyst_count||0,
+          spark, opt, ins, ss, score, isActive:_activeSet.has(TK)
+        });
+      });
+    });
+
+    // Sort: highest score first (most bullish), ties broken by analyst PT upside
+    _rows.sort((a,b)=>b.score-a.score||(b.ptUpside||0)-(a.ptUpside||0));
+
+    // Aggregate stats
+    const nBull=_rows.filter(r=>r.score>0).length;
+    const nBear=_rows.filter(r=>r.score<0).length;
+    const nNeu=_rows.length-nBull-nBear;
+    const nOpts=Object.keys(_optMap).length;
+    const nIns=Object.keys(_insMap).length;
+
+    // Render helpers
+    function _recBadge(rec){
+      if(!rec||rec==="n/a") return `<span class="pf-us-rec pf-us-rec-h">—</span>`;
+      const cls=rec==="strong_buy"?"pf-us-rec-sb":rec==="buy"?"pf-us-rec-b":rec==="sell"||rec==="strong_sell"?"pf-us-rec-s":"pf-us-rec-h";
+      const lbl=rec==="strong_buy"?"S-BUY":rec==="buy"?"BUY":rec==="hold"?"HOLD":rec==="sell"?"SELL":rec==="strong_sell"?"S-SELL":rec.slice(0,6).toUpperCase();
+      return `<span class="pf-us-rec ${cls}">${lbl}</span>`;
+    }
+    function _optBadge(opt){
+      if(!opt) return `<span class="pf-us-badge pf-us-badge-neu">—</span>`;
+      if(opt.verdict==="bullish_setup") return `<span class="pf-us-badge pf-us-badge-bull" title="P/C ${opt.pc?.toFixed(2)||'?'} · Score ${opt.score?.toFixed(1)||'?'}">↑ BULL</span>`;
+      if(opt.verdict==="bearish_setup") return `<span class="pf-us-badge pf-us-badge-bear" title="P/C ${opt.pc?.toFixed(2)||'?'} · Score ${opt.score?.toFixed(1)||'?'}">↓ BEAR</span>`;
+      return `<span class="pf-us-badge pf-us-badge-neu">NEUT</span>`;
+    }
+    function _insBadge(ins){
+      if(!ins) return `<span class="pf-us-badge pf-us-badge-neu">—</span>`;
+      const absMn=Math.abs(ins.net)/1e6;
+      const lbl=absMn>=1?`${absMn>=1000?(absMn/1000).toFixed(1)+"B":absMn.toFixed(0)+"M"}`:"<1M";
+      if(ins.net>0) return `<span class="pf-us-badge pf-us-badge-bull" title="${ins.buy_execs} Execs kauften">↑ ${lbl}</span>`;
+      return `<span class="pf-us-badge pf-us-badge-bear" title="${ins.sell_execs} Execs verkauften">↓ ${lbl}</span>`;
+    }
+    function _ssBadge(ss){
+      if(!ss) return `<span class="pf-us-badge pf-us-badge-neu">—</span>`;
+      const lbl=ss.bucket==="extreme"?"EXTREM":ss.bucket==="high"?"HIGH":"SQZE";
+      const tip=ss.si?`SI ${ss.si.toFixed(1)}%`:"";
+      return `<span class="pf-us-badge pf-us-badge-warn" title="${tip}">⚠ ${lbl}</span>`;
+    }
+    function _scoreBadge(score){
+      const cls=score>=1.5?"pf-us-score-hi":score>=-0.5?"pf-us-score-mid":"pf-us-score-lo";
+      const disp=score>0?"+"+score.toFixed(1):score===0?"0":score.toFixed(1);
+      return `<span class="pf-us-score ${cls}">${disp}</span>`;
+    }
+    function _miniSpark(spark){
+      if(!spark||spark.length<2) return `<svg class="pf-us-spark-svg" width="64" height="22" viewBox="0 0 64 22"><line x1="0" y1="11" x2="64" y2="11" stroke="rgba(139,148,158,.2)" stroke-width="1"/></svg>`;
+      const mn=Math.min(...spark), mx=Math.max(...spark);
+      const rng=mx-mn||1;
+      const n=spark.length;
+      const pts=spark.map((v,i)=>{
+        const x=(i/(n-1))*62+1;
+        const y=20-((v-mn)/rng)*18;
+        return `${x},${y}`;
+      }).join(" ");
+      const last=spark[n-1], first=spark[0];
+      const up=last>=first;
+      const col=up?"#3fb950":"#f85149";
+      return `<svg class="pf-us-spark-svg" width="64" height="22" viewBox="0 0 64 22"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+    }
+
+    const rowsHtml=_rows.map(r=>{
+      const activeDot=r.isActive?`<span class="pf-us-active-dot" title="Aktiver Call"></span>`:"";
+      const retCls=r.ret30==null?"pf-us-chg-neu":r.ret30>=0?"pf-us-chg-pos":"pf-us-chg-neg";
+      const retStr=r.ret30==null?"—":(r.ret30>=0?"+":"")+r.ret30.toFixed(1)+"%";
+      const ptStr=r.ptUpside==null?"—":(r.ptUpside>=0?"+":"")+r.ptUpside.toFixed(0)+"%";
+      const ptCls=r.ptUpside==null?"pf-us-chg-neu":r.ptUpside>=15?"pf-us-pt-pos":r.ptUpside<=-5?"pf-us-pt-neg":"";
+      const priceStr=r.price!=null?("$"+(r.price<10?r.price.toFixed(2):r.price<100?r.price.toFixed(2):r.price.toFixed(1))):"—";
+      const secShort=r.sector.replace("AI-Software","AI-SW").replace("Cloud & Infra","Cloud").replace("Compute & Semis","Semis").replace("Data Center","DC").replace("Enterprise","Ent.").slice(0,12);
+      return `<tr>
+        <td class="pf-us-td-spark">${_miniSpark(r.spark)}</td>
+        <td><a class="pf-us-tk" href="https://finance.yahoo.com/quote/${r.ticker}" target="_blank" rel="noopener">${esc(r.ticker)}</a>${activeDot}<div class="pf-us-sec">${esc(secShort)}</div></td>
+        <td class="pf-us-td-r"><span class="pf-us-price">${priceStr}</span><div class="${retCls}" style="font-size:9px">${retStr} 30d</div></td>
+        <td class="pf-us-hide-mobile"><div>${_recBadge(r.rec)}</div><div class="pf-us-pt ${ptCls}">${ptStr} PT</div></td>
+        <td>${_optBadge(r.opt)}</td>
+        <td class="pf-us-hide-mobile">${_insBadge(r.ins)}</td>
+        <td class="pf-us-hide-mobile">${_ssBadge(r.ss)}</td>
+        <td class="pf-us-td-r">${_scoreBadge(r.score)}</td>
+      </tr>`;
+    }).join("");
+
+    universPanelHtml=`<div class="panel pf-us-panel">
+      <div class="pf-us-h">
+        <div>
+          <div class="pf-us-title">Universe Scanner — Signal-Konvergenz</div>
+          <div class="pf-us-sub">${_rows.length} Ticker · Ranked by Signal-Conviction · Optionen, Insider-Flow &amp; Short-Squeeze aggregiert · Aktive Calls markiert ●</div>
+        </div>
+        <div class="pf-us-stats">
+          <div class="pf-us-stat"><span class="pf-us-stat-lbl">Bullish</span><span class="pf-us-stat-val pf-us-stat-bull">${nBull}</span></div>
+          <div class="pf-us-stat"><span class="pf-us-stat-lbl">Neutral</span><span class="pf-us-stat-val pf-us-stat-neu">${nNeu}</span></div>
+          <div class="pf-us-stat"><span class="pf-us-stat-lbl">Bearish</span><span class="pf-us-stat-val pf-us-stat-bear">${nBear}</span></div>
+          <div class="pf-us-stat"><span class="pf-us-stat-lbl">Opt-Cov</span><span class="pf-us-stat-val pf-us-stat-neu">${nOpts}</span></div>
+          <div class="pf-us-stat"><span class="pf-us-stat-lbl">Ins-Cov</span><span class="pf-us-stat-val pf-us-stat-neu">${nIns}</span></div>
+        </div>
+      </div>
+      <div class="pf-us-wrap">
+        <table class="pf-us-tbl" id="pf-us-tbl">
+          <thead><tr>
+            <th style="width:72px">Spark 30d</th>
+            <th>Ticker / Sektor</th>
+            <th class="pf-us-th-r">Kurs / Ret</th>
+            <th class="pf-us-hide-mobile">Konsensus / PT</th>
+            <th>Optionen</th>
+            <th class="pf-us-hide-mobile">Insider</th>
+            <th class="pf-us-hide-mobile">Short-SI</th>
+            <th class="pf-us-th-r">Score</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+      <div class="pf-us-foot">Score = Σ Signale (Optionen BULL +2/BEAR −2 · Insider-Flow-Richtung ±1 · Short-Squeeze −0.5). Aktive Calls mit ● markiert. Options-Coverage ${nOpts}/30, Insider-Coverage ${nIns}/30. Sortiert nach Signal-Conviction absteigend. Klick auf Ticker öffnet Yahoo Finance. Letzte Datenaktualisierung: ${(D.options_tape||{}).as_of||"—"}.</div>
+    </div>`;
+  }
+
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${universPanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
