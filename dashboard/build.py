@@ -2105,6 +2105,47 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 @media(min-width:681px){
   .pf-conv-card{display:none}
 }
+/* Track-Record Equity-Curve Headline (HED-150 Zyklus 154) */
+.tr-ec{margin-bottom:var(--s3);padding:var(--s3)}
+.tr-ec-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.tr-ec-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt);line-height:1.2}
+.tr-ec-sub{font-size:var(--fs-micro);margin-top:2px;line-height:1.4;color:var(--mut)}
+.tr-ec-kpis{display:flex;gap:var(--s4);flex-wrap:wrap;flex-shrink:0}
+.tr-ec-kpi{display:flex;flex-direction:column;align-items:flex-end;font-variant-numeric:tabular-nums;gap:2px}
+.tr-ec-kpi-lbl{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.05em;font-weight:600;color:var(--mut)}
+.tr-ec-kpi-val{font-size:18px;font-weight:700;line-height:1}
+.tr-ec-kpi-val-pos{color:var(--green)}
+.tr-ec-kpi-val-neg{color:var(--red)}
+.tr-ec-kpi-val-mut{color:var(--txt)}
+.tr-ec-svg{width:100%;height:auto;display:block;max-height:280px}
+.tr-ec-line{fill:none;stroke-width:2}
+.tr-ec-line-pos{stroke:var(--green)}
+.tr-ec-line-neg{stroke:var(--red)}
+.tr-ec-line-flat{stroke:var(--mut)}
+.tr-ec-area{opacity:.1}
+.tr-ec-area-pos{fill:var(--green)}
+.tr-ec-area-neg{fill:var(--red)}
+.tr-ec-dd-area{fill:var(--red);opacity:.15}
+.tr-ec-zero{stroke:rgba(139,148,158,.4);stroke-width:.75;stroke-dasharray:3 4}
+.tr-ec-axis{stroke:rgba(139,148,158,.2);stroke-width:.5}
+.tr-ec-ylab,.tr-ec-xlab{font-size:9px;fill:var(--mut);font-family:inherit;font-variant-numeric:tabular-nums}
+.tr-ec-dot{r:3.5;stroke:var(--bg);stroke-width:1.5}
+.tr-ec-dot-pos{fill:var(--green)}
+.tr-ec-dot-neg{fill:var(--red)}
+.tr-ec-thesis-line{fill:none;stroke-width:1;opacity:.55}
+.tr-ec-legend{display:flex;flex-wrap:wrap;gap:var(--s3);align-items:center;font-size:var(--fs-micro);margin-top:var(--s3)}
+.tr-ec-leg-item{display:inline-flex;align-items:center;gap:5px;color:var(--mut)}
+.tr-ec-leg-swatch{display:inline-block;width:12px;height:3px;border-radius:1.5px}
+.tr-ec-leg-pnl{font-weight:700;font-variant-numeric:tabular-nums}
+.tr-ec-leg-pnl-pos{color:var(--green)}
+.tr-ec-leg-pnl-neg{color:var(--red)}
+.tr-ec-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s2);line-height:1.5}
+@media(max-width:600px){
+  .tr-ec-h{flex-direction:column;gap:var(--s2)}
+  .tr-ec-kpis{width:100%;justify-content:space-between;gap:var(--s2)}
+  .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
+  .tr-ec-kpi-val{font-size:16px}
+}
 /* Makro-Portfolio-Kontext — Regime-Einbettung (HED-150 Zyklus 153) */
 .pf-mpc{margin-top:var(--s3);padding:var(--s3);border-left:3px solid rgba(139,148,158,.3)}
 .pf-mpc-hd{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:var(--s3);margin-bottom:var(--s3)}
@@ -5196,7 +5237,194 @@ function calibSvg(buckets){
       return `<div class="thp-cap">Offene Thesen — zu früh für Wertung · <span class="muted">Sortiert nach Conviction</span></div>
         <div class="thp-grid">${cards}</div>`;
     })() : "";
-    $("trbody").innerHTML=`<div class="panel"><div class="empty">
+    // Track-Record Equity-Curve Headline (HED-150 Zyklus 154)
+    // Live unrealized P&L curve derived from per-thesis spark + baseline.
+    // Builds an honest pre-scoring equity line: for each day in the last 30,
+    // sum conv-weighted direction-adjusted % returns across theses active that day.
+    // Drawdown band shaded underwater from rolling high-water-mark.
+    // Per-thesis P&L overlay lines (faded, color-coded) for attribution.
+    let ecHtml="";
+    {
+      // Find entry index in spark for each thesis (closest match to baseline in last 6 days)
+      const _ecCalls=[];
+      pendingTheses.forEach(t=>{
+        const tks=(t.tickers||[]).map(x=>String(x).toUpperCase());
+        const primary=tks[0]; if(!primary) return;
+        const spark=_thpSparkMap[primary]; if(!spark||!spark.length) return;
+        const base=t.baseline_price; if(base==null) return;
+        // Find entry index — closest spark price to baseline within last 6 days
+        const n=spark.length;
+        let eIdx=-1, bestDiff=Infinity;
+        for(let i=Math.max(0,n-6); i<n; i++){
+          const d=Math.abs(spark[i]-base);
+          if(d<bestDiff){ bestDiff=d; eIdx=i; }
+        }
+        // Sanity check: if best match is >3% off baseline, skip (unreliable entry)
+        if(eIdx<0 || Math.abs(spark[eIdx]-base)/base>0.03) return;
+        _ecCalls.push({
+          ticker:tks.join("·"),
+          primary, spark, baseline:base,
+          dir:(t.direction||"long").toLowerCase(),
+          sign:(t.direction||"").toLowerCase()==="short"?-1:1,
+          conv:Number(t.conviction||0.5),
+          entryIdx:eIdx,
+          label:t.label||""
+        });
+      });
+
+      if(_ecCalls.length){
+        const sparkLen=Math.max(..._ecCalls.map(c=>c.spark.length));
+        const inceptIdx=Math.min(..._ecCalls.map(c=>c.entryIdx));
+        const ptsCount=sparkLen-inceptIdx;
+
+        // Aggregate: for each day from inception to today, conv-weighted P&L of active theses
+        const aggSeries=[];
+        const thesisSeries=_ecCalls.map(()=>[]); // parallel arrays
+        for(let day=inceptIdx; day<sparkLen; day++){
+          let wSum=0, pSum=0;
+          _ecCalls.forEach((c,ci)=>{
+            if(day>=c.entryIdx && day<c.spark.length){
+              const pnl=(c.spark[day]-c.baseline)/c.baseline*100*c.sign;
+              wSum+=c.conv; pSum+=c.conv*pnl;
+              thesisSeries[ci].push({day, pnl});
+            } else {
+              thesisSeries[ci].push(null);
+            }
+          });
+          aggSeries.push({day, pct:wSum>0?pSum/wSum:0});
+        }
+
+        // KPIs
+        const livePct=aggSeries[aggSeries.length-1].pct;
+        let peak=-Infinity, maxDD=0;
+        const ddSeries=aggSeries.map(p=>{
+          if(p.pct>peak) peak=p.pct;
+          const dd=p.pct-peak;
+          if(dd<maxDD) maxDD=dd;
+          return {day:p.day, dd};
+        });
+        const bestDay=Math.max(...aggSeries.map(p=>p.pct));
+        const worstDay=Math.min(...aggSeries.map(p=>p.pct));
+        const daysLive=aggSeries.length-1;
+
+        // SVG geometry
+        const W=720, H=200;
+        const pad={l:42,r:16,t:14,b:32};
+        const ddH=44; // drawdown sub-area height
+        const eqH=H-pad.t-pad.b-ddH-8;
+        const iW=W-pad.l-pad.r;
+
+        // Y range for equity (include aggregate + all per-thesis post-entry values + 0)
+        const pcts=aggSeries.map(p=>p.pct);
+        const allPcts=pcts.slice();
+        thesisSeries.forEach(ts=>ts.forEach(p=>{if(p) allPcts.push(p.pnl);}));
+        let lo=Math.min(0,...allPcts), hi=Math.max(0,...allPcts);
+        if(hi-lo<1){const m=(hi+lo)/2; lo=m-0.5; hi=m+0.5;}
+        const yPad=(hi-lo)*0.15; lo-=yPad; hi+=yPad;
+        const yEq=v=>pad.t+(hi-v)/(hi-lo)*eqH;
+        const yZero=yEq(0);
+
+        const xStep=ptsCount>1?iW/(ptsCount-1):0;
+        const ptCoords=aggSeries.map((p,i)=>[pad.l+i*xStep, yEq(p.pct)]);
+        const linePts=ptCoords.map(([x,y])=>`${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+        const lineCls=livePct>=0.1?"tr-ec-line-pos":livePct<=-0.1?"tr-ec-line-neg":"tr-ec-line-flat";
+        const areaCls=livePct>=0?"tr-ec-area-pos":"tr-ec-area-neg";
+        const areaPath=ptCoords.length>1
+          ? `M ${pad.l},${yZero.toFixed(1)} `+ptCoords.map(([x,y])=>`L ${x.toFixed(1)},${y.toFixed(1)}`).join(" ")+` L ${(pad.l+(ptCoords.length-1)*xStep).toFixed(1)},${yZero.toFixed(1)} Z`
+          : "";
+
+        // Drawdown sub-chart (below equity)
+        const ddTop=pad.t+eqH+8;
+        let ddMin=Math.min(0,...ddSeries.map(d=>d.dd));
+        if(ddMin>-0.5) ddMin=-0.5;
+        const yDD=v=>ddTop+(0-v)/(0-ddMin)*ddH;
+        const ddCoords=ddSeries.map((d,i)=>[pad.l+i*xStep, yDD(d.dd)]);
+        const ddPath=ddCoords.length>1
+          ? `M ${pad.l},${ddTop.toFixed(1)} `+ddCoords.map(([x,y])=>`L ${x.toFixed(1)},${y.toFixed(1)}`).join(" ")+` L ${(pad.l+(ddCoords.length-1)*xStep).toFixed(1)},${ddTop.toFixed(1)} Z`
+          : "";
+
+        // Per-thesis overlay lines (faded)
+        const thesisColors=["#79c0ff","#d2a8ff","#ffa657","#7ee787","#ff7b72"];
+        const thesisLines=_ecCalls.map((c,ci)=>{
+          const series=thesisSeries[ci].map((p,i)=>{
+            if(p==null) return null;
+            return [pad.l+i*xStep, yEq(p.pnl)];
+          }).filter(Boolean);
+          if(series.length<2) return "";
+          const pts=series.map(([x,y])=>`${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+          return `<polyline class="tr-ec-thesis-line" points="${pts}" stroke="${thesisColors[ci%thesisColors.length]}"><title>${esc(c.ticker)} ${esc(c.dir.toUpperCase())}</title></polyline>`;
+        }).join("");
+
+        const fmt=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
+
+        // Y-axis labels for equity
+        const showZeroLab=(yZero>pad.t+8 && yZero<pad.t+eqH-8);
+        const yLabHtml=[
+          `<text class="tr-ec-ylab" x="${pad.l-6}" y="${(pad.t+4).toFixed(1)}" text-anchor="end">${fmt(hi)}</text>`,
+          showZeroLab?`<text class="tr-ec-ylab" x="${pad.l-6}" y="${(yZero+3).toFixed(1)}" text-anchor="end">0.00%</text>`:"",
+          `<text class="tr-ec-ylab" x="${pad.l-6}" y="${(pad.t+eqH).toFixed(1)}" text-anchor="end">${fmt(lo)}</text>`,
+          // DD axis labels
+          `<text class="tr-ec-ylab" x="${pad.l-6}" y="${(ddTop+5).toFixed(1)}" text-anchor="end">0%</text>`,
+          `<text class="tr-ec-ylab" x="${pad.l-6}" y="${(ddTop+ddH-1).toFixed(1)}" text-anchor="end">${fmt(ddMin)}</text>`
+        ].filter(Boolean).join("");
+
+        const xLabHtml=`<text class="tr-ec-xlab" x="${pad.l}" y="${(H-12).toFixed(1)}">Inception (T−${daysLive})</text>`+
+                      `<text class="tr-ec-xlab" x="${(pad.l+iW).toFixed(1)}" y="${(H-12).toFixed(1)}" text-anchor="end">Heute</text>`+
+                      `<text class="tr-ec-xlab" x="${pad.l}" y="${(ddTop+ddH+12).toFixed(1)}" fill-opacity=".75">Drawdown</text>`;
+
+        const lastP=ptCoords[ptCoords.length-1];
+        const dotCls=livePct>=0?"tr-ec-dot-pos":"tr-ec-dot-neg";
+
+        // Legend with per-thesis P&L
+        const legendItems=_ecCalls.map((c,ci)=>{
+          const last=thesisSeries[ci].filter(Boolean).pop();
+          const pnl=last?last.pnl:0;
+          const cls=pnl>=0?"tr-ec-leg-pnl-pos":"tr-ec-leg-pnl-neg";
+          const color=thesisColors[ci%thesisColors.length];
+          return `<span class="tr-ec-leg-item">
+            <span class="tr-ec-leg-swatch" style="background:${color}"></span>
+            <span>${esc(c.ticker)}</span>
+            <span class="tr-ec-leg-pnl ${cls}">${fmt(pnl)}</span>
+          </span>`;
+        }).join("");
+
+        const liveCls=livePct>=0?"tr-ec-kpi-val-pos":"tr-ec-kpi-val-neg";
+        const ddCls=maxDD<-0.05?"tr-ec-kpi-val-neg":"tr-ec-kpi-val-mut";
+
+        ecHtml=`<div class="panel tr-ec">
+          <div class="tr-ec-h">
+            <div>
+              <div class="tr-ec-title">Buch-Performance-Verlauf <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">live unrealized · seit Inception</span></div>
+              <div class="tr-ec-sub">Aggregierte konv-gewichtete P&amp;L aller offenen Calls + Drawdown-Underwater. Erste reguläre Wertung ab ${esc(tr.earliest_score_date||"—")}.</div>
+            </div>
+            <div class="tr-ec-kpis">
+              <div class="tr-ec-kpi" title="Aktuelle live unrealisierte Buch-P&L"><span class="tr-ec-kpi-lbl">Live</span><span class="tr-ec-kpi-val ${liveCls}">${fmt(livePct)}</span></div>
+              <div class="tr-ec-kpi" title="Größter Drawdown vom Hoch seit Inception"><span class="tr-ec-kpi-lbl">Max DD</span><span class="tr-ec-kpi-val ${ddCls}">${maxDD<-0.005?fmt(maxDD):"0.00%"}</span></div>
+              <div class="tr-ec-kpi" title="Bester Tag seit Inception"><span class="tr-ec-kpi-lbl">Hoch</span><span class="tr-ec-kpi-val tr-ec-kpi-val-pos">${fmt(bestDay)}</span></div>
+              <div class="tr-ec-kpi" title="Schlechtester Tag seit Inception"><span class="tr-ec-kpi-lbl">Tief</span><span class="tr-ec-kpi-val tr-ec-kpi-val-neg">${fmt(worstDay)}</span></div>
+              <div class="tr-ec-kpi" title="Handelstage seit Inception"><span class="tr-ec-kpi-lbl">Tage</span><span class="tr-ec-kpi-val tr-ec-kpi-val-mut">${daysLive}</span></div>
+            </div>
+          </div>
+          <svg class="tr-ec-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Buch-Performance-Verlauf">
+            <line class="tr-ec-axis" x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${(pad.t+eqH).toFixed(1)}"/>
+            <line class="tr-ec-axis" x1="${pad.l}" y1="${(pad.t+eqH).toFixed(1)}" x2="${(pad.l+iW).toFixed(1)}" y2="${(pad.t+eqH).toFixed(1)}"/>
+            ${areaPath?`<path class="tr-ec-area ${areaCls}" d="${areaPath}"/>`:""}
+            ${showZeroLab?`<line class="tr-ec-zero" x1="${pad.l}" y1="${yZero.toFixed(1)}" x2="${(pad.l+iW).toFixed(1)}" y2="${yZero.toFixed(1)}"/>`:""}
+            ${thesisLines}
+            ${ptCoords.length>1?`<polyline class="tr-ec-line ${lineCls}" points="${linePts}"/>`:""}
+            ${lastP?`<circle class="tr-ec-dot ${dotCls}" cx="${lastP[0].toFixed(1)}" cy="${lastP[1].toFixed(1)}"><title>Live ${fmt(livePct)}</title></circle>`:""}
+            <line class="tr-ec-axis" x1="${pad.l}" y1="${ddTop.toFixed(1)}" x2="${(pad.l+iW).toFixed(1)}" y2="${ddTop.toFixed(1)}"/>
+            ${ddPath?`<path class="tr-ec-dd-area" d="${ddPath}"/>`:""}
+            ${yLabHtml}
+            ${xLabHtml}
+          </svg>
+          <div class="tr-ec-legend">${legendItems}</div>
+          <div class="tr-ec-foot">Equity-Linie: täglich konviktions-gewichtete P&amp;L aller offenen Calls (sign-flipped für Shorts), indexiert bei 0% am Inception-Tag (frühester Entry). Drawdown: laufender Rückgang vom rollierenden Hoch — der ehrlichste Stress-Indikator. Per-These-Linien (gedämpft) zeigen Attribution: welcher Call zieht die Aggregate-Kurve hoch/runter. Honest tracking: erste reguläre Wertung gegen Live-Kurse ab ${esc(tr.earliest_score_date||"—")} — bis dahin = live unrealized P&amp;L.</div>
+        </div>`;
+      }
+    }
+
+    $("trbody").innerHTML=`${ecHtml}<div class="panel"><div class="empty">
       <div class="g" aria-hidden="true">⏳</div>
       <div class="hl">Noch keine gewerteten Thesen</div>
       <div class="ex">${a.too_early||0} offene These${(a.too_early===1)?"":"n"} — der Zeithorizont (Wochen/Quartale) ist noch nicht abgelaufen. Gewertet wird gegen reale Kurse, keine Schätzungen.</div>
