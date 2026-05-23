@@ -695,6 +695,54 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .pf-corr-lbl{max-width:80px}
   .pf-corr-diag-row{gap:var(--s3)}
 }
+/* Risk-Decomposition — Component CTR pro Call (HED-137 Zyklus 100, Bloomberg PORT-R / Aladdin-Stil) */
+.pf-rd{padding:var(--s3)}
+.pf-rd-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3)}
+.pf-rd-title{font-weight:700;font-size:var(--fs-h2);text-transform:none;letter-spacing:0;color:var(--txt)}
+.pf-rd-meta{font-size:var(--fs-micro);font-variant-numeric:tabular-nums}
+.pf-rd-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pf-rd-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+.pf-rd-tbl thead th{font-size:var(--fs-micro);font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--mut);padding:4px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.pf-rd-tbl thead th.pf-rd-th-name,.pf-rd-tbl thead th.pf-rd-th-bar{text-align:left}
+.pf-rd-tbl thead th.pf-rd-th-bar{width:42%}
+.pf-rd-tbl tbody td{padding:7px 6px;border-top:1px solid var(--line);text-align:right;vertical-align:middle}
+.pf-rd-tbl tbody tr:first-child td,.pf-rd-tbl tbody tr:first-child th{border-top:0}
+.pf-rd-tbl tbody tr:hover{background:rgba(77,163,255,.06)}
+.pf-rd-lbl{padding:7px 6px 7px 0;text-align:left;font-weight:700;color:var(--txt);white-space:nowrap;
+  display:flex;align-items:center;gap:6px;border-top:1px solid var(--line)}
+.pf-rd-name{overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.pf-rd-bar-cell{padding-left:0!important;padding-right:var(--s2)!important}
+.pf-rd-bar-stack{display:flex;flex-direction:column;gap:3px;min-width:120px}
+.pf-rd-bar{height:9px;border-radius:2px;min-width:1px}
+.pf-rd-bar-w{background:linear-gradient(90deg,#3a4a66,#5a7196)}
+.pf-rd-bar-r{background:linear-gradient(90deg,#a14b48,#f85149)}
+.pf-rd-num{font-weight:600;min-width:54px}
+.pf-rd-d-num{font-weight:700}
+.pf-rd-verd{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2);
+  margin-top:var(--s3);padding:var(--s2) var(--s3);background:var(--panel2);border-radius:6px;
+  font-size:var(--fs-cap);font-variant-numeric:tabular-nums}
+.pf-rd-verd b{font-weight:700}
+.pf-rd-chip{display:inline-block;padding:2px 8px;border-radius:99px;font-size:var(--fs-micro);
+  font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  border:1px solid var(--line);background:var(--panel)}
+.pf-rd-chip.move-dn{color:var(--red);border-color:rgba(248,81,73,.4)}
+.pf-rd-chip.move-up{color:var(--green);border-color:rgba(63,185,80,.4)}
+.pf-rd-legend{display:flex;flex-wrap:wrap;gap:var(--s3);align-items:center;font-size:var(--fs-micro);margin-top:var(--s2)}
+.pf-rd-leg{display:inline-flex;align-items:center;gap:5px}
+.pf-rd-leg-sw{display:inline-block;width:18px;height:8px;border-radius:2px}
+.pf-rd-foot{font-size:var(--fs-micro);margin-top:var(--s2);line-height:1.45}
+@media(max-width:560px){
+  .pf-rd-tbl thead th,.pf-rd-tbl tbody td{padding:5px 4px;font-size:var(--fs-micro)}
+  .pf-rd-tbl thead th.pf-rd-th-bar{width:38%}
+  .pf-rd-lbl{padding:5px 4px 5px 0}
+  .pf-rd-name{max-width:96px}
+  .pf-rd-bar-stack{min-width:64px}
+  .pf-rd-num{min-width:42px}
+  .pf-rd-d-num{display:none}
+  .pf-rd-tbl thead th:last-child{display:none}
+  .pf-rd-verd{font-size:var(--fs-micro)}
+}
 /* Buch-Allokation — Position-Sizing-Stack (HED-137 Zyklus 87): Long/Short side stacks, conviction-weighted widths, P&L-colored segments */
 .pf-alloc{margin-top:var(--s3);padding:var(--s3)}
 .pf-alloc-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
@@ -3102,7 +3150,150 @@ function calibSvg(buckets){
       </div>`;
     }
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskHtml}`;
+  // Risk-Decomposition (HED-137 Zyklus 100 — Meilenstein): per-position contribution to
+  // BOOK VOLATILITY, separately from weight and from return. Bloomberg PORT-R / BlackRock
+  // Aladdin core risk view. Answers "which position drives my risk?" — a position can
+  // hold 30% of capital weight but 55% of risk share; that gap is where concentrated
+  // volatility actually lives, invisible in conviction-weight or sector breakdowns.
+  //
+  //   - Daily returns per ticker from 25d sparks, sign-flipped for shorts (P&L-Ebene)
+  //   - Weights w_i = conviction_i / Σconviction (book share)
+  //   - Sample covariance Cov[i][j] over the common observation window
+  //   - Portfolio variance σ²_p = Σ_i Σ_j w_i w_j Cov[i][j]
+  //   - Marginal Contribution to Risk:  MCTR_i = (Σ_j w_j Cov[i][j]) / σ_p
+  //   - Component Contribution:         CTR_i  = w_i × MCTR_i        (Σ CTR_i = σ_p)
+  //   - Risk share:                     s_i    = CTR_i / σ_p          (Σ s_i = 100%)
+  //
+  // Δ R−w = s_i − w_i. Positive = risk-concentrating, negative = risk-diluting (the
+  // textbook diversification benefit). Top-2 risk share gives the concentration verdict.
+  let riskDecompPanelHtml="";
+  {
+    const _decRets=[];
+    active.forEach(t=>{
+      const tk=(t.tickers||[])[0];
+      if(!tk || t.conviction==null) return;
+      const sp=_sparkMap[String(tk).toUpperCase()];
+      if(!sp||sp.length<6) return;
+      const N=Math.min(25, sp.length-1);
+      const r=[];
+      for(let i=sp.length-N;i<sp.length;i++){
+        if(i<=0) continue;
+        const p0=sp[i-1], p1=sp[i];
+        if(p0>0) r.push((p1-p0)/p0);
+      }
+      if(r.length<5) return;
+      const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+      _decRets.push({
+        label:(t.tickers||[]).join("·")||tk,
+        dir:(t.direction||"").toLowerCase(),
+        conv:+t.conviction,
+        r: r.map(v=>v*sign)
+      });
+    });
+    if(_decRets.length>=2){
+      const obs=Math.min(..._decRets.map(s=>s.r.length));
+      const N=_decRets.length;
+      if(obs>=3){
+        const R=_decRets.map(s=>s.r.slice(-obs));
+        const Mn=R.map(arr=>arr.reduce((a,b)=>a+b,0)/obs);
+        const C=Array.from({length:N},()=>Array(N).fill(0));
+        for(let i=0;i<N;i++) for(let j=i;j<N;j++){
+          let s=0;
+          for(let k=0;k<obs;k++) s+=(R[i][k]-Mn[i])*(R[j][k]-Mn[j]);
+          const c=s/Math.max(1,obs-1);
+          C[i][j]=c; C[j][i]=c;
+        }
+        const totConv=_decRets.reduce((s,x)=>s+x.conv,0)||1;
+        const W=_decRets.map(x=>x.conv/totConv);
+        let varP=0;
+        for(let i=0;i<N;i++) for(let j=0;j<N;j++) varP+=W[i]*W[j]*C[i][j];
+        const sdP=Math.sqrt(Math.max(varP,0));
+        if(sdP>1e-9){
+          const ANN=Math.sqrt(252);
+          const ctr=[];
+          for(let i=0;i<N;i++){
+            let sumWC=0;
+            for(let j=0;j<N;j++) sumWC+=W[j]*C[i][j];
+            const mctr=sumWC/sdP;
+            const ctc =W[i]*mctr;
+            const share=ctc/sdP;
+            ctr.push({
+              i, label:_decRets[i].label, dir:_decRets[i].dir,
+              w: W[i], share, mctr, ctc,
+              delta: share - W[i]
+            });
+          }
+          ctr.sort((a,b)=>b.share-a.share);
+          const maxShare=Math.max(...ctr.map(x=>x.share));
+          const maxW=Math.max(...ctr.map(x=>x.w));
+          const barMax=Math.max(maxShare, maxW, 0.01);
+          const fmtPct=v=>(v*100).toFixed(1)+"%";
+          const fmtPP=v=>(v>=0?"+":"−")+Math.abs(v*100).toFixed(1)+"pp";
+          const _dirCls=d=>d==="long"?"cd-long":d==="short"?"cd-short":"cd-pair";
+          const rows=ctr.map(x=>{
+            const wBarW=(x.w/barMax*100).toFixed(1);
+            const rBarW=(x.share/barMax*100).toFixed(1);
+            const deltaCls=x.delta>0.02?"move-dn":x.delta<-0.02?"move-up":"muted";
+            const deltaTip=x.delta>0.02
+              ? "Risiko-konzentrierend: Position trägt mehr zur Buch-Volatilität bei als ihr Gewicht vermuten lässt"
+              : x.delta<-0.02
+                ? "Risiko-verdünnend: Position trägt weniger zur Buch-Volatilität bei als ihr Gewicht — Diversifikations-Effekt"
+                : "Beitrag entspricht ungefähr dem Gewicht";
+            const dirChip=`<span class="cd ${_dirCls(x.dir)}" aria-label="${esc(x.dir.toUpperCase())}">${esc((x.dir.slice(0,1)||"·").toUpperCase())}</span>`;
+            return `<tr>
+              <th class="pf-rd-lbl" scope="row"><span class="pf-rd-name">${esc(x.label)}</span>${dirChip}</th>
+              <td class="pf-rd-bar-cell">
+                <div class="pf-rd-bar-stack">
+                  <div class="pf-rd-bar pf-rd-bar-w" style="width:${wBarW}%" title="Gewicht (conviction-share): ${fmtPct(x.w)}"></div>
+                  <div class="pf-rd-bar pf-rd-bar-r" style="width:${rBarW}%" title="Risiko-Beitrag: ${fmtPct(x.share)} der Buch-Volatilität"></div>
+                </div>
+              </td>
+              <td class="pf-rd-num pf-rd-w-num" title="Gewicht im Buch (conviction-share)">${fmtPct(x.w)}</td>
+              <td class="pf-rd-num pf-rd-r-num" title="Anteil an der Gesamt-Buch-Volatilität">${fmtPct(x.share)}</td>
+              <td class="pf-rd-num pf-rd-d-num ${deltaCls}" title="${deltaTip}">${fmtPP(x.delta)}</td>
+            </tr>`;
+          }).join("");
+          const top1=ctr[0], top2=ctr[1]||null;
+          const top2Share=top1.share + (top2?top2.share:0);
+          const concVerd = top2Share>=0.75 ? "Hoch konzentriert" : top2Share>=0.55 ? "Mäßig konzentriert" : "Breit verteilt";
+          const concCls  = top2Share>=0.75 ? "move-dn"           : top2Share>=0.55 ? ""                    : "move-up";
+          const sdAnnPct=(sdP*ANN*100).toFixed(2);
+          const top2Lbl = top2 ? `${top1.label} + ${top2.label}` : top1.label;
+          riskDecompPanelHtml=`<div class="panel pf-rd" style="margin-top:var(--s3)">
+            <div class="pf-rd-h">
+              <div class="pf-rd-title">Risiko-Dekomposition <span class="muted" style="font-weight:400">— Component CTR pro Call</span></div>
+              <div class="pf-rd-meta muted">σ Buch (ann.) ${sdAnnPct}% · n=${obs} Tagesreturns</div>
+            </div>
+            <div class="pf-rd-wrap">
+              <table class="pf-rd-tbl" role="table" aria-label="Risiko-Beitrag pro offenem Call">
+                <thead>
+                  <tr>
+                    <th scope="col" class="pf-rd-th-name">Position</th>
+                    <th scope="col" class="pf-rd-th-bar">Gewicht vs Risiko</th>
+                    <th scope="col" class="pf-rd-num">w</th>
+                    <th scope="col" class="pf-rd-num">σ-Anteil</th>
+                    <th scope="col" class="pf-rd-num" title="Differenz Risiko-Anteil minus Gewicht. Positiv = Position konzentriert Risiko über ihr Gewicht hinaus.">Δ R−w</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+            <div class="pf-rd-verd">
+              <span class="muted">Top-2 Risiko-Treiber</span> <b>${esc(top2Lbl)}</b>
+              <span class="${concCls}"><b>${(top2Share*100).toFixed(0)}%</b> der Buch-Volatilität</span>
+              <span class="pf-rd-chip ${concCls}">${concVerd}</span>
+            </div>
+            <div class="pf-rd-legend muted">
+              <span class="pf-rd-leg"><span class="pf-rd-leg-sw pf-rd-bar-w"></span>Gewicht (conviction-share)</span>
+              <span class="pf-rd-leg"><span class="pf-rd-leg-sw pf-rd-bar-r"></span>Risiko-Beitrag (σ-Anteil)</span>
+            </div>
+            <div class="pf-rd-foot">Component Contribution to Risk: <i>w<sub>i</sub> · (Σ<sub>j</sub> w<sub>j</sub> Cov<sub>ij</sub>) / σ<sub>p</sub></i>. Summiert exakt auf σ<sub>p</sub>. Identifiziert Positionen, die mehr Risiko ins Buch tragen als ihr Gewicht impliziert — Risiko-Konzentration ohne Kapital-Konzentration. Methodik: Bloomberg PORT-R / BlackRock Aladdin.</div>
+          </div>`;
+        }
+      }
+    }
+  }
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
