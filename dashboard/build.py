@@ -3290,6 +3290,52 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .pf-attrib-tbl thead th,.pf-attrib-tbl tbody td{padding:5px 4px}
   .pf-attrib-tbl thead th.pf-attrib-bar-col{width:30%}
 }
+/* Stock-Selection-α — vs Sektor-Median (HED-137 Zyklus 117).
+   Brinson-style "selection effect": isolates stock-picking skill from sector beta.
+   Lollipop layout per call — track centered on 0, stem to α, dot at α-value,
+   ticker+sector chip on the left, formatted α on the right. */
+.pf-sel{margin-top:var(--s3);padding:var(--s3)}
+.pf-sel-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3)}
+.pf-sel-h-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-sel-h-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400}
+.pf-sel-verd{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s4);align-items:center;padding:var(--s2) 0 var(--s3);font-size:var(--fs-cap);font-variant-numeric:tabular-nums;color:var(--mut);border-bottom:1px solid var(--line);margin-bottom:var(--s2)}
+.pf-sel-verd b{color:var(--txt)}
+.pf-sel-verd-chip{display:inline-block;font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:4px;font-weight:700;background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+.pf-sel-verd-chip--pos{background:rgba(63,185,80,.15);color:var(--green);border-color:rgba(63,185,80,.4)}
+.pf-sel-verd-chip--neg{background:rgba(248,81,73,.15);color:var(--red);border-color:rgba(248,81,73,.4)}
+.pf-sel-verd-chip--mix{background:rgba(210,153,34,.15);color:var(--amber);border-color:rgba(210,153,34,.4)}
+.pf-sel-rows{display:flex;flex-direction:column;gap:var(--s2)}
+.pf-sel-row{display:grid;grid-template-columns:minmax(140px,1.4fr) minmax(120px,1fr) 2.4fr minmax(72px,auto);gap:var(--s3);align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.pf-sel-row:first-child{border-top:0}
+.pf-sel-tk{display:flex;align-items:center;gap:6px;min-width:0}
+.pf-sel-tk-name{font-weight:700;font-size:var(--fs-h2);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.pf-sel-sec{display:inline-flex;align-items:baseline;gap:5px;min-width:0;overflow:hidden}
+.pf-sel-sec-id{font-size:var(--fs-micro);color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums;flex:0 0 auto}
+.pf-sel-sec-nm{font-size:var(--fs-cap);color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-sel-pop{position:relative;height:18px}
+.pf-sel-pop-track{position:absolute;left:0;right:0;top:50%;height:2px;background:var(--panel2);transform:translateY(-50%);border-radius:1px}
+.pf-sel-pop-zero{position:absolute;top:-1px;bottom:-1px;width:1px;background:var(--mut);opacity:.55}
+.pf-sel-pop-stem{position:absolute;top:50%;height:4px;border-radius:2px;transform:translateY(-50%)}
+.pf-sel-pop-stem--pos{background:linear-gradient(90deg,rgba(63,185,80,.25),rgba(63,185,80,.85))}
+.pf-sel-pop-stem--neg{background:linear-gradient(270deg,rgba(248,81,73,.25),rgba(248,81,73,.85))}
+.pf-sel-pop-dot{position:absolute;top:50%;width:11px;height:11px;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 2px var(--panel);z-index:1}
+.pf-sel-pop-dot--pos{background:var(--green)}
+.pf-sel-pop-dot--neg{background:var(--red)}
+.pf-sel-pop-dot--flat{background:var(--mut)}
+.pf-sel-pop-bench{position:absolute;top:50%;width:8px;height:8px;border:1.5px solid var(--mut);border-radius:50%;transform:translate(-50%,-50%);background:var(--panel);opacity:.75}
+.pf-sel-pop-axis{position:absolute;left:0;right:0;bottom:-12px;display:flex;justify-content:space-between;font-size:9px;color:var(--mut);font-variant-numeric:tabular-nums;line-height:1;pointer-events:none}
+.pf-sel-alpha{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;font-size:var(--fs-h2);white-space:nowrap}
+.pf-sel-alpha-sub{display:block;font-size:var(--fs-micro);font-weight:500;color:var(--mut);letter-spacing:0}
+.pf-sel-foot{margin-top:var(--s3);font-size:var(--fs-micro);color:var(--mut);line-height:1.5}
+.pf-sel-foot code{font-family:ui-monospace,SFMono-Regular,monospace;background:var(--panel2);padding:1px 5px;border-radius:3px;color:var(--txt)}
+.pf-sel-empty{padding:var(--s3) 0;color:var(--mut);font-size:var(--fs-cap);font-style:italic}
+@media(max-width:640px){
+  .pf-sel-row{grid-template-columns:1fr auto;grid-template-areas:"tk alpha" "sec sec" "pop pop";gap:4px var(--s2);padding:var(--s3) 0}
+  .pf-sel-tk{grid-area:tk}
+  .pf-sel-sec{grid-area:sec;margin-top:-2px}
+  .pf-sel-pop{grid-area:pop;margin-top:6px;margin-bottom:14px}
+  .pf-sel-alpha{grid-area:alpha;font-size:var(--fs-h2)}
+}
 /* conviction color ramp */
 .conv-lo{color:var(--mut)}
 .conv-mid{color:var(--txt)}
@@ -5673,6 +5719,142 @@ function calibSvg(buckets){
       </table>
     </div>`;
   }
+  // Stock-Selection-α — vs Sektor-Median (HED-137 Zyklus 117).
+  // Brinson decomposition's "selection effect": isolates stock-picking skill from sector beta.
+  // attribPanelHtml above measures allocation effect (which sector was right);
+  // this measures selection effect (within that sector, was the picked ticker right).
+  //   For each active call:
+  //     1. Look up sector via SECTOR_MAP[primary_ticker]
+  //     2. Build peer set: every ticker in that same sector from sector_view (incl. self)
+  //     3. Compute holding-period return of each peer = (spark[-1] − spark[eIdx]) / spark[eIdx]
+  //        where eIdx = same entry-offset as the call's own equity-curve anchor
+  //     4. Sector benchmark = median peer return (median > mean; resistant to single-stock outliers)
+  //     5. Direction-aware bench:  long → +secMed, short → −secMed
+  //        (Shorting a stock that fell more than its sector → positive selection-α)
+  //     6. Selection-α = call.pnl_signed − dir_bench
+  //   Visualization: horizontal lollipop per call; stem from 0 to α, dot at α-value.
+  let selPanelHtml="";
+  {
+    const _secPeers={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>{
+      const key=s.id+" "+s.name;
+      const tks=(s.tickers||[]).map(t=>{
+        const sym=t&&t.ticker!=null?String(t.ticker).toUpperCase():(typeof t==="string"?t.toUpperCase():null);
+        return sym;
+      }).filter(Boolean);
+      _secPeers[key]=tks;
+    });
+    function _medianPeerRet(secKey, eOff){
+      const peers=_secPeers[secKey]||[];
+      const rets=[];
+      peers.forEach(tk=>{
+        const sp=_sparkMap[tk]; if(!sp||sp.length<2) return;
+        if(eOff>=sp.length) return;
+        const baseIdx=sp.length-1-eOff;
+        if(baseIdx<0||baseIdx>=sp.length-1) return;
+        const base=sp[baseIdx], last=sp[sp.length-1];
+        if(!(base>0)) return;
+        rets.push((last-base)/base*100);
+      });
+      if(rets.length<2) return {ret:null,n:rets.length};
+      rets.sort((a,b)=>a-b);
+      const mid=Math.floor(rets.length/2);
+      const med=rets.length%2 ? rets[mid] : (rets[mid-1]+rets[mid])/2;
+      return {ret:med,n:rets.length};
+    }
+    const _selRows=[];
+    pnlRows.forEach(r=>{
+      const t=r.t;
+      if(r.pnl==null||t.baseline_price==null||!t.date) return;
+      const tks=(t.tickers||[]); if(!tks.length) return;
+      const TK=String(tks[0]).toUpperCase();
+      const sec=SECTOR_MAP[TK]; if(!sec) return;
+      const sp=_sparkMap[TK]; if(!sp) return;
+      const eIdx=_entryIdx(sp, t.baseline_price, t.date);
+      if(eIdx<0||eIdx>=sp.length-1) return;
+      const eOff=sp.length-1-eIdx;
+      const peer=_medianPeerRet(sec, eOff);
+      if(peer.ret==null) return;
+      const dir=(t.direction||"").toLowerCase();
+      const sign=dir==="short"?-1:1;
+      const dirBench=sign*peer.ret;
+      const alpha=r.pnl-dirBench;
+      _selRows.push({
+        t, tk:TK, tksLbl:tks.join("·"), sec, dir,
+        peerN:peer.n, secMed:peer.ret, dirBench, callPnl:r.pnl, alpha
+      });
+    });
+    if(_selRows.length){
+      _selRows.sort((a,b)=>b.alpha-a.alpha);
+      const maxAbs=Math.max(...(_selRows.map(r=>Math.abs(r.alpha))), 1.0);
+      const scale=v=>Math.max(0,Math.min(100, 50 + (v/maxAbs)*48));
+      const fmtPP=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"pp";
+      const fmtPct=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
+      const dotCls=v=>v>=0.25?"pos":v<=-0.25?"neg":"flat";
+      const rowsHtml=_selRows.map(r=>{
+        const xα=scale(r.alpha);
+        const xB=scale(0);
+        const stemCls=r.alpha>=0?"pos":"neg";
+        const stemLeft=r.alpha>=0?xB:xα;
+        const stemWidth=Math.abs(xα-xB);
+        const secParts=String(r.sec).split(/\s+/);
+        const secId=secParts[0]||"—";
+        const secName=secParts.slice(1).join(" ")||r.sec;
+        const dirChip=`<span class="cd ${r.dir==="long"?"cd-long":r.dir==="short"?"cd-short":"cd-pair"}" aria-label="${esc(r.dir.toUpperCase())}">${esc((r.dir.slice(0,1)||"·").toUpperCase())}</span>`;
+        const tip=`${r.tksLbl} ${r.dir.toUpperCase()} · Call ${fmtPct(r.callPnl)} · Sektor-Median ${fmtPct(r.secMed)} (${r.peerN} Peers) · dir-bench ${fmtPct(r.dirBench)} · Selection-α ${fmtPP(r.alpha)}`;
+        const alphaCls=r.alpha>=0.25?"move-up":r.alpha<=-0.25?"move-dn":"muted";
+        return `<div class="pf-sel-row" title="${esc(tip)}">
+          <div class="pf-sel-tk"><span class="pf-sel-tk-name">${esc(r.tksLbl)}</span>${dirChip}</div>
+          <div class="pf-sel-sec"><span class="pf-sel-sec-id">${esc(secId)}</span><span class="pf-sel-sec-nm">${esc(secName)}</span></div>
+          <div class="pf-sel-pop" role="img" aria-label="Selection-α ${fmtPP(r.alpha)}, Sektor-Median ${fmtPct(r.secMed)}">
+            <div class="pf-sel-pop-track"></div>
+            <div class="pf-sel-pop-zero" style="left:50%"></div>
+            <div class="pf-sel-pop-stem pf-sel-pop-stem--${stemCls}" style="left:${stemLeft.toFixed(2)}%;width:${stemWidth.toFixed(2)}%"></div>
+            <div class="pf-sel-pop-dot pf-sel-pop-dot--${dotCls(r.alpha)}" style="left:${xα.toFixed(2)}%"></div>
+            <div class="pf-sel-pop-axis"><span>−${maxAbs.toFixed(1)}pp</span><span>0</span><span>+${maxAbs.toFixed(1)}pp</span></div>
+          </div>
+          <div class="pf-sel-alpha"><span class="${alphaCls}">${fmtPP(r.alpha)}</span><span class="pf-sel-alpha-sub">Call ${fmtPct(r.callPnl)} · Sek ${fmtPct(r.secMed)}</span></div>
+        </div>`;
+      }).join("");
+      const nPos=_selRows.filter(r=>r.alpha>0.25).length;
+      const nNeg=_selRows.filter(r=>r.alpha<-0.25).length;
+      const nFlat=_selRows.length-nPos-nNeg;
+      const totalConvSel=_selRows.reduce((s,r)=>s+(r.t.conviction||0),0);
+      const wAlpha=totalConvSel>0?_selRows.reduce((s,r)=>s+(r.t.conviction||0)*r.alpha,0)/totalConvSel:null;
+      const wAlphaTxt=wAlpha==null?"—":fmtPP(wAlpha);
+      const wAlphaCls=wAlpha==null?"muted":wAlpha>=0.25?"move-up":wAlpha<=-0.25?"move-dn":"muted";
+      let verdChip;
+      if(nPos>=Math.max(2,_selRows.length*0.6)) verdChip=`<span class="pf-sel-verd-chip pf-sel-verd-chip--pos">Selection-α positiv</span>`;
+      else if(nNeg>=Math.max(2,_selRows.length*0.6)) verdChip=`<span class="pf-sel-verd-chip pf-sel-verd-chip--neg">Selection-α negativ</span>`;
+      else verdChip=`<span class="pf-sel-verd-chip pf-sel-verd-chip--mix">Selection-α gemischt</span>`;
+      const skipped=pnlRows.filter(r=>r.pnl!=null).length-_selRows.length;
+      const skipNote=skipped>0?` · <span class="muted">${skipped} Call${skipped===1?"":"s"} ohne Peer-Daten</span>`:"";
+      selPanelHtml=`<div class="panel pf-sel">
+        <div class="pf-sel-h">
+          <div>
+            <div class="pf-sel-h-title">Stock-Selection-α — vs Sektor-Median</div>
+            <div class="pf-sel-h-sub">Selection-Effekt der Brinson-Attribution · α = Call-P&amp;L − Sektor-Median-Rendite (richtungs-adjustiert) · isoliert Stock-Picking-Skill von Sektor-Beta</div>
+          </div>
+          ${verdChip}
+        </div>
+        <div class="pf-sel-verd">
+          <span><b>${nPos}</b> schlagen Sektor</span>
+          <span><b>${nNeg}</b> unter Sektor</span>
+          ${nFlat?`<span><b>${nFlat}</b> ≈ Sektor</span>`:""}
+          <span>· Konv.-gew. Selection-α <b class="${wAlphaCls}">${wAlphaTxt}</b></span>
+          ${skipNote}
+        </div>
+        <div class="pf-sel-rows">${rowsHtml}</div>
+        <div class="pf-sel-foot">
+          Selection-α = <code>call.P&amp;L − (long↔+ , short↔−) × median(peer<sub>i</sub>.return)</code> über gleiche Haltedauer.
+          Positives α bei einem Short ⇒ Position fiel mehr als der Sektor (richtiger Pick im richtigen Bear-Setup).
+          Negatives α bei einem Long ⇒ Sektor stieg, Position blieb zurück (Sektor richtig, Stock-Pick nicht).
+          Peer-Set = alle Sektor-Mitglieder aus der Sektor-Ansicht; Median statt Mean dämpft Single-Stock-Outlier.
+          Reicht über die Spark-Haltedauer (≤30 Handelstage); Δ zu vs-SPY (Live-Monitor) = Sektor-Beta-Komponente.
+        </div>
+      </div>`;
+    }
+  }
   // Conviction-vs-P&L Scatter — "are my high-conviction calls working?"
   // X: conviction (0.0–1.0); Y: unrealised P&L %; one dot per priced active call.
   // Quadrant dividers at x=0.5 (conviction midpoint) and y=0.
@@ -6197,7 +6379,7 @@ function calibSvg(buckets){
       </div>`;
     }
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${riskHtml}`;
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
