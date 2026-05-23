@@ -2146,6 +2146,63 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Trade-Idea Generator — Signal-driven Candidate Pipeline (HED-150 Zyklus 164)
+   Scans non-active universe tickers, scores them via cross-signal aggregation
+   (Options + Insider + Fundamentals + Tech + Consensus), surfaces top LONG and
+   SHORT candidates with transparent PRO/CON bullets. Bridges signals → next trades. */
+.pf-ti-panel{padding:var(--s3)}
+.pf-ti-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-ti-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-ti-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-ti-stats{display:flex;gap:var(--s3);flex-wrap:wrap;flex-shrink:0}
+.pf-ti-stat{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:54px}
+.pf-ti-stat-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt)}
+.pf-ti-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut)}
+.pf-ti-stat-val-bull{color:#3fb950}
+.pf-ti-stat-val-bear{color:#f85149}
+.pf-ti-section-h{font-size:var(--fs-cap);font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--txt);margin:var(--s3) 0 var(--s2);display:flex;align-items:center;gap:8px}
+.pf-ti-section-h-pill{display:inline-flex;align-items:center;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.04em}
+.pf-ti-section-h-pill-bull{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-ti-section-h-pill-bear{background:rgba(248,81,73,.18);color:#f85149}
+.pf-ti-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:var(--s2)}
+.pf-ti-card{background:rgba(139,148,158,.04);border:1px solid rgba(139,148,158,.12);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:6px;border-top:3px solid rgba(139,148,158,.3);transition:border-color .12s}
+.pf-ti-card-strong{border-top-width:4px}
+.pf-ti-card-long{border-top-color:#3fb950}
+.pf-ti-card-long-strong{border-top-color:#3fb950;background:rgba(35,134,54,.04)}
+.pf-ti-card-short{border-top-color:#f85149}
+.pf-ti-card-short-strong{border-top-color:#f85149;background:rgba(248,81,73,.04)}
+.pf-ti-card-hdr{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.pf-ti-tk-row{display:flex;align-items:center;gap:6px;min-width:0}
+.pf-ti-tk{font-weight:700;font-size:16px;color:var(--txt);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em}
+.pf-ti-tk-sec{font-size:9px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-ti-score{display:inline-flex;align-items:center;justify-content:center;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0}
+.pf-ti-score-pos{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-ti-score-neg{background:rgba(248,81,73,.18);color:#f85149}
+.pf-ti-score-zero{background:rgba(139,148,158,.12);color:var(--mut)}
+.pf-ti-spark{display:flex;align-items:center;justify-content:flex-end;height:24px}
+.pf-ti-pricerow{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums;gap:6px}
+.pf-ti-price{font-weight:600;color:var(--txt);font-size:12px}
+.pf-ti-upside-pos{color:#3fb950;font-weight:600}
+.pf-ti-upside-neg{color:#f85149;font-weight:600}
+.pf-ti-flags{display:flex;flex-direction:column;gap:3px}
+.pf-ti-flag{display:flex;align-items:flex-start;gap:5px;font-size:10px;line-height:1.4;padding:3px 6px;border-radius:3px}
+.pf-ti-flag-pro{background:rgba(35,134,54,.07);color:var(--txt);border-left:2px solid #3fb950}
+.pf-ti-flag-con{background:rgba(248,81,73,.06);color:var(--txt);border-left:2px solid #f85149}
+.pf-ti-flag-icon{flex-shrink:0;font-weight:700;font-size:9px;letter-spacing:.04em;text-transform:uppercase}
+.pf-ti-flag-icon-pro{color:#3fb950}
+.pf-ti-flag-icon-con{color:#f85149}
+.pf-ti-action{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:5px;border-top:1px solid rgba(139,148,158,.1)}
+.pf-ti-dir{display:inline-flex;align-items:center;padding:3px 9px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.pf-ti-dir-long{background:rgba(35,134,54,.18);color:#3fb950}
+.pf-ti-dir-short{background:rgba(248,81,73,.18);color:#f85149}
+.pf-ti-pe-tag{font-size:10px;color:var(--mut);font-variant-numeric:tabular-nums}
+.pf-ti-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+@media(max-width:600px){
+  .pf-ti-h{flex-direction:column}
+  .pf-ti-stats{width:100%;justify-content:space-between}
+  .pf-ti-grid{grid-template-columns:1fr;gap:6px}
+  .pf-ti-card{padding:8px}
+}
 /* Fundamentals-Quadrant — Value × Wachstum (HED-150 Zyklus 163)
    2D scatter: X = Fwd P/E (log), Y = Rev Growth YoY. Universe context + active
    positions highlighted. Quadrants by median: GARP-Gold / Momentum / Value-Trap /
@@ -10840,7 +10897,173 @@ function calibSvg(buckets){
     }
   }
 
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${alertsPanelHtml}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${sectorRotationHtml}${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${fundQuadHtml}${eventHorizonHtml}${universPanelHtml}${insiderFlowHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Trade-Idea Generator — Signal-driven Candidate Pipeline (HED-150 Zyklus 164).
+  // Scans NON-active universe tickers, aggregates Options + Insider + Fundamentals
+  // + Tech + Consensus signals into a composite score, surfaces top LONG and SHORT
+  // candidates with transparent PRO/CON bullets. Bridges signals → next trades.
+  let tradeIdeaHtml="";
+  {
+    const _activeTk=new Set(active.flatMap(th=>(th.tickers||[]).map(tk=>String(tk).toUpperCase())));
+    const _sv={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>{
+      (s.tickers||[]).forEach(t=>{if(t&&t.ticker) _sv[String(t.ticker).toUpperCase()]={...t,sector_name:s.name};});
+    });
+    const _ot={}, _it={}, _ss={};
+    ((D.options_tape||{}).tickers||[]).forEach(t=>{if(t&&t.ticker) _ot[t.ticker.toUpperCase()]=t;});
+    ((D.insider_tape||{}).tickers||[]).forEach(t=>{if(t&&t.ticker) _it[t.ticker.toUpperCase()]=t;});
+    ((D.short_squeeze||{}).tickers||[]).forEach(t=>{if(t&&t.ticker) _ss[t.ticker.toUpperCase()]=t;});
+
+    function _fmtM(v){
+      const a=Math.abs(v);
+      if(a>=1e9) return `$${(v/1e9).toFixed(1)}B`;
+      if(a>=1e6) return `$${(v/1e6).toFixed(0)}M`;
+      return `$${(v/1e3).toFixed(0)}K`;
+    }
+
+    const candidates=[];
+    Object.entries(_sv).forEach(([tk,sv])=>{
+      if(_activeTk.has(tk)) return;
+      const c=sv.consensus||{};
+      const o=_ot[tk]||null;
+      const i=_it[tk]||null;
+      const ss=_ss[tk]||null;
+
+      let score=0;
+      const pros=[], cons=[];
+
+      // Options
+      if(o){
+        if(o.verdict==="bullish_setup"){ score+=2; pros.push({lbl:"Opt",txt:`BULL P/C ${o.pc?.toFixed(2)||"?"}`}); }
+        else if(o.verdict==="bearish_setup"){ score-=2; cons.push({lbl:"Opt",txt:`BEAR P/C ${o.pc?.toFixed(2)||"?"}`}); }
+        else if(o.verdict==="hedge_bid"){ score-=1; cons.push({lbl:"Opt",txt:"Hedge-Bid (Put-Skew)"}); }
+        else if(o.verdict==="squeeze_risk"){ cons.push({lbl:"Opt",txt:"Squeeze-Risk"}); }
+        else if(o.verdict==="event_pending"){ pros.push({lbl:"Event",txt:`±${o.emove?.toFixed(1)||"?"}%`}); }
+      }
+      // Insider
+      if(i && i.net_dollar!=null){
+        const nd=i.net_dollar;
+        if(nd>1e6){ score+=2; pros.push({lbl:"Ins",txt:`+${_fmtM(nd).replace("$","")} (${i.n_buy_execs} Exec)`}); }
+        else if(nd<-10e6){ score-=1; cons.push({lbl:"Ins",txt:`−${_fmtM(Math.abs(nd)).replace("$","")} (${i.n_sell_execs} Exec)`}); }
+      }
+      // Fundamentals
+      const fpe=c.fwd_pe, rev=c.rev_growth_yoy;
+      if(typeof fpe==="number"&&fpe>0&&typeof rev==="number"){
+        const garp=rev/fpe;
+        if(garp>5){ score+=2; pros.push({lbl:"GARP",txt:`P/E ${fpe.toFixed(0)} Rev +${rev.toFixed(0)}%`}); }
+        else if(garp>2){ score+=1; pros.push({lbl:"Val",txt:`P/E ${fpe.toFixed(0)} Rev +${rev.toFixed(0)}%`}); }
+        else if(garp<1&&fpe>30){ score-=1; cons.push({lbl:"Val",txt:`Expensive P/E ${fpe.toFixed(0)} Rev ${rev>=0?'+':''}${rev.toFixed(0)}%`}); }
+      }
+      // Tech
+      const rsi=sv.rsi14;
+      if(typeof rsi==="number"){
+        if(rsi<30){ score+=1; pros.push({lbl:"Tech",txt:`Oversold RSI ${rsi.toFixed(0)}`}); }
+        else if(rsi>75){ score-=1; cons.push({lbl:"Tech",txt:`Overbought RSI ${rsi.toFixed(0)}`}); }
+      }
+      // Squeeze
+      if(ss && (ss.bucket==="extreme"||ss.bucket==="high")){
+        cons.push({lbl:"SI",txt:`Squeeze ${ss.bucket.toUpperCase()} (SI ${ss.si?.toFixed(0)||"?"}%)`});
+      }
+      // Analyst PT + rec
+      const pt=c.pt_mean, price=sv.price;
+      if(typeof pt==="number"&&pt>0&&typeof price==="number"&&price>0){
+        const upside=(pt-price)/price*100;
+        if(upside>30){ score+=1; pros.push({lbl:"PT",txt:`Upside +${upside.toFixed(0)}%`}); }
+        else if(upside<-10){ score-=1; cons.push({lbl:"PT",txt:`Downside ${upside.toFixed(0)}%`}); }
+      }
+      const rec=c.rec;
+      if(rec==="strong_buy"){ score+=1; pros.push({lbl:"Konsens",txt:"Strong-Buy"}); }
+      else if(rec==="sell"||rec==="strong_sell"){ score-=1; cons.push({lbl:"Konsens",txt:rec==="strong_sell"?"Strong-Sell":"Sell"}); }
+
+      candidates.push({
+        tk, sector:sv.sector_name||"", price, sv, c, o, i,
+        upside:typeof pt==="number"&&typeof price==="number"&&price>0?(pt-price)/price*100:null,
+        spark:sv.spark||[],
+        score, pros, cons
+      });
+    });
+
+    // Pick top LONG (score≥+2) and top SHORT (score≤-2) candidates
+    const longCands=candidates.filter(c=>c.score>=2).sort((a,b)=>b.score-a.score).slice(0,6);
+    const shortCands=candidates.filter(c=>c.score<=-2).sort((a,b)=>a.score-b.score).slice(0,4);
+
+    function _miniSpark(spark){
+      if(!spark||spark.length<2) return `<svg width="60" height="22"><line x1="0" y1="11" x2="60" y2="11" stroke="rgba(139,148,158,.2)"/></svg>`;
+      const mn=Math.min(...spark), mx=Math.max(...spark);
+      const rng=mx-mn||1;
+      const n=spark.length;
+      const pts=spark.map((v,i)=>{
+        const x=(i/(n-1))*58+1;
+        const y=20-((v-mn)/rng)*18;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(" ");
+      const up=spark[n-1]>=spark[0];
+      const col=up?"#3fb950":"#f85149";
+      return `<svg width="60" height="22" viewBox="0 0 60 22"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+    }
+
+    function _renderCard(c,dir){
+      const isLong=(dir==="long");
+      const strongScore=Math.abs(c.score)>=3;
+      const cardCls=`pf-ti-card ${isLong?(strongScore?'pf-ti-card-long-strong':'pf-ti-card-long'):(strongScore?'pf-ti-card-short-strong':'pf-ti-card-short')}${strongScore?' pf-ti-card-strong':''}`;
+      const scoreCls=c.score>0?"pf-ti-score-pos":c.score<0?"pf-ti-score-neg":"pf-ti-score-zero";
+      const secShort=c.sector.replace("Compute & Semis","Semis").replace("AI-Software & Apps","AI-SW").replace("Hyperscaler & Big Tech","Hyperscaler").replace("Energy / Power / Infra","Energy").slice(0,18);
+      const upsideStr=c.upside!=null?`${c.upside>=0?'+':''}${c.upside.toFixed(0)}% PT`:"";
+      const upsideCls=c.upside==null?"":c.upside>=20?"pf-ti-upside-pos":c.upside<=-10?"pf-ti-upside-neg":"";
+      const peStr=c.c.fwd_pe?`P/E ${c.c.fwd_pe.toFixed(0)}`:"";
+      const dirBadge=`<span class="pf-ti-dir ${isLong?'pf-ti-dir-long':'pf-ti-dir-short'}">${isLong?'▲ LONG':'▼ SHORT'}</span>`;
+
+      const prosHtml=c.pros.slice(0,4).map(f=>`<div class="pf-ti-flag pf-ti-flag-pro"><span class="pf-ti-flag-icon pf-ti-flag-icon-pro">${esc(f.lbl)}</span><span>${esc(f.txt)}</span></div>`).join("");
+      const consHtml=c.cons.slice(0,3).map(f=>`<div class="pf-ti-flag pf-ti-flag-con"><span class="pf-ti-flag-icon pf-ti-flag-icon-con">${esc(f.lbl)}</span><span>${esc(f.txt)}</span></div>`).join("");
+      // For shorts, the CONs are actually the THESIS evidence — re-frame
+      const evidenceHtml=isLong?prosHtml+consHtml:consHtml+prosHtml;
+
+      return `<div class="${cardCls}">
+        <div class="pf-ti-card-hdr">
+          <div class="pf-ti-tk-row"><span class="pf-ti-tk">${esc(c.tk)}</span></div>
+          <span class="pf-ti-score ${scoreCls}">${c.score>=0?'+':''}${c.score}</span>
+        </div>
+        <div class="pf-ti-pricerow">
+          <span><span class="pf-ti-price">${c.price!=null?'$'+c.price.toFixed(2):'—'}</span> <span class="pf-ti-tk-sec">${esc(secShort)}</span></span>
+          <span class="pf-ti-spark">${_miniSpark(c.spark)}</span>
+        </div>
+        <div class="pf-ti-flags">${evidenceHtml}</div>
+        <div class="pf-ti-action">
+          ${dirBadge}
+          <span class="pf-ti-pe-tag">${esc(peStr)} ${upsideStr?'· <span class="'+upsideCls+'">'+upsideStr+'</span>':''}</span>
+        </div>
+      </div>`;
+    }
+
+    if(longCands.length || shortCands.length){
+      const longHtml=longCands.length?longCands.map(c=>_renderCard(c,"long")).join(""):"";
+      const shortHtml=shortCands.length?shortCands.map(c=>_renderCard(c,"short")).join(""):"";
+
+      const longCount=longCands.length;
+      const shortCount=shortCands.length;
+      const strongLong=longCands.filter(c=>c.score>=3).length;
+      const strongShort=shortCands.filter(c=>c.score<=-3).length;
+
+      tradeIdeaHtml=`<div class="panel pf-ti-panel">
+        <div class="pf-ti-h">
+          <div>
+            <div class="pf-ti-title">Trade-Idea Generator — Signal-Konvergenz-Pipeline</div>
+            <div class="pf-ti-sub">Scannt ${candidates.length} Nicht-Buch-Ticker · Aggregiert Options + Insider + Fundamentals + Tech + Konsensus zu Composite-Score · Surfaced wenn |Score| ≥ 2</div>
+          </div>
+          <div class="pf-ti-stats">
+            <div class="pf-ti-stat"><span class="pf-ti-stat-val pf-ti-stat-val-bull">${longCount}</span><span class="pf-ti-stat-lbl">LONG Cand.</span></div>
+            <div class="pf-ti-stat"><span class="pf-ti-stat-val pf-ti-stat-val-bear">${shortCount}</span><span class="pf-ti-stat-lbl">SHORT Cand.</span></div>
+            <div class="pf-ti-stat"><span class="pf-ti-stat-val pf-ti-stat-val-bull">${strongLong}</span><span class="pf-ti-stat-lbl">High-Conv ▲</span></div>
+            <div class="pf-ti-stat"><span class="pf-ti-stat-val pf-ti-stat-val-bear">${strongShort}</span><span class="pf-ti-stat-lbl">High-Conv ▼</span></div>
+          </div>
+        </div>
+        ${longCount?`<div class="pf-ti-section-h">▲ LONG-Kandidaten <span class="pf-ti-section-h-pill pf-ti-section-h-pill-bull">${longCount}</span></div><div class="pf-ti-grid">${longHtml}</div>`:""}
+        ${shortCount?`<div class="pf-ti-section-h">▼ SHORT-Kandidaten <span class="pf-ti-section-h-pill pf-ti-section-h-pill-bear">${shortCount}</span></div><div class="pf-ti-grid">${shortHtml}</div>`:""}
+        <div class="pf-ti-foot">Score-Komponenten: Options-Verdict ±2 (BULL/BEAR) · Insider-Flow ±2/-1 (Käufe >$1M ist selten + stark, Verkäufe ab >$10M Counter) · GARP ±2 (Rev/PE > 5 ist Top, > 2 ist Value) · RSI-Extreme ±1 · Konsensus Strong-Buy/Sell ±1 · Analyst-PT-Upside/Downside ±1. Aktive Positionen ausgeschlossen — fokus auf NÄCHSTE Ideen. High-Conv = |Score| ≥ 3 (3+ unabhängige Signale aligned).</div>
+      </div>`;
+    }
+  }
+
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${alertsPanelHtml}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${sectorRotationHtml}${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${fundQuadHtml}${tradeIdeaHtml}${eventHorizonHtml}${universPanelHtml}${insiderFlowHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
