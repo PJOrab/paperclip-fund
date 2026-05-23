@@ -77,6 +77,7 @@ def collect() -> dict:
         "macro_pulse": collect_macro_pulse(c),
         "options_tape": collect_options_tape(c),
         "short_squeeze": collect_short_squeeze(c),
+        "eps_revisions": collect_eps_revisions(c),
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "built_at_iso": datetime.now(timezone.utc).isoformat(),
     }
@@ -761,6 +762,222 @@ def collect_short_squeeze(c, lookback_days: int = 14, ticker_cap: int = 24) -> d
         "n_extreme": n_extreme,
         "n_high": n_high,
         "n_rising": n_rising,
+        "stale": stale,
+    }
+
+
+# EPS-Revisions-Velocity (HED-137 Zyklus 112): Bloomberg-EE/EM-equivalent
+# sell-side estimate-revision panel. EpsRevisionsAdapter emits one row per
+# watchlist ticker when the StarMine/IBES revision velocity is directional:
+# "[NVDA] Sell-side EPS revisions POSITIVE (current quarter) — 7d: 8 up / 1 down ·
+# 30d: 12 up / 2 down — consensus Q-EPS $0.85 (+4.2% vs 30d ago) — FY-30d: 18 up /
+# 3 down (aligned) — 28 analysts in consensus". This is the single strongest
+# academic forward-return predictor for individual equities (PEAD, Bernard &
+# Thomas 1989; Jegadeesh-Titman; modern StarMine 1-yr alpha ≈3-5%). We render
+# per-ticker rows showing 30d net-revision as a centered diverging bar
+# (down=red left, up=green right), 7d count as compact reads, EPS drift % as
+# the dollar-weighted magnitude, verdict pill, and a book cross-ref badge —
+# long on a tailwind name = momentum-aligned; short on a tailwind = fighting
+# the tape (asymmetry-risk). Together with Earnings-Playbook (historic beat
+# behavior), Konsens-Spread (analyst disagreement on PT) and Quality-Scorecard
+# (Rule-of-40 fundamentals), this completes the earnings/fundamental lens
+# institutional PMs scan before every print.
+_ER_RE = re.compile(
+    r"^\[(?P<ticker>[A-Z][A-Z0-9.\-]{0,9})\]\s+Sell-side EPS revisions\s+"
+    r"(?P<dir>POSITIVE|NEGATIVE)\b",
+    re.IGNORECASE,
+)
+_ER_7D = re.compile(r"7d:\s*(\d+)\s*up\s*/\s*(\d+)\s*down", re.IGNORECASE)
+_ER_30D = re.compile(r"30d:\s*(\d+)\s*up\s*/\s*(\d+)\s*down", re.IGNORECASE)
+_ER_DRIFT = re.compile(
+    r"consensus Q-EPS\s+\$([\d.\-]+)\s*\(([+\-]?[\d.]+)%\s*vs\s*30d ago\)",
+    re.IGNORECASE,
+)
+_ER_FY = re.compile(
+    r"FY-30d:\s*(\d+)\s*up\s*/\s*(\d+)\s*down\s*\(aligned\)",
+    re.IGNORECASE,
+)
+_ER_ANAL = re.compile(r"(\d+)\s*analysts in consensus", re.IGNORECASE)
+
+
+def _er_parse(text: str) -> dict | None:
+    m = _ER_RE.search(text or "")
+    if not m:
+        return None
+    out: dict = {
+        "ticker": m.group("ticker").upper(),
+        "direction": m.group("dir").upper(),
+    }
+    m7 = _ER_7D.search(text)
+    if m7:
+        try:
+            out["up7"] = int(m7.group(1))
+            out["down7"] = int(m7.group(2))
+        except ValueError:
+            pass
+    m30 = _ER_30D.search(text)
+    if m30:
+        try:
+            out["up30"] = int(m30.group(1))
+            out["down30"] = int(m30.group(2))
+        except ValueError:
+            pass
+    md = _ER_DRIFT.search(text)
+    if md:
+        try:
+            out["eps_cur"] = float(md.group(1))
+            out["drift_pct"] = float(md.group(2))  # already signed
+        except ValueError:
+            pass
+    mfy = _ER_FY.search(text)
+    if mfy:
+        try:
+            out["fy_up30"] = int(mfy.group(1))
+            out["fy_down30"] = int(mfy.group(2))
+        except ValueError:
+            pass
+    ma = _ER_ANAL.search(text)
+    if ma:
+        try:
+            out["n_analysts"] = int(ma.group(1))
+        except ValueError:
+            pass
+    return out
+
+
+def collect_eps_revisions(c, lookback_days: int = 21, ticker_cap: int = 24) -> dict:
+    """Latest per-ticker EPS-revision read, sorted by absolute conviction.
+
+    Pulls source='eps_revisions' raw_items from the last `lookback_days`, keeps
+    the freshest read per ticker, computes a synthesized verdict per row, and
+    returns a render-ready envelope. Score sums |drift_pct|·1.0 + net_30d·0.4
+    + net_7d·0.6 so the row order reflects "strongest combined velocity".
+    """
+    try:
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=lookback_days)).isoformat()
+        rows = (c.table("raw_items")
+                .select("text,fetched_at,url")
+                .eq("source", "eps_revisions")
+                .gte("fetched_at", cutoff)
+                .order("fetched_at", desc=True)
+                .limit(400)
+                .execute().data or [])
+    except Exception:
+        rows = []
+
+    latest: dict[str, dict] = {}
+    for r in rows:
+        p = _er_parse(r.get("text"))
+        if not p:
+            continue
+        if p["ticker"] not in latest:
+            p["fetched_at"] = r.get("fetched_at")
+            p["url"] = r.get("url")
+            latest[p["ticker"]] = p
+
+    out = []
+    for tk, p in latest.items():
+        direction = p.get("direction") or "POSITIVE"
+        is_pos = direction == "POSITIVE"
+        drift = p.get("drift_pct")  # signed %; may be None
+        net30 = (p.get("up30", 0) or 0) - (p.get("down30", 0) or 0)
+        net7 = (p.get("up7", 0) or 0) - (p.get("down7", 0) or 0)
+        abs_drift = abs(drift) if drift is not None else 0.0
+
+        # Verdict bucketing — drift threshold dominates because the EPS-level
+        # move is the dollar-weighted impact; revision counts are confirmation
+        # of breadth. ≥5% drift = "strong"; ≥2% = standard; <2% = breadth only.
+        if is_pos:
+            if abs_drift >= 5.0 or net30 >= 8:
+                verdict, tone = "strong_tailwind", "g"
+            elif abs_drift >= 2.0 or net30 >= 5:
+                verdict, tone = "tailwind", "g"
+            else:
+                verdict, tone = "breadth_pos", "n"
+        else:
+            if abs_drift >= 5.0 or -net30 >= 8:
+                verdict, tone = "strong_headwind", "r"
+            elif abs_drift >= 2.0 or -net30 >= 5:
+                verdict, tone = "headwind", "r"
+            else:
+                verdict, tone = "breadth_neg", "n"
+
+        # Acceleration: 7d net per-week pace vs 30d net per-week pace.
+        # If the 7d rate exceeds the 30d rate by ≥50%, momentum is accelerating;
+        # if it falls below 30% of the 30d rate, momentum is fading.
+        accel = None
+        if net30 != 0:
+            pace_7d_norm = net7  # 7d net already = per-week
+            pace_30d_norm = net30 / 4.3  # ~weeks in 30d
+            sign_match = (pace_7d_norm * pace_30d_norm) > 0
+            if sign_match and pace_30d_norm != 0:
+                ratio = abs(pace_7d_norm) / abs(pace_30d_norm) if abs(pace_30d_norm) > 0 else 0
+                if ratio >= 1.5:
+                    accel = "accel"
+                elif ratio <= 0.3:
+                    accel = "fade"
+            elif not sign_match and abs(net7) >= 2:
+                accel = "reversal"
+
+        # FY alignment: a second-derivative read — full-year revisions agreeing
+        # with quarter is a much stronger conviction signal than just-quarter
+        fy_aligned = ("fy_up30" in p and "fy_down30" in p)
+
+        score = abs_drift + abs(net30) * 0.4 + abs(net7) * 0.6
+        if fy_aligned:
+            score += 1.5  # FY-aligned reads outrank pure-Q reads of similar magnitude
+
+        out.append({
+            "ticker": tk,
+            "direction": direction,
+            "up7": p.get("up7", 0),
+            "down7": p.get("down7", 0),
+            "up30": p.get("up30", 0),
+            "down30": p.get("down30", 0),
+            "net7": net7,
+            "net30": net30,
+            "drift_pct": drift,
+            "eps_cur": p.get("eps_cur"),
+            "n_analysts": p.get("n_analysts"),
+            "fy_aligned": fy_aligned,
+            "fy_up30": p.get("fy_up30"),
+            "fy_down30": p.get("fy_down30"),
+            "verdict": verdict,
+            "tone": tone,
+            "accel": accel,
+            "score": round(score, 3),
+            "fetched_at": p.get("fetched_at"),
+            "url": p.get("url"),
+        })
+
+    out.sort(key=lambda r: -r["score"])
+    out = out[:ticker_cap]
+
+    n_pos = sum(1 for r in out if r["direction"] == "POSITIVE")
+    n_neg = sum(1 for r in out if r["direction"] == "NEGATIVE")
+    n_strong = sum(1 for r in out
+                   if r["verdict"] in ("strong_tailwind", "strong_headwind"))
+    n_accel = sum(1 for r in out if r.get("accel") == "accel")
+
+    stale = False
+    if out:
+        try:
+            newest = max(
+                datetime.fromisoformat(str(r["fetched_at"]).replace("Z", "+00:00"))
+                for r in out if r.get("fetched_at")
+            )
+            stale = (datetime.now(timezone.utc) - newest).days > 7
+        except Exception:
+            stale = False
+
+    return {
+        "as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        "lookback_days": lookback_days,
+        "tickers": out,
+        "n_pos": n_pos,
+        "n_neg": n_neg,
+        "n_strong": n_strong,
+        "n_accel": n_accel,
         "stale": stale,
     }
 
@@ -2236,6 +2453,104 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .ss-si{min-width:36px}
   .ss-vd{font-size:9px;padding:1px 5px}
 }
+/* EPS-Revisions-Velocity (HED-137 Zyklus 112): Bloomberg-EE/EM-equivalent
+   sell-side estimate-revision panel. Per-ticker row: direction badge, a
+   centered diverging bar where the green-right segment shows 30d upgrades
+   (width = up/total) and the red-left segment 30d downgrades, 7d compact
+   reads as a smaller secondary, signed drift % as the dollar-weighted impact,
+   verdict pill, accel/fade/reversal tag and a book cross-ref badge. Visual
+   grammar deliberately mirrors Short-Squeeze and Options-Tape so the four
+   "positioning/momentum" panels read as a single suite. */
+.er-panel{padding:var(--s3);margin-top:var(--s3)}
+.er-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.er-h-title{font-weight:700;font-size:var(--fs-h2);text-transform:none;letter-spacing:0;color:var(--txt);line-height:1.2}
+.er-h-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400;margin-top:2px;max-width:64ch;line-height:1.45}
+.er-metrics{display:flex;gap:var(--s4);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.er-metric{display:flex;flex-direction:column;gap:1px;font-size:var(--fs-micro);text-align:right;min-width:54px;cursor:help}
+.er-metric .lbl{color:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.er-metric .val{font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.15;color:var(--txt)}
+.er-metric .val.pos{color:var(--green)}
+.er-metric .val.neg{color:var(--red)}
+.er-metric .val.amb{color:var(--amber)}
+.er-table-wrap{overflow-x:auto;margin:0 calc(-1*var(--s3));padding:0 var(--s3)}
+.er-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+.er-table thead th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.er-table thead th.r{text-align:right}
+.er-table thead th.c{text-align:center}
+.er-table tbody tr{border-bottom:1px solid var(--line)}
+.er-table tbody tr:last-child{border-bottom:0}
+.er-table tbody tr:hover{background:rgba(77,163,255,.05)}
+.er-table tbody td{padding:8px 8px;vertical-align:middle;line-height:1.25}
+.er-table tbody td.r{text-align:right}
+.er-table tbody td.c{text-align:center}
+.er-tone-g{box-shadow:inset 3px 0 0 var(--green)}
+.er-tone-r{box-shadow:inset 3px 0 0 var(--red)}
+.er-tone-n{box-shadow:inset 3px 0 0 var(--line)}
+.er-tk{font-weight:700;font-size:var(--fs-cap);letter-spacing:.02em;color:var(--txt)}
+.er-tk-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.er-book{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;letter-spacing:.04em;padding:1px 6px;border-radius:3px;text-transform:uppercase;white-space:nowrap;line-height:1.4}
+.er-book-aligned{background:rgba(63,185,80,.18);color:var(--green)}
+.er-book-aligned::before{content:"✓\00a0"}
+.er-book-fighting{background:rgba(248,81,73,.20);color:var(--red)}
+.er-book-fighting::before{content:"⚠\00a0"}
+.er-book-watch{background:var(--panel2);color:var(--mut)}
+.er-dir{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.04em;white-space:nowrap;display:inline-block;text-transform:uppercase}
+.er-dir-pos{background:rgba(63,185,80,.18);color:var(--green)}
+.er-dir-pos::before{content:"↑\00a0"}
+.er-dir-neg{background:rgba(248,81,73,.18);color:var(--red)}
+.er-dir-neg::before{content:"↓\00a0"}
+/* Diverging revision bar: a 110px track split at the midline. Left = down (red),
+   right = up (green). Length encodes raw count, max ≈10 so 8 saturates ~80%. */
+.er-bar-cell{min-width:144px}
+.er-bar-wrap{position:relative;height:14px;background:var(--panel2);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.er-bar-mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line);z-index:2}
+.er-bar-up{position:absolute;left:50%;top:1px;bottom:1px;background:linear-gradient(90deg,rgba(63,185,80,.55),rgba(63,185,80,.95));border-radius:0 2px 2px 0;transition:width .15s}
+.er-bar-dn{position:absolute;right:50%;top:1px;bottom:1px;background:linear-gradient(90deg,rgba(248,81,73,.95),rgba(248,81,73,.55));border-radius:2px 0 0 2px;transition:width .15s}
+.er-bar-counts{display:flex;justify-content:space-between;align-items:center;margin-top:2px;font-size:10px;color:var(--mut);font-variant-numeric:tabular-nums;line-height:1}
+.er-bar-counts .dn{color:var(--red);font-weight:600}
+.er-bar-counts .up{color:var(--green);font-weight:600}
+.er-bar-counts .mid{color:var(--mut);font-size:9px;letter-spacing:.04em;text-transform:uppercase}
+.er-7d{display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums;font-size:var(--fs-cap);font-weight:600;color:var(--txt);white-space:nowrap}
+.er-7d .up{color:var(--green)}
+.er-7d .dn{color:var(--red)}
+.er-7d .sep{color:var(--mut);font-weight:400}
+.er-drift{font-weight:700;font-size:var(--fs-cap);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.er-drift.pos{color:var(--green)}
+.er-drift.neg{color:var(--red)}
+.er-drift.flat{color:var(--mut);font-weight:500}
+.er-drift-strong{font-size:15px}
+.er-eps{font-size:10px;color:var(--mut);font-variant-numeric:tabular-nums;display:block;margin-top:1px;line-height:1.2}
+.er-vd{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;display:inline-block}
+.er-vd-strong_tailwind{background:rgba(63,185,80,.32);color:#fff}
+.er-vd-tailwind{background:rgba(63,185,80,.20);color:var(--green)}
+.er-vd-breadth_pos{background:rgba(63,185,80,.10);color:var(--green)}
+.er-vd-strong_headwind{background:rgba(248,81,73,.32);color:#fff}
+.er-vd-headwind{background:rgba(248,81,73,.20);color:var(--red)}
+.er-vd-breadth_neg{background:rgba(248,81,73,.10);color:var(--red)}
+.er-accel{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;letter-spacing:.04em;text-transform:uppercase;margin-left:4px}
+.er-accel-accel{background:rgba(63,185,80,.22);color:var(--green)}
+.er-accel-fade{background:rgba(210,153,34,.18);color:var(--amber)}
+.er-accel-reversal{background:rgba(248,81,73,.22);color:var(--red)}
+.er-fy{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;letter-spacing:.04em;text-transform:uppercase;background:var(--panel2);color:var(--mut);margin-left:4px}
+.er-fy.aligned{background:rgba(88,166,255,.18);color:var(--accent)}
+.er-anal{font-size:10px;color:var(--mut);font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+.er-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+.er-foot a{color:var(--mut);border-bottom:1px dotted var(--line)}
+.er-foot a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.er-empty{display:flex;align-items:center;justify-content:center;padding:var(--s5) var(--s3);background:transparent;border-radius:6px;border:1px dashed var(--line);color:var(--mut);font-size:var(--fs-micro);font-style:italic;text-align:center}
+@media(max-width:640px){
+  .er-h{flex-direction:column;align-items:stretch;gap:var(--s2)}
+  .er-metrics{justify-content:space-between;gap:var(--s3)}
+  .er-metric{text-align:left;min-width:0;flex:1}
+  .er-metric .val{font-size:16px}
+  .er-table thead th{font-size:9px;padding:5px 5px}
+  .er-table tbody td{padding:7px 5px}
+  .er-table .col-hide-m{display:none}
+  .er-bar-cell{min-width:96px}
+  .er-vd{font-size:9px;padding:1px 5px;white-space:normal;line-height:1.25;display:inline-block}
+  .er-drift-strong{font-size:13px}
+  .er-accel,.er-fy{font-size:8px;padding:1px 4px;margin-left:2px;margin-top:2px;display:inline-block}
+}
 /* Katalysator-Runway: event-driven timeline (earnings + thesis-horizon) for the next 30 days (HED-137 Zyklus 85) */
 .cat-panel{padding:var(--s3)}
 .cat-svg{width:100%;height:auto;display:block;max-height:160px;margin-top:var(--s2)}
@@ -2985,6 +3300,7 @@ main:focus{outline:none}
     <a href="#h-catalysts">Katalysatoren</a>
     <a href="#h-earnplay">Earnings-Playbook</a>
     <a href="#h-quality">Quality-Scorecard</a>
+    <a href="#h-epsrev">EPS-Revisions</a>
     <a href="#h-scanner">Ideen-Scanner</a>
     <a href="#h-consspread">Konsens-Spread</a>
     <a href="#h-sectorview">Sektoren</a>
@@ -3050,6 +3366,10 @@ main:focus{outline:none}
   <section aria-labelledby="h-quality">
   <h2 id="h-quality">Quality-Scorecard <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Rule-of-40 · Margin-Profil · Multiple</span></h2>
   <div id="qualityscore" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:55%"></div><div class="skel skel-line" style="width:68%"></div><div class="skel skel-line" style="width:62%"></div></div></div>
+  </section>
+  <section aria-labelledby="h-epsrev">
+  <h2 id="h-epsrev">EPS-Revisions-Velocity <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Sell-Side-Momentum · StarMine · EE/EM</span></h2>
+  <div id="epsrev" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:52%"></div><div class="skel skel-line" style="width:68%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
   </section>
 
   <section aria-labelledby="h-scanner">
@@ -6565,6 +6885,193 @@ function calibSvg(buckets){
   root.setAttribute("aria-busy","false");
 })();
 
+// EPS-Revisions-Velocity (HED-137 Zyklus 112): Bloomberg-EE/EM-equivalent sell-side
+// estimate-revision panel. Reads `eps_revisions` raw_items aggregated by
+// collect_eps_revisions and renders one row per ticker, sorted by combined velocity
+// score. Visual grammar: a centered diverging bar shows 30d upgrades (green-right)
+// vs downgrades (red-left), 7d compact reads as confirmation, signed drift % as
+// the dollar-weighted magnitude (large + colored when ≥|2%|), verdict pill, accel/
+// fade/reversal tag and a book cross-ref badge. A long on a tailwind name = aligned
+// (momentum-confirming); short on a tailwind = fighting the tape (asymmetry-risk).
+// Why this is investment-grade: sell-side EPS-revision velocity is the single
+// strongest academic forward-return predictor for individual equities (Bernard &
+// Thomas 1989 PEAD; modern StarMine 1-yr alpha ≈3-5%). Hedge funds buy this signal
+// at 6-figure annual cost from FactSet/Refinitiv; we get it free from Yahoo IBES.
+(function renderEpsRevisions(){
+  const root=$("epsrev");
+  if(!root) return;
+  const er=D.eps_revisions||{};
+  const rows=er.tickers||[];
+  if(!rows.length){
+    root.innerHTML='<div class="panel er-panel"><div class="er-empty">Keine direktionalen Revisions-Lesungen in den letzten '+(er.lookback_days||21)+'d — EpsRevisionsAdapter hat keine emittiert (Watchlist im Neutral-Bereich oder Feed still).</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  // Direction map of open calls — mirrors Short-Squeeze / Options-Tape for consistency
+  const dirMap={};
+  ((D.track_record||{}).theses||[])
+    .filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date))
+    .forEach(t=>{(t.tickers||[]).forEach(tk=>{
+      const k=String(tk).toUpperCase();
+      if(dirMap[k]&&dirMap[k]!==(t.direction||"").toLowerCase()) dirMap[k]="pair";
+      else if(!dirMap[k]) dirMap[k]=(t.direction||"").toLowerCase();
+    });});
+  function bookBadge(r){
+    const dir=dirMap[r.ticker];
+    if(!dir) return "";
+    const isPos=r.direction==="POSITIVE";
+    if(dir==="pair") return '<span class="er-book er-book-watch" title="Long+Short Paar im Buch — neutral zur Revisions-Lesung">Pair</span>';
+    if(dir==="long"&&isPos) return '<span class="er-book er-book-aligned" title="Long aligned mit Sell-Side-Upgrades — Momentum-Tailwind, EPS-Drift bestätigt Long-These">Long aligned</span>';
+    if(dir==="long"&&!isPos) return '<span class="er-book er-book-fighting" title="Long im Cut-Zyklus — Sell-Side senkt EPS, gegen die These; falsifiziert wenn Drift &lt;−5% anhält">Long fighting</span>';
+    if(dir==="short"&&!isPos) return '<span class="er-book er-book-aligned" title="Short aligned mit Sell-Side-Cuts — Bearish-Tailwind">Short aligned</span>';
+    if(dir==="short"&&isPos) return '<span class="er-book er-book-fighting" title="Short im Upgrade-Zyklus — Sell-Side hebt EPS, gegen die These; Crowded-Short-Risiko wenn EPS-Drift &gt;5% anhält">Short fighting</span>';
+    return "";
+  }
+  // Diverging 30d revision bar. Scale: 0-10 each side (caps at 10 so 8/0 saturates ~80%).
+  // The midline is fixed at 50%; bar grows outward from it.
+  function barCell(r){
+    const upMax=10, dnMax=10;
+    const upW=Math.min(50,(r.up30/upMax)*50);
+    const dnW=Math.min(50,(r.down30/dnMax)*50);
+    const tip=`30d Revisionen: ${r.up30} up / ${r.down30} down (Netto ${r.net30>=0?'+':''}${r.net30})`;
+    return `<div class="er-bar-cell">
+      <div class="er-bar-wrap" title="${esc(tip)}">
+        <div class="er-bar-dn" style="width:${dnW.toFixed(1)}%"></div>
+        <div class="er-bar-up" style="width:${upW.toFixed(1)}%"></div>
+        <div class="er-bar-mid"></div>
+      </div>
+      <div class="er-bar-counts">
+        <span class="dn">${r.down30||0}↓</span>
+        <span class="mid">30d</span>
+        <span class="up">${r.up30||0}↑</span>
+      </div>
+    </div>`;
+  }
+  function sevDayCell(r){
+    if(r.up7==null&&r.down7==null) return '<span class="er-7d" title="Keine 7d-Daten">—</span>';
+    const tip=`7d Revisionen: ${r.up7||0} up / ${r.down7||0} down (Netto ${r.net7>=0?'+':''}${r.net7||0})`;
+    return `<span class="er-7d" title="${esc(tip)}"><span class="up">${r.up7||0}↑</span><span class="sep">/</span><span class="dn">${r.down7||0}↓</span></span>`;
+  }
+  function driftCell(r){
+    if(r.drift_pct==null){
+      return '<span class="er-drift flat" title="Kein EPS-Drift in den Daten">—</span>';
+    }
+    const d=r.drift_pct;
+    const cls=d>=2?"pos":d<=-2?"neg":"flat";
+    const strong=Math.abs(d)>=5?" er-drift-strong":"";
+    const sign=d>=0?"+":"";
+    const eps=r.eps_cur!=null?`<span class="er-eps">${r.eps_cur>=0?'$':'−$'}${Math.abs(r.eps_cur).toFixed(2)} Q-EPS</span>`:"";
+    const tip=`EPS-Drift gegen 30d-Konsens: ${sign}${d.toFixed(1)}% (Q-EPS ${r.eps_cur!=null?'$'+r.eps_cur.toFixed(2):'?'})`;
+    return `<span class="er-drift ${cls}${strong}" title="${esc(tip)}">${sign}${d.toFixed(1)}%</span>${eps}`;
+  }
+  function dirBadge(r){
+    const cls=r.direction==="POSITIVE"?"er-dir-pos":"er-dir-neg";
+    const lbl=r.direction==="POSITIVE"?"Pos":"Neg";
+    return `<span class="er-dir ${cls}" title="Richtungs-Synthese: ${r.direction==='POSITIVE'?'Sell-Side hebt EPS-Schätzungen':'Sell-Side senkt EPS-Schätzungen'}">${lbl}</span>`;
+  }
+  function vdLabel(v){
+    return ({
+      strong_tailwind:"Strong Tailwind",
+      tailwind:"Tailwind",
+      breadth_pos:"Breadth +",
+      strong_headwind:"Strong Headwind",
+      headwind:"Headwind",
+      breadth_neg:"Breadth −",
+    })[v]||v;
+  }
+  function vdTooltip(v){
+    return ({
+      strong_tailwind:"EPS-Drift ≥+5% oder ≥8 Netto-Upgrades — institutioneller Momentum-Bid, häufig PEAD-Setup für Long-Side",
+      tailwind:"EPS-Drift ≥+2% oder ≥5 Netto-Upgrades — Sell-Side hebt aktiv, Tailwind",
+      breadth_pos:"Direktionale Upgrades aber kleine EPS-Drift — Breadth ohne Magnitude, niedrig-Conviction Tailwind",
+      strong_headwind:"EPS-Drift ≤−5% oder ≥8 Netto-Cuts — institutionelles De-Rating, häufig PEAD-Setup für Short-Side",
+      headwind:"EPS-Drift ≤−2% oder ≥5 Netto-Cuts — Sell-Side senkt aktiv, Headwind",
+      breadth_neg:"Direktionale Cuts aber kleine EPS-Drift — Breadth ohne Magnitude, niedrig-Conviction Headwind",
+    })[v]||"";
+  }
+  function accelBadge(r){
+    if(!r.accel) return "";
+    const lbl=({accel:"Accel",fade:"Fade",reversal:"Reversal"})[r.accel]||r.accel;
+    const tip=({
+      accel:"7d-Pace ≥1.5× 30d-Pace — Momentum beschleunigt diese Woche",
+      fade:"7d-Pace ≤0.3× 30d-Pace — Momentum verlangsamt sich",
+      reversal:"7d-Pace gegenläufig zum 30d-Trend — Richtungswechsel im Aufbau",
+    })[r.accel]||"";
+    return `<span class="er-accel er-accel-${esc(r.accel)}" title="${esc(tip)}">${lbl}</span>`;
+  }
+  function fyBadge(r){
+    if(!r.fy_aligned) return "";
+    const tip=`Full-Year-Revisionen aligned mit Quartal: ${r.fy_up30||0} up / ${r.fy_down30||0} down über 30d — zweite Ableitung bestätigt die Q-Bewegung`;
+    return `<span class="er-fy aligned" title="${esc(tip)}">FY-aligned</span>`;
+  }
+  const headerKpi=`
+    <div class="er-metrics">
+      <div class="er-metric" title="Anzahl Watchlist-Ticker mit aktiven direktionalen Revisions-Lesungen in den letzten ${er.lookback_days}d">
+        <span class="lbl">Ticker</span><span class="val">${rows.length}</span>
+      </div>
+      <div class="er-metric" title="Sell-Side hebt EPS-Schätzungen — Tailwind-Kandidaten">
+        <span class="lbl">Pos</span><span class="val pos">${er.n_pos||0}</span>
+      </div>
+      <div class="er-metric" title="Sell-Side senkt EPS-Schätzungen — Headwind-Kandidaten">
+        <span class="lbl">Neg</span><span class="val neg">${er.n_neg||0}</span>
+      </div>
+      <div class="er-metric" title="Verdict 'Strong Tailwind' oder 'Strong Headwind' — institutionelle Re-Rate-Setups (|drift| ≥5% oder ≥8 Netto-Revisionen)">
+        <span class="lbl">Strong</span><span class="val amb">${er.n_strong||0}</span>
+      </div>
+      <div class="er-metric" title="Tickers mit 7d-Pace ≥1.5× der 30d-Pace — Revisions-Momentum beschleunigt diese Woche">
+        <span class="lbl">Accel</span><span class="val amb">${er.n_accel||0}</span>
+      </div>
+    </div>`;
+  const tbody=rows.map(r=>{
+    const book=bookBadge(r);
+    const anal=r.n_analysts?`<span class="er-anal" title="Anzahl Sell-Side-Analysten im aktuellen Konsens">${r.n_analysts}a</span>`:'<span class="er-anal">—</span>';
+    return `<tr class="er-tone-${esc(r.tone||'n')}">
+      <td>
+        <div class="er-tk-row">
+          <span class="er-tk">${esc(r.ticker)}</span>
+          ${dirBadge(r)}
+          ${book}
+        </div>
+      </td>
+      <td>${barCell(r)}</td>
+      <td class="r col-hide-m">${sevDayCell(r)}</td>
+      <td class="r">${driftCell(r)}</td>
+      <td class="c col-hide-m">${anal}</td>
+      <td>
+        <span class="er-vd er-vd-${esc(r.verdict)}" title="${esc(vdTooltip(r.verdict))}">${esc(vdLabel(r.verdict))}</span>
+        ${accelBadge(r)}${fyBadge(r)}
+      </td>
+    </tr>`;
+  }).join("");
+  const staleNote=er.stale?` · <span style="color:var(--amber)">⚠ Feed >7 Tage alt</span>`:"";
+  root.innerHTML=`<div class="panel er-panel">
+    <div class="er-h">
+      <div>
+        <div class="er-h-title">EPS-Revisions-Velocity — Sell-Side-Momentum pro Watchlist-Ticker</div>
+        <div class="er-h-sub">Netto-Revisions-Zählung 30d/7d · Konsens-EPS-Drift in % vs 30d ago · pro aktivem Ticker · sortiert nach |Velocity-Score|. Quelle: yfinance IBES-aggregiert (StarMine-Äquivalent). PEAD-Faktor mit nachgewiesenem 3–5% 12M-Alpha (Bernard-Thomas, Jegadeesh-Titman)${staleNote}</div>
+      </div>
+      ${headerKpi}
+    </div>
+    <div class="er-table-wrap">
+      <table class="er-table" role="table">
+        <thead><tr>
+          <th scope="col">Ticker</th>
+          <th scope="col" title="30d Revisionen: diverging Bar links=down (rot), rechts=up (grün); Skala 0–10 je Seite">30d Revisions</th>
+          <th scope="col" class="r col-hide-m" title="Letzte 7 Tage: up↑ / down↓ — Bestätigung des 30d-Trends">7d</th>
+          <th scope="col" class="r" title="EPS-Drift = (aktueller Konsens − 30d-Konsens) / |30d-Konsens|. ≥|2%| = direktionaler Drift, ≥|5%| = institutioneller Re-Rate">EPS-Drift</th>
+          <th scope="col" class="c col-hide-m" title="Anzahl Sell-Side-Analysten im aktuellen Konsens">#A</th>
+          <th scope="col">Verdict</th>
+        </tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>
+    <div class="er-foot">
+      EPS-Revisions-Velocity ist der akademisch nachgewiesen <em>stärkste</em> Forward-Return-Predictor für Einzelaktien — die <b>PEAD-Anomalie</b> (Post-Earnings-Announcement-Drift) zeigt, dass Konsens-Schätzungen Information mit Verzögerung integrieren, was einen mehrwöchigen Drift in Richtung der Revisionen erzeugt. <b>Strong Tailwind/Headwind</b> (|drift|≥5% oder ≥8 Netto-Revisionen) markiert die institutionellen Re-Rate-Setups; <b>Accel</b> = 7d-Pace beschleunigt sich gegen 30d, <b>Fade</b> = Pace verlangsamt, <b>Reversal</b> = 7d kehrt sich gegen 30d. <b>FY-aligned</b> = Full-Year-Revisionen bestätigen Q-Bewegung (zweite Ableitung der Conviction). Buch-Cross-Ref: <span class="er-book er-book-aligned">aligned</span> = Long auf Tailwind / Short auf Headwind (Momentum-konfirmiert); <span class="er-book er-book-fighting">fighting</span> = These gegen Revisions-Drift (falsifizierbar wenn Drift anhält). Quelle: <a href="https://finance.yahoo.com/" target="_blank" rel="noopener">yfinance eps_revisions / eps_trend</a> via <code>EpsRevisionsAdapter</code> — IBES-aggregiert, Update-Lag ≤24h.
+    </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 // Katalysator-Runway (HED-137 Zyklus 85): 30-day event timeline combining earnings calendar
 // and active-thesis horizon-resolution dates. Distinguishes positions im Buch (direkter P&L-Impact)
 // from Watchlist (re-entry signal). Bloomberg ECO/ER equivalent, customised to our actual book.
@@ -7433,7 +7940,7 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 })();
 
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
-["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","insidertape","opttape","ivrvedge","signalmatrix"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","insidertape","opttape","ivrvedge","signalmatrix"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
 // Section nav: highlight the anchor pill whose section is currently most in view
 (function(){
