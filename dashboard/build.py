@@ -870,6 +870,63 @@ a.call-chip:hover{border-color:var(--accent);background:var(--panel)}
 .spark-line{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 .spark-up{stroke:#3fb950}.spark-dn{stroke:#f78166}.spark-flat{stroke:var(--mut)}
 .sec-ph{color:var(--mut);font-size:var(--fs-h2);padding:var(--s2) 0}
+/* Sektor-Heatmap (HED-137 Zyklus 93): Bloomberg-/Finviz-style universe scan.
+   Cells = tickers, color = intraday move, grouped by sector. Single visual scan
+   of where the heat is across the AI/Tech book. Above the detail tiles. */
+.sec-hmap{margin-bottom:var(--s4);padding:var(--s3) var(--s3) var(--s2)}
+.sec-hmap-h{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s3);
+  margin-bottom:var(--s2);flex-wrap:wrap}
+.sec-hmap-h-title{font-weight:600;font-size:var(--fs-h2)}
+.sec-hmap-h-sub{color:var(--mut);font-size:var(--fs-cap)}
+.sec-hmap-legend{display:flex;align-items:center;gap:6px;font-size:var(--fs-micro);color:var(--mut)}
+.sec-hmap-legend-sw{display:inline-block;width:14px;height:10px;border-radius:2px;vertical-align:middle}
+.sec-hmap-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--s2)}
+.sec-hmap-grp{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:var(--s2);
+  display:flex;flex-direction:column;gap:6px}
+.sec-hmap-grp-h{display:flex;align-items:baseline;gap:6px;font-size:var(--fs-micro);
+  border-bottom:1px solid var(--line);padding-bottom:4px}
+.sec-hmap-grp-h .id{color:var(--accent);font-weight:700;letter-spacing:.06em}
+.sec-hmap-grp-h .nm{color:var(--txt);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sec-hmap-grp-h .avg{font-variant-numeric:tabular-nums;font-weight:600}
+.sec-hmap-cells{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:4px}
+.sec-hmap-cell{display:flex;flex-direction:column;justify-content:center;align-items:stretch;
+  padding:6px 4px;border-radius:5px;text-align:center;text-decoration:none;color:inherit;
+  position:relative;cursor:help;min-height:48px;
+  transition:transform .1s ease, box-shadow .1s ease;border:1px solid transparent}
+.sec-hmap-cell:hover{transform:scale(1.05);box-shadow:0 2px 8px rgba(0,0,0,.45);z-index:2}
+.sec-hmap-cell .tk{font-weight:700;font-size:12px;letter-spacing:.02em;line-height:1.1}
+.sec-hmap-cell .ch{font-variant-numeric:tabular-nums;font-size:11px;line-height:1.15;margin-top:2px;opacity:.95}
+/* Color tiers — 9-step diverging (red ⇄ green) with white text for contrast on saturated cells */
+.hmap-c-pp3{background:#0d6f2d;color:#fff}
+.hmap-c-pp2{background:#1f8b3f;color:#fff}
+.hmap-c-pp1{background:#3aa454;color:#fff}
+.hmap-c-pp0{background:rgba(63,185,80,.30);color:var(--txt)}
+.hmap-c-z  {background:var(--panel);color:var(--mut)}
+.hmap-c-nn0{background:rgba(248,81,73,.30);color:var(--txt)}
+.hmap-c-nn1{background:#c44d44;color:#fff}
+.hmap-c-nn2{background:#a73229;color:#fff}
+.hmap-c-nn3{background:#7a201a;color:#fff}
+.hmap-c-na {background:repeating-linear-gradient(45deg,var(--panel),var(--panel) 4px,var(--panel2) 4px,var(--panel2) 8px);
+  color:var(--mut)}
+/* Active-book marker: left accent + dir letter top-right */
+.sec-hmap-cell.in-book{border-left:3px solid var(--accent)}
+.sec-hmap-cell.in-book.book-long{border-left-color:var(--green)}
+.sec-hmap-cell.in-book.book-short{border-left-color:var(--red)}
+.sec-hmap-cell .book-tag{position:absolute;top:2px;right:3px;font-size:8px;font-weight:700;
+  letter-spacing:.04em;padding:0 3px;border-radius:2px;
+  background:rgba(11,15,23,.55);color:rgba(255,255,255,.92)}
+@media (max-width:760px){
+  .sec-hmap-groups{grid-template-columns:1fr}
+  .sec-hmap-cells{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}
+  .sec-hmap-cell{min-height:44px}
+}
+@media (max-width:430px){
+  .sec-hmap{padding:var(--s2)}
+  .sec-hmap-cells{grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:3px}
+  .sec-hmap-cell{padding:4px 3px;min-height:42px}
+  .sec-hmap-cell .tk{font-size:11px}
+  .sec-hmap-cell .ch{font-size:10px}
+}
 @media (max-width:760px){
   .cards{grid-template-columns:repeat(2,1fr)}
   .sectors{grid-template-columns:1fr}
@@ -1045,6 +1102,7 @@ main:focus{outline:none}
 
   <section aria-labelledby="h-sectorview">
   <h2 id="h-sectorview">Sektor-Ansicht <span id="secstand" class="tag"></span></h2>
+  <div class="panel sec-hmap" id="sectorheatmap" aria-busy="true" hidden></div>
   <div class="grid sectors" id="sectorview" aria-busy="true"><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div><div class="skel skel-tile" aria-hidden="true"></div></div>
   </section>
   </main>
@@ -2419,6 +2477,106 @@ function calibSvg(buckets){
   }
   root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskHtml}`;
   root.setAttribute("aria-busy","false");
+})();
+
+// Sektor-Heatmap (HED-137 Zyklus 93): Bloomberg-/Finviz-style scan of the AI/Tech
+// universe. Cells per ticker colored by intraday move, grouped by sector, with
+// active-book accent. A PM-grade single-glance read on where the action is —
+// runs above the detailed sector tiles which keep the per-ticker drill-down.
+(function renderHeatmap(){
+  const sv=D.sector_view, root=$("sectorheatmap");
+  if(!sv || !(sv.sectors||[]).length || !root) return;
+  // Active-book map (ticker → {dir, conv}) from the latest briefing theses
+  const book={};
+  const latestB=D.briefing||{};
+  ((latestB.theses||{}).theses||[]).forEach(t=>{
+    const dir=(t.direction||"").toLowerCase();
+    (t.tickers||[]).forEach(tk=>{
+      const k=String(tk||"").toUpperCase(); if(!k) return;
+      const ex=book[k];
+      if(!ex||(t.conviction!=null&&(ex.conv==null||t.conviction>ex.conv)))
+        book[k]={dir,conv:t.conviction,label:t.label||""};
+    });
+  });
+  // 9-step color tier from change % — symmetric red/green diverging scale, ±5% terminal
+  function tier(c){
+    if(c==null) return "na";
+    const a=Math.abs(c);
+    if(a<0.3) return "z";
+    if(c>0)  return a>=5?"pp3":a>=3?"pp2":a>=1?"pp1":"pp0";
+    return            a>=5?"nn3":a>=3?"nn2":a>=1?"nn1":"nn0";
+  }
+  const allTks=sv.sectors.flatMap(s=>s.tickers||[]);
+  const anyPriced=allTks.some(t=>t.change_pct!=null);
+  if(!anyPriced){ root.hidden=true; return; }
+  root.hidden=false; root.setAttribute("aria-busy","false");
+  // Universe stats for the header subtitle
+  const moves=allTks.map(t=>t.change_pct).filter(v=>v!=null);
+  const uniAvg=moves.length?moves.reduce((a,b)=>a+b,0)/moves.length:null;
+  const upN=moves.filter(v=>v>=0.3).length, dnN=moves.filter(v=>v<=-0.3).length;
+  const breadth=moves.length?`${upN} ↑ · ${dnN} ↓ · ${moves.length-upN-dnN} flat`:"";
+  const avgTxt=uniAvg!=null?`${uniAvg>=0?"+":"−"}${Math.abs(uniAvg).toFixed(2)}%`:"—";
+  const avgCls=uniAvg==null?"muted":uniAvg>=0.3?"move-up":uniAvg<=-0.3?"move-dn":"muted";
+  // Sector order: priced sectors only, hottest |avg move| first (Information Scent, Von Restorff)
+  const sorted=sv.sectors.slice().filter(s=>(s.tickers||[]).length>0).map(s=>{
+    const ms=(s.tickers||[]).map(t=>t.change_pct).filter(v=>v!=null);
+    const a=ms.length?ms.reduce((x,y)=>x+y,0)/ms.length:null;
+    return {s,avg:a};
+  }).sort((x,y)=>{
+    const ax=x.avg==null?-1:Math.abs(x.avg), ay=y.avg==null?-1:Math.abs(y.avg);
+    return ay-ax || String(x.s.id).localeCompare(String(y.s.id),undefined,{numeric:true});
+  });
+  function cellHtml(t){
+    const tk=String(t.ticker||"").toUpperCase();
+    const c=t.change_pct;
+    const cls=`hmap-c-${tier(c)}`;
+    const px=t.price!=null?(t.price<10?t.price.toFixed(2):t.price<100?t.price.toFixed(1):t.price.toFixed(0)):"—";
+    const chTxt=c!=null?`${c>=0?"+":"−"}${Math.abs(c).toFixed(1)}%`:"n/a";
+    const b=book[tk];
+    const bookCls=b?` in-book book-${b.dir==="short"?"short":"long"}`:"";
+    const tag=b?`<span class="book-tag" aria-label="aktiver Call ${b.dir.toUpperCase()}">${b.dir.toUpperCase().slice(0,1)}</span>`:"";
+    const tipParts=[
+      `${tk} — $${px}`,
+      c!=null?`Tagesveränd. ${chTxt}`:null,
+      t.pct_of_52w_high!=null?`${t.pct_of_52w_high.toFixed(0)}% vom 52W-Hoch`:null,
+      t.rsi14!=null?`RSI14 ${t.rsi14}`:null,
+      b?`Aktiver Call: ${b.dir.toUpperCase()}${b.conv!=null?` · Conv ${b.conv.toFixed(2)}`:""}${b.label?` · "${b.label}"`:""}`:null
+    ].filter(Boolean).join(" · ");
+    const url=`https://finance.yahoo.com/quote/${encodeURIComponent(t.ticker)}`;
+    return `<a class="sec-hmap-cell ${cls}${bookCls}" href="${url}" target="_blank" rel="noopener" `
+      +`title="${esc(tipParts)}" aria-label="${esc(tipParts)}">${tag}`
+      +`<span class="tk">${esc(tk)}</span><span class="ch">${esc(chTxt)}</span></a>`;
+  }
+  const groupsHtml=sorted.map(({s,avg})=>{
+    const cells=(s.tickers||[])
+      .slice()
+      .sort((a,b)=>{const ma=a.change_pct!=null?a.change_pct:-1e9, mb=b.change_pct!=null?b.change_pct:-1e9; return mb-ma;})
+      .map(cellHtml).join("");
+    const avgTxt=avg!=null?`${avg>=0?"+":"−"}${Math.abs(avg).toFixed(1)}%`:"—";
+    const avgCls=avg==null?"muted":avg>=0.3?"move-up":avg<=-0.3?"move-dn":"muted";
+    return `<div class="sec-hmap-grp"><div class="sec-hmap-grp-h">`
+      +`<span class="id">${esc(s.id)}</span><span class="nm">${esc(s.name)}</span>`
+      +`<span class="avg ${avgCls}">${esc(avgTxt)}</span></div>`
+      +`<div class="sec-hmap-cells">${cells}</div></div>`;
+  }).join("");
+  const legend=`<div class="sec-hmap-legend" aria-hidden="true">
+    <span>≤−5%</span>
+    <span class="sec-hmap-legend-sw hmap-c-nn3"></span>
+    <span class="sec-hmap-legend-sw hmap-c-nn2"></span>
+    <span class="sec-hmap-legend-sw hmap-c-nn1"></span>
+    <span class="sec-hmap-legend-sw hmap-c-nn0"></span>
+    <span class="sec-hmap-legend-sw hmap-c-z"></span>
+    <span class="sec-hmap-legend-sw hmap-c-pp0"></span>
+    <span class="sec-hmap-legend-sw hmap-c-pp1"></span>
+    <span class="sec-hmap-legend-sw hmap-c-pp2"></span>
+    <span class="sec-hmap-legend-sw hmap-c-pp3"></span>
+    <span>≥+5%</span></div>`;
+  root.innerHTML=`<div class="sec-hmap-h">
+      <div><div class="sec-hmap-h-title">Universum-Heatmap — Tagesbewegung</div>
+        <div class="sec-hmap-h-sub">Ø Universum <b class="${avgCls}">${esc(avgTxt)}</b> · ${esc(breadth)} · Kachel mit Akzent = aktiver Call (L/S)</div></div>
+      ${legend}
+    </div>
+    <div class="sec-hmap-groups" role="group" aria-label="Sektor-Heatmap der AI/Tech-Universum-Ticker">${groupsHtml}</div>`;
 })();
 
 // Sektor-Ansicht (HED-48)
