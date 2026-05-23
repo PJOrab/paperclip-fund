@@ -523,6 +523,37 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .sc-qlabel{font-size:9px;fill:var(--mut);text-transform:uppercase;letter-spacing:.04em;font-family:inherit}
 .sc-axlabel{font-size:9px;fill:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-family:inherit}
 .sc-foot{font-size:var(--fs-micro);margin-top:6px;line-height:1.4}
+/* Korrelationsmatrix — Diversifikations-Diagnose (HED-137 Zyklus 86): pairwise 30d return correlation */
+.pf-corr{margin-top:var(--s3);padding:var(--s3)}
+.pf-corr-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3);font-weight:700;font-size:var(--fs-h2);text-transform:none;letter-spacing:0;color:var(--txt)}
+.pf-corr-sub{font-size:var(--fs-micro);font-weight:400}
+.pf-corr-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px}
+.pf-corr-tbl{border-collapse:separate;border-spacing:2px;font-variant-numeric:tabular-nums;font-size:var(--fs-cap);width:auto;min-width:100%}
+.pf-corr-tbl th,.pf-corr-tbl td{padding:6px 8px;text-align:center;border-radius:5px;font-weight:600;white-space:nowrap}
+.pf-corr-tbl thead th{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.04em;color:var(--mut);font-weight:600;background:transparent}
+.pf-corr-corner{background:transparent}
+.pf-corr-col{min-width:60px}
+.pf-corr-row{text-align:left;background:var(--panel2);position:sticky;left:0;z-index:1;min-width:150px;display:flex;align-items:center;justify-content:space-between;gap:var(--s2)}
+.pf-corr-lbl{display:inline-block;max-width:120px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;font-weight:700}
+.pf-corr-cell{min-width:54px}
+.pf-corr-diag{background:var(--panel2);color:var(--mut)}
+.pf-corr-na{background:var(--panel2);color:var(--mut)}
+.pf-corr-strong{font-weight:800;outline:1.5px solid var(--line);outline-offset:-1px}
+.pf-corr-diag-row{display:flex;flex-wrap:wrap;gap:var(--s5);margin-top:var(--s3);font-size:var(--fs-cap);font-variant-numeric:tabular-nums}
+.pf-corr-diag-row b{font-weight:700}
+.pf-corr-verd{font-size:var(--fs-cap);margin-top:6px;line-height:1.5;color:var(--txt)}
+.pf-corr-foot{font-size:var(--fs-micro);margin-top:var(--s2);line-height:1.4}
+.pf-corr-legend{display:inline-flex;gap:var(--s3);align-items:center;flex-wrap:wrap}
+.pf-corr-leg-chip{display:inline-flex;align-items:center;gap:4px}
+.pf-corr-leg-sw{display:inline-block;width:14px;height:10px;border-radius:3px;border:1px solid var(--line)}
+@media(max-width:560px){
+  .pf-corr-tbl th,.pf-corr-tbl td{padding:5px 6px;font-size:var(--fs-micro)}
+  .pf-corr-row{min-width:104px}
+  .pf-corr-col{min-width:46px}
+  .pf-corr-cell{min-width:46px}
+  .pf-corr-lbl{max-width:80px}
+  .pf-corr-diag-row{gap:var(--s3)}
+}
 /* Katalysator-Runway: event-driven timeline (earnings + thesis-horizon) for the next 30 days (HED-137 Zyklus 85) */
 .cat-panel{padding:var(--s3)}
 .cat-svg{width:100%;height:auto;display:block;max-height:160px;margin-top:var(--s2)}
@@ -1791,7 +1822,128 @@ function calibSvg(buckets){
       <div class="sc-foot muted">Ideal: High-Conviction-Calls rechts oben. Systematischer Drift in "Dragging" = Conviction-Scoring neu kalibrieren.</div>
     </div>`;
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${riskHtml}`;
+  // Korrelationsmatrix der aktiven Calls — Diversifikations-Diagnose (HED-137 Zyklus 86).
+  // Pairwise Pearson r über die letzten 25 Tagesrenditen aus den sector_view-Sparks,
+  // sign-flipped für Shorts (auf P&L-Ebene, nicht Underlying-Ebene). Off-diagonal-Mittel
+  // und max-Paar beantworten die echte Diversifikations-Frage: bewegen sich meine
+  // "verschiedenen" Positionen wirklich unabhängig, oder ist das Buch in Wahrheit
+  // N Varianten derselben Makro-Wette? Sektor-Streuung ≠ echte Diversifikation.
+  let corrPanelHtml="";
+  {
+    const _rets=[];
+    active.forEach(t=>{
+      const tk=(t.tickers||[])[0];
+      if(!tk) return;
+      const sp=_sparkMap[String(tk).toUpperCase()];
+      if(!sp||sp.length<6) return;
+      const N=Math.min(25, sp.length-1);
+      const r=[];
+      for(let i=sp.length-N;i<sp.length;i++){
+        if(i<=0) continue;
+        const p0=sp[i-1], p1=sp[i];
+        if(p0>0) r.push((p1-p0)/p0);
+      }
+      if(r.length<5) return;
+      const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+      _rets.push({
+        label:(t.tickers||[]).join("·")||tk,
+        dir:(t.direction||"").toLowerCase(),
+        r: r.map(v=>v*sign)
+      });
+    });
+    if(_rets.length>=2){
+      const _pearson=(a,b)=>{
+        const n=Math.min(a.length,b.length); if(n<3) return null;
+        const A=a.slice(-n), B=b.slice(-n);
+        let mA=0,mB=0; for(let i=0;i<n;i++){mA+=A[i];mB+=B[i];} mA/=n; mB/=n;
+        let cov=0,vA=0,vB=0;
+        for(let i=0;i<n;i++){ const da=A[i]-mA, db=B[i]-mB; cov+=da*db; vA+=da*da; vB+=db*db; }
+        if(vA===0||vB===0) return null;
+        return cov/Math.sqrt(vA*vB);
+      };
+      const N=_rets.length;
+      const M=Array.from({length:N},()=>Array(N).fill(null));
+      for(let i=0;i<N;i++){
+        M[i][i]=1;
+        for(let j=i+1;j<N;j++){ const r=_pearson(_rets[i].r,_rets[j].r); M[i][j]=r; M[j][i]=r; }
+      }
+      let offSum=0, offN=0, maxR=-2, maxPair=null, minR=2, minPair=null;
+      for(let i=0;i<N;i++) for(let j=i+1;j<N;j++){
+        const r=M[i][j]; if(r==null) continue;
+        offSum+=r; offN++;
+        if(r>maxR){ maxR=r; maxPair=[i,j]; }
+        if(r<minR){ minR=r; minPair=[i,j]; }
+      }
+      const avgR=offN>0?offSum/offN:null;
+      const _corrColor=r=>{
+        if(r==null) return "background:var(--panel2);color:var(--mut)";
+        const t=Math.max(-1,Math.min(1,r));
+        if(t>=0){
+          const a=(t*0.85).toFixed(2);
+          return `background:rgba(248,81,73,${a});color:${t>0.4?"#fff":"var(--txt)"}`;
+        }
+        const a=(Math.abs(t)*0.7).toFixed(2);
+        return `background:rgba(88,166,255,${a});color:${Math.abs(t)>0.4?"#fff":"var(--txt)"}`;
+      };
+      const _dirCls=d=>d==="long"?"cd-long":d==="short"?"cd-short":"cd-pair";
+      const _fmtR=v=>v==null?"—":(v>=0?"+":"")+v.toFixed(2);
+      const headCells=_rets.map(s=>`<th class="pf-corr-col" scope="col" title="${esc(s.label)}">${esc(s.label)}</th>`).join("");
+      const bodyRows=_rets.map((s,i)=>{
+        const cells=_rets.map((_,j)=>{
+          if(i===j) return `<td class="pf-corr-cell pf-corr-diag" title="${esc(s.label)} mit sich selbst">1.00</td>`;
+          const r=M[i][j];
+          if(r==null) return `<td class="pf-corr-cell pf-corr-na" title="zu wenig Überlappung">—</td>`;
+          const cls=Math.abs(r)>=0.7?"pf-corr-cell pf-corr-strong":"pf-corr-cell";
+          return `<td class="${cls}" style="${_corrColor(r)}" title="${esc(_rets[i].label)} × ${esc(_rets[j].label)}: r = ${_fmtR(r)}">${_fmtR(r)}</td>`;
+        }).join("");
+        const dirChip=`<span class="cd ${_dirCls(s.dir)}" aria-label="${esc(s.dir.toUpperCase())}">${esc((s.dir.slice(0,1)||"·").toUpperCase())}</span>`;
+        return `<tr><th class="pf-corr-row" scope="row"><span class="pf-corr-lbl">${esc(s.label)}</span>${dirChip}</th>${cells}</tr>`;
+      }).join("");
+      let diag="";
+      if(avgR!=null){
+        const avgCls=avgR>=0.6?"move-dn":avgR<=0.2?"move-up":"";
+        const verd=avgR>=0.7?"Buch stark konzentriert — viele Positionen bewegen sich zusammen, geringe echte Diversifikation. Drawdown-Risiko unterschätzt."
+                  :avgR>=0.4?"Buch moderat korreliert — Risiken nicht unabhängig, Drawdown-Korridor enger als nominell."
+                  :avgR>=0.1?"Buch gemischt — gesunder Diversifikations-Mix, Positionen bewegen sich nicht systematisch zusammen."
+                  :"Buch breit diversifiziert oder teilweise hedgend — Positionen kompensieren sich.";
+        const maxLbl=maxPair?`${_rets[maxPair[0]].label} × ${_rets[maxPair[1]].label}`:"—";
+        const maxCls=maxR>=0.7?"move-dn":"";
+        const minLbl=(minPair&&minR<-0.1)?`${_rets[minPair[0]].label} × ${_rets[minPair[1]].label}`:null;
+        const minPart=minLbl?`<span><span class="muted">niedrigstes Paar</span> <b>${esc(minLbl)}</b> <span class="move-up">${_fmtR(minR)}</span></span>`:"";
+        diag=`<div class="pf-corr-diag-row">
+          <span><span class="muted">Ø off-diagonal</span> <b class="${avgCls}">${_fmtR(avgR)}</b></span>
+          <span><span class="muted">höchstes Paar</span> <b>${esc(maxLbl)}</b> <span class="${maxCls}">${_fmtR(maxR)}</span></span>
+          ${minPart}
+        </div>
+        <div class="pf-corr-verd">${esc(verd)}</div>`;
+      }
+      const win=Math.min(25,(_rets[0]&&_rets[0].r.length)||0);
+      const skipped=active.length-_rets.length;
+      const skipNote=skipped>0?` · ${skipped} Call${skipped===1?"":"s"} ohne ausreichende Spark-Daten ausgeblendet`:"";
+      corrPanelHtml=`<div class="panel pf-corr">
+        <div class="pf-corr-h">
+          <span>Korrelationsmatrix — Diversifikations-Diagnose</span>
+          <span class="pf-corr-sub muted">Pearson r über letzte ${win} Handelstage · sign-flipped für Shorts${skipNote}</span>
+        </div>
+        <div class="pf-corr-wrap">
+          <table class="pf-corr-tbl" role="table" aria-label="Pairwise Korrelationsmatrix der aktiven Calls">
+            <thead><tr><th scope="col" class="pf-corr-corner" aria-label=""></th>${headCells}</tr></thead>
+            <tbody>${bodyRows}</tbody>
+          </table>
+        </div>
+        ${diag}
+        <div class="pf-corr-foot muted">
+          <span class="pf-corr-legend">
+            <span class="pf-corr-leg-chip"><span class="pf-corr-leg-sw" style="background:rgba(248,81,73,0.85)"></span>r ≈ +1 (gleiche Bewegung)</span>
+            <span class="pf-corr-leg-chip"><span class="pf-corr-leg-sw" style="background:var(--panel2)"></span>r ≈ 0 (unabhängig)</span>
+            <span class="pf-corr-leg-chip"><span class="pf-corr-leg-sw" style="background:rgba(88,166,255,0.7)"></span>r ≈ −1 (Hedge)</span>
+          </span>
+          · Diversifikation ≠ Sektor-Streuung: zwei "verschiedene" Calls in derselben Makro-Welle bewegen sich trotzdem zusammen.
+        </div>
+      </div>`;
+    }
+  }
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskHtml}`;
   root.setAttribute("aria-busy","false");
 })();
 
