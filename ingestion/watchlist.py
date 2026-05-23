@@ -362,6 +362,13 @@ SOURCE_RELIABILITY = {
     # FFIEC data — same authoritative source as fed_macro (0.90) but quantitative
     # economic series (rates, spreads, labor) rather than qualitative policy statements.
     "fred_macro": 0.95,
+    # Technical-level events per liquid watchlist ticker computed from ~252d of
+    # OHLCV via yfinance: 50d/200d SMA crosses + breaches, 52w extremes, RSI-14,
+    # volume spikes, gap-up/down. Exchange-derived price action — same authoritative
+    # tier as options_market (0.82). The adapter itself tiers per-item reliability
+    # by strongest trigger (cross/200d=0.90, 52w=0.87, 50d=0.83, RSI/vol/gap=0.78);
+    # this base is the source-default for items without an override.
+    "tech_level": 0.85,
 }
 
 # S5 Energy/Power sector feeds — AI-capex risk thesis (power/grid strain).

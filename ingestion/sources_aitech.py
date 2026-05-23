@@ -2422,3 +2422,453 @@ class GovContractsAdapter:
             "url": url,
             "reliability": self.RELIABILITY,
         }
+
+
+# ---------------------------------------------------------------------------
+# Job-postings velocity (Greenhouse + Lever public boards)
+# ---------------------------------------------------------------------------
+
+# Title-keyword buckets — hiring composition reveals capex direction. ML/AI
+# growth signals product/research intensification; Sales/GTM growth signals
+# forward revenue pipeline buildout; Infra/Platform growth signals capacity /
+# capex (compute, datacenter, networking — direct demand for NVDA/AMD/AVGO/
+# ANET/VRT thesis). Patterns are conservative — false positives diluted by
+# only counting clear matches. Order matters: ml_ai pattern checked first so
+# "ML platform engineer" lands in ml_ai not infra_dc.
+_JOB_BUCKET_PATTERNS = [
+    ("ml_ai", re.compile(
+        r"\b(machine\s+learning|applied\s+scientist|research\s+scientist|"
+        r"research\s+engineer|deep\s+learning|llm|nlp|computer\s+vision|"
+        r"\bml\b|\bai\b|generative)", re.I)),
+    ("infra_dc", re.compile(
+        r"\b(infrastructure|platform\s+engineer|site\s+reliability|\bsre\b|"
+        r"devops|kubernetes|data\s*cent(?:er|re)|\bgpu\b|\bhpc\b|"
+        r"distributed\s+systems|networking\s+engineer)", re.I)),
+    ("sales_gtm", re.compile(
+        r"\b(account\s+executive|\bsales\b|business\s+development|"
+        r"go-to-market|\bgtm\b|forward\s+deployed|customer\s+success|"
+        r"solutions\s+engineer|\bsdr\b|\bbdr\b)", re.I)),
+]
+
+
+def _classify_job_title(title: str) -> str | None:
+    """Return bucket key for a job title or None if no clear match."""
+    if not title:
+        return None
+    for key, pat in _JOB_BUCKET_PATTERNS:
+        if pat.search(title):
+            return key
+    return None
+
+
+class JobPostingsAdapter:
+    """
+    Job-posting velocity per AI/Tech company via Greenhouse + Lever public boards.
+
+    Strategy.md tier-1 target ('Job-Posting-Velocity → Forward-Revenue-Indikator,
+    Kapazitätsaufbau'): hiring is the single strongest forward indicator of
+    revenue and capex direction — months ahead of guidance, quarters ahead of
+    earnings. Quant funds (Citadel, Millennium, Point72) pay Revelio Labs /
+    LinkUp / Thinknum five-figures/month for this exact signal; Greenhouse and
+    Lever publish their customers' boards as free public JSON, no API key.
+
+    Two flavours of signal layered into one snapshot per company per day:
+
+    1. **Volume** — total open requisitions and # NEW in last 7d
+       (using Greenhouse `updated_at` / Lever `createdAt`). A 7d-new burst is
+       the actionable instantaneous read (e.g. Anthropic opening 78 new reqs
+       in a single week — AI lab on hyper-growth = compute / NVDA demand).
+
+    2. **Composition** — bucket-count by title pattern (ML/AI, Infra/DC,
+       Sales/GTM). The composition is the leading indicator:
+       - ML/AI heavy → product/research push, model-cycle thesis
+       - Infra/DC heavy → capex / datacenter buildout (NVDA/AVGO/ANET demand)
+       - Sales/GTM heavy → revenue pipeline buildout, monetization push
+
+    Coverage is intentionally split:
+    - Direct watchlist signal (PLTR on Lever — direct ticker read)
+    - AI ecosystem proxy (Anthropic, xAI, Scale AI, Together AI, SambaNova,
+      Databricks, Mistral on Greenhouse/Lever) — these private AI labs
+      collectively drive ~40-60% of incremental NVDA/AMD compute demand,
+      and their hiring pace is the cleanest leading indicator of AI-capex
+      direction available outside the hyperscalers' own quarterly guidance.
+
+    Emission discipline:
+    - One item per company per day (date bucket in URL query → canonical dedup
+      collapses within-day re-emissions to one row).
+    - Skip boards returning <5 total postings (dead/closed/empty board noise).
+    - Reliability 0.85 — Greenhouse/Lever are official ATS systems run by the
+      companies themselves; data is the actual hiring system, not an editorial
+      summary.
+
+    Source: 'job_postings'. Free public APIs, no key required, stdlib HTTP only.
+    """
+
+    SOURCE = "job_postings"
+    RELIABILITY = 0.85
+    MIN_TOTAL = 5
+    GREENHOUSE_URL = "https://boards-api.greenhouse.io/v1/boards/{slug}/jobs"
+    LEVER_URL = "https://api.lever.co/v0/postings/{slug}"
+
+    def fetch(self) -> list[dict]:
+        out: list[dict] = []
+        as_of = datetime.now(timezone.utc).date().isoformat()
+        gh_targets = getattr(W, "JOB_POSTINGS_GREENHOUSE", {})
+        lv_targets = getattr(W, "JOB_POSTINGS_LEVER", {})
+        for slug, meta in gh_targets.items():
+            try:
+                item = self._fetch_greenhouse(slug, meta, as_of)
+                if item:
+                    out.append(item)
+            except Exception:
+                continue
+            time.sleep(0.3)
+        for slug, meta in lv_targets.items():
+            try:
+                item = self._fetch_lever(slug, meta, as_of)
+                if item:
+                    out.append(item)
+            except Exception:
+                continue
+            time.sleep(0.3)
+        return out
+
+    @classmethod
+    def _fetch_greenhouse(cls, slug: str, meta: dict, as_of: str) -> dict | None:
+        url = cls.GREENHOUSE_URL.format(slug=slug)
+        data = fetch_json(url, timeout=12)
+        if not data:
+            return None
+        jobs = data.get("jobs") or []
+        if len(jobs) < cls.MIN_TOTAL:
+            return None
+        now = datetime.now(timezone.utc)
+        cutoff_7d = now - timedelta(days=7)
+        cutoff_30d = now - timedelta(days=30)
+        new_7d, new_30d = 0, 0
+        buckets = {"ml_ai": 0, "infra_dc": 0, "sales_gtm": 0}
+        for j in jobs:
+            ua = j.get("updated_at") or j.get("first_published") or ""
+            dt = cls._parse_iso(ua)
+            if dt:
+                if dt >= cutoff_7d:
+                    new_7d += 1
+                if dt >= cutoff_30d:
+                    new_30d += 1
+            bucket = _classify_job_title(j.get("title") or "")
+            if bucket:
+                buckets[bucket] += 1
+        public_url = f"https://boards.greenhouse.io/{slug}?as_of={as_of}"
+        return cls._format_item(meta, len(jobs), new_7d, new_30d, buckets, public_url)
+
+    @classmethod
+    def _fetch_lever(cls, slug: str, meta: dict, as_of: str) -> dict | None:
+        url = cls.LEVER_URL.format(slug=slug)
+        data = fetch_json(url, timeout=12)
+        if not data or not isinstance(data, list):
+            return None
+        if len(data) < cls.MIN_TOTAL:
+            return None
+        now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+        cutoff_7d_ms = now_ms - 7 * 24 * 3600 * 1000
+        cutoff_30d_ms = now_ms - 30 * 24 * 3600 * 1000
+        new_7d, new_30d = 0, 0
+        buckets = {"ml_ai": 0, "infra_dc": 0, "sales_gtm": 0}
+        for j in data:
+            created = j.get("createdAt") or 0
+            if isinstance(created, (int, float)):
+                if created >= cutoff_7d_ms:
+                    new_7d += 1
+                if created >= cutoff_30d_ms:
+                    new_30d += 1
+            bucket = _classify_job_title(j.get("text") or "")
+            if bucket:
+                buckets[bucket] += 1
+        public_url = f"https://jobs.lever.co/{slug}?as_of={as_of}"
+        return cls._format_item(meta, len(data), new_7d, new_30d, buckets, public_url)
+
+    @staticmethod
+    def _parse_iso(s: str) -> datetime | None:
+        if not s:
+            return None
+        try:
+            return datetime.fromisoformat(s.replace("Z", "+00:00"))
+        except Exception:
+            return None
+
+    @classmethod
+    def _format_item(cls, meta: dict, total: int, new_7d: int, new_30d: int,
+                     buckets: dict, public_url: str) -> dict:
+        label = meta.get("label") or meta.get("ticker") or "?"
+        ticker = meta.get("ticker") or "?"
+        kind = meta.get("kind") or "proxy"   # 'direct' = watchlist ticker, 'proxy' = ecosystem
+        # Composition direction tag — what KIND of hiring dominates.
+        # Threshold 25% of classified-positions, min 5 absolute, to avoid
+        # spurious labels when one bucket has 2/100.
+        classified = sum(buckets.values())
+        tags = []
+        if classified >= 5:
+            for key, label_short in (("ml_ai", "ML/AI"),
+                                     ("infra_dc", "Infra/DC"),
+                                     ("sales_gtm", "Sales/GTM")):
+                if buckets[key] >= 5 and buckets[key] / max(classified, 1) >= 0.25:
+                    tags.append(f"{label_short}={buckets[key]}")
+        # Headline format: [JOBS · TICKER] LABEL: total open, N new 7d (M 30d); ML/AI=x; Infra/DC=y
+        parts = [f"[JOBS · {ticker}] {label} ({kind}): {total} open requisitions"]
+        if new_7d > 0:
+            if new_30d > new_7d:
+                parts.append(f"{new_7d} new last 7d ({new_30d} last 30d)")
+            else:
+                parts.append(f"{new_7d} new last 7d")
+        if tags:
+            parts.append("; ".join(tags))
+        # Add interpretive hint when 7d-new is a meaningful burst (>= 5% of total OR >=20 absolute).
+        if new_7d >= 20 or (total > 0 and new_7d / total >= 0.05):
+            parts.append("ACTIVE HIRING BURST")
+        text = " — ".join(parts)
+        return {
+            "text": text[:400],
+            "source": cls.SOURCE,
+            "url": public_url,
+            "reliability": W.SOURCE_RELIABILITY.get(cls.SOURCE, cls.RELIABILITY),
+        }
+
+
+# ---------------------------------------------------------------------------
+# Technical-levels pure helpers (testable without yfinance)
+# ---------------------------------------------------------------------------
+
+def _sma(values: list[float], period: int) -> float | None:
+    """Simple moving average of the last `period` values. None if too short."""
+    if not values or len(values) < period or period <= 0:
+        return None
+    window = values[-period:]
+    return sum(window) / period
+
+
+def _rsi(closes: list[float], period: int = 14) -> float | None:
+    """Wilder RSI on the last (period+1) closes. None if too short."""
+    if not closes or len(closes) < period + 1 or period <= 0:
+        return None
+    gains: list[float] = []
+    losses: list[float] = []
+    for i in range(1, len(closes)):
+        diff = closes[i] - closes[i - 1]
+        gains.append(max(diff, 0.0))
+        losses.append(max(-diff, 0.0))
+    # Wilder seed = simple average of first `period` deltas
+    avg_gain = sum(gains[:period]) / period
+    avg_loss = sum(losses[:period]) / period
+    # Smooth the rest
+    for i in range(period, len(gains)):
+        avg_gain = (avg_gain * (period - 1) + gains[i]) / period
+        avg_loss = (avg_loss * (period - 1) + losses[i]) / period
+    if avg_loss == 0:
+        return 100.0 if avg_gain > 0 else 50.0
+    rs = avg_gain / avg_loss
+    return 100.0 - (100.0 / (1.0 + rs))
+
+
+def _detect_cross(fast_today: float | None, fast_yest: float | None,
+                  slow_today: float | None, slow_yest: float | None) -> str | None:
+    """Return 'golden', 'death', or None for SMA-fast vs SMA-slow crossover today."""
+    vals = (fast_today, fast_yest, slow_today, slow_yest)
+    if any(v is None for v in vals):
+        return None
+    if fast_yest <= slow_yest and fast_today > slow_today:
+        return "golden"
+    if fast_yest >= slow_yest and fast_today < slow_today:
+        return "death"
+    return None
+
+
+class TechnicalLevelsAdapter:
+    """
+    Technical-level + price-action triage signals per liquid watchlist ticker.
+
+    The track-record loop and every thesis card today lack objective price
+    context. Without persistent technical levels, the Devil's Advocate stage
+    has no empirical anchor for "what does the market already price in?" and
+    briefings read as headline summaries instead of investment-grade calls.
+
+    Pulls ~260 trading days of OHLCV via yfinance and emits one item per
+    ticker only when an institutional technical trigger is present. Multiple
+    triggers compose into one richer headline (avoids item flood).
+
+    Triggers (rated by structural importance):
+      - Golden / Death cross  : 50d SMA crosses 200d SMA today (rare pivot)
+      - 200d SMA breach       : close crosses 200d ±2% band (regime change)
+      - 52w high / low        : close within 1% of 252d extreme
+      - 50d SMA breach        : close crosses 50d ±2% band (trend break)
+      - RSI-14 extreme        : < 30 (oversold) or > 70 (overbought)
+      - Volume spike          : day volume > 2× 20d-avg (institutional flow)
+      - Gap-up / gap-down     : open vs prior close > ±3%
+
+    Reliability tiered by strongest trigger present:
+      - Cross events / 200d breach : 0.90
+      - 52w extreme               : 0.87
+      - 50d breach                : 0.83
+      - RSI / volume / gap only   : 0.78
+
+    Source: 'tech_level' (exchange-derived OHLCV; same authoritative tier as
+    options_market). Stable dedup per (ticker, top-trigger, ISO-week) so daily
+    re-runs don't flood raw_items when the technical picture is unchanged.
+    """
+
+    SOURCE = "tech_level"
+    RELIABILITY = 0.85
+    SMA_FAST = 50
+    SMA_SLOW = 200
+    RSI_PERIOD = 14
+    RSI_OVERSOLD = 30.0
+    RSI_OVERBOUGHT = 70.0
+    VOL_SPIKE_MULTIPLE = 2.0
+    GAP_THRESHOLD = 0.03
+    NEAR_EXTREME_PCT = 0.01   # within 1% of 52w high/low = "near"
+    MA_BREACH_BAND = 0.02     # within ±2% of MA = "near the breach"
+    HISTORY_PERIOD = "1y"     # ~252 trading days, enough for 200d SMA + 52w
+
+    # Same liquid-options universe as OptionsMarketAdapter — these are the
+    # names where technical levels actually matter for institutional flow.
+    TICKERS = [
+        "NVDA", "MSFT", "GOOGL", "META", "AMZN", "AAPL",
+        "AMD", "TSM", "ASML", "ARM", "AVGO", "PLTR",
+        "ORCL", "NOW", "CRM", "SNOW", "CRWD",
+    ]
+
+    def fetch(self) -> list[dict]:
+        try:
+            import yfinance as yf
+        except ImportError:
+            return []
+        out: list[dict] = []
+        for ticker in self.TICKERS:
+            try:
+                item = self._fetch_one(ticker, yf)
+                if item:
+                    out.append(item)
+                time.sleep(0.2)
+            except Exception:
+                continue
+        return out
+
+    def _fetch_one(self, ticker: str, yf) -> dict | None:
+        t = yf.Ticker(ticker)
+        hist = t.history(period=self.HISTORY_PERIOD, auto_adjust=True)
+        if hist is None or hist.empty or len(hist) < self.SMA_SLOW + 5:
+            return None
+
+        closes = [float(c) for c in hist["Close"].tolist()]
+        opens = [float(o) for o in hist["Open"].tolist()]
+        highs = [float(h) for h in hist["High"].tolist()]
+        lows = [float(l) for l in hist["Low"].tolist()]
+        vols = [float(v) for v in hist["Volume"].tolist()]
+        last_date = hist.index[-1].date().isoformat()
+
+        price = closes[-1]
+        prior_close = closes[-2]
+        open_today = opens[-1]
+        gap_pct = (open_today / prior_close - 1.0) if prior_close else 0.0
+
+        sma50_today = _sma(closes, self.SMA_FAST)
+        sma50_yest = _sma(closes[:-1], self.SMA_FAST)
+        sma200_today = _sma(closes, self.SMA_SLOW)
+        sma200_yest = _sma(closes[:-1], self.SMA_SLOW)
+        rsi = _rsi(closes, self.RSI_PERIOD)
+        avg_vol_20 = _sma(vols[:-1], 20)
+        vol_today = vols[-1]
+
+        # 252-trading-day high/low (52-week)
+        window = closes[-252:] if len(closes) >= 252 else closes
+        window_high = max(window)
+        window_low = min(window)
+
+        triggers: list[tuple[int, str]] = []  # (tier, label) — higher = stronger
+
+        # Cross — tier 4
+        cross = _detect_cross(sma50_today, sma50_yest, sma200_today, sma200_yest)
+        if cross == "golden":
+            triggers.append((4, "Golden Cross (50d SMA crossed above 200d today)"))
+        elif cross == "death":
+            triggers.append((4, "Death Cross (50d SMA crossed below 200d today)"))
+
+        # 200d breach — tier 4
+        if sma200_today:
+            d200 = price / sma200_today - 1.0
+            if abs(d200) <= self.MA_BREACH_BAND:
+                side = "above" if d200 >= 0 else "below"
+                triggers.append((4, f"close {price:.2f} sits {d200*100:+.1f}% vs 200d SMA {sma200_today:.2f} ({side}, regime line)"))
+
+        # 52w extreme — tier 3
+        near_high = (window_high - price) / window_high if window_high else 1.0
+        near_low = (price - window_low) / window_low if window_low else 1.0
+        if near_high <= self.NEAR_EXTREME_PCT:
+            triggers.append((3, f"close {price:.2f} within {near_high*100:.1f}% of 52w high {window_high:.2f}"))
+        elif near_low <= self.NEAR_EXTREME_PCT:
+            triggers.append((3, f"close {price:.2f} within {near_low*100:.1f}% of 52w low {window_low:.2f}"))
+
+        # 50d breach — tier 2
+        if sma50_today:
+            d50 = price / sma50_today - 1.0
+            if abs(d50) <= self.MA_BREACH_BAND:
+                side = "above" if d50 >= 0 else "below"
+                triggers.append((2, f"close {d50*100:+.1f}% vs 50d SMA {sma50_today:.2f} ({side})"))
+
+        # RSI extreme — tier 1
+        if rsi is not None:
+            if rsi < self.RSI_OVERSOLD:
+                triggers.append((1, f"RSI-14 {rsi:.0f} (oversold)"))
+            elif rsi > self.RSI_OVERBOUGHT:
+                triggers.append((1, f"RSI-14 {rsi:.0f} (overbought)"))
+
+        # Volume spike — tier 1
+        if avg_vol_20 and vol_today > 0:
+            v_mult = vol_today / avg_vol_20
+            if v_mult >= self.VOL_SPIKE_MULTIPLE:
+                triggers.append((1, f"volume {v_mult:.1f}× 20d-avg (institutional flow)"))
+
+        # Gap — tier 1
+        if abs(gap_pct) >= self.GAP_THRESHOLD:
+            direction = "gap-up" if gap_pct > 0 else "gap-down"
+            triggers.append((1, f"{direction} {gap_pct*100:+.1f}% vs prior close"))
+
+        if not triggers:
+            return None
+
+        # Strongest trigger drives reliability and dedup bucket
+        top_tier = max(t[0] for t in triggers)
+        if top_tier >= 4:
+            reliability = 0.90
+            top_bucket = "cross_or_200d"
+        elif top_tier == 3:
+            reliability = 0.87
+            top_bucket = "52w_extreme"
+        elif top_tier == 2:
+            reliability = 0.83
+            top_bucket = "50d_breach"
+        else:
+            reliability = 0.78
+            top_bucket = "rsi_vol_gap"
+
+        # Order labels by descending tier
+        ordered = sorted(triggers, key=lambda x: -x[0])
+        labels = [lbl for _, lbl in ordered]
+
+        text = f"[TECH · {ticker}] {labels[0]}"
+        if len(labels) > 1:
+            text += " — " + "; ".join(labels[1:])
+        text += f" (as of {last_date})"
+
+        # ISO-week dedup so multiple intra-week wakes don't flood raw_items
+        iso_year, iso_week, _ = datetime.fromisoformat(last_date).isocalendar()
+        dedup_url = (
+            f"https://finance.yahoo.com/quote/{ticker}/chart"
+            f"?tech={top_bucket}&w={iso_year}W{iso_week:02d}"
+        )
+
+        return {
+            "text": text[:450],
+            "source": self.SOURCE,
+            "url": dedup_url,
+            "reliability": reliability,
+        }

@@ -121,6 +121,7 @@ def build_adapters():
         ("Options Market", S.OptionsMarketAdapter()),
         ("EPS Revisions", S.EpsRevisionsAdapter()),
         ("Gov Contracts", S.GovContractsAdapter()),
+        ("Technical Levels", S.TechnicalLevelsAdapter()),
     ]
     if getattr(m, "NEWSAPI_KEY", ""):
         adapters.append(("NewsAPI AI", S.AITechNewsAPIAdapter()))
