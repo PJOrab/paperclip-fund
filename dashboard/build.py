@@ -554,6 +554,41 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .pf-corr-lbl{max-width:80px}
   .pf-corr-diag-row{gap:var(--s3)}
 }
+/* Buch-Allokation — Position-Sizing-Stack (HED-137 Zyklus 87): Long/Short side stacks, conviction-weighted widths, P&L-colored segments */
+.pf-alloc{margin-top:var(--s3);padding:var(--s3)}
+.pf-alloc-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-alloc-h-title{font-weight:700;font-size:var(--fs-h2);text-transform:none;letter-spacing:0;color:var(--txt);line-height:1.2}
+.pf-alloc-h-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400;margin-top:2px}
+.pf-alloc-metrics{display:flex;gap:var(--s4);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.pf-alloc-metric{display:flex;flex-direction:column;gap:1px;font-size:var(--fs-micro);text-align:right;cursor:help;min-width:54px}
+.pf-alloc-metric .lbl{color:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.pf-alloc-metric .val{font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.15;color:var(--txt)}
+.pf-alloc-sides{display:flex;flex-direction:column;gap:var(--s3)}
+.pf-alloc-side-h{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s2);font-size:var(--fs-micro);color:var(--mut);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.pf-alloc-side-h b{color:var(--txt);font-weight:700;font-variant-numeric:tabular-nums}
+.pf-alloc-bar{display:flex;height:36px;background:var(--panel2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.pf-alloc-seg{display:flex;align-items:center;justify-content:center;font-size:var(--fs-micro);font-weight:700;color:#fff;border-right:1px solid rgba(0,0,0,.32);overflow:hidden;white-space:nowrap;cursor:help;transition:filter .12s;font-variant-numeric:tabular-nums;padding:0 6px;min-width:0}
+.pf-alloc-seg:last-child{border-right:0}
+.pf-alloc-seg:hover{filter:brightness(1.18)}
+.pf-alloc-seg-pos-strong{background:#2da347}
+.pf-alloc-seg-pos{background:rgba(63,185,80,.55);color:var(--txt)}
+.pf-alloc-seg-flat{background:rgba(138,160,189,.25);color:var(--txt)}
+.pf-alloc-seg-neg{background:rgba(248,81,73,.55);color:var(--txt)}
+.pf-alloc-seg-neg-strong{background:#d23a32}
+.pf-alloc-seg-unpriced{background:repeating-linear-gradient(45deg,var(--panel2),var(--panel2) 4px,rgba(138,160,189,.18) 4px,rgba(138,160,189,.18) 8px);color:var(--mut)}
+.pf-alloc-empty{display:flex;align-items:center;justify-content:center;height:36px;background:transparent;border-radius:6px;border:1px dashed var(--line);font-size:var(--fs-micro);color:var(--mut);font-style:italic}
+.pf-alloc-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+.pf-alloc-legend{display:inline-flex;gap:var(--s3);flex-wrap:wrap;align-items:center}
+.pf-alloc-legend-chip{display:inline-flex;align-items:center;gap:4px}
+.pf-alloc-legend-sw{display:inline-block;width:12px;height:10px;border-radius:2px;border:1px solid rgba(255,255,255,.06)}
+@media(max-width:640px){
+  .pf-alloc-h{flex-direction:column;align-items:stretch;gap:var(--s2)}
+  .pf-alloc-metrics{justify-content:space-between;gap:var(--s3)}
+  .pf-alloc-metric{text-align:left;min-width:0;flex:1}
+  .pf-alloc-metric .val{font-size:16px}
+  .pf-alloc-bar{height:30px}
+  .pf-alloc-seg{font-size:10px;padding:0 4px}
+}
 /* Katalysator-Runway: event-driven timeline (earnings + thesis-horizon) for the next 30 days (HED-137 Zyklus 85) */
 .cat-panel{padding:var(--s3)}
 .cat-svg{width:100%;height:auto;display:block;max-height:160px;margin-top:var(--s2)}
@@ -1446,6 +1481,91 @@ function calibSvg(buckets){
       <span class="pf-sec-pct">${Math.round(cv/totalConv*100)}%</span>
     </div>`).join("")}
   </div>`:"";
+  // Buch-Allokation — Position-Sizing-Stack (HED-137 Zyklus 87).
+  // Each call rendered as a segment within its side's stack: width = within-side conviction %,
+  // color = unrealized P&L bucket. Sorted by conviction desc — biggest position-sizing visible left.
+  // Gross / Net / Leverage above the stacks answer the institutional question:
+  // "How direktional ist das Buch wirklich, oder hedgt es sich?"
+  const grossConv=longConv+shortConv;
+  const netConvSigned=longConv-shortConv;
+  const dirPctOfGross=grossConv>0?Math.abs(netConvSigned)/grossConv*100:0;
+  const dirTxt=grossConv>0?Math.round(dirPctOfGross)+"%":"—";
+  const dirTip=grossConv<=0
+    ?"Keine aktiven Calls"
+    :dirPctOfGross>=90?"Vollkommen einseitig — kein Hedge-Offset, Buch entspricht netto seiner Brutto-Aufnahme"
+    :dirPctOfGross>=60?"Stark direktional — Long und Short sind weit auseinander, schwacher Hedge"
+    :dirPctOfGross>=30?"Moderat direktional — teilweise Hedge-Wirkung, aber Buch tendiert zu einer Seite"
+    :dirPctOfGross>=10?"Überwiegend gehedged — Long und Short fast in Balance"
+    :"Market-neutral — Long und Short halten sich annähernd die Waage";
+  const allocSegCls=function(pnl){
+    if(pnl==null) return "pf-alloc-seg-unpriced";
+    if(pnl>=5) return "pf-alloc-seg-pos-strong";
+    if(pnl>0.5) return "pf-alloc-seg-pos";
+    if(pnl<=-5) return "pf-alloc-seg-neg-strong";
+    if(pnl<-0.5) return "pf-alloc-seg-neg";
+    return "pf-alloc-seg-flat";
+  };
+  function _allocSideStack(rows, sideConv, sideLabel){
+    if(!rows.length) return `<div class="pf-alloc-empty">Keine ${esc(sideLabel)}-Positionen</div>`;
+    const sorted=rows.slice().sort((a,b)=>(b.t.conviction||0)-(a.t.conviction||0));
+    const segs=sorted.map(r=>{
+      const t=r.t, conv=(t.conviction||0);
+      const w=sideConv>0?(conv/sideConv*100):0;
+      const tk=(t.tickers||[]).join("·")||"?";
+      const pnl=r.pnl;
+      const cls=allocSegCls(pnl);
+      const pnlTxt=pnl!=null?`${pnl>=0?"+":"−"}${Math.abs(pnl).toFixed(2)}%`:"kein Live-Kurs";
+      // Show ticker if segment is wide enough; add P&L if even wider
+      const label=w>=14?(pnl!=null?`${tk} ${pnl>=0?"+":"−"}${Math.abs(pnl).toFixed(1)}%`:tk)
+                  :w>=7?tk
+                  :"";
+      const tip=`${tk} · Konv ${conv.toFixed(2)} (${w.toFixed(0)}% der ${sideLabel}-Seite) · ${pnlTxt}${t.label?" · "+t.label:""}`;
+      return `<div class="pf-alloc-seg ${cls}" style="flex:${w.toFixed(2)} 0 auto" title="${esc(tip)}" aria-label="${esc(tip)}">${esc(label)}</div>`;
+    }).join("");
+    return `<div class="pf-alloc-bar" role="img" aria-label="Position-Sizing-Stack ${esc(sideLabel)}: ${rows.length} Calls">${segs}</div>`;
+  }
+  const longRows=pnlRows.filter(r=>(r.t.direction||"").toLowerCase()==="long");
+  const shortRows=pnlRows.filter(r=>(r.t.direction||"").toLowerCase()==="short");
+  const netSideLabel=netConvSigned>=0?"Long":"Short";
+  const netSign=netConvSigned>=0?"+":"−";
+  const allocHtml=`<div class="panel pf-alloc">
+    <div class="pf-alloc-h">
+      <div>
+        <div class="pf-alloc-h-title">Buch-Allokation — Position-Sizing</div>
+        <div class="pf-alloc-h-sub">Konviktions-gewichtete Größen je Seite · Segment-Farbe = unrealisierte Performance</div>
+      </div>
+      <div class="pf-alloc-metrics">
+        <div class="pf-alloc-metric" title="Brutto-Exposure: Σ Konviktion (Long + Short) — Gesamt-Risikoaufnahme des Buchs">
+          <span class="lbl">Brutto</span><span class="val">${grossConv.toFixed(2)}</span>
+        </div>
+        <div class="pf-alloc-metric" title="Netto-Exposure: Long − Short — ${Math.round(dirPctOfGross)}% der Brutto-Aufnahme, ${esc(netSideLabel)}-skewed">
+          <span class="lbl">Netto ${esc(netSideLabel)}</span><span class="val">${netSign}${Math.abs(netConvSigned).toFixed(2)}</span>
+        </div>
+        <div class="pf-alloc-metric" title="${esc(dirTip)} · |Netto|/Brutto · 0% = market-neutral, 100% = vollkommen einseitig">
+          <span class="lbl">Direktional</span><span class="val">${esc(dirTxt)}</span>
+        </div>
+      </div>
+    </div>
+    <div class="pf-alloc-sides">
+      <div>
+        <div class="pf-alloc-side-h"><span>Long-Seite</span><span><b>${longCalls.length}</b> Call${longCalls.length===1?"":"s"} · <b>${longConv.toFixed(2)}</b> Konviktion · <b>${totalConv>0?Math.round(longConv/totalConv*100):0}%</b> der Brutto</span></div>
+        ${_allocSideStack(longRows, longConv, "Long")}
+      </div>
+      <div>
+        <div class="pf-alloc-side-h"><span>Short-Seite</span><span><b>${shortCalls.length}</b> Call${shortCalls.length===1?"":"s"} · <b>${shortConv.toFixed(2)}</b> Konviktion · <b>${totalConv>0?Math.round(shortConv/totalConv*100):0}%</b> der Brutto</span></div>
+        ${_allocSideStack(shortRows, shortConv, "Short")}
+      </div>
+    </div>
+    <div class="pf-alloc-foot">
+      <span class="pf-alloc-legend">
+        <span class="pf-alloc-legend-chip"><span class="pf-alloc-legend-sw" style="background:#2da347"></span>≥+5%</span>
+        <span class="pf-alloc-legend-chip"><span class="pf-alloc-legend-sw" style="background:rgba(63,185,80,.55)"></span>0 bis +5%</span>
+        <span class="pf-alloc-legend-chip"><span class="pf-alloc-legend-sw" style="background:rgba(248,81,73,.55)"></span>−5 bis 0%</span>
+        <span class="pf-alloc-legend-chip"><span class="pf-alloc-legend-sw" style="background:#d23a32"></span>≤−5%</span>
+        <span class="pf-alloc-legend-chip"><span class="pf-alloc-legend-sw" style="background:repeating-linear-gradient(45deg,var(--panel2),var(--panel2) 3px,rgba(138,160,189,.18) 3px,rgba(138,160,189,.18) 6px)"></span>kein Live-Kurs</span>
+      </span>
+    </div>
+  </div>`;
   // Konzentrationsrisiko: turn the descriptive bars into an actual risk readout a PM would scan
   const dirPct=Math.max(longPct,shortPct);
   const dirSide=longPct>=shortPct?"Long":"Short";
@@ -1943,7 +2063,7 @@ function calibSvg(buckets){
       </div>`;
     }
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskHtml}`;
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskHtml}`;
   root.setAttribute("aria-busy","false");
 })();
 
