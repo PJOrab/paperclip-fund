@@ -2146,6 +2146,61 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Fundamentals-Quadrant — Value × Wachstum (HED-150 Zyklus 163)
+   2D scatter: X = Fwd P/E (log), Y = Rev Growth YoY. Universe context + active
+   positions highlighted. Quadrants by median: GARP-Gold / Momentum / Value-Trap /
+   Avoid. Bottom: active-position fundamentals deep-dive table. */
+.pf-fq-panel{padding:var(--s3)}
+.pf-fq-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-fq-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-fq-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-fq-stats{display:flex;gap:var(--s3);flex-wrap:wrap;flex-shrink:0;align-items:flex-end}
+.pf-fq-stat{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:60px}
+.pf-fq-stat-val{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt)}
+.pf-fq-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut)}
+.pf-fq-stat-val-pos{color:#3fb950}
+.pf-fq-stat-val-warn{color:#e3b341}
+.pf-fq-body{display:grid;grid-template-columns:1.4fr 1fr;gap:var(--s3);align-items:stretch}
+.pf-fq-chart-wrap{background:rgba(139,148,158,.03);border:1px solid rgba(139,148,158,.08);border-radius:6px;padding:var(--s3);min-height:340px;position:relative}
+.pf-fq-chart{width:100%;display:block;height:auto;max-height:380px}
+.pf-fq-qlabel{position:absolute;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);pointer-events:none;line-height:1.2}
+.pf-fq-qlabel-tl{top:10px;left:12px;color:#3fb950}
+.pf-fq-qlabel-tr{top:10px;right:12px;color:#e3b341}
+.pf-fq-qlabel-bl{bottom:30px;left:12px;color:#a8a8a8}
+.pf-fq-qlabel-br{bottom:30px;right:12px;color:#f85149}
+.pf-fq-axis-x,.pf-fq-axis-y{stroke:rgba(139,148,158,.25);stroke-width:0.5}
+.pf-fq-axis-mid{stroke:rgba(139,148,158,.4);stroke-width:0.5;stroke-dasharray:3,3}
+.pf-fq-axis-lbl{font-size:9px;fill:var(--mut);font-family:inherit;font-variant-numeric:tabular-nums}
+.pf-fq-axis-title{font-size:10px;fill:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.pf-fq-dot{cursor:default}
+.pf-fq-dot circle{fill:rgba(139,148,158,.45);transition:fill .12s,r .12s}
+.pf-fq-dot.pf-fq-dot-active circle{fill:#3fb950;stroke:#3fb950;stroke-width:1.5;filter:drop-shadow(0 0 4px rgba(63,185,80,.4))}
+.pf-fq-dot:hover circle{fill:var(--txt);r:6}
+.pf-fq-dot-lbl{font-size:8px;font-weight:700;fill:var(--txt);text-anchor:middle;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.pf-fq-dot-active-lbl{fill:#3fb950}
+.pf-fq-tbl{font-size:var(--fs-cap);font-variant-numeric:tabular-nums;width:100%;border-collapse:collapse}
+.pf-fq-tbl thead th{padding:4px 5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);border-bottom:1px solid rgba(139,148,158,.15);text-align:right}
+.pf-fq-tbl thead th:first-child{text-align:left}
+.pf-fq-tbl tbody td{padding:6px 5px;border-bottom:1px solid rgba(139,148,158,.06);text-align:right}
+.pf-fq-tbl tbody td:first-child{text-align:left}
+.pf-fq-tbl-tk{font-weight:700;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--txt)}
+.pf-fq-cell-good{color:#3fb950;font-weight:600}
+.pf-fq-cell-mid{color:var(--txt)}
+.pf-fq-cell-warn{color:#e3b341;font-weight:600}
+.pf-fq-cell-bad{color:#f85149;font-weight:600}
+.pf-fq-tbl-note{font-size:9px;color:var(--mut);margin-top:6px;line-height:1.5}
+.pf-fq-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+@media(max-width:900px){
+  .pf-fq-body{grid-template-columns:1fr}
+  .pf-fq-chart-wrap{min-height:280px}
+}
+@media(max-width:600px){
+  .pf-fq-h{flex-direction:column}
+  .pf-fq-stats{width:100%;justify-content:space-between}
+  .pf-fq-stat{flex:1}
+  .pf-fq-tbl{font-size:11px}
+  .pf-fq-tbl thead th,.pf-fq-tbl tbody td{padding:4px}
+}
 /* Position-Comparison Matrix — Side-by-Side Active Calls (HED-150 Zyklus 162)
    Bloomberg-PORT-equivalent: one row per active position with consolidated metrics
    (price, return, conviction, tech, options, insider, catalyst, devil) plus a
@@ -10615,7 +10670,177 @@ function calibSvg(buckets){
     </div>`;
   }
 
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${alertsPanelHtml}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${sectorRotationHtml}${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${eventHorizonHtml}${universPanelHtml}${insiderFlowHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Fundamentals-Quadrant — Value × Wachstum (HED-150 Zyklus 163).
+  // 2D scatter of Fwd P/E (log X) vs Rev Growth YoY (Y), universe context with
+  // active positions highlighted. Quadrants by median split. Bottom: active
+  // fundamentals deep-dive table.
+  let fundQuadHtml="";
+  {
+    const _activeTk=new Set(active.flatMap(th=>(th.tickers||[]).map(tk=>String(tk).toUpperCase())));
+    const _sv={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>{
+      (s.tickers||[]).forEach(t=>{if(t&&t.ticker) _sv[String(t.ticker).toUpperCase()]={...t,sector_name:s.name};});
+    });
+
+    // Build points
+    const points=[];
+    Object.entries(_sv).forEach(([tk,d])=>{
+      const c=d.consensus||{};
+      const pe=c.fwd_pe;
+      const gr=c.rev_growth_yoy;
+      if(typeof pe!=="number"||pe<=0||pe>100||typeof gr!=="number"||gr<-50||gr>500) return;
+      points.push({
+        tk, pe, gr,
+        gm:c.gross_margin, om:c.op_margin, nm:c.net_margin, fcfm:c.fcf_margin, evs:c.ev_sales,
+        sector:d.sector_name||"",
+        isActive:_activeTk.has(tk)
+      });
+    });
+
+    if(points.length>=3){
+      // Compute medians
+      const peArr=points.map(p=>p.pe).slice().sort((a,b)=>a-b);
+      const grArr=points.map(p=>p.gr).slice().sort((a,b)=>a-b);
+      const medPe=peArr[Math.floor(peArr.length/2)];
+      const medGr=grArr[Math.floor(grArr.length/2)];
+
+      // Chart dimensions
+      const W=480, H=320;
+      const pad={top:24, right:24, bottom:42, left:48};
+      const innerW=W-pad.left-pad.right;
+      const innerH=H-pad.top-pad.bottom;
+
+      // Log-scale X for P/E (handle range)
+      const peMin=Math.max(5, Math.min(...peArr));
+      const peMax=Math.min(60, Math.max(...peArr));
+      const logPeMin=Math.log10(peMin);
+      const logPeMax=Math.log10(peMax);
+      const grMin=Math.min(0, ...grArr);
+      const grMax=Math.max(...grArr);
+      // Reasonable axis bounds (pad 10% above max growth)
+      const grLo=Math.floor(grMin/10)*10;
+      const grHi=Math.ceil(grMax*1.05/10)*10;
+
+      function xOf(pe){
+        const lp=Math.log10(Math.max(peMin,Math.min(peMax,pe)));
+        return pad.left + (lp-logPeMin)/(logPeMax-logPeMin)*innerW;
+      }
+      function yOf(gr){
+        return pad.top + (1-(gr-grLo)/(grHi-grLo))*innerH;
+      }
+
+      // Axis ticks
+      const peTicks=[5,10,20,40];
+      const grTicks=(()=>{
+        const step=grHi>200?50:grHi>100?25:grHi>50?20:10;
+        const ticks=[];
+        for(let v=Math.floor(grLo/step)*step; v<=grHi; v+=step) ticks.push(v);
+        return ticks;
+      })();
+
+      // Median lines
+      const xMid=xOf(medPe), yMid=yOf(medGr);
+      // Sort active to render last (on top)
+      points.sort((a,b)=>(a.isActive?1:0)-(b.isActive?1:0));
+      const dotsHtml=points.map(p=>{
+        const cx=xOf(p.pe), cy=yOf(p.gr);
+        const cls=p.isActive?"pf-fq-dot pf-fq-dot-active":"pf-fq-dot";
+        const r=p.isActive?5:3.5;
+        const tip=`${p.tk}: P/E ${p.pe.toFixed(1)}, Rev ${p.gr>=0?'+':''}${p.gr.toFixed(0)}%`;
+        const lblHtml=p.isActive
+          ? `<text class="pf-fq-dot-lbl pf-fq-dot-active-lbl" x="${cx.toFixed(1)}" y="${(cy-9).toFixed(1)}">${esc(p.tk)}</text>`
+          : (p.pe<=12 && p.gr>=80 ? `<text class="pf-fq-dot-lbl" x="${cx.toFixed(1)}" y="${(cy-7).toFixed(1)}">${esc(p.tk)}</text>` : "");
+        return `<g class="${cls}"><title>${esc(tip)}</title>${lblHtml}<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}"/></g>`;
+      }).join("");
+
+      // Axis labels
+      const xLblsHtml=peTicks.filter(t=>t>=peMin&&t<=peMax).map(t=>{
+        const x=xOf(t);
+        return `<text class="pf-fq-axis-lbl" x="${x.toFixed(1)}" y="${(pad.top+innerH+12).toFixed(1)}" text-anchor="middle">${t}</text>`;
+      }).join("");
+      const yLblsHtml=grTicks.map(t=>{
+        const y=yOf(t);
+        return `<text class="pf-fq-axis-lbl" x="${(pad.left-5).toFixed(1)}" y="${(y+3).toFixed(1)}" text-anchor="end">${t}%</text>`;
+      }).join("");
+
+      const chartSvg=`<svg class="pf-fq-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+        <line class="pf-fq-axis-x" x1="${pad.left}" y1="${pad.top+innerH}" x2="${pad.left+innerW}" y2="${pad.top+innerH}"/>
+        <line class="pf-fq-axis-y" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top+innerH}"/>
+        <line class="pf-fq-axis-mid" x1="${xMid.toFixed(1)}" y1="${pad.top}" x2="${xMid.toFixed(1)}" y2="${pad.top+innerH}"/>
+        <line class="pf-fq-axis-mid" x1="${pad.left}" y1="${yMid.toFixed(1)}" x2="${pad.left+innerW}" y2="${yMid.toFixed(1)}"/>
+        ${xLblsHtml}${yLblsHtml}
+        <text class="pf-fq-axis-title" x="${(pad.left+innerW/2).toFixed(1)}" y="${(pad.top+innerH+30).toFixed(1)}" text-anchor="middle">Fwd P/E (log)</text>
+        <text class="pf-fq-axis-title" transform="rotate(-90 14 ${(pad.top+innerH/2).toFixed(1)})" x="14" y="${(pad.top+innerH/2).toFixed(1)}" text-anchor="middle">Umsatz-Wachstum YoY</text>
+        ${dotsHtml}
+      </svg>`;
+
+      // Active positions fundamentals table
+      const activePts=points.filter(p=>p.isActive);
+      function _cellCls(val, good, bad, lower_is_better){
+        if(val==null||!isFinite(val)) return "";
+        if(lower_is_better){
+          if(val<=good) return "pf-fq-cell-good";
+          if(val>=bad) return "pf-fq-cell-bad";
+          return "pf-fq-cell-mid";
+        } else {
+          if(val>=good) return "pf-fq-cell-good";
+          if(val<=bad) return "pf-fq-cell-warn";
+          return "pf-fq-cell-mid";
+        }
+      }
+      function _f(v,suffix=""){return (typeof v==="number"&&isFinite(v))?(v.toFixed(1)+suffix):"—";}
+      const tblRows=activePts.map(p=>`<tr>
+        <td><span class="pf-fq-tbl-tk">${esc(p.tk)}</span></td>
+        <td class="${_cellCls(p.pe,15,30,true)}">${_f(p.pe)}</td>
+        <td class="${_cellCls(p.gr,30,10,false)}">${_f(p.gr,"%")}</td>
+        <td class="${_cellCls(p.gm,65,40,false)}">${_f(p.gm,"%")}</td>
+        <td class="${_cellCls(p.om,30,10,false)}">${_f(p.om,"%")}</td>
+        <td class="${_cellCls(p.nm,25,10,false)}">${_f(p.nm,"%")}</td>
+        <td class="${_cellCls(p.fcfm,20,5,false)}">${_f(p.fcfm,"%")}</td>
+        <td class="${_cellCls(p.evs,8,15,true)}">${_f(p.evs)}x</td>
+      </tr>`).join("");
+
+      // Universe stats
+      const cheapest=points.slice().sort((a,b)=>a.pe-b.pe)[0];
+      const fastest=points.slice().sort((a,b)=>b.gr-a.gr)[0];
+      const garpScore=p=>(p.gr/Math.max(0.1,p.pe));
+      const bestGarp=points.slice().sort((a,b)=>garpScore(b)-garpScore(a))[0];
+
+      fundQuadHtml=`<div class="panel pf-fq-panel">
+        <div class="pf-fq-h">
+          <div>
+            <div class="pf-fq-title">Fundamentals-Quadrant — Value × Wachstum</div>
+            <div class="pf-fq-sub">${points.length} Ticker mit Konsensus-Daten · X = Fwd P/E (log) · Y = Umsatz-Wachstum YoY · Median-Split definiert Quadranten · Aktive Positionen <span style="color:#3fb950">●</span> hervorgehoben</div>
+          </div>
+          <div class="pf-fq-stats">
+            <div class="pf-fq-stat"><span class="pf-fq-stat-val">${medPe.toFixed(1)}</span><span class="pf-fq-stat-lbl">Median P/E</span></div>
+            <div class="pf-fq-stat"><span class="pf-fq-stat-val">${medGr.toFixed(0)}%</span><span class="pf-fq-stat-lbl">Median Wachstum</span></div>
+            <div class="pf-fq-stat"><span class="pf-fq-stat-val pf-fq-stat-val-pos">${esc(cheapest.tk)}</span><span class="pf-fq-stat-lbl">Günstigster (P/E ${cheapest.pe.toFixed(1)})</span></div>
+            <div class="pf-fq-stat"><span class="pf-fq-stat-val pf-fq-stat-val-pos">${esc(bestGarp.tk)}</span><span class="pf-fq-stat-lbl">Bestes GARP</span></div>
+          </div>
+        </div>
+        <div class="pf-fq-body">
+          <div class="pf-fq-chart-wrap">
+            <span class="pf-fq-qlabel pf-fq-qlabel-tl">▲ GARP-Gold</span>
+            <span class="pf-fq-qlabel pf-fq-qlabel-tr">▲ Momentum</span>
+            <span class="pf-fq-qlabel pf-fq-qlabel-bl">▼ Cheap-Boring</span>
+            <span class="pf-fq-qlabel pf-fq-qlabel-br">▼ Avoid</span>
+            ${chartSvg}
+          </div>
+          <div>
+            <table class="pf-fq-tbl">
+              <thead><tr><th>Active</th><th>Fwd P/E</th><th>Rev+</th><th>GM</th><th>OM</th><th>NM</th><th>FCFM</th><th>EV/S</th></tr></thead>
+              <tbody>${tblRows}</tbody>
+            </table>
+            <div class="pf-fq-tbl-note">Farb-Coding: Grün = stark (P/E ≤15 / Wachstum ≥30% / GM ≥65% / OM ≥30% / NM ≥25% / FCFM ≥20% / EV-S ≤8) · Gelb = mittelmäßig · Rot = schwach. Aktive Positionen vs Universe-Benchmark.</div>
+          </div>
+        </div>
+        <div class="pf-fq-foot">Quadranten: <b>GARP-Gold</b> (oben-links) = günstig + hohes Wachstum, klassischer Value+Quality-Sweet-Spot. <b>Momentum</b> (oben-rechts) = teuer + hohes Wachstum, Premium für Story. <b>Cheap-Boring</b> (unten-links) = günstig + langsam, Value-Trap-Risiko. <b>Avoid</b> (unten-rechts) = teuer + langsam, ohne Begründung problematisch. GARP-Score = Rev-Growth ÷ P/E (höher = besser).</div>
+      </div>`;
+    }
+  }
+
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${alertsPanelHtml}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${sectorRotationHtml}${mpcPanelHtml}${thcPanelHtml}${curvePanelHtml}${fundQuadHtml}${eventHorizonHtml}${universPanelHtml}${insiderFlowHtml}${analysisPanelHtml}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
