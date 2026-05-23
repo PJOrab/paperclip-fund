@@ -500,12 +500,21 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .ec-ylab{font-size:10px;fill:var(--mut);font-variant-numeric:tabular-nums;font-family:inherit}
 .ec-xlab{font-size:10px;fill:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-family:inherit}
 .ec-foot{font-size:var(--fs-micro);margin-top:6px;line-height:1.4}
+/* Underwater (drawdown) curve — risk profile paired with equity curve (HED-137 cycle 90) */
+.dd-svg{width:100%;height:auto;display:block;max-height:90px;margin-top:2px}
+.dd-line{fill:none;stroke:var(--red);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.dd-area{fill:var(--red);opacity:.20}
+.dd-min{fill:var(--red);stroke:var(--bg);stroke-width:2}
+.dd-cur{fill:none;stroke:var(--red);stroke-width:2}
+.dd-title{font-size:10px;fill:var(--mut);font-variant-numeric:tabular-nums;font-family:inherit;text-transform:uppercase;letter-spacing:.05em}
+.dd-title-cur{fill:var(--red);font-weight:700}
 @media(max-width:640px){
   .ec-h{flex-direction:column;align-items:stretch;gap:var(--s2)}
   .ec-kpis{justify-content:space-between;gap:var(--s3)}
   .ec-kpi{text-align:left}
   .ec-kpi b{font-size:15px}
   .ec-svg{max-height:130px}
+  .dd-svg{max-height:70px}
 }
 /* Conviction-vs-P&L Scatter — "are my high-conviction calls working?" (HED-137 cycle 84) */
 .pf-scatter{margin-top:var(--s3);padding:var(--s3)}
@@ -1926,8 +1935,52 @@ function calibSvg(buckets){
       // Peak / max-drawdown stats over the live window
       const daysLive=_curve.length-1;
       const peakPct=Math.max(0,...pcts);
-      let runMax=-Infinity, maxDD=0;
-      pcts.forEach(p=>{ if(p>runMax) runMax=p; const dd=p-runMax; if(dd<maxDD) maxDD=dd; });
+      let runMax=-Infinity, maxDD=0, _maxDDIdx=0;
+      const ddArr=pcts.map((p,i)=>{ if(p>runMax) runMax=p; const dd=p-runMax; if(dd<maxDD){ maxDD=dd; _maxDDIdx=i; } return dd; });
+      const curDD=ddArr[ddArr.length-1];
+      // Days underwater: consecutive trailing days with DD < -5bp
+      let daysUnderwater=0;
+      for(let i=ddArr.length-1;i>=0 && ddArr[i] < -0.005; i--) daysUnderwater++;
+      // Underwater chart — aligned to equity-curve x-axis (same pad.l, xStep).
+      // Floor the y-axis at ≥0.5% so a flat curve stays visible.
+      let ddSvg="";
+      if(_curve.length>=2){
+        const ddH=72, ddPadT=14, ddPadB=12;
+        const ddIH=ddH-ddPadT-ddPadB;
+        const ddLo=Math.min(-0.5, maxDD*1.15);
+        const yDD=v=>ddPadT+(0-v)/(0-ddLo)*ddIH;
+        const ddPts=ddArr.map((d,i)=>[pad.l+i*xStep, yDD(d)]);
+        const ddLine=ddPts.map(([x,y])=>`${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+        const xLast=pad.l+(ddPts.length-1)*xStep;
+        const ddArea=`M ${pad.l.toFixed(1)},${yDD(0).toFixed(1)} `
+          + ddPts.map(([x,y])=>`L ${x.toFixed(1)},${y.toFixed(1)}`).join(" ")
+          + ` L ${xLast.toFixed(1)},${yDD(0).toFixed(1)} Z`;
+        const ddZeroLine=`<line class="ec-zero" x1="${pad.l}" y1="${yDD(0).toFixed(1)}" x2="${(pad.l+iW).toFixed(1)}" y2="${yDD(0).toFixed(1)}"/>`;
+        // Max-DD marker dot
+        const minMarker = maxDD<-0.05
+          ? `<circle class="dd-min" cx="${(pad.l+_maxDDIdx*xStep).toFixed(1)}" cy="${yDD(maxDD).toFixed(1)}" r="3.5"><title>Tiefster Punkt: ${fmt(maxDD)} (Tag −${_curve[_maxDDIdx].off})</title></circle>`
+          : "";
+        // Current DD marker (only if currently underwater)
+        const curMarker = curDD<-0.05
+          ? `<circle class="dd-cur" cx="${xLast.toFixed(1)}" cy="${yDD(curDD).toFixed(1)}" r="3"/>`
+          : "";
+        const ddYLab=`<text class="ec-ylab" x="${(pad.l-6).toFixed(1)}" y="${(ddPadT+ddIH).toFixed(1)}" text-anchor="end">${fmt(ddLo)}</text>`
+          + `<text class="ec-ylab" x="${(pad.l-6).toFixed(1)}" y="${(yDD(0)+3).toFixed(1)}" text-anchor="end">0%</text>`;
+        const uwTxt = daysUnderwater>0
+          ? `${daysUnderwater} Tag${daysUnderwater===1?"":"e"} unter Hoch`
+          : "Auf Hoch";
+        const curCls = curDD<-0.05 ? ' class="dd-title-cur"' : '';
+        const ddTitle=`<text class="dd-title" x="${pad.l}" y="${(ddPadT-3).toFixed(1)}">Underwater · aktuell <tspan${curCls}>${fmt(curDD)}</tspan> · max ${fmt(maxDD)} · ${uwTxt}</text>`;
+        ddSvg=`<svg class="dd-svg" viewBox="0 0 ${W} ${ddH}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Underwater-Drawdown-Chart — aktuell ${fmt(curDD)}, maximal ${fmt(maxDD)}, ${uwTxt}">
+          ${ddZeroLine}
+          <path class="dd-area" d="${ddArea}"/>
+          <polyline class="dd-line" points="${ddLine}"/>
+          ${minMarker}
+          ${curMarker}
+          ${ddYLab}
+          ${ddTitle}
+        </svg>`;
+      }
       const lastCls=lastPct>=0?"move-up":"move-dn";
       const peakCls=peakPct>0?"move-up":"muted";
       const ddCls=maxDD<-0.05?"move-dn":"muted";
@@ -1945,7 +1998,8 @@ function calibSvg(buckets){
           </div>
         </div>
         ${svg}
-        <div class="ec-foot muted">Honestes Inception-Tracking — die Kurve wächst mit jedem Handelstag. Indexiert bei 0% am Entry-Tag, sign-flipped für Shorts.</div>
+        ${ddSvg}
+        <div class="ec-foot muted">Honestes Inception-Tracking — die Kurve wächst mit jedem Handelstag. Indexiert bei 0% am Entry-Tag, sign-flipped für Shorts. Underwater-Chart zeigt Drawdown vom rollierenden Hoch (immer ≤ 0).</div>
       </div>`;
     }
   }
