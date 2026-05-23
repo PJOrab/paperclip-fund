@@ -1705,6 +1705,78 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .pf-alloc-bar{height:30px}
   .pf-alloc-seg{font-size:10px;padding:0 4px}
 }
+/* Signal-Matrix (HED-137 Zyklus 109): Bloomberg MOST-screen equivalent — per open-call
+   synthesis table that joins Tech Setup, Options Tape, Vol-Edge, and Insider signals into
+   one composite view. The PM sees at a glance: which positions have all signals aligned
+   (high conviction) vs which have conflicting signals (review needed). Composite score
+   (confirms − conflicts) drives a book-wide alignment verdict. Each signal cell is a
+   color-coded pill so the dominant posture reads preattentively without parsing numbers.
+   Mobile: outer scrolls horizontally; all 4 signal columns + composite always visible. */
+.sm-panel{padding:var(--s3);margin-top:0}
+.sm-h{margin-bottom:var(--s3)}
+.sm-h-title{font-weight:700;font-size:var(--fs-h2);text-transform:none;letter-spacing:0;color:var(--txt);line-height:1.2}
+.sm-h-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400;margin-top:2px;line-height:1.4}
+.sm-wrap{overflow-x:auto;margin:0 calc(-1*var(--s3));padding:0 var(--s3)}
+.sm-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+.sm-tbl thead th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);font-weight:600;text-align:left;padding:6px 8px 6px 6px;border-bottom:2px solid var(--line);white-space:nowrap}
+.sm-tbl thead th.c{text-align:center}
+.sm-tbl thead th.r{text-align:right}
+.sm-tbl tbody tr{border-bottom:1px solid var(--panel2)}
+.sm-tbl tbody tr:last-child{border-bottom:none}
+.sm-tbl tbody tr:hover{background:rgba(77,163,255,.04)}
+.sm-tbl tbody td{padding:8px 8px 8px 6px;vertical-align:middle;line-height:1.25}
+.sm-tbl tbody td.c{text-align:center}
+.sm-tbl tbody td.r{text-align:right}
+/* Ticker + direction cell */
+.sm-tk-wrap{display:flex;align-items:center;gap:6px}
+.sm-tk{font-weight:700;font-size:13px;letter-spacing:.03em;color:var(--txt)}
+.sm-dir{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em}
+.sm-dir-long{background:rgba(63,185,80,.22);color:var(--green)}
+.sm-dir-short{background:rgba(248,81,73,.22);color:var(--red)}
+.sm-dir-pair{background:var(--panel2);color:var(--mut)}
+/* Conviction bar + value */
+.sm-conv-cell{display:flex;align-items:center;gap:6px;min-width:70px}
+.sm-conv-bar{height:4px;border-radius:2px;min-width:36px;position:relative;background:var(--panel2)}
+.sm-conv-fill{position:absolute;top:0;bottom:0;left:0;border-radius:2px}
+.sm-conv-fill-hi{background:var(--accent)}
+.sm-conv-fill-lo{background:var(--mut)}
+.sm-conv-val{font-size:var(--fs-micro);font-weight:600;color:var(--mut);min-width:24px}
+/* Signal pills — the core vocabulary of this panel */
+.sm-sig{display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;
+  padding:3px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;
+  min-width:64px;line-height:1.3;cursor:default;gap:3px}
+.sm-sig-conf{background:rgba(63,185,80,.20);color:var(--green)}          /* confirms call */
+.sm-sig-conf::before{content:"✓\00a0"}
+.sm-sig-conflict{background:rgba(248,81,73,.18);color:var(--red)}         /* contradicts call */
+.sm-sig-conflict::before{content:"✗\00a0"}
+.sm-sig-watch{background:rgba(210,153,34,.18);color:var(--amber)}         /* mixed / watch */
+.sm-sig-watch::before{content:"◐\00a0"}
+.sm-sig-none{background:var(--panel2);color:var(--mut)}                   /* no data */
+/* Composite score cell */
+.sm-comp{display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  font-size:13px;font-weight:800;min-width:36px}
+.sm-comp-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.sm-comp-hi{color:var(--green)}.sm-comp-hi .sm-comp-dot{background:var(--green)}
+.sm-comp-lo{color:var(--red)}.sm-comp-lo .sm-comp-dot{background:var(--red)}
+.sm-comp-mid{color:var(--amber)}.sm-comp-mid .sm-comp-dot{background:var(--amber)}
+.sm-comp-nil{color:var(--mut)}.sm-comp-nil .sm-comp-dot{background:var(--mut)}
+.sm-verdict-bar{display:flex;flex-wrap:wrap;gap:var(--s2);align-items:center;margin-top:var(--s3);padding-top:var(--s3);border-top:1px solid var(--panel2)}
+.sm-verdict-chip{font-size:11px;font-weight:700;padding:4px 10px;border-radius:5px;text-transform:uppercase;letter-spacing:.04em}
+.sm-verdict-aligned{background:rgba(63,185,80,.18);color:var(--green)}
+.sm-verdict-split{background:rgba(210,153,34,.18);color:var(--amber)}
+.sm-verdict-conflict{background:rgba(248,81,73,.18);color:var(--red)}
+.sm-verdict-insuf{background:var(--panel2);color:var(--mut)}
+.sm-verdict-meta{font-size:var(--fs-micro);color:var(--mut);line-height:1.5}
+.sm-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+.sm-empty{display:flex;align-items:center;justify-content:center;padding:var(--s5) var(--s3);border:1px dashed var(--line);border-radius:6px;color:var(--mut);font-size:var(--fs-micro);font-style:italic}
+.sm-col-tech,.sm-col-opt,.sm-col-vol,.sm-col-ins{white-space:nowrap}
+@media(max-width:640px){
+  .sm-tbl thead th{font-size:9px;padding:5px 5px}
+  .sm-tbl tbody td{padding:7px 5px}
+  .sm-sig{font-size:9px;padding:2px 5px;min-width:54px}
+  .sm-tk{font-size:12px}
+  .sm-comp{font-size:12px}
+}
 /* Insider-Tape (HED-137 Zyklus 103): Bloomberg-INSI-style per-ticker rollup of the last 30d
    of SEC Form-4 open-market buys/sells. Each row is a diverging $-bar around a center axis:
    sells extend left in red, buys right in green. Sorted by absolute |net $| desc so the
@@ -2562,6 +2634,7 @@ main:focus{outline:none}
     <a href="#h-briefing">Briefing</a>
     <a href="#h-trackrecord">Track-Record</a>
     <a href="#h-portfolio">Portfolio</a>
+    <a href="#h-signalmatrix">Signal-Matrix</a>
     <a href="#h-opttape">Optionen</a>
     <a href="#h-ivrvedge">Vol-Edge</a>
     <a href="#h-catalysts">Katalysatoren</a>
@@ -2591,6 +2664,11 @@ main:focus{outline:none}
   <section aria-labelledby="h-portfolio">
   <h2 id="h-portfolio">Portfolio-Übersicht</h2>
   <div id="portfolioview" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:55%"></div><div class="skel skel-line" style="width:70%"></div></div></div>
+  </section>
+
+  <section aria-labelledby="h-signalmatrix">
+  <h2 id="h-signalmatrix">Signal-Matrix <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Synthesis · Tech · Options · Vol-Edge · Insider</span></h2>
+  <div id="signalmatrix" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:55%"></div><div class="skel skel-line" style="width:80%"></div><div class="skel skel-line" style="width:68%"></div></div></div>
   </section>
 
   <section aria-labelledby="h-insidertape">
@@ -4765,6 +4843,254 @@ function calibSvg(buckets){
   root.setAttribute("aria-busy","false");
 })();
 
+// Signal-Matrix (HED-137 Zyklus 109): Bloomberg MOST-screen equivalent.
+// One row per open call; columns: Tech Setup, Options Tape verdict, Vol-Edge
+// pricing, Insider Flow. Each cell is a confirm/conflict/watch/none pill.
+// A composite score (confirms − conflicts) drives the per-row alignment read
+// and an aggregate verdict: "Broadly Aligned", "Split", "Conflicted".
+//
+// Signal scoring (always relative to call direction):
+//   Tech:     konfirmiert → +1; überdehnt/gemischt → 0; konflikt → −1
+//   Options:  bullish/squeeze (long) or bearish/hedge (short) → +1; inverse → −1; neutral/event → 0
+//   Vol-Edge: günstig (cheap options) → +1; teuer (expensive) → −1; fair → 0
+//             [Rationale for long: cheap options = event-play viable; expensive = headwind for calls]
+//   Insider:  net_dollar confirms direction → +1; contradicts → −1; silent → 0
+//
+// Max composite: 4 confirms. Score ≥ 2 → Aligned; 0 → Neutral; −1 → Mixed; ≤ −2 → Conflicted.
+(function renderSignalMatrix(){
+  const root=$("signalmatrix");
+  if(!root) return;
+  const tr=D.track_record||{}, sv=D.sector_view||{};
+  const active=(tr.theses||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  if(!active.length){
+    root.innerHTML='<div class="panel sm-panel"><div class="sm-empty">Keine offenen Calls — Signal-Matrix benötigt aktive Positionen im Buch.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  // --- Build lookup maps ---
+  // Tech: from sector_view ticker objects
+  const techMap={};
+  (sv.sectors||[]).forEach(s=>{
+    (s.tickers||[]).forEach(t=>{
+      if(!t||!t.ticker) return;
+      techMap[String(t.ticker).toUpperCase()]={
+        ma30:t.ma30, pct_vs_ma30:t.pct_vs_ma30,
+        rsi14:t.rsi14, pct_of_52w_high:t.pct_of_52w_high,
+        spark:t.spark
+      };
+    });
+  });
+  // Options Tape: from options_tape.tickers (keyed by ticker)
+  const otMap={};
+  ((D.options_tape||{}).tickers||[]).forEach(r=>{ otMap[String(r.ticker).toUpperCase()]=r; });
+  // Vol-Edge: compute inline (same logic as renderIVRVEdge)
+  const today=new Date(); today.setUTCHours(0,0,0,0);
+  function dteOf(exp){
+    if(!exp) return null;
+    const [y,m,d]=String(exp).split("-").map(Number);
+    return isFinite(y)?Math.max(1,Math.round((new Date(Date.UTC(y,m-1,d)).getTime()-today.getTime())/86400000)):null;
+  }
+  function rv30(sp){
+    if(!Array.isArray(sp)||sp.length<6) return null;
+    const c=sp.slice(-31), lr=[];
+    for(let i=1;i<c.length;i++){ if(c[i-1]>0&&c[i]>0) lr.push(Math.log(c[i]/c[i-1])); }
+    if(lr.length<5) return null;
+    const mu=lr.reduce((a,b)=>a+b,0)/lr.length;
+    const v=lr.reduce((s,x)=>s+(x-mu)*(x-mu),0)/Math.max(1,lr.length-1);
+    return Math.sqrt(v)*Math.sqrt(252);
+  }
+  const volEdgeMap={};
+  ((D.options_tape||{}).tickers||[]).filter(r=>r.emove!=null&&r.exp).forEach(r=>{
+    const tk=String(r.ticker).toUpperCase();
+    const dte=dteOf(r.exp); if(!dte) return;
+    const sp=techMap[tk]?.spark;
+    const rv=rv30(sp); if(!rv) return;
+    const iv=(r.emove/100)/0.7979/Math.sqrt(dte/252);
+    if(!isFinite(iv)||iv<=0) return;
+    const spreadPp=(iv-rv)*100;
+    volEdgeMap[tk]={spreadPp, iv, rv, dte};
+  });
+  // Insider Tape: from insider_tape.tickers (keyed by ticker)
+  const insMap={};
+  ((D.insider_tape||{}).tickers||[]).forEach(r=>{ insMap[String(r.ticker).toUpperCase()]=r; });
+
+  // --- Signal computation (direction-aware) ---
+  function techSignal(tk, dir){
+    const m=techMap[tk]; if(!m) return {score:0,label:"—",cls:"none",tip:""};
+    const isLong=dir==="long", isShort=dir==="short";
+    if(!isLong&&!isShort) return {score:0,label:"—",cls:"none",tip:""};
+    const ma=m.pct_vs_ma30, rsi=m.rsi14, w52=m.pct_of_52w_high;
+    const sign=isLong?1:-1;
+    const trendSig=ma==null?0:(sign*ma>0?1:-1);
+    let momSig=0, stretched=false;
+    if(rsi!=null){
+      if(isLong){
+        if(rsi>=70){momSig=1;stretched=true;}
+        else if(rsi>=50)momSig=1;
+        else if(rsi<30)momSig=1;  // oversold long
+      }else{
+        if(rsi<=30){momSig=1;stretched=true;}
+        else if(rsi<=50)momSig=1;
+        else if(rsi>70)momSig=1;  // overbought short
+      }
+    }
+    if(trendSig===1&&!stretched&&momSig===1)  return {score:1, label:"Konfirmiert",cls:"conf",  tip:`Trend + Momentum bestätigen ${dir}`};
+    if(trendSig===1&&stretched)               return {score:0, label:"Überdehnt",  cls:"watch", tip:`Trend stützt, aber RSI im Extrem — Late-${dir} Warnung`};
+    if(trendSig===-1)                         return {score:-1,label:"Konflikt",   cls:"conflict",tip:`Chart läuft gegen ${dir} — re-evaluieren`};
+    return {score:0, label:"Gemischt", cls:"watch", tip:"Partielles Chart-Setup — thesis-getrieben"};
+  }
+  function optSignal(tk, dir){
+    const r=otMap[tk]; if(!r) return {score:0,label:"—",cls:"none",tip:""};
+    const bullish=r.verdict==="bullish_setup"||r.verdict==="squeeze_risk";
+    const bearish=r.verdict==="bearish_setup"||r.verdict==="hedge_bid";
+    const ev=r.verdict==="event_pending";
+    if(dir==="long"){
+      if(bullish) return {score:1, label:"Bull-Flow",  cls:"conf",    tip:`Optionsmarkt bestätigt Long: ${esc((r.signals||[]).join(", ")||r.verdict)}`};
+      if(bearish) return {score:-1,label:"Bear-Flow",  cls:"conflict",tip:`Optionsmarkt widerspricht Long: ${esc((r.signals||[]).join(", ")||r.verdict)}`};
+    }else if(dir==="short"){
+      if(bearish) return {score:1, label:"Bear-Flow",  cls:"conf",    tip:`Optionsmarkt bestätigt Short: ${esc((r.signals||[]).join(", ")||r.verdict)}`};
+      if(bullish) return {score:-1,label:"Bull-Flow",  cls:"conflict",tip:`Optionsmarkt widerspricht Short: ${esc((r.signals||[]).join(", ")||r.verdict)}`};
+    }
+    if(ev) return {score:0,label:"Event",cls:"watch",tip:`Event-IV ≥4% — Katalysator pricing`};
+    return {score:0,label:"Neutral",cls:"none",tip:"Kein klares Optionssignal"};
+  }
+  function volSignal(tk, dir){
+    const ve=volEdgeMap[tk]; if(!ve) return {score:0,label:"—",cls:"none",tip:""};
+    const spr=ve.spreadPp;
+    const sSign=spr>=0?"+":"−";
+    const sAbs=Math.abs(spr).toFixed(1);
+    // For long: cheap options (günstig) = +1 (event-calls, call-replacement viable)
+    //           expensive (teuer) = −1 (avoid chasing calls; outright OK but premium bid)
+    // For short: cheap options (günstig) = +1 (put protection cheap = favorable)
+    //            expensive (teuer) = +1 (put bid = market is pricing downside risk = confirms short thesis)
+    // Actually: teuer for short = market pricing protection = slight confirming signal. Let's be conservative:
+    // For short: teuer → +0 (neutral, puts expensive but thesis confirms); günstig → +1 (puts cheap, hedge viable)
+    // Simpler approach: günstig = +1 for both (cheap premium = favorable execution); teuer = -1 for long (costs money to hedge), 0 for short; fair = 0 always
+    if(spr<=-5){
+      return {score:1, label:"Günstig",  cls:"conf",    tip:`Premium günstig: IV−RV ${sSign}${sAbs}pp — Options-Execution attraktiv`};
+    }else if(spr>=5){
+      if(dir==="long") return {score:-1,label:"Teuer",cls:"conflict",tip:`Premium teuer: IV−RV +${sAbs}pp — Calls überteuert, Outright bevorzugt`};
+      return {score:0, label:"Teuer",    cls:"watch",   tip:`Premium teuer: IV−RV +${sAbs}pp — Puts teuer, Put-Schutz begrenzt`};
+    }
+    return {score:0, label:"Fair",      cls:"none",    tip:`Vol-Edge fair: IV−RV ${sSign}${sAbs}pp`};
+  }
+  function insSignal(tk, dir){
+    const r=insMap[tk]; if(!r) return {score:0,label:"—",cls:"none",tip:""};
+    const net=r.net_dollar||0;
+    if(Math.abs(net)<50000) return {score:0,label:"Neutral",cls:"none",tip:`Insider-Aktivität minimal (${ (Math.abs(net)/1e3).toFixed(0)}k netto)`};
+    const fmtM=v=>(Math.abs(v)>=1e6?(Math.abs(v)/1e6).toFixed(1)+"M":(Math.abs(v)/1e3).toFixed(0)+"k");
+    if(dir==="long"){
+      if(net>0) return {score:1, label:"Net Buy",   cls:"conf",    tip:`Insider Netto-Kauf ${fmtM(net)} — bestätigt Long`};
+      else      return {score:-1,label:"Net Sell",  cls:"conflict",tip:`Insider Netto-Verkauf ${fmtM(net)} — widerspricht Long`};
+    }else if(dir==="short"){
+      if(net<0) return {score:1, label:"Net Sell",  cls:"conf",    tip:`Insider Netto-Verkauf ${fmtM(net)} — bestätigt Short`};
+      else      return {score:-1,label:"Net Buy",   cls:"conflict",tip:`Insider Netto-Kauf ${fmtM(net)} — widerspricht Short`};
+    }
+    return {score:0,label:"Neutral",cls:"none",tip:""};
+  }
+  function sigPill(s){
+    const lbl=esc(s.label);
+    const tip=s.tip?` title="${esc(s.tip)}"` : "";
+    return `<span class="sm-sig sm-sig-${s.cls||'none'}"${tip}>${lbl}</span>`;
+  }
+
+  // --- Build rows ---
+  let totalConf=0, totalConflict=0;
+  const rows=active.map(t=>{
+    const tks=(t.tickers||[]);
+    const tk=(tks[0]||"").toUpperCase();
+    const dir=(t.direction||"").toLowerCase();
+    const conv=typeof t.conviction==="number"?t.conviction:null;
+    const tech=techSignal(tk, dir);
+    const opt =optSignal (tk, dir);
+    const vol =volSignal (tk, dir);
+    const ins =insSignal (tk, dir);
+    const composite=tech.score+opt.score+vol.score+ins.score;
+    const nSignals=[tech,opt,vol,ins].filter(s=>s.score!==0).length;
+    // Per-row composite display
+    let compCls="nil", compLabel="—";
+    if(nSignals===0){ compCls="nil"; compLabel="—"; }
+    else if(composite>=2){ compCls="hi"; compLabel="+"+composite; }
+    else if(composite===1){ compCls="hi"; compLabel="+1"; }
+    else if(composite===0){ compCls="mid"; compLabel="0"; }
+    else if(composite===-1){ compCls="mid"; compLabel="−1"; }
+    else { compCls="lo"; compLabel="−"+Math.abs(composite); }
+    if(composite>=1) totalConf++;
+    if(composite<=-1) totalConflict++;
+    // Conviction bar
+    const convPct=conv!=null?Math.round(conv*100):null;
+    const convBar=convPct!=null
+      ? `<div class="sm-conv-cell" title="Conviction: ${conv.toFixed(2)}">
+           <div class="sm-conv-bar" style="width:48px"><div class="sm-conv-fill ${conv>=0.5?"sm-conv-fill-hi":"sm-conv-fill-lo"}" style="width:${convPct}%"></div></div>
+           <span class="sm-conv-val">${conv.toFixed(2)}</span>
+         </div>`
+      : '<span class="muted">—</span>';
+    const dirCls=dir==="long"?"long":dir==="short"?"short":"pair";
+    const tkLabel=tks.join("·");
+    return `<tr>
+      <td>
+        <div class="sm-tk-wrap">
+          <span class="sm-tk">${esc(tkLabel)}</span>
+          ${dir?`<span class="sm-dir sm-dir-${dirCls}">${esc(dir)}</span>`:""}
+        </div>
+      </td>
+      <td class="r">${convBar}</td>
+      <td class="c sm-col-tech">${sigPill(tech)}</td>
+      <td class="c sm-col-opt">${sigPill(opt)}</td>
+      <td class="c sm-col-vol">${sigPill(vol)}</td>
+      <td class="c sm-col-ins">${sigPill(ins)}</td>
+      <td class="c">
+        <span class="sm-comp sm-comp-${compCls}" title="Composite = Bestätigungen − Konflikte aus ${nSignals} aktiven Signalen">
+          <span class="sm-comp-dot"></span>${compLabel}
+        </span>
+      </td>
+    </tr>`;
+  }).join("");
+
+  // --- Book-wide verdict ---
+  const n=active.length;
+  const pctAligned=Math.round(totalConf/n*100);
+  const pctConflict=Math.round(totalConflict/n*100);
+  let verdChip, verdMeta;
+  if(totalConf>=n*0.7){ verdChip=`<span class="sm-verdict-chip sm-verdict-aligned">Broadly Aligned</span>`; verdMeta=`${totalConf} von ${n} Calls mit positiver Signal-Summe — Buch gut koordiniert.`; }
+  else if(totalConflict>=n*0.5){ verdChip=`<span class="sm-verdict-chip sm-verdict-conflict">Konflikte</span>`; verdMeta=`${totalConflict} von ${n} Calls mit negativer Signal-Summe — Review empfohlen.`; }
+  else { verdChip=`<span class="sm-verdict-chip sm-verdict-split">Split</span>`; verdMeta=`${totalConf} Aligned · ${totalConflict} Konflikt · ${n-totalConf-totalConflict} Neutral — gemischtes Bild.`; }
+
+  root.innerHTML=`<div class="panel sm-panel">
+    <div class="sm-h">
+      <div class="sm-h-title">Signal-Matrix — Positionssignale im Überblick</div>
+      <div class="sm-h-sub">Pro offenem Call: Tech-Setup · Options-Positioning · Vol-Pricing · Insider-Flow · Composite-Score (Konfirmierungen − Konflikte)</div>
+    </div>
+    <div class="sm-wrap">
+      <table class="sm-tbl" role="table" aria-label="Signal-Synthese pro offenem Call">
+        <thead><tr>
+          <th scope="col">Ticker</th>
+          <th scope="col" class="r" title="Conviction-Score des aktiven Calls">Conv.</th>
+          <th scope="col" class="c" title="Tech-Setup: Trend (vs MA30) + Momentum (RSI14) + Cycle-Position (52w-High%)">Tech</th>
+          <th scope="col" class="c" title="Options-Tape: P/C OI, IV-Skew-Positionierung relativ zur Call-Direction">Optionen</th>
+          <th scope="col" class="c" title="Vol-Edge: IV−RV30 Spread — günstig = Optionen relativ billig, teuer = relativ teuer">Vol-Edge</th>
+          <th scope="col" class="c" title="Insider-Flow (30d): Net-Dollar-Flow der Form-4-Transaktionen relativ zur Call-Direction">Insider</th>
+          <th scope="col" class="c" title="Composite = Σ Scores (max +4, min −4). ≥+2 grün, 0 amber, ≤−2 rot">Score</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="sm-verdict-bar">
+      ${verdChip}
+      <span class="sm-verdict-meta">${verdMeta}</span>
+    </div>
+    <div class="sm-foot">
+      Signals: <b>Tech</b> = Trend (MA30) + Momentum (RSI14) + Zyklusposition (52w-High%) relativ zur Call-Direction.
+      <b>Optionen</b> = OMON-Verdict aus P/C OI und IV-Skew.
+      <b>Vol-Edge</b> = IV−RV30-Spread: günstig (≤−5pp) bestätigt Options-Execution; teuer (≥+5pp) bedeutet für Long-Calls Gegenwind.
+      <b>Insider</b> = 30d Form-4 Open-Market Netto-Dollar, richtungsbereinigt.
+      Score-Banding: ≥+2 Aligned · +1 Lean · 0 Neutral · −1 Mixed · ≤−2 Conflicted.
+      Bloomberg-Pendant: MOST / PORT-M.
+    </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 // Sektor-Rotation-Matrix (HED-137 Zyklus 97): relative-strength matrix across
 // 5d / 20d / 30d windows, with alpha-vs-SPY and book net-exposure overlays.
 // Answers the PM rotation question: which sector is accelerating, which is
@@ -6424,7 +6750,7 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 })();
 
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
-["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","insidertape","opttape","ivrvedge"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","insidertape","opttape","ivrvedge","signalmatrix"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
 // Section nav: highlight the anchor pill whose section is currently most in view
 (function(){
