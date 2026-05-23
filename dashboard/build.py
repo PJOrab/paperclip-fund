@@ -2463,6 +2463,30 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .pf-gl-item{grid-template-columns:70px 1fr;gap:8px}
 }
 @media print{.pf-gl-overlay,.pf-gl-btn{display:none!important}}
+/* Universal Search Palette — Cmd+K (HED-150 Zyklus 187)
+   Searches across panel names, tickers, and glossary terms. Power-user
+   command palette. Modal-style with arrow-key navigation. */
+.pf-cp-overlay{position:fixed;inset:0;background:rgba(11,15,23,.78);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:80px var(--s3) var(--s3);animation:pf-kb-fade .15s ease-out}
+.pf-cp-overlay[hidden]{display:none}
+.pf-cp-card{background:var(--bg);border:1px solid rgba(139,148,158,.25);border-radius:8px;width:100%;max-width:540px;box-shadow:0 12px 40px rgba(0,0,0,.5);overflow:hidden;display:flex;flex-direction:column;max-height:70vh}
+.pf-cp-input-wrap{padding:var(--s3);border-bottom:1px solid rgba(139,148,158,.15)}
+.pf-cp-input{width:100%;padding:8px 12px;background:rgba(139,148,158,.06);border:1px solid rgba(139,148,158,.18);border-radius:5px;color:var(--txt);font-family:inherit;font-size:14px;outline:none;box-sizing:border-box}
+.pf-cp-input:focus{border-color:rgba(88,166,255,.5)}
+.pf-cp-input::placeholder{color:var(--mut);font-style:italic}
+.pf-cp-hint{font-size:9px;color:var(--mut);margin-top:6px;display:flex;gap:12px}
+.pf-cp-hint kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:rgba(139,148,158,.12);border:1px solid rgba(139,148,158,.2);border-radius:3px;padding:1px 5px;font-size:9px;color:var(--txt)}
+.pf-cp-results{flex:1;overflow-y:auto;padding:6px 0}
+.pf-cp-group-h{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--mut);padding:6px var(--s3) 3px}
+.pf-cp-item{display:grid;grid-template-columns:24px 1fr auto;gap:8px;padding:6px var(--s3);cursor:pointer;align-items:center;transition:background .08s}
+.pf-cp-item:hover,.pf-cp-item.pf-cp-active{background:rgba(88,166,255,.10)}
+.pf-cp-item.pf-cp-active{border-left:2px solid var(--blue);padding-left:calc(var(--s3) - 2px)}
+.pf-cp-item-icon{font-size:14px;text-align:center;color:var(--mut);line-height:1}
+.pf-cp-item.pf-cp-active .pf-cp-item-icon{color:var(--blue)}
+.pf-cp-item-lbl{font-weight:600;font-size:12px;color:var(--txt)}
+.pf-cp-item-desc{font-size:10px;color:var(--mut);line-height:1.4}
+.pf-cp-item-type{font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.pf-cp-empty{padding:var(--s3);text-align:center;color:var(--mut);font-size:var(--fs-cap);font-style:italic}
+@media print{.pf-cp-overlay{display:none!important}}
 /* Keyboard-Shortcut Overlay (HED-150 Zyklus 182)
    Bloomberg-style g+letter quick-jumps. "?" opens an overlay listing all
    shortcuts. Esc closes. "/" focuses universe filter. Power-user UX. */
@@ -5432,6 +5456,7 @@ main:focus{outline:none}
       <div class="pf-kb-section">
         <div class="pf-kb-section-h">Actions</div>
         <div class="pf-kb-list">
+          <div class="pf-kb-row"><span class="pf-kb-key">⌘ K</span><span class="pf-kb-desc">Universal Search (Panels/Tickers/Terms)</span></div>
           <div class="pf-kb-row"><span class="pf-kb-key">/</span><span class="pf-kb-desc">Focus Universe-Filter</span></div>
           <div class="pf-kb-row"><span class="pf-kb-key">?</span><span class="pf-kb-desc">Toggle this overlay</span></div>
           <div class="pf-kb-row"><span class="pf-kb-key">Esc</span><span class="pf-kb-desc">Close overlay</span></div>
@@ -5441,6 +5466,21 @@ main:focus{outline:none}
     </div>
   </div>
   <div class="pf-kb-hint" id="pf-kb-hint">Press <b>?</b> for shortcuts</div>
+
+  <!-- Universal Search Palette (HED-150 Zyklus 187): Cmd+K opens, type to search panels/tickers/terms. -->
+  <div id="pf-cp-overlay" class="pf-cp-overlay" role="dialog" aria-modal="true" aria-label="Universal Search" hidden>
+    <div class="pf-cp-card">
+      <div class="pf-cp-input-wrap">
+        <input type="text" id="pf-cp-input" class="pf-cp-input" placeholder="Suche Panels, Ticker, Begriffe…" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Universal-Suche">
+        <div class="pf-cp-hint">
+          <span><kbd>↑↓</kbd> navigate</span>
+          <span><kbd>↵</kbd> select</span>
+          <span><kbd>Esc</kbd> close</span>
+        </div>
+      </div>
+      <div class="pf-cp-results" id="pf-cp-results"></div>
+    </div>
+  </div>
 
   <!-- Glossary Modal (HED-150 Zyklus 184): explains all metric acronyms used across panels. -->
   <div id="pf-gl-overlay" class="pf-gl-overlay" role="dialog" aria-modal="true" aria-label="Glossar" hidden>
@@ -12745,6 +12785,176 @@ function calibSvg(buckets){
     overlay.addEventListener("click",function(e){if(e.target===overlay) _closeOverlay();});
     // Auto-hide hint after 8s
     if(hint){setTimeout(()=>{hint.style.transition="opacity 1s";hint.style.opacity="0.25";},8000);}
+  })();
+
+  // Universal Search Palette (HED-150 Zyklus 187).
+  // Cmd+K (Mac) / Ctrl+K (Win/Linux) opens. Searches panels, tickers, glossary.
+  (function initCmdPalette(){
+    const overlay=document.getElementById("pf-cp-overlay");
+    const input=document.getElementById("pf-cp-input");
+    const resultsEl=document.getElementById("pf-cp-results");
+    if(!overlay||!input||!resultsEl) return;
+
+    // Build search index
+    const panels=[
+      {icon:"⚠",label:"Alerts",desc:"Cross-panel signal synthesis",type:"panel",anchor:"pf-alerts"},
+      {icon:"◧",label:"Position Matrix",desc:"Verdict per active call",type:"panel",anchor:"pf-matrix"},
+      {icon:"⏚",label:"Idea Funnel",desc:"Universe → Book conversion",type:"panel",anchor:"pf-funnel"},
+      {icon:"▣",label:"Sektor-Rotation",desc:"Sektor 1d/5d/30d returns",type:"panel",anchor:"pf-rotation"},
+      {icon:"◉",label:"Thesis-Karten",desc:"Active call cards",type:"panel",anchor:"pf-theses"},
+      {icon:"∿",label:"Equity-Curve",desc:"Book performance chart",type:"panel",anchor:"pf-equity"},
+      {icon:"⚖",label:"Calibration Map",desc:"Conviction vs PnL",type:"panel",anchor:"pf-calmap"},
+      {icon:"◇",label:"Fundamentals-Quadrant",desc:"Value × Wachstum",type:"panel",anchor:"pf-fundamentals"},
+      {icon:"✦",label:"Trade-Ideas",desc:"Signal-driven candidates",type:"panel",anchor:"pf-ideas"},
+      {icon:"◷",label:"Event-Horizon",desc:"Earnings catalysts",type:"panel",anchor:"pf-events"},
+      {icon:"✉",label:"News-Flow",desc:"Recent news per ticker",type:"panel",anchor:"pf-news"},
+      {icon:"⋮",label:"Universe-Scanner",desc:"30-ticker signal grid",type:"panel",anchor:"pf-scanner"},
+      {icon:"►",label:"Insider-Flow",desc:"Form-4 transactions",type:"panel",anchor:"pf-insider"},
+      {icon:"✎",label:"Heutige Analyse",desc:"Briefing key facts",type:"panel",anchor:"pf-analysis"},
+      {icon:"⛏",label:"Research Pipeline",desc:"Thesis funnel + red-team",type:"panel",anchor:"pf-pipeline"}
+    ];
+    // Tickers from sector_view
+    const tickers=[];
+    ((D.sector_view||{}).sectors||[]).forEach(s=>{
+      (s.tickers||[]).forEach(t=>{
+        if(t&&t.ticker){
+          tickers.push({
+            icon:"$",label:t.ticker.toUpperCase(),
+            desc:`${s.name||""}${t.price!=null?` · $${t.price.toFixed(2)}`:""}`,
+            type:"ticker",anchor:"pf-scanner",ticker:t.ticker.toUpperCase()
+          });
+        }
+      });
+    });
+    // Glossary terms
+    const glossary=[];
+    document.querySelectorAll(".pf-gl-item").forEach(it=>{
+      const term=it.querySelector(".pf-gl-term")?.textContent.trim();
+      const def=it.querySelector(".pf-gl-def")?.textContent.trim();
+      if(term) glossary.push({icon:"?",label:term,desc:(def||"").slice(0,80),type:"glossary",anchor:"__glossary__",searchTerm:term});
+    });
+
+    function _doScroll(item){
+      if(item.anchor==="__glossary__"){
+        const gl=document.getElementById("pf-gl-overlay");
+        if(gl){
+          gl.removeAttribute("hidden");
+          const glSearch=document.getElementById("pf-gl-search");
+          if(glSearch && item.searchTerm){
+            glSearch.value=item.searchTerm;
+            glSearch.dispatchEvent(new Event("input"));
+          }
+        }
+        return;
+      }
+      if(item.type==="ticker"){
+        // Jump to Universe Scanner + filter by ticker
+        const scanner=document.getElementById("pf-scanner");
+        if(scanner) scanner.scrollIntoView({behavior:"smooth",block:"start"});
+        const usInput=document.getElementById("pf-us-filter-input");
+        if(usInput){
+          usInput.value=item.ticker;
+          usInput.dispatchEvent(new Event("input"));
+          // Reset to "All" category pill
+          const allPill=document.querySelector('[data-pf-us-flt="all"]');
+          if(allPill && !allPill.classList.contains("pf-us-filter-pill-active")) allPill.click();
+        }
+        return;
+      }
+      const target=document.getElementById(item.anchor);
+      if(target) target.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+
+    function _filter(query){
+      const q=query.trim().toUpperCase();
+      const matchScore=(item)=>{
+        if(!q) return item.type==="panel"?100:50; // default: panels first
+        const lbl=item.label.toUpperCase();
+        const desc=(item.desc||"").toUpperCase();
+        if(lbl===q) return 1000;
+        if(lbl.startsWith(q)) return 500;
+        if(lbl.includes(q)) return 250;
+        if(desc.includes(q)) return 100;
+        return 0;
+      };
+      const all=[...panels, ...tickers, ...glossary];
+      const scored=all.map(it=>({it,score:matchScore(it)})).filter(s=>s.score>0);
+      scored.sort((a,b)=>b.score-a.score);
+      return scored.slice(0,15).map(s=>s.it);
+    }
+
+    let activeIdx=0;
+    let currentResults=[];
+    function _render(){
+      const items=_filter(input.value);
+      currentResults=items;
+      activeIdx=Math.min(activeIdx, items.length-1);
+      if(activeIdx<0) activeIdx=0;
+      if(items.length===0){
+        resultsEl.innerHTML=`<div class="pf-cp-empty">Keine Treffer für "${esc(input.value)}".</div>`;
+        return;
+      }
+      // Group by type
+      const grouped={panel:[],ticker:[],glossary:[]};
+      items.forEach(it=>grouped[it.type].push(it));
+      const labels={panel:"Panels",ticker:"Ticker",glossary:"Glossar"};
+      let html="";
+      let globalIdx=0;
+      ["panel","ticker","glossary"].forEach(grp=>{
+        if(grouped[grp].length===0) return;
+        html+=`<div class="pf-cp-group-h">${labels[grp]}</div>`;
+        grouped[grp].forEach(it=>{
+          const isActive=globalIdx===activeIdx;
+          html+=`<div class="pf-cp-item${isActive?' pf-cp-active':''}" data-pf-cp-idx="${globalIdx}">
+            <span class="pf-cp-item-icon">${esc(it.icon)}</span>
+            <div><div class="pf-cp-item-lbl">${esc(it.label)}</div><div class="pf-cp-item-desc">${esc(it.desc||"")}</div></div>
+            <span class="pf-cp-item-type">${grp}</span>
+          </div>`;
+          globalIdx++;
+        });
+      });
+      resultsEl.innerHTML=html;
+      // Re-wire clicks
+      resultsEl.querySelectorAll(".pf-cp-item").forEach(el=>{
+        el.addEventListener("click",()=>{
+          const idx=parseInt(el.getAttribute("data-pf-cp-idx"),10);
+          const item=currentResults[idx];
+          if(item){_close(); _doScroll(item);}
+        });
+        el.addEventListener("mouseenter",()=>{
+          activeIdx=parseInt(el.getAttribute("data-pf-cp-idx"),10);
+          resultsEl.querySelectorAll(".pf-cp-item").forEach(e=>e.classList.remove("pf-cp-active"));
+          el.classList.add("pf-cp-active");
+        });
+      });
+    }
+    function _open(){
+      overlay.removeAttribute("hidden");
+      activeIdx=0;
+      input.value="";
+      _render();
+      setTimeout(()=>input.focus(),50);
+    }
+    function _close(){overlay.setAttribute("hidden","");}
+    input.addEventListener("input",_render);
+    input.addEventListener("keydown",function(e){
+      if(e.key==="ArrowDown"){activeIdx=Math.min(activeIdx+1, currentResults.length-1); _render(); e.preventDefault();}
+      else if(e.key==="ArrowUp"){activeIdx=Math.max(activeIdx-1, 0); _render(); e.preventDefault();}
+      else if(e.key==="Enter"){
+        const item=currentResults[activeIdx];
+        if(item){_close(); _doScroll(item);}
+        e.preventDefault();
+      }
+    });
+    overlay.addEventListener("click",function(e){if(e.target===overlay) _close();});
+    // Global Cmd+K / Ctrl+K
+    document.addEventListener("keydown",function(e){
+      if((e.metaKey||e.ctrlKey)&&e.key==="k"){
+        if(overlay.hasAttribute("hidden")) _open(); else _close();
+        e.preventDefault(); return;
+      }
+      if(e.key==="Escape"&&!overlay.hasAttribute("hidden")){_close(); e.preventDefault();}
+    });
   })();
 
   // Glossary Modal (HED-150 Zyklus 184).
