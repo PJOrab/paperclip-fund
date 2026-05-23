@@ -1134,6 +1134,79 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .us-rsi-bar{width:44px}
   .us-tk{font-size:13px}
 }
+/* Konsens-Spread — Bloomberg-ANR-Stil (HED-137 Zyklus 105).
+   Visualisiert für jedes Universum-Ticker die analyst PT-Range (low|mean|high)
+   und wo der aktuelle Preis darauf sitzt. Hoher Spread = viel
+   Analystenuneinigkeit = Raum für variant perception = Alpha-Potenzial.
+   Beantwortet: "Wo lohnt es sich, eine differenzierte These zu bauen?" */
+.cs-panel{padding:var(--s3)}
+.cs-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3)}
+.cs-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.cs-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400;margin-top:2px}
+.cs-meta{display:flex;gap:var(--s3);flex-wrap:wrap;font-variant-numeric:tabular-nums;align-items:center}
+.cs-meta-kpi{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.cs-meta-kpi .lbl{text-transform:uppercase;letter-spacing:.05em;font-weight:600;font-size:10px;color:var(--mut)}
+.cs-meta-kpi .val{font-size:18px;font-weight:700;line-height:1.1;color:var(--txt)}
+.cs-meta-kpi .val.hot{color:var(--accent)}
+.cs-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cs-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+.cs-tbl thead th{font-size:var(--fs-micro);font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--mut);padding:6px 8px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+.cs-tbl thead th.r{text-align:right}
+.cs-tbl thead th.c{text-align:center}
+.cs-tbl tbody td{padding:11px 8px;border-top:1px solid var(--line);vertical-align:middle}
+.cs-tbl tbody tr:hover{background:rgba(77,163,255,.06)}
+.cs-tbl tbody tr.own td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.cs-tk-cell{min-width:130px}
+.cs-tk-row{display:flex;align-items:center;gap:6px;line-height:1.1}
+.cs-tk{font-weight:700;font-size:15px;color:var(--txt)}
+.cs-sec-tag{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;font-weight:600;margin-top:2px}
+.cs-own-lbl{display:inline-block;padding:1px 5px;border-radius:3px;background:rgba(77,163,255,.18);
+  color:var(--accent);border:1px solid rgba(77,163,255,.28);font-size:10px;font-weight:700}
+/* Range-Bar: low → high, with mean diamond + price marker.
+   Stranger glance test: where does the price sit relative to consensus? */
+.cs-rng-cell{min-width:220px;width:42%}
+.cs-rng{position:relative;height:28px;margin:2px 0 4px;cursor:help}
+.cs-rng-track{position:absolute;left:0;right:0;top:13px;height:4px;border-radius:2px;
+  background:linear-gradient(90deg,rgba(248,81,73,.32) 0%,rgba(138,160,189,.28) 50%,rgba(63,185,80,.32) 100%);
+  border:1px solid var(--line)}
+.cs-rng-mean{position:absolute;top:8px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid var(--accent);transform:translateX(-50%)}
+.cs-rng-mean-d{position:absolute;top:14px;width:6px;height:6px;background:var(--accent);transform:translateX(-50%) rotate(45deg);border:1px solid var(--bg)}
+.cs-rng-price{position:absolute;top:7px;width:3px;height:17px;background:var(--txt);transform:translateX(-50%);border-radius:1px;box-shadow:0 0 0 1px var(--bg)}
+.cs-rng-lbl{position:absolute;font-size:9px;color:var(--mut);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;top:0}
+.cs-rng-lbl.lo{left:0}
+.cs-rng-lbl.hi{right:0;text-align:right}
+.cs-up{font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.cs-up.pos{color:var(--green)}
+.cs-up.neg{color:var(--red)}
+.cs-up.neu{color:var(--mut)}
+.cs-spread-cell{min-width:96px}
+.cs-spread-bar{position:relative;height:5px;background:var(--panel2);border-radius:99px;border:1px solid var(--line);overflow:hidden;width:72px;margin-top:2px}
+.cs-spread-fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--accent) 0%,#e8b341 60%,var(--red) 100%);border-radius:99px}
+.cs-spread-val{font-weight:700;font-size:13px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.cs-spread-val.hi{color:#e8b341}
+.cs-spread-val.vhi{color:var(--accent)}
+.cs-n{color:var(--mut);font-variant-numeric:tabular-nums;font-size:13px}
+.cs-rec{display:inline-block;padding:2px 7px;border-radius:4px;font-size:var(--fs-micro);font-weight:700;letter-spacing:.03em;white-space:nowrap}
+.cs-rec-sb{background:rgba(63,185,80,.18);color:var(--green);border:1px solid rgba(63,185,80,.32)}
+.cs-rec-b {background:rgba(63,185,80,.10);color:var(--green);border:1px solid rgba(63,185,80,.18)}
+.cs-rec-h {background:rgba(138,160,189,.18);color:var(--mut);border:1px solid rgba(138,160,189,.28)}
+.cs-rec-s {background:rgba(248,81,73,.14);color:var(--red);border:1px solid rgba(248,81,73,.28)}
+.cs-flag{display:inline-block;padding:1px 6px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.02em;white-space:nowrap;border:1px solid var(--line)}
+.cs-flag-contested{background:rgba(77,163,255,.14);color:var(--accent);border-color:rgba(77,163,255,.32)}
+.cs-flag-priced{background:rgba(138,160,189,.10);color:var(--mut);border-color:rgba(138,160,189,.22)}
+.cs-flag-room{background:rgba(63,185,80,.12);color:var(--green);border-color:rgba(63,185,80,.28)}
+.cs-flag-rich{background:rgba(248,81,73,.14);color:var(--red);border-color:rgba(248,81,73,.28)}
+.cs-empty{padding:var(--s4);text-align:center;color:var(--mut);font-size:var(--fs-cap);font-style:italic}
+.cs-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.55}
+@media(max-width:640px){
+  .cs-h{flex-direction:column;gap:var(--s2)}
+  .cs-tbl thead th,.cs-tbl tbody td{padding:8px 5px;font-size:var(--fs-micro)}
+  .cs-tbl thead th.col-hide-m,.cs-tbl tbody td.col-hide-m{display:none}
+  .cs-tk{font-size:13px}
+  .cs-rng-cell{min-width:160px}
+  .cs-spread-bar{width:48px}
+}
 /* Buch-Allokation — Position-Sizing-Stack (HED-137 Zyklus 87): Long/Short side stacks, conviction-weighted widths, P&L-colored segments */
 .pf-alloc{margin-top:var(--s3);padding:var(--s3)}
 .pf-alloc-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
@@ -1874,6 +1947,7 @@ main:focus{outline:none}
     <a href="#h-catalysts">Katalysatoren</a>
     <a href="#h-earnplay">Earnings-Playbook</a>
     <a href="#h-scanner">Ideen-Scanner</a>
+    <a href="#h-consspread">Konsens-Spread</a>
     <a href="#h-sectorview">Sektoren</a>
   </nav>
 
@@ -1912,6 +1986,11 @@ main:focus{outline:none}
   <section aria-labelledby="h-scanner">
   <h2 id="h-scanner">Ideen-Scanner <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Universum-Screening</span></h2>
   <div id="universe-scanner" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:55%"></div><div class="skel skel-line" style="width:70%"></div></div></div>
+  </section>
+
+  <section aria-labelledby="h-consspread">
+  <h2 id="h-consspread">Konsens-Spread <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Analystenuneinigkeit · Variant-Perception-Map</span></h2>
+  <div id="consspread" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:52%"></div><div class="skel skel-line" style="width:68%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
   </section>
 
   <section aria-labelledby="h-sectorview">
@@ -5181,8 +5260,134 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
   root.setAttribute("aria-busy","false");
 })();
 
+// Konsens-Spread — Bloomberg-ANR/EE-Stil (HED-137 Zyklus 105).
+// Variant-perception map: für jedes Universum-Ticker visualisiere die analyst PT-Range
+// (low | mean | high) und wo der aktuelle Preis darauf sitzt. Hoher Spread =
+// Analystenuneinigkeit = Raum für eine differenzierte These. Mean PT > Price =
+// noch Upside-Headroom; Mean PT ≤ Price = consensus eingepreist.
+// Sortierung: Spread% desc (=größte Disagreement zuerst).
+// Highlight-Tags pro Reihe: "Contested" (spread>50%), "Room" (upside>15%),
+// "Rich" (upside<0, consensus already passed), "Priced In" (upside<5%).
+(function(){
+  const root=$("consspread"); if(!root) return;
+  const sv=D.sector_view;
+  if(!sv){ root.innerHTML='<div class="panel cs-panel"><div class="cs-empty">Konsens-Daten nicht verfügbar — sector_view fehlt.</div></div>'; return; }
+  const tr=D.track_record;
+  const active=(tr&&tr.theses?tr.theses.filter(t=>t.verdict!=="win"&&t.verdict!=="loss"):[])||[];
+  const ownSet=new Set();
+  active.forEach(t=>(t.tickers||[]).forEach(tk=>ownSet.add(String(tk).toUpperCase())));
+  const rows=[];
+  (sv.sectors||[]).forEach(sec=>{
+    (sec.tickers||[]).forEach(t=>{
+      if(!t||!t.ticker) return;
+      const c=t.consensus||{};
+      const price=t.price, lo=c.pt_low, hi=c.pt_high, mn=c.pt_mean, n=c.analyst_count;
+      if(price==null||lo==null||hi==null||mn==null||hi<=lo) return;
+      const spread=(hi-lo)/mn*100;            // disagreement metric
+      const upside=(mn-price)/price*100;       // implied upside to mean PT
+      // Where the price sits on the [low..high] track, clamped for the marker
+      const rangeSpan=hi-lo;
+      const pricePos=Math.max(0,Math.min(100,(price-lo)/rangeSpan*100));
+      const meanPos=Math.max(0,Math.min(100,(mn-lo)/rangeSpan*100));
+      rows.push({TK:String(t.ticker).toUpperCase(),sec:sec.name,price,lo,hi,mn,n:n||0,
+        spread,upside,pricePos,meanPos,rec:c.rec||"",own:ownSet.has(String(t.ticker).toUpperCase())});
+    });
+  });
+  if(!rows.length){
+    root.innerHTML='<div class="panel cs-panel"><div class="cs-empty">Keine Analyst-Preisziel-Daten verfügbar.</div></div>';
+    return;
+  }
+  rows.sort((a,b)=>b.spread-a.spread);
+  const top=rows.slice(0,12);
+  // Universum-Aggregate für KPI-Strip
+  const median=(arr)=>{const s=arr.slice().sort((a,b)=>a-b);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+  const medSpread=median(rows.map(r=>r.spread));
+  const medUpside=median(rows.map(r=>r.upside));
+  const contested=rows.filter(r=>r.spread>50).length;
+  const room=rows.filter(r=>r.upside>15).length;
+  const ownContested=rows.filter(r=>r.own&&r.spread>50).length;
+  const _money=(v)=>"$"+(v>=1000?v.toFixed(0):v.toFixed(1));
+  const _recChip=(r)=>{
+    if(r==="strong_buy") return '<span class="cs-rec cs-rec-sb">Strong Buy</span>';
+    if(r==="buy") return '<span class="cs-rec cs-rec-b">Buy</span>';
+    if(r==="hold") return '<span class="cs-rec cs-rec-h">Hold</span>';
+    if(r==="sell"||r==="strong_sell") return '<span class="cs-rec cs-rec-s">Sell</span>';
+    return '<span class="cs-rec cs-rec-h">—</span>';
+  };
+  const _flag=(r)=>{
+    const f=[];
+    if(r.spread>50) f.push('<span class="cs-flag cs-flag-contested" title="Spread >50% — hohe Analystenuneinigkeit, Raum für variant perception">Contested</span>');
+    if(r.upside>15) f.push('<span class="cs-flag cs-flag-room" title="Mean PT impliziert >15% Upside">Room</span>');
+    else if(r.upside<0) f.push('<span class="cs-flag cs-flag-rich" title="Preis bereits über Mean PT — consensus eingepreist oder überschritten">Rich</span>');
+    else if(r.upside<5) f.push('<span class="cs-flag cs-flag-priced" title="Upside <5% — Mean-PT-Niveau praktisch erreicht">Priced In</span>');
+    return f.join(" ");
+  };
+  const _rngBar=(r)=>{
+    return `<div class="cs-rng" title="Range $${r.lo.toFixed(2)} → $${r.hi.toFixed(2)} · Mean $${r.mn.toFixed(2)} · Spot $${r.price.toFixed(2)}">
+      <span class="cs-rng-lbl lo">${esc(_money(r.lo))}</span>
+      <span class="cs-rng-lbl hi">${esc(_money(r.hi))}</span>
+      <div class="cs-rng-track"></div>
+      <span class="cs-rng-mean" style="left:${r.meanPos.toFixed(1)}%"></span>
+      <span class="cs-rng-mean-d" style="left:${r.meanPos.toFixed(1)}%"></span>
+      <span class="cs-rng-price" style="left:${r.pricePos.toFixed(1)}%"></span>
+    </div>`;
+  };
+  const _spread=(s)=>{
+    const cls=s>70?"vhi":s>40?"hi":"";
+    const fillW=Math.max(4,Math.min(100,s));
+    return `<div><span class="cs-spread-val ${cls}">${s.toFixed(0)}%</span>
+      <div class="cs-spread-bar" title="High-Low als % der Mean — Disagreement-Proxy"><span class="cs-spread-fill" style="width:${fillW.toFixed(1)}%"></span></div></div>`;
+  };
+  const _ups=(u)=>{
+    const cls=u>=15?"pos":u>=0?"neu":"neg";
+    const sign=u>=0?"+":"";
+    return `<span class="cs-up ${cls}">${sign}${u.toFixed(1)}%</span>`;
+  };
+  const tbody=top.map(r=>`<tr${r.own?' class="own"':''}>
+    <td class="cs-tk-cell"><div class="cs-tk-row"><span class="cs-tk">${esc(r.TK)}</span>${r.own?'<span class="cs-own-lbl" title="Aktive Position im Buch">CALL</span>':''}</div><div class="cs-sec-tag">${esc(r.sec)}</div></td>
+    <td class="cs-rng-cell">${_rngBar(r)}</td>
+    <td class="r">${_ups(r.upside)}</td>
+    <td class="cs-spread-cell">${_spread(r.spread)}</td>
+    <td class="r col-hide-m"><span class="cs-n">${r.n}</span></td>
+    <td class="c col-hide-m">${_recChip(r.rec)}</td>
+    <td>${_flag(r)}</td>
+  </tr>`).join("");
+  root.innerHTML=`<div class="panel cs-panel">
+    <div class="cs-h">
+      <div>
+        <div class="cs-title">Konsens-Spread — Analystenuneinigkeit</div>
+        <div class="cs-sub">PT-Range &amp; Variant-Perception-Karte über ${rows.length} Universum-Tickers · sortiert nach Spread (=Disagreement-Proxy)</div>
+      </div>
+      <div class="cs-meta">
+        <div class="cs-meta-kpi" title="Median (High-Low)/Mean über Universum"><span class="lbl">Median Spread</span><span class="val">${medSpread.toFixed(0)}%</span></div>
+        <div class="cs-meta-kpi" title="Tickers mit Spread > 50% — contested names"><span class="lbl">Contested</span><span class="val hot">${contested}<span class="muted" style="font-size:var(--fs-micro)">/${rows.length}</span></span></div>
+        <div class="cs-meta-kpi" title="Median impliziter Upside zur Mean PT"><span class="lbl">Median Upside</span><span class="val ${medUpside>=0?'':'cs-up neg'}">${medUpside>=0?'+':''}${medUpside.toFixed(1)}%</span></div>
+        <div class="cs-meta-kpi" title="Eigene Calls auf contested Tickers"><span class="lbl">Eigene · Contested</span><span class="val">${ownContested}<span class="muted" style="font-size:var(--fs-micro)">/${ownSet.size||0}</span></span></div>
+      </div>
+    </div>
+    <div class="cs-wrap">
+      <table class="cs-tbl" role="table" aria-label="Konsens-Spread — Analystenuneinigkeit pro Ticker">
+        <thead><tr>
+          <th scope="col">Ticker</th>
+          <th scope="col">PT-Range · Preis</th>
+          <th scope="col" class="r" title="Mean PT vs aktueller Preis">Upside</th>
+          <th scope="col" title="(High-Low)/Mean — höher = mehr Analystenuneinigkeit">Spread</th>
+          <th scope="col" class="r col-hide-m" title="Analyst-Count">n</th>
+          <th scope="col" class="c col-hide-m">Rec</th>
+          <th scope="col">Setup</th>
+        </tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>
+    <div class="cs-foot">
+      <b>Lesart:</b> Die Range-Bar zeigt die Spannweite der Analyst-Kursziele (links = Low, rechts = High); das blaue ◆ markiert die Mean PT, der weiße Strich den aktuellen Spot. <b>Spread</b> = (High − Low) / Mean — ein einfacher Proxy für Analystenuneinigkeit. <b>Investoren-Lesart:</b> hoher Spread + meaningful Upside = Raum für eine differenzierte These (variant perception). Niedriger Spread + Upside ≈ 0 = consensus crowded, kein Alpha. <b>CALL</b>-Markierung zeigt: dort haben wir bereits eine eigene These — idealerweise auf den "Contested"-Namen, nicht auf den "Priced In"-Namen. Quelle: yfinance recommendations + targetMean/Low/High (sector_view).
+    </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
-["briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","earnplay","insidertape"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+["briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","insidertape"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
 // Section nav: highlight the anchor pill whose section is currently most in view
 (function(){
