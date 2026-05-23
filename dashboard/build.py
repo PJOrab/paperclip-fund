@@ -569,6 +569,7 @@ a.call-chip:hover{border-color:var(--accent);background:var(--panel)}
   #sectorview{min-height:320px}
   .two-col{grid-template-columns:1fr}
   .flow{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* scored track-record table → card layout */
   .tr-tbl{display:block}
   .tr-tbl thead{display:none}
   .tr-tbl tbody,.tr-tbl tr{display:block}
@@ -576,10 +577,58 @@ a.call-chip:hover{border-color:var(--accent);background:var(--panel)}
   .tr-tbl td,.tr-tbl tbody th{display:flex;justify-content:space-between;gap:var(--s3);padding:2px 0;border:0;text-align:right}
   .tr-tbl .num{text-align:right}
   .tr-tbl .dlabel{display:inline-block;min-width:90px;vertical-align:top}
-  /* sticky calls-strip: trade signals stay in view while scrolling briefing text */
+  /* pending-theses table (5-col) → card layout on mobile to prevent horizontal overflow */
+  .tr-pending{display:block;width:100%;overflow:hidden}
+  .tr-pending thead{display:none}
+  .tr-pending tbody,.tr-pending tr{display:block}
+  .tr-pending tr{padding:var(--s3) 0;border-bottom:1px solid var(--line)}
+  .tr-pending td,.tr-pending tbody th{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s2);padding:3px 0;border:0;font-size:var(--fs-cap)}
+  .tr-pending td::before,.tr-pending tbody th::before{content:attr(data-label);color:var(--mut);font-size:var(--fs-micro);flex-shrink:0;min-width:80px}
+  /* call chips strip: thumb-friendly sticky bar when briefing is scrolled */
   .calls-strip{position:sticky;top:0;z-index:20;background:var(--bg);
     padding:var(--s2) 0;margin-bottom:var(--s3);
     border-bottom:1px solid var(--line)}
+  /* sector row: hide secondary data columns to prevent overflow; live price + change_pct stay */
+  .sec-row .w52{display:none}
+  .sec-row .rsi{display:none}
+  /* section nav: slightly larger tap targets */
+  .sec-nav a{padding:5px var(--s3);min-height:36px;display:inline-flex;align-items:center}
+}
+/* ============================================================
+   MOBILE-FIRST: 430px — phone viewport (iPhone 14/SE, Pixel 7)
+   Goal: one-thumb navigation during market open, no pinch-zoom
+   ============================================================ */
+@media (max-width:430px){
+  /* Tighter lateral padding: 12px gutter frees 24px viewport width vs desktop 24px */
+  .wrap{padding:var(--s4) var(--s3)}
+  /* h1 shrink: "AI/Tech Fund — Intelligence Dashboard" wraps on 390px at 22px */
+  h1{font-size:17px;line-height:1.35}
+  /* sub-text: keep readable */
+  .sub{font-size:10px}
+  /* KPI cards: 2-col is fine at 430px, but shrink padding so numbers breathe */
+  .kpi{font-size:26px}
+  .panel.kpi-dl{padding:var(--s3)}
+  /* Call chips: 44px touch target (WCAG 2.5.5 AAA, Apple HIG) */
+  .call-chip{min-height:44px;padding:var(--s2) var(--s3);gap:5px;border-radius:8px}
+  /* Thesis cards: reduce padding on phone */
+  .thesis{padding:var(--s3) var(--s2)}
+  /* Back-to-top: respect iOS safe area at bottom */
+  .to-top{bottom:calc(var(--s4) + env(safe-area-inset-bottom, 0px))}
+  /* Section nav pills: ensure 44px touch height */
+  .sec-nav a{min-height:44px;padding:var(--s2) var(--s3)}
+  /* Portfolio risk chips: allow wrap so no overflow at 375px */
+  .pf-risk-chips{gap:var(--s1)}
+  .pf-risk-chip{font-size:10px;padding:3px 8px}
+  /* Sector tile: tighter internal padding */
+  .sec-tile{padding:var(--s3) var(--s3)!important}
+}
+/* Very narrow: iPhone SE (375px) and Galaxy A series (360px) */
+@media (max-width:375px){
+  .wrap{padding:var(--s3) var(--s2)}
+  .cards{grid-template-columns:1fr}
+  .kpi{font-size:24px}
+  /* KPI grid single column: 180px min too wide for two at 360px - 16px gutter */
+  .pf-grid{grid-template-columns:1fr 1fr}
 }
 /* skip-to-content link: bypass plumbing/workflow chrome (WCAG 2.4.1 Bypass Blocks) */
 .skip-link{position:absolute;left:var(--s4);top:-48px;z-index:100;
@@ -1057,15 +1106,15 @@ function calibSvg(buckets){
       return `<table class="tr-pending"><caption class="tr-cap">Offene Thesen — zu früh für Wertung</caption>
         <thead><tr><th scope="col">Diese</th><th scope="col">Richtung</th><th scope="col">Conv.</th><th scope="col">Unrealis. P&amp;L</th><th scope="col">Wertung ab</th></tr></thead>
         <tbody>${rows.map(t=>`<tr${devNote(t)}>
-          <th scope="row"><span class="t" style="font-weight:600">${esc(t.label||"?")}</span>
+          <th scope="row" data-label="These"><span class="t" style="font-weight:600">${esc(t.label||"?")}</span>
             ${(t.tickers||[]).length?" <span class='muted'>("+
               (t.tickers||[]).map(tk=>`<a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(tk)}" target="_blank" rel="noopener">${esc(tk)}</a>`).join(", ")+
             ")</span>":""}
             ${exitNote(t)}${scenNote(t)}</th>
-          <td><span class="cd ${dirClass(t.direction)}">${esc(t.direction||"—")}</span></td>
-          <td class="num"><span class="${_cc(t.conviction)}" style="font-variant-numeric:tabular-nums">${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></td>
-          <td class="num">${_mtm(t)||'<span class="muted">—</span>'}</td>
-          <td class="sd">${esc(t.earliest_score_date||"—")}</td>
+          <td data-label="Richtung"><span class="cd ${dirClass(t.direction)}">${esc(t.direction||"—")}</span></td>
+          <td class="num" data-label="Conv."><span class="${_cc(t.conviction)}" style="font-variant-numeric:tabular-nums">${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></td>
+          <td class="num" data-label="P&L">${_mtm(t)||'<span class="muted">—</span>'}</td>
+          <td class="sd" data-label="Wertung ab">${esc(t.earliest_score_date||"—")}</td>
         </tr>`).join("")}</tbody></table>`;
     })() : "";
     $("trbody").innerHTML=`<div class="panel"><div class="empty">
