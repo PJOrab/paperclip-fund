@@ -55,11 +55,59 @@ def _telegram_alert(text: str) -> None:
         pass
 
 
+# Top-level container that each schema requires. A structural miss here
+# (missing key, wrong type) means the upstream stage returned shapeless garbage;
+# the downstream stages would either crash with a confusing error or silently
+# emit an empty briefing to the CEO. Both are worse than a clean hard-fail.
+_SCHEMA_TOPLEVEL = {
+    "triage":  "clusters",
+    "analyst": "analyses",
+    "thesis":  "theses",
+    "devil":   "critiques",
+}
+
+
+def _is_catastrophic(schema: str, data: dict) -> bool:
+    """True iff the stage output is structurally unusable (top-level list missing
+    or wrong type). An empty list is NOT catastrophic — it's a valid signal
+    (e.g. quiet day, no high-conviction call)."""
+    key = _SCHEMA_TOPLEVEL.get(schema)
+    if not key:
+        return False
+    return not isinstance(data.get(key) if isinstance(data, dict) else None, list)
+
+
 def _check(schema: str, data: dict) -> None:
-    """Log schema violations; non-fatal so the pipeline doesn't die on a single bad field."""
+    """Validate a stage's JSON against its schema. Replaces the prior silent-log
+    behaviour so quality drift can no longer slip into a CEO briefing:
+
+      * Any violations → Telegram alert (first 5 enumerated) + stderr log.
+      * Structural miss (top-level list missing/wrong type) → raise so the run
+        hard-fails via _fail() instead of propagating garbage to the next stage.
+
+    Per-item violations (bad enum, missing field on one record) still propagate
+    so the operator sees them on Telegram each cycle and the briefing can ship —
+    catastrophic shapelessness does not."""
+    # Catastrophic structural check FIRST — the per-item validator assumes the
+    # top-level field is a list and will itself crash on the wrong type
+    # (e.g. enumerate(str) iterates characters → AttributeError on .get).
+    if _is_catastrophic(schema, data):
+        msg = (f"top-level '{_SCHEMA_TOPLEVEL[schema]}' missing or wrong type "
+               f"(got {type(data.get(_SCHEMA_TOPLEVEL[schema]) if isinstance(data, dict) else data).__name__})")
+        _log(f"[validate/{schema}] CATASTROPHIC — {msg}")
+        _telegram_alert(f"⚠️ SCHEMA-VIOLATION {schema}\nCATASTROPHIC: {msg}")
+        raise RuntimeError(
+            f"[validate/{schema}] CATASTROPHIC — {msg}; refusing to propagate "
+            f"shapeless output to next stage"
+        )
     errs = _validate(schema, data)
     if errs:
-        _log(f"[validate/{schema}] WARNING — schema violations: {errs}")
+        first = "; ".join(errs[:5])
+        more = f" (+{len(errs) - 5} more)" if len(errs) > 5 else ""
+        _log(f"[validate/{schema}] WARNING — {len(errs)} schema violation(s): {first}{more}")
+        _telegram_alert(
+            f"⚠️ SCHEMA-VIOLATION {schema}\n{len(errs)} defect(s)\n{first[:1500]}{more}"
+        )
 
 
 def _cross_check_devil_conviction(theses: list[dict], critiques: list[dict]) -> None:

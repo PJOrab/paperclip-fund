@@ -564,6 +564,74 @@ def test_pipeline_alerts_wired() -> None:
     print("ok: pipeline-failure Telegram alerts wired")
 
 
+def test_check_strict_violation_gate() -> None:
+    """The _check() gate must (1) Telegram-alert on any schema violation and
+    (2) raise on catastrophic structural failures so the run hard-fails via
+    _fail() instead of propagating shapeless output to the next stage."""
+    from agents import run as R
+
+    # Capture Telegram-alert calls without sending anything.
+    captured: list[str] = []
+    original_alert = R._telegram_alert
+    R._telegram_alert = lambda txt: captured.append(txt)  # type: ignore[assignment]
+    try:
+        # 1. Valid output → no alert, no raise.
+        captured.clear()
+        R._check("triage", {"clusters": [
+            {"title": "NVDA", "tickers": ["NVDA"], "category": "earnings",
+             "why": "beat", "importance": 5}
+        ]})
+        _check("valid triage emits no alert", captured == [])
+
+        # 2. Empty list is NOT catastrophic — a quiet day is a valid signal.
+        captured.clear()
+        R._check("thesis", {"theses": []})
+        _check("empty theses list does not raise", True)
+        _check("empty theses list emits no alert", captured == [])
+
+        # 3. Soft per-item violation → alert fires, no raise.
+        captured.clear()
+        R._check("triage", {"clusters": [
+            {"title": "x", "tickers": [], "category": "BADCAT",
+             "why": "y", "importance": 3}
+        ]})
+        _check("per-item violation triggers Telegram alert", len(captured) == 1)
+        _check("alert is tagged SCHEMA-VIOLATION",
+               "SCHEMA-VIOLATION" in captured[0])
+        _check("alert names the stage", "triage" in captured[0])
+
+        # 4. Catastrophic: top-level key missing → raises so _fail() pages
+        #    + status=error instead of garbage cascading to analyst.
+        for stage, payload in [
+            ("triage",  {}),
+            ("triage",  {"clusters": "not a list"}),
+            ("analyst", {}),
+            ("thesis",  {"wrong_key": []}),
+            ("devil",   {"critiques": None}),
+        ]:
+            captured.clear()
+            raised = False
+            try:
+                R._check(stage, payload)
+            except RuntimeError as e:
+                raised = True
+                _check(f"{stage} catastrophic raises with CATASTROPHIC tag",
+                       "CATASTROPHIC" in str(e))
+            _check(f"{stage} structural miss raises", raised)
+            _check(f"{stage} structural miss also alerts", len(captured) >= 1)
+
+        # 5. _is_catastrophic boundary: list present (even empty) is fine.
+        _check("clusters=[] not catastrophic",
+               not R._is_catastrophic("triage", {"clusters": []}))
+        _check("clusters missing IS catastrophic",
+               R._is_catastrophic("triage", {}))
+        _check("unknown schema never catastrophic",
+               not R._is_catastrophic("nonexistent", {}))
+    finally:
+        R._telegram_alert = original_alert  # type: ignore[assignment]
+    print("ok: _check strict-validation gate alerts + hard-fails on structural miss")
+
+
 def main() -> None:
     test_parse_json()
     test_cross_check()
@@ -574,6 +642,7 @@ def main() -> None:
     test_triage_user_prompt()
     test_guidance_extraction()
     test_pipeline_alerts_wired()
+    test_check_strict_violation_gate()
     print("\nALL PIPELINE TESTS PASSED")
 
 
