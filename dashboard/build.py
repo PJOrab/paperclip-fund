@@ -377,6 +377,91 @@ def _earnings_calendar() -> list[dict]:
         return []
 
 
+def _earnings_history(ticker: str, max_quarters: int = 4) -> dict | None:
+    """Per-ticker earnings beat-profile (HED-137 Zyklus 104): last `max_quarters`
+    reported earnings — EPS surprise % and 1-day post-earnings close-to-close
+    reaction. Off-build-path (Netz!); aggregated into sector_view.json.
+
+    Why this is investment-grade: Bloomberg's ERN screen answers "does this ticker
+    historically beat/miss, and does the surprise translate to the stock?" Beat-rate
+    + sign-match (surprise direction == reaction direction) flags names that are
+    *already priced in* vs names where the catalyst still moves the tape."""
+    try:
+        import yfinance as yf
+        import pandas as pd
+        tk = yf.Ticker(ticker)
+        ed = tk.earnings_dates
+        if ed is None or ed.empty:
+            return None
+        reported = ed.dropna(subset=["Reported EPS"]).head(max_quarters)
+        if reported.empty:
+            return None
+        earliest = reported.index.min().to_pydatetime()
+        start = (earliest - pd.Timedelta(days=10)).date().isoformat()
+        end_dt = datetime.now(timezone.utc).date().isoformat()
+        try:
+            prices = tk.history(start=start, end=end_dt, auto_adjust=False)
+        except Exception:
+            prices = None
+        quarters = []
+        for idx, row in reported.iterrows():
+            ed_date = idx.date()
+            surprise = (float(row["Surprise(%)"])
+                        if pd.notna(row.get("Surprise(%)")) else None)
+            reaction = None
+            if prices is not None and not prices.empty:
+                try:
+                    px_idx = prices.index.date
+                    before = prices[px_idx < ed_date]
+                    after = prices[px_idx >= ed_date]
+                    if not before.empty and not after.empty:
+                        pre_close = float(before["Close"].iloc[-1])
+                        post_close = float(after["Close"].iloc[0])
+                        if pre_close > 0:
+                            reaction = round((post_close - pre_close) / pre_close * 100, 2)
+                except Exception:
+                    reaction = None
+            quarters.append({
+                "date": ed_date.isoformat(),
+                "surprise_pct": round(surprise, 2) if surprise is not None else None,
+                "reaction_1d_pct": reaction,
+                "eps_est": (round(float(row["EPS Estimate"]), 3)
+                            if pd.notna(row.get("EPS Estimate")) else None),
+                "eps_actual": (round(float(row["Reported EPS"]), 3)
+                               if pd.notna(row.get("Reported EPS")) else None),
+            })
+        surprises = [q["surprise_pct"] for q in quarters if q["surprise_pct"] is not None]
+        reactions = [q["reaction_1d_pct"] for q in quarters if q["reaction_1d_pct"] is not None]
+        beats = sum(1 for s in surprises if s > 0)
+        avg_surprise = round(sum(surprises) / len(surprises), 2) if surprises else None
+        avg_reaction = round(sum(reactions) / len(reactions), 2) if reactions else None
+        # Earnings volatility: stdev of abs 1d reaction — signals whether this name
+        # typically *moves* on earnings or trades through quietly.
+        if len(reactions) >= 2:
+            mean_r = sum(reactions) / len(reactions)
+            var_r = sum((r - mean_r) ** 2 for r in reactions) / len(reactions)
+            std_reaction = round(var_r ** 0.5, 2)
+        else:
+            std_reaction = None
+        sign_hits = sum(1 for q in quarters
+                        if q["surprise_pct"] is not None and q["reaction_1d_pct"] is not None
+                        and ((q["surprise_pct"] > 0 and q["reaction_1d_pct"] > 0)
+                             or (q["surprise_pct"] < 0 and q["reaction_1d_pct"] < 0)))
+        return {
+            "quarters": quarters,
+            "beat_n": beats,
+            "beat_total": len(surprises) if surprises else 0,
+            "beat_pct": round(beats / len(surprises) * 100) if surprises else None,
+            "avg_surprise_pct": avg_surprise,
+            "avg_reaction_1d_pct": avg_reaction,
+            "std_reaction_1d_pct": std_reaction,
+            "sign_hits": sign_hits,
+            "sign_total": len(reactions) if reactions else 0,
+        }
+    except Exception:
+        return None
+
+
 def gen_sector_view() -> dict:
     """Baut sector_view.json: pro Sektor die in-universe Ticker + letzter
     Yahoo-Kurs. Off-build-path (Netz!), per --gen-sector-view aufgerufen."""
@@ -389,6 +474,9 @@ def gen_sector_view() -> dict:
                 cons = _consensus_estimates(t)
                 if cons:
                     q["consensus"] = cons
+                eh = _earnings_history(t)
+                if eh:
+                    q["earnings_history"] = eh
                 enriched.append(q)
         sectors.append({"id": s["id"], "name": s["name"],
                         "note": s.get("note"), "tickers": enriched})
@@ -1169,6 +1257,82 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .cat-list-row{grid-template-columns:50px 38px 20px 1fr auto;gap:var(--s2);font-size:var(--fs-micro)}
   .cat-list-row .d-kind{display:none}
 }
+/* Earnings-Playbook (HED-137 Zyklus 104): Bloomberg ERN-screen equivalent.
+   Per-ticker beat-profile — last 4 reported EPS surprises (sequence bar),
+   average reaction, sign-match (does surprise direction translate to stock?).
+   Answers: "How does this name historically behave at earnings?" — the
+   exact question a PM asks the night before a print. Sorted by upcoming
+   earnings proximity so the next print is the top row. */
+.ep-panel{padding:var(--s3);margin-top:var(--s3)}
+.ep-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.ep-h-title{font-weight:700;font-size:var(--fs-h2);text-transform:none;letter-spacing:0;color:var(--txt);line-height:1.2}
+.ep-h-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400;margin-top:2px}
+.ep-metrics{display:flex;gap:var(--s4);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.ep-metric{display:flex;flex-direction:column;gap:1px;font-size:var(--fs-micro);text-align:right;min-width:54px;cursor:help}
+.ep-metric .lbl{color:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.ep-metric .val{font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.15;color:var(--txt)}
+.ep-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+.ep-tbl thead th{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-weight:600;text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+.ep-tbl thead th.l{text-align:left}
+.ep-tbl thead th.c{text-align:center}
+.ep-tbl tbody td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}
+.ep-tbl tbody td.l{text-align:left}
+.ep-tbl tbody td.c{text-align:center}
+.ep-tbl tbody tr:hover{background:rgba(77,163,255,.05)}
+.ep-tbl tbody tr.is-held td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.ep-tk{display:flex;flex-direction:column;gap:1px;line-height:1.15;min-width:0}
+.ep-tk-row{display:flex;align-items:center;gap:5px}
+.ep-tk-sym{font-weight:700;color:var(--txt);font-size:var(--fs-cap);letter-spacing:.02em}
+.ep-tk-star{font-size:11px;color:var(--accent);line-height:1}
+.ep-tk-dir{font-size:9px;font-weight:700;letter-spacing:.06em;padding:1px 5px;border-radius:3px;text-transform:uppercase}
+.ep-tk-dir.long{background:rgba(63,185,80,.18);color:var(--green)}
+.ep-tk-dir.short{background:rgba(248,81,73,.18);color:var(--red)}
+.ep-tk-meta{font-size:10px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+/* Surprise-history sequence bars: 4 cells, oldest left, newest right.
+   Color encodes sign (green=beat / red=miss), saturation encodes magnitude. */
+.ep-seq{display:inline-flex;gap:2px;align-items:center}
+.ep-cell{display:inline-flex;align-items:center;justify-content:center;width:30px;height:22px;font-size:10px;font-weight:700;border-radius:3px;color:#fff;letter-spacing:-.01em;cursor:help;font-variant-numeric:tabular-nums}
+.ep-cell.empty{background:repeating-linear-gradient(45deg,var(--panel2),var(--panel2) 3px,rgba(138,160,189,.18) 3px,rgba(138,160,189,.18) 6px);color:transparent;cursor:default}
+.ep-cell.beat-strong{background:#2da347}
+.ep-cell.beat{background:rgba(63,185,80,.65);color:var(--txt)}
+.ep-cell.beat-weak{background:rgba(63,185,80,.30);color:var(--txt)}
+.ep-cell.miss-weak{background:rgba(248,81,73,.32);color:var(--txt)}
+.ep-cell.miss{background:rgba(248,81,73,.65);color:var(--txt)}
+.ep-cell.miss-strong{background:#d23a32}
+.ep-beat{font-weight:700;font-size:var(--fs-cap);letter-spacing:-.01em}
+.ep-beat .nbeat{color:var(--green)}
+.ep-beat .ntot{color:var(--mut);font-weight:500}
+.ep-pct{display:inline-flex;align-items:baseline;gap:3px;font-size:var(--fs-cap);font-weight:600}
+.ep-pct .sign{font-weight:700}
+.ep-pct.pos{color:var(--green)}
+.ep-pct.neg{color:var(--red)}
+.ep-pct.flat{color:var(--mut)}
+.ep-react-cell{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;gap:1px}
+.ep-react-cell .ep-std{font-size:9px;color:var(--mut);font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+.ep-next{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;gap:1px;font-variant-numeric:tabular-nums}
+.ep-next .when{font-weight:700;color:var(--txt);font-size:var(--fs-cap)}
+.ep-next .out{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.ep-next.imminent .when{color:var(--amber)}
+.ep-next.imminent .out{color:var(--amber)}
+.ep-next.soon .when{color:var(--accent)}
+.ep-next .dash{color:var(--mut);font-weight:400}
+.ep-sign-bar{display:inline-block;height:6px;width:48px;background:var(--panel2);border-radius:3px;overflow:hidden;border:1px solid var(--line);vertical-align:middle;margin-right:5px}
+.ep-sign-bar-f{display:block;height:100%;background:linear-gradient(90deg,var(--mut),var(--accent))}
+.ep-sign-txt{font-size:10px;color:var(--mut);font-weight:500;font-variant-numeric:tabular-nums}
+.ep-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+.ep-empty{display:flex;align-items:center;justify-content:center;padding:var(--s5) var(--s3);border:1px dashed var(--line);border-radius:6px;color:var(--mut);font-size:var(--fs-micro);font-style:italic}
+@media(max-width:640px){
+  .ep-h{flex-direction:column;align-items:stretch;gap:var(--s2)}
+  .ep-metrics{justify-content:space-between;gap:var(--s3)}
+  .ep-metric{text-align:left;min-width:0;flex:1}
+  .ep-metric .val{font-size:16px}
+  .ep-tbl thead th.col-hide-m,.ep-tbl tbody td.col-hide-m{display:none}
+  .ep-tbl thead th{padding:6px 3px;font-size:9px}
+  .ep-tbl tbody td{padding:7px 3px}
+  .ep-cell{width:26px;height:20px;font-size:9px}
+  .ep-tk-meta{display:none}
+  .ep-sign-bar{width:32px}
+}
 /* Thesis price-context bar: Bloomberg-style market data row embedded in each call card */
 .th-mkt{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin:var(--s2) 0 var(--s3);
   background:var(--bg);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-variant-numeric:tabular-nums}
@@ -1708,6 +1872,7 @@ main:focus{outline:none}
     <a href="#h-trackrecord">Track-Record</a>
     <a href="#h-portfolio">Portfolio</a>
     <a href="#h-catalysts">Katalysatoren</a>
+    <a href="#h-earnplay">Earnings-Playbook</a>
     <a href="#h-scanner">Ideen-Scanner</a>
     <a href="#h-sectorview">Sektoren</a>
   </nav>
@@ -1737,6 +1902,11 @@ main:focus{outline:none}
   <section aria-labelledby="h-catalysts">
   <h2 id="h-catalysts">Katalysator-Runway</h2>
   <div id="catalysts" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:48%"></div><div class="skel skel-line" style="width:62%"></div></div></div>
+  </section>
+
+  <section aria-labelledby="h-earnplay">
+  <h2 id="h-earnplay">Earnings-Playbook <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Beat-Rate · Surprise · 1d-Reaktion</span></h2>
+  <div id="earnplay" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:48%"></div><div class="skel skel-line" style="width:64%"></div><div class="skel skel-line" style="width:58%"></div></div></div>
   </section>
 
   <section aria-labelledby="h-scanner">
@@ -4714,6 +4884,163 @@ function calibSvg(buckets){
 
 function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));}
 
+// Earnings-Playbook (HED-137 Zyklus 104 — Bloomberg ERN-screen equivalent).
+// Per-ticker beat-profile: last 4 EPS surprises as a sequence bar (oldest left →
+// newest right, green = beat / red = miss, saturation = magnitude), average
+// 1-day post-earnings reaction, and sign-match (does surprise direction translate
+// to stock direction, or is it already priced in?). Sorted so upcoming earnings
+// surface at the top — directly actionable for the Katalysator-Runway above.
+(function renderEarnPlay(){
+  const root=$("earnplay"); if(!root) return;
+  const sv=D.sector_view||{}, tr=D.track_record||{};
+  // Held tickers (open calls) — for ★ overlay + direction tag
+  const heldMap={};
+  ((tr.theses)||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date)).forEach(t=>{
+    (t.tickers||[]).forEach(tk=>{ const k=String(tk).toUpperCase();
+      if(!heldMap[k]) heldMap[k]={direction:(t.direction||"").toLowerCase(),conv:t.conviction||0,label:t.label||""}; });
+  });
+  // Upcoming earnings date map: ticker → days_out
+  const upMap={};
+  ((sv.earnings_calendar)||[]).forEach(e=>{
+    const tk=String(e.ticker||"").toUpperCase();
+    if(tk&&!(tk in upMap)) upMap[tk]={date:e.date,daysOut:e.days_out};
+  });
+  // Flatten ticker rows from sectors
+  const rows=[];
+  ((sv.sectors)||[]).forEach(sec=>{
+    (sec.tickers||[]).forEach(t=>{
+      if(!t||!t.ticker) return;
+      const eh=t.earnings_history; if(!eh||!eh.quarters||!eh.quarters.length) return;
+      const TK=String(t.ticker).toUpperCase();
+      rows.push({tk:TK,sector:sec.id,sectorName:sec.name,price:t.price,eh,held:heldMap[TK]||null,
+        next:upMap[TK]||null});
+    });
+  });
+  if(!rows.length){
+    root.innerHTML='<div class="panel ep-panel"><div class="ep-empty">Keine Earnings-Historie verfügbar — sector_view muss mit --gen-sector-view aktualisiert werden.</div></div>';
+    root.setAttribute("aria-busy","false"); return;
+  }
+  // Sort: 1) upcoming earnings within 30d ascending, 2) then held positions by beat_pct desc,
+  // 3) then everything else by beat_pct desc. Surfaces the most actionable name first.
+  rows.sort((a,b)=>{
+    const ad=a.next&&a.next.daysOut!=null&&a.next.daysOut<=30?a.next.daysOut:999;
+    const bd=b.next&&b.next.daysOut!=null&&b.next.daysOut<=30?b.next.daysOut:999;
+    if(ad!==bd) return ad-bd;
+    const ah=a.held?1:0,bh=b.held?1:0;
+    if(ah!==bh) return bh-ah;
+    return (b.eh.beat_pct||0)-(a.eh.beat_pct||0);
+  });
+  // Aggregate KPIs (the "what is the book's print history?" answer)
+  const heldRows=rows.filter(r=>r.held);
+  let bookBeatN=0,bookBeatTot=0,bookSurpSum=0,bookSurpN=0,bookReactSum=0,bookReactN=0;
+  heldRows.forEach(r=>{
+    bookBeatN+=r.eh.beat_n||0; bookBeatTot+=r.eh.beat_total||0;
+    if(r.eh.avg_surprise_pct!=null){ bookSurpSum+=r.eh.avg_surprise_pct; bookSurpN++; }
+    if(r.eh.avg_reaction_1d_pct!=null){ bookReactSum+=r.eh.avg_reaction_1d_pct; bookReactN++; }
+  });
+  const bookBeatPct=bookBeatTot?Math.round(bookBeatN/bookBeatTot*100):null;
+  const bookAvgSurp=bookSurpN?(bookSurpSum/bookSurpN):null;
+  const bookAvgReact=bookReactN?(bookReactSum/bookReactN):null;
+  // KPI rendering helpers
+  const pct=(v,d=1)=>v==null?"—":(v>=0?"+":"")+v.toFixed(d)+"%";
+  const pctCls=v=>v==null?"":v>0.05?"move-up":v<-0.05?"move-dn":"muted";
+  // Surprise → cell class & label
+  function cellCls(s){
+    if(s==null) return "empty";
+    if(s>=10) return "beat-strong"; if(s>=3) return "beat"; if(s>0) return "beat-weak";
+    if(s<=-10) return "miss-strong"; if(s<=-3) return "miss"; return "miss-weak";
+  }
+  // Build sequence cells: pad to 4 from the LEFT with empty cells if fewer quarters
+  function seqHtml(quarters){
+    const PAD=4;
+    const qs=quarters.slice(0,PAD); // already newest first from yfinance
+    const ordered=qs.slice().reverse(); // render oldest → newest
+    const empties=Math.max(0,PAD-ordered.length);
+    const out=[];
+    for(let i=0;i<empties;i++) out.push('<span class="ep-cell empty" aria-hidden="true">·</span>');
+    ordered.forEach(q=>{
+      const s=q.surprise_pct;
+      const cls=cellCls(s);
+      const lab=s==null?"·":(s>=0?"+":"")+s.toFixed(s>=10?0:1);
+      const tip=`${q.date} · Surprise ${lab}%`+(q.reaction_1d_pct!=null?` · 1d-Reaktion ${q.reaction_1d_pct>=0?"+":""}${q.reaction_1d_pct.toFixed(1)}%`:"")+(q.eps_actual!=null&&q.eps_est!=null?` · EPS $${q.eps_actual} vs Cons $${q.eps_est}`:"");
+      out.push(`<span class="ep-cell ${cls}" title="${esc(tip)}">${esc(lab)}</span>`);
+    });
+    return `<span class="ep-seq" aria-label="Letzte 4 EPS-Surprises, links alt → rechts neu">${out.join("")}</span>`;
+  }
+  function nextCellHtml(next){
+    if(!next||next.daysOut==null) return '<span class="ep-next"><span class="dash">—</span></span>';
+    const d=next.daysOut;
+    const cls=d<=7?"imminent":d<=21?"soon":"";
+    const m=String(next.date||"").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const dd=m?`${m[3]}.${m[2]}`:String(next.date||"");
+    return `<span class="ep-next ${cls}"><span class="when">${esc(dd)}</span><span class="out">+${d}d</span></span>`;
+  }
+  function reactCellHtml(eh){
+    if(eh.avg_reaction_1d_pct==null) return '<span class="muted">—</span>';
+    const v=eh.avg_reaction_1d_pct, cls=pctCls(v);
+    const std=eh.std_reaction_1d_pct;
+    return `<span class="ep-react-cell"><span class="${cls}" style="font-weight:700">${pct(v,1)}</span>${std!=null?`<span class="ep-std">σ ${std.toFixed(1)}%</span>`:""}</span>`;
+  }
+  function signCellHtml(eh){
+    if(!eh.sign_total) return '<span class="muted">—</span>';
+    const ratio=eh.sign_hits/eh.sign_total;
+    return `<span class="ep-sign-bar" title="Wie oft Stock-Reaktion mit Surprise-Vorzeichen übereinstimmt"><span class="ep-sign-bar-f" style="width:${(ratio*100).toFixed(0)}%"></span></span><span class="ep-sign-txt">${eh.sign_hits}/${eh.sign_total}</span>`;
+  }
+  const tbody=rows.map(r=>{
+    const eh=r.eh;
+    const beatTxt=eh.beat_total?`<span class="nbeat">${eh.beat_n}</span><span class="ntot">/${eh.beat_total}</span>`:'<span class="muted">—</span>';
+    const beatPct=eh.beat_pct!=null?`<span class="muted" style="font-weight:500;margin-left:4px">${eh.beat_pct}%</span>`:"";
+    const heldHtml=r.held?`<span class="ep-tk-star" title="Im Buch — ${esc(r.held.label)}">★</span><span class="ep-tk-dir ${r.held.direction==="long"?"long":r.held.direction==="short"?"short":""}">${esc(r.held.direction||"")}</span>`:"";
+    const surpCls=pctCls(eh.avg_surprise_pct);
+    return `<tr class="${r.held?"is-held":""}">
+      <td class="l"><div class="ep-tk"><div class="ep-tk-row"><span class="ep-tk-sym">${esc(r.tk)}</span>${heldHtml}</div><span class="ep-tk-meta">${esc(r.sectorName||"")}</span></div></td>
+      <td class="c">${seqHtml(eh.quarters||[])}</td>
+      <td><span class="ep-beat">${beatTxt}</span>${beatPct}</td>
+      <td class="${surpCls}" style="font-weight:700">${pct(eh.avg_surprise_pct,1)}</td>
+      <td>${reactCellHtml(eh)}</td>
+      <td class="col-hide-m">${signCellHtml(eh)}</td>
+      <td>${nextCellHtml(r.next)}</td>
+    </tr>`;
+  }).join("");
+  const bookBeatTxt=bookBeatPct!=null?`${bookBeatN}/${bookBeatTot} · ${bookBeatPct}%`:"—";
+  const bookSurpTxt=bookAvgSurp!=null?(bookAvgSurp>=0?"+":"")+bookAvgSurp.toFixed(1)+"%":"—";
+  const bookReactTxt=bookAvgReact!=null?(bookAvgReact>=0?"+":"")+bookAvgReact.toFixed(1)+"%":"—";
+  const surpCls=bookAvgSurp==null?"":bookAvgSurp>0.1?"move-up":bookAvgSurp<-0.1?"move-dn":"muted";
+  const reactCls=bookAvgReact==null?"":bookAvgReact>0.1?"move-up":bookAvgReact<-0.1?"move-dn":"muted";
+  root.innerHTML=`<div class="panel ep-panel">
+    <div class="ep-h">
+      <div>
+        <div class="ep-h-title">Earnings-Playbook · Beat-Profil pro Ticker</div>
+        <div class="ep-h-sub">Letzte 4 EPS-Reports — Surprise %, 1-Tages-Stock-Reaktion, Sign-Match. Sortiert nach nächstem Earnings-Termin. Buchpositionen mit ★.</div>
+      </div>
+      <div class="ep-metrics" aria-label="Aggregat-Kennzahlen offener Positionen">
+        <div class="ep-metric" title="Beat-Rate aller Buchpositionen über die letzten 4 Quartale"><span class="lbl">Buch Beat</span><span class="val">${esc(bookBeatTxt)}</span></div>
+        <div class="ep-metric" title="Durchschnittliche EPS-Surprise % über alle offenen Calls (Avg-of-Avg)"><span class="lbl">Ø Surprise</span><span class="val ${surpCls}">${esc(bookSurpTxt)}</span></div>
+        <div class="ep-metric" title="Durchschnittliche 1-Tages-Stock-Reaktion auf Earnings-Print (Avg-of-Avg)"><span class="lbl">Ø 1d Reaktion</span><span class="val ${reactCls}">${esc(bookReactTxt)}</span></div>
+        <div class="ep-metric" title="Anzahl Ticker mit Earnings im 30-Tage-Fenster"><span class="lbl">≤30d Prints</span><span class="val">${rows.filter(r=>r.next&&r.next.daysOut!=null&&r.next.daysOut<=30).length}</span></div>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="ep-tbl" aria-label="Earnings Beat-Profil pro Ticker">
+        <thead><tr>
+          <th class="l">Ticker</th>
+          <th class="c">Surprise-Sequenz (alt → neu)</th>
+          <th>Beat</th>
+          <th>Ø Surprise</th>
+          <th>Ø 1d Reaktion</th>
+          <th class="col-hide-m">Sign-Match</th>
+          <th>Nächster</th>
+        </tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>
+    <div class="ep-foot">
+      <b>Lesart:</b> Surprise-Sequenz zeigt die letzten 4 EPS-Quartale (links alt → rechts neu). Grün = Beat, Rot = Miss, Sättigung = Magnitude (|surprise|≥10% kräftig, ≥3% mittel, sonst schwach). <b>Sign-Match</b> = wie oft die 1-Tages-Stock-Reaktion das Vorzeichen der Surprise teilt. Niedrige Sign-Match-Rate trotz hoher Beat-Rate = <i>bereits eingepreist</i> (Markt erwartet Beats). Hohe Sign-Match-Rate = der Print bewegt die Tape; das ist die einzige Konstellation, in der ein direktionaler Earnings-Trade rationale Edge hat. Quelle: yfinance earnings_dates + 1d Close-zu-Close um den Report-Termin.
+    </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 // Universum Ideen-Scanner (HED-137 Zyklus 102 — Bloomberg EQSCRN-Stil).
 // Screens ALL universe tickers NOT already in an active open call for long-side
 // opportunity quality using four independently-scored factors:
@@ -4855,7 +5182,7 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 })();
 
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
-["briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+["briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","earnplay","insidertape"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
 // Section nav: highlight the anchor pill whose section is currently most in view
 (function(){
