@@ -1738,6 +1738,44 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .fsb-stats{gap:0}
   .fsb-stat{padding:var(--s2) var(--s3)}
 }
+/* Heute auf dem Tape (HED-137 Zyklus 116) — Bloomberg TOP-style daily action triage.
+   Above-the-fold companion to FSB: today's book pulse, biggest book winner/loser, hottest
+   universe mover. Answers "what should I look at first?" without scrolling through 16 panels. */
+#todays-tape{margin:var(--s3) 0 var(--s4)}
+.tm{display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tm-cell{background:var(--panel);padding:var(--s3) var(--s4);display:flex;flex-direction:column;
+  justify-content:space-between;min-height:88px;min-width:0}
+.tm-cell--pulse{background:linear-gradient(180deg,var(--panel) 0%,rgba(77,163,255,.04) 100%)}
+.tm-h{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s2);min-width:0}
+.tm-lbl{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--mut);white-space:nowrap}
+.tm-tag{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);font-weight:600;
+  padding:1px 5px;border-radius:3px;border:1px solid var(--line);background:var(--panel2);white-space:nowrap;flex-shrink:0}
+.tm-tag--book{color:var(--accent);border-color:rgba(77,163,255,.32);background:rgba(77,163,255,.08)}
+.tm-tag--univ{color:var(--mut)}
+.tm-val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;letter-spacing:-.01em;
+  display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0}
+.tm-val .tm-tk{font-size:16px;color:var(--txt);font-weight:700;letter-spacing:0}
+.tm-val .tm-dir{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;letter-spacing:.05em;align-self:center}
+.tm-val .tm-dir-l{background:rgba(77,163,255,.18);color:var(--accent);border:1px solid rgba(77,163,255,.32)}
+.tm-val .tm-dir-s{background:rgba(248,112,90,.18);color:#f78166;border:1px solid rgba(248,112,90,.32)}
+.tm-pos{color:var(--green)}
+.tm-neg{color:var(--red)}
+.tm-flat{color:var(--mut)}
+.tm-sub{font-size:var(--fs-micro);color:var(--mut);line-height:1.35;font-variant-numeric:tabular-nums;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tm-sub b{color:var(--txt);font-weight:600}
+.tm-empty{color:var(--mut);font-style:italic;font-size:var(--fs-cap)}
+.tm-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s2);text-align:right;line-height:1.4}
+@media (max-width:900px){
+  .tm{grid-template-columns:1fr 1fr}
+  .tm-cell{min-height:76px}
+}
+@media (max-width:430px){
+  .tm-val{font-size:18px}
+  .tm-val .tm-tk{font-size:14px}
+  .tm-cell{padding:var(--s2) var(--s3);min-height:68px}
+}
 /* portfolio view */
 .pf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--s3);margin-bottom:var(--s3)}
 .pf-bar-wrap{margin-top:var(--s3)}
@@ -3611,6 +3649,9 @@ main:focus{outline:none}
        Placed before nav so it's visible immediately on mobile without scrolling. -->
   <div id="fund-summary-bar" aria-label="Fund Performance Summary" style="margin:var(--s4) 0 var(--s3)"></div>
 
+  <!-- Heute auf dem Tape (HED-137 Zyklus 116): 1d action triage — book pulse, top mover/laggard, hottest universe move. -->
+  <div id="todays-tape" aria-label="Heute auf dem Tape — 1-Tages-Action-Triage"></div>
+
   <details class="wf-details">
     <summary class="wf-summary">Workflow — Pipeline-Status</summary>
     <div class="flow-wrap"><div class="flow" id="flow"></div></div>
@@ -4641,6 +4682,122 @@ function calibSvg(buckets){
     </div>
     ${sparkHtml?`<div class="fsb-spark" title="Buch-Equity-Kurve seit Inception (konviktions-gewichtet)">${sparkHtml}</div>`:""}
   </div>`;
+})();
+
+// Heute auf dem Tape (HED-137 Zyklus 116) — daily action triage above the fold.
+// 4 quadrants: (1) book pulse 1d (conviction-weighted today's contribution),
+// (2) top open-call winner 1d, (3) top open-call loser 1d, (4) hottest universe move
+// (|%| max across all tracked tickers, in or out of book). PM-workflow morning view:
+// answers "what should I look at first?" before the user scrolls into the 16 deeper panels.
+(function renderTodaysTape(){
+  const root=$("todays-tape");
+  if(!root) return;
+  const tr=D.track_record;
+  const active=(tr&&tr.theses||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  // Build live ticker map from sector_view: change_pct (1d) + price + sector name.
+  // SANITY CAP: 1d single-stock moves >±30% are almost always stale-feed artifacts
+  // (chartPreviousClose not refreshed), not real action. We mark these as suspect and
+  // exclude them from the Hot Tape pick — better to show nothing than INTC +171%.
+  const STALE_THRESHOLD=30.0;
+  const tickByTk={}; const allUnivTicks=[]; let staleCount=0;
+  ((D.sector_view||{}).sectors||[]).forEach(s=>{
+    (s.tickers||[]).forEach(t=>{
+      if(!t||!t.ticker) return;
+      const sym=String(t.ticker).toUpperCase();
+      const cp=t.change_pct;
+      const stale=cp!=null&&Math.abs(cp)>STALE_THRESHOLD;
+      if(stale) staleCount++;
+      tickByTk[sym]={ticker:sym,price:t.price,change_pct:cp,sector:s.name||s.id||"",stale:stale};
+      if(cp!=null) allUnivTicks.push(tickByTk[sym]);
+    });
+  });
+  // Per open-call 1d move, sign-adjusted for direction. Stale-cap values excluded
+  // from book pulse and winner/loser ranking to avoid misleading headline numbers.
+  const bookMoves=[];
+  active.forEach(t=>{
+    const tk=(t.tickers||[])[0]; if(!tk) return;
+    const m=tickByTk[String(tk).toUpperCase()]; if(!m||m.change_pct==null||m.stale) return;
+    const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+    bookMoves.push({
+      ticker:String(tk).toUpperCase(),
+      sector:m.sector,
+      direction:(t.direction||"long").toLowerCase(),
+      conviction:t.conviction||0,
+      raw_pct:m.change_pct,        // market move
+      pnl_pct:m.change_pct*sign,   // book contribution sign
+      price:m.price
+    });
+  });
+  // Book pulse 1d = conviction-weighted average of pnl_pct
+  const wTot=bookMoves.reduce((s,b)=>s+(b.conviction||0),0);
+  const bookPulse=wTot>0?bookMoves.reduce((s,b)=>s+(b.conviction||0)*b.pnl_pct,0)/wTot:null;
+  const winners=bookMoves.slice().filter(b=>b.pnl_pct>0).sort((a,b)=>b.pnl_pct-a.pnl_pct);
+  const losers =bookMoves.slice().filter(b=>b.pnl_pct<0).sort((a,b)=>a.pnl_pct-b.pnl_pct);
+  // Universe hot: ticker with max |change_pct| across full tracked universe.
+  // Tie-break: prefer tickers also in book (more actionable). Skip benchmarks (SPY/QQQ/etc)
+  // and stale-flagged tickers (>±30% 1d, almost certainly feed artifacts).
+  const BENCH=new Set(["SPY","QQQ","DIA","IWM","VIX","TLT","GLD","UUP"]);
+  const bookSet=new Set(bookMoves.map(b=>b.ticker));
+  const univCand=allUnivTicks.filter(t=>!BENCH.has(t.ticker)&&!t.stale);
+  univCand.sort((a,b)=>{
+    const da=Math.abs(a.change_pct||0), db=Math.abs(b.change_pct||0);
+    if(Math.abs(da-db)>0.001) return db-da;
+    return (bookSet.has(b.ticker)?1:0)-(bookSet.has(a.ticker)?1:0);
+  });
+  const univHot=univCand[0]||null;
+  const univHot2=univCand[1]||null;
+  // Tape freshness: use sector_view as_of
+  const tapeAsOf=((D.sector_view||{}).as_of||"").replace(" UTC","");
+  // Helpers
+  const fmtPct=(v,digits=2)=>v==null?"—":`${v>=0?"+":"−"}${Math.abs(v).toFixed(digits)}%`;
+  const clsOf=(v)=>v==null?"tm-flat":v>0.005?"tm-pos":v<-0.005?"tm-neg":"tm-flat";
+  const dirChip=(d)=>d==="short"?'<span class="tm-dir tm-dir-s">SHORT</span>':'<span class="tm-dir tm-dir-l">LONG</span>';
+  // Quadrant 1: Buch-Pulse 1d
+  const pulseVal=fmtPct(bookPulse);
+  const pulseCls=clsOf(bookPulse);
+  const pulseSub=bookMoves.length
+    ? `<span>${bookMoves.length} bepreiste Calls · konviktions-gewichtet</span>`
+    : '<span class="tm-empty">keine Live-Kurse</span>';
+  // Quadrant 2: Top Winner
+  const w=winners[0];
+  const winnerCell=w
+    ? `<div class="tm-val ${clsOf(w.pnl_pct)}"><span class="tm-tk">${esc(w.ticker)}</span>${dirChip(w.direction)}<span>${fmtPct(w.pnl_pct)}</span></div>
+       <div class="tm-sub">${esc(w.sector||"")}${w.price!=null?` · <b>$${w.price.toFixed(2)}</b>`:""}${w.direction==="short"?` · Markt ${fmtPct(w.raw_pct)}`:""}</div>`
+    : `<div class="tm-val tm-flat">—</div><div class="tm-sub tm-empty">kein grüner Call heute</div>`;
+  // Quadrant 3: Top Loser
+  const l=losers[0];
+  const loserCell=l
+    ? `<div class="tm-val ${clsOf(l.pnl_pct)}"><span class="tm-tk">${esc(l.ticker)}</span>${dirChip(l.direction)}<span>${fmtPct(l.pnl_pct)}</span></div>
+       <div class="tm-sub">${esc(l.sector||"")}${l.price!=null?` · <b>$${l.price.toFixed(2)}</b>`:""}${l.direction==="short"?` · Markt ${fmtPct(l.raw_pct)}`:""}</div>`
+    : `<div class="tm-val tm-flat">—</div><div class="tm-sub tm-empty">kein roter Call heute</div>`;
+  // Quadrant 4: Universe hot
+  const u=univHot;
+  const inBook=u?bookSet.has(u.ticker):false;
+  const univCell=u
+    ? `<div class="tm-val ${clsOf(u.change_pct)}"><span class="tm-tk">${esc(u.ticker)}</span>${inBook?'<span class="tm-dir tm-dir-l" title="Position im Buch">★ BOOK</span>':""}<span>${fmtPct(u.change_pct)}</span></div>
+       <div class="tm-sub">${esc(u.sector||"")}${u.price!=null?` · <b>$${u.price.toFixed(2)}</b>`:""}${univHot2&&univHot2.ticker!==u.ticker?` · 2. <b>${esc(univHot2.ticker)}</b> ${fmtPct(univHot2.change_pct,1)}`:""}</div>`
+    : `<div class="tm-val tm-flat">—</div><div class="tm-sub tm-empty">Universum unbewegt</div>`;
+  // Don't render if zero signal (avoid empty terminal-style strip)
+  if(!bookMoves.length && !univHot){ root.style.display="none"; return; }
+  root.innerHTML=`<div class="tm" role="region" aria-label="Tagestriage">
+    <div class="tm-cell tm-cell--pulse">
+      <div class="tm-h"><span class="tm-lbl">Buch-Pulse 1d</span><span class="tm-tag tm-tag--book">unrealisiert</span></div>
+      <div class="tm-val ${pulseCls}" style="font-size:26px">${pulseVal}</div>
+      <div class="tm-sub">${pulseSub}</div>
+    </div>
+    <div class="tm-cell">
+      <div class="tm-h"><span class="tm-lbl">Top-Winner 1d</span><span class="tm-tag tm-tag--book">Buch</span></div>
+      ${winnerCell}
+    </div>
+    <div class="tm-cell">
+      <div class="tm-h"><span class="tm-lbl">Top-Laggard 1d</span><span class="tm-tag tm-tag--book">Buch</span></div>
+      ${loserCell}
+    </div>
+    <div class="tm-cell">
+      <div class="tm-h"><span class="tm-lbl">Hot Tape</span><span class="tm-tag tm-tag--univ">Universum</span></div>
+      ${univCell}
+    </div>
+  </div>${tapeAsOf?`<div class="tm-foot">Tape-Stand ${esc(tapeAsOf)} · 1d Close-zu-Close · Short-Calls vorzeichenkorrigiert${staleCount?` · <span title="Yahoo chartPreviousClose nicht aktualisiert — typischer Pre-Market-Artefakt">${staleCount} Ticker mit |Δ|>30% ausgefiltert (stale feed)</span>`:""}</div>`:""}`;
 })();
 
 // Portfolio-Übersicht: aktive Calls aus Track-Record + Sektorkonzentration
