@@ -541,6 +541,50 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .rs-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .rs-val{font-size:17px}
 }
+/* Stress-Test-Panel — szenario shocks (HED-137 Zyklus 95): bookwise Impact-Schätzung pro Standard-Shock */
+.st-panel{margin-top:var(--s3);padding:var(--s3)}
+.st-h{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);margin-bottom:var(--s3);flex-wrap:wrap}
+.st-title{font-weight:700;font-size:var(--fs-h2);text-transform:none;letter-spacing:0;color:var(--txt);line-height:1.2}
+.st-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400;margin-top:2px}
+.st-method{font-size:var(--fs-micro);color:var(--mut);font-variant-numeric:tabular-nums;
+  padding:2px 8px;border:1px solid var(--line);border-radius:4px;cursor:help;letter-spacing:.02em;white-space:nowrap}
+.st-method b{color:var(--txt);font-weight:700}
+.st-grid{display:grid;grid-template-columns:1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.st-row{display:grid;grid-template-columns:minmax(150px,1.4fr) minmax(110px,1fr) minmax(140px,2fr) 80px;
+  align-items:center;gap:var(--s3);padding:var(--s2) var(--s3);background:var(--bg);font-variant-numeric:tabular-nums}
+.st-row-cap{font-size:var(--fs-micro);color:var(--mut);text-transform:uppercase;letter-spacing:.04em;font-weight:600;
+  background:var(--panel2);padding:6px var(--s3)}
+.st-row-cap div:nth-child(4){text-align:right}
+.st-label{font-size:var(--fs-cap);font-weight:700;color:var(--txt);line-height:1.25}
+.st-label-sub{display:block;font-weight:400;color:var(--mut);font-size:var(--fs-micro);margin-top:1px;text-transform:none;letter-spacing:0}
+.st-assume{font-size:var(--fs-cap);color:var(--txt);font-weight:500}
+.st-assume-tag{display:inline-block;padding:1px 6px;border:1px solid var(--line);border-radius:3px;font-size:var(--fs-micro);background:var(--panel2);white-space:nowrap}
+.st-bar-track{position:relative;height:18px;background:var(--panel2);border-radius:3px;overflow:hidden}
+.st-bar-mid{position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--line)}
+.st-bar-fill{position:absolute;top:1px;bottom:1px;border-radius:2px}
+.st-bar-pos{background:linear-gradient(90deg,rgba(63,185,80,.35),#3fb950);left:50%}
+.st-bar-neg{background:linear-gradient(90deg,#f85149,rgba(248,81,73,.35));right:50%}
+.st-val{text-align:right;font-weight:700;font-size:15px;letter-spacing:-.01em}
+.st-val.move-up{color:var(--green)}
+.st-val.move-dn{color:var(--red)}
+.st-val.muted{color:var(--mut);font-weight:500}
+.st-axis{display:grid;grid-template-columns:minmax(150px,1.4fr) minmax(110px,1fr) minmax(140px,2fr) 80px;
+  gap:var(--s3);padding:0 var(--s3);font-size:var(--fs-micro);color:var(--mut);font-variant-numeric:tabular-nums;margin-top:4px}
+.st-axis-bar{display:flex;justify-content:space-between}
+.st-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s2);line-height:1.5}
+.st-foot b{color:var(--txt);font-weight:700}
+.st-worst{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:4px;
+  background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);color:var(--red);
+  font-weight:700;font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+@media(max-width:760px){
+  .st-row{grid-template-columns:1fr 90px;grid-template-rows:auto auto;row-gap:6px;padding:var(--s3)}
+  .st-row-cap{display:none}
+  .st-axis{display:none}
+  .st-label{grid-column:1/2;grid-row:1}
+  .st-val{grid-column:2/3;grid-row:1;font-size:17px}
+  .st-assume{grid-column:1/3;grid-row:2;font-size:var(--fs-micro);color:var(--mut)}
+  .st-bar-track{grid-column:1/3;grid-row:3;height:14px}
+}
 /* Conviction-vs-P&L Scatter — "are my high-conviction calls working?" (HED-137 cycle 84) */
 .pf-scatter{margin-top:var(--s3);padding:var(--s3)}
 .pf-scatter-h{font-size:var(--fs-cap);color:var(--mut);margin-bottom:var(--s2);display:flex;
@@ -2112,7 +2156,8 @@ function calibSvg(buckets){
     const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
     _curveSrc.push({conv:(t.conviction!=null?t.conviction:0.5), baseline:t.baseline_price, spark:sp, eOff, sign});
   });
-  let curvePanelHtml="", riskStatsPanelHtml="";
+  let curvePanelHtml="", riskStatsPanelHtml="", stressPanelHtml="";
+  let _portBeta=null, _portVolAnn=null, _portObs=0;
   if(_curveSrc.length){
     const _incep=Math.max(..._curveSrc.map(s=>s.eOff));
     const _curve=[];
@@ -2229,6 +2274,7 @@ function calibSvg(buckets){
             const volAnn=sdB*ANN*100;
             const sharpe=sdB>1e-9 ? mB/sdB*ANN : null;
             const beta=vS>1e-12 ? cov/vS : null;
+            _portBeta=beta; _portVolAnn=volAnn; _portObs=n;
             const corr=(sdB>1e-9 && sdS>1e-9) ? cov/(sdB*sdS) : null;
             const trackErrAnn=sdTE*ANN*100;
             const infoRatio=sdTE>1e-9 ? mTE/sdTE*ANN : null;
@@ -2342,6 +2388,97 @@ function calibSvg(buckets){
         <div class="ec-foot muted">Honestes Inception-Tracking — die Kurve wächst mit jedem Handelstag. Indexiert bei 0% am Entry-Tag, sign-flipped für Shorts. Underwater-Chart zeigt Drawdown vom rollierenden Hoch (immer ≤ 0).</div>
       </div>`;
     }
+  }
+  // Stress-Test-Panel (HED-137 Zyklus 95): Szenario-Shock-Schätzung — was passiert mit dem Buch,
+  // wenn der Markt korrigiert, Tech rotiert oder eine Top-Position blowt up?
+  // Systematische Shocks (SPY ±x%): β × shock (aus Risiko-Kennzahlen; Fallback Netto-Direktion wenn β fehlt).
+  // Tech-Sektor-Shock: Σ(konv-gewichtete Exposure zu S1-S4) × shock × Richtung.
+  // Single-Stock-Shock: Top-Conviction-Position × shock × Richtung.
+  // Long-Positionen verlieren bei negativem Shock, Shorts profitieren — Vorzeichen-Logik beachtet das.
+  if(active.length && totalConv>0){
+    const _betaSrc = _portBeta!=null ? "β" : "Netto-Direktion";
+    const _netDir = totalConv>0 ? (longConv-shortConv)/totalConv : 0;
+    // Systematic impact: prefer β, fall back to net-direction proxy until enough live history exists
+    function sysImpact(shockPct){
+      if(_portBeta!=null) return _portBeta*shockPct;
+      return _netDir*shockPct; // honest fallback — labels it as such
+    }
+    // Tech-sector exposure: sum conv-weighted, direction-signed long/short exposure to S1-S4
+    const TECH=new Set(["S1","S2","S3","S4"]);
+    let techNetExp=0, techGrossExp=0;
+    active.forEach(t=>{
+      const tk=(t.tickers||[])[0]; if(!tk) return;
+      const secId=String(SECTOR_MAP[String(tk).toUpperCase()]||"").split(/\s+/)[0];
+      if(!TECH.has(secId)) return;
+      const w=(t.conviction||0)/totalConv;
+      const dir=(t.direction||"").toLowerCase()==="short"?-1:1;
+      techNetExp+=w*dir;
+      techGrossExp+=w;
+    });
+    // Top-Conviction-Position (Single-Stock-Blow-up-Kandidat)
+    const _topCall = active.slice().sort((a,b)=>(b.conviction||0)-(a.conviction||0))[0];
+    const _topTk = (_topCall.tickers||[])[0]||"?";
+    const _topW = (_topCall.conviction||0)/totalConv;
+    const _topDir = (_topCall.direction||"").toLowerCase()==="short"?-1:1;
+    const _topDirLbl = _topDir>0?"Long":"Short";
+    // Define standard shocks
+    const shocks=[
+      {label:"Markt-Korrektur",     sub:"akuter Sell-off-Tag",     assume:"SPY −5%",  impact:sysImpact(-5),  kind:"sys", betaApplied:true},
+      {label:"Bear-Markt-Eintritt", sub:"10% vom Hoch",            assume:"SPY −10%", impact:sysImpact(-10), kind:"sys", betaApplied:true},
+      {label:"Tech-Rotation raus",  sub:"Sektor-Drehung S1–S4",   assume:"Tech −10%",
+        impact:techGrossExp>0?(techNetExp*-10):null, kind:"tech", betaApplied:false,
+        meta:`Netto-Tech-Exposure: ${(techNetExp*100>=0?"+":"−")}${Math.abs(techNetExp*100).toFixed(0)}% · brutto ${Math.round(techGrossExp*100)}%`},
+      {label:"Single-Stock-Blow-up",sub:`Top: ${_topTk} (${_topDirLbl})`, assume:`${_topTk} −20%`,
+        impact:_topW>0?(_topDir*-20*_topW):null, kind:"single", betaApplied:false,
+        meta:`Conv-Gewicht: ${Math.round(_topW*100)}% · Move −20% wirkt ${_topDir>0?"belastend":"entlastend"} (${_topDirLbl})`},
+      {label:"Risk-on Rally",       sub:"breite Tech-Rotation rein", assume:"SPY +5%",  impact:sysImpact(5),  kind:"sys", betaApplied:true},
+    ];
+    // Worst-case for header callout
+    const _impacted = shocks.filter(s=>s.impact!=null);
+    const _worst = _impacted.length ? _impacted.reduce((a,b)=>(a.impact<b.impact?a:b)) : null;
+    // Bar sizing — symmetric around 0 using max |impact| across shocks (floor at 2pp so small books still register)
+    const _maxAbs = Math.max(2, ..._impacted.map(s=>Math.abs(s.impact)));
+    const _scaleLbl = Math.ceil(_maxAbs/2)*2;
+    const _fmt = v => (v==null||!isFinite(v))?"—":(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
+    const _cls = v => v==null?"muted":v>=0.05?"move-up":v<=-0.05?"move-dn":"muted";
+    const rowsHtml = shocks.map(s=>{
+      const v=s.impact;
+      const w = v!=null ? Math.min(48, Math.abs(v)/_maxAbs*48) : 0;
+      const barCls = v==null?"":v>=0?"st-bar-pos":"st-bar-neg";
+      const barHtml = v==null
+        ? '<div class="st-bar-track" title="Modellierung nicht anwendbar"><div class="st-bar-mid"></div></div>'
+        : `<div class="st-bar-track" title="${_fmt(v)} Buch-Impact"><div class="st-bar-mid"></div><div class="st-bar-fill ${barCls}" style="width:${w}%"></div></div>`;
+      const valCls = _cls(v);
+      const tip = `${s.label} — ${s.assume}. ${s.meta||(s.betaApplied?`Methode: β=${_portBeta!=null?_portBeta.toFixed(2):"—"} × Shock`: "Modell: Direktion × Shock")}`;
+      const subLine = s.meta ? `<span class="st-label-sub">${esc(s.meta)}</span>` : `<span class="st-label-sub">${esc(s.sub)}</span>`;
+      return `<div class="st-row" title="${esc(tip)}">
+        <div class="st-label">${esc(s.label)}${subLine}</div>
+        <div class="st-assume"><span class="st-assume-tag">${esc(s.assume)}</span></div>
+        ${barHtml}
+        <div class="st-val ${valCls}">${_fmt(v)}</div>
+      </div>`;
+    }).join("");
+    const _methodNote = _portBeta!=null
+      ? `Systematische Schocks: β=<b>${_portBeta.toFixed(2)}</b> × Shock · n=${_portObs}`
+      : `Systematische Schocks: Netto-Direktion <b>${(_netDir*100>=0?"+":"−")}${Math.abs(_netDir*100).toFixed(0)}%</b> × Shock (β kommt mit längerer Historie)`;
+    const _worstCallout = _worst
+      ? `<span class="st-worst" title="Schwerster modellierter Drawdown im Szenario-Set">📉 Worst-Case: ${esc(_worst.label)} → ${_fmt(_worst.impact)}</span>`
+      : "";
+    stressPanelHtml=`<div class="panel st-panel">
+      <div class="st-h">
+        <div>
+          <div class="st-title">Stress-Test <span class="muted" style="font-weight:400">— Szenario-Shocks aufs Buch</span></div>
+          <div class="st-sub">Geschätzter unrealisierter Impact pro Standard-Shock · Long verliert bei Down-Shock, Short gewinnt</div>
+        </div>
+        ${_worstCallout}
+      </div>
+      <div class="st-grid">
+        <div class="st-row st-row-cap"><div>Szenario</div><div>Annahme</div><div>Impact-Bar</div><div style="text-align:right">Buch-Δ</div></div>
+        ${rowsHtml}
+      </div>
+      <div class="st-axis"><div></div><div></div><div class="st-axis-bar"><span>−${_scaleLbl}%</span><span>0</span><span>+${_scaleLbl}%</span></div><div></div></div>
+      <div class="st-foot">${_methodNote} · Tech-Shock = Netto-Exposure S1–S4 × Shock · Single-Stock = Top-Conviction-Position × Shock · Schätzer, keine echte Korrelations-Matrix.</div>
+    </div>`;
   }
   // Sector Performance Attribution — "where is my book working?" Brinson-style.
   // Per sector: conviction-weighted P&L of priced calls in that sector,
@@ -2638,7 +2775,7 @@ function calibSvg(buckets){
       </div>`;
     }
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskHtml}`;
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskHtml}`;
   root.setAttribute("aria-busy","false");
 })();
 
