@@ -2431,6 +2431,8 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-nav-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:14px;font-size:11px;font-weight:600;color:var(--mut);background:rgba(139,148,158,.06);border:1px solid rgba(139,148,158,.12);white-space:nowrap;text-decoration:none;flex-shrink:0;transition:background .12s,color .12s,border-color .12s;cursor:pointer;font-family:inherit}
 .pf-nav-chip:hover{background:rgba(139,148,158,.15);color:var(--txt);border-color:rgba(139,148,158,.25);text-decoration:none}
 .pf-nav-chip:focus{outline:1px solid var(--blue);outline-offset:1px}
+.pf-nav-chip-active{background:rgba(88,166,255,.15);color:var(--txt);border-color:rgba(88,166,255,.45);box-shadow:0 0 0 1px rgba(88,166,255,.25)}
+.pf-nav-chip-active .pf-nav-chip-icon{color:var(--blue)}
 .pf-nav-chip-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:14px;padding:0 4px;border-radius:7px;font-size:9px;font-weight:700;background:rgba(248,81,73,.18);color:#f85149;line-height:1;letter-spacing:0}
 .pf-nav-chip-badge-warn{background:rgba(210,168,80,.18);color:#e3b341}
 .pf-nav-chip-badge-pos{background:rgba(35,134,54,.18);color:#3fb950}
@@ -12288,6 +12290,38 @@ function calibSvg(buckets){
   }
 
   root.innerHTML=`${subNavHtml}${freshnessHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-funnel")}${funnelHtml}${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Sub-Nav Scroll-Spy (HED-150 Zyklus 174).
+  // IntersectionObserver watches each .pf-anchor; when one enters the viewport,
+  // the matching chip in the sticky nav-strip is highlighted. Falls back gracefully
+  // if IntersectionObserver isn't available (older browsers).
+  (function initScrollSpy(){
+    if(!("IntersectionObserver" in window)) return;
+    const anchors=document.querySelectorAll(".pf-anchor");
+    const navStrip=document.querySelector(".pf-nav-strip");
+    if(!anchors.length||!navStrip) return;
+    const chipMap={};
+    navStrip.querySelectorAll(".pf-nav-chip").forEach(c=>{
+      const href=c.getAttribute("href")||"";
+      if(href.startsWith("#")) chipMap[href.slice(1)]=c;
+    });
+    // Track which anchor is currently most-visible
+    const visibleSet=new Set();
+    const obs=new IntersectionObserver(entries=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting) visibleSet.add(e.target.id);
+        else visibleSet.delete(e.target.id);
+      });
+      // Apply active class to first visible anchor's chip (top-down DOM order)
+      let activeId=null;
+      for(const a of anchors){if(visibleSet.has(a.id)){activeId=a.id; break;}}
+      Object.entries(chipMap).forEach(([id,chip])=>{
+        if(id===activeId) chip.classList.add("pf-nav-chip-active");
+        else chip.classList.remove("pf-nav-chip-active");
+      });
+    },{rootMargin:"-50px 0px -60% 0px", threshold:0});
+    anchors.forEach(a=>obs.observe(a));
+  })();
+
   // Market-Hours Indicator — live JS update (HED-150 Zyklus 173).
   // NYSE/NASDAQ RTH = 09:30-16:00 ET, Mon-Fri. Updates badge every 30 s with
   // current state + countdown to next transition. US Eastern handled via toLocaleString.
