@@ -2105,6 +2105,65 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 @media(min-width:681px){
   .pf-conv-card{display:none}
 }
+/* Thesis-Karten — Investment Case per aktivem Call (HED-150 Zyklus 152) */
+.pf-thc{margin-top:var(--s3);padding:var(--s3)}
+.pf-thc-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-thc-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt);line-height:1.2}
+.pf-thc-sub{font-size:var(--fs-micro);margin-top:2px;line-height:1.4;color:var(--mut)}
+.pf-thc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--s3)}
+@media(max-width:900px){.pf-thc-grid{grid-template-columns:1fr}}
+.pf-thc-card{border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:var(--s3);background:var(--panel2);display:flex;flex-direction:column;gap:var(--s3)}
+.pf-thc-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s2)}
+.pf-thc-tk{font-weight:700;font-size:18px;color:var(--txt);letter-spacing:.02em;line-height:1.1}
+.pf-thc-meta{display:flex;align-items:center;gap:6px;margin-top:3px}
+.pf-thc-dir{display:inline-flex;align-items:center;border-radius:3px;padding:2px 7px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.pf-thc-dir-long{background:rgba(63,185,80,.18);color:var(--green)}
+.pf-thc-dir-short{background:rgba(248,81,73,.18);color:var(--red)}
+.pf-thc-hor{font-size:var(--fs-micro);color:var(--mut);font-weight:600;text-transform:lowercase;letter-spacing:.02em}
+.pf-thc-conv{display:inline-flex;flex-direction:column;align-items:flex-end;font-variant-numeric:tabular-nums}
+.pf-thc-conv-val{font-size:18px;font-weight:700;color:var(--txt);line-height:1}
+.pf-thc-conv-lbl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-top:2px}
+.pf-thc-conv-bar{width:60px;height:4px;background:rgba(139,148,158,.18);border-radius:2px;overflow:hidden;margin-top:4px}
+.pf-thc-conv-fill{height:100%;background:var(--accent);border-radius:2px}
+.pf-thc-thesis{font-size:var(--fs-cap);color:var(--txt);font-weight:600;line-height:1.35}
+.pf-thc-px-row{display:flex;justify-content:space-between;align-items:center;gap:var(--s2);font-size:var(--fs-micro);color:var(--mut);font-variant-numeric:tabular-nums}
+.pf-thc-px-base{font-weight:600}
+.pf-thc-px-curr{font-weight:700;color:var(--txt)}
+.pf-thc-px-mv{font-weight:700}
+.pf-thc-px-mv-pos{color:var(--green)}
+.pf-thc-px-mv-neg{color:var(--red)}
+.pf-thc-spark{width:100%;height:48px;display:block}
+.pf-thc-spark-line{fill:none;stroke-width:1.5}
+.pf-thc-spark-line-pos{stroke:var(--green)}
+.pf-thc-spark-line-neg{stroke:var(--red)}
+.pf-thc-spark-fill{opacity:.12}
+.pf-thc-spark-fill-pos{fill:var(--green)}
+.pf-thc-spark-fill-neg{fill:var(--red)}
+.pf-thc-spark-base{stroke:rgba(139,148,158,.45);stroke-width:.75;stroke-dasharray:2 3}
+.pf-thc-spark-dot{r:2.5;stroke:var(--bg);stroke-width:1}
+.pf-thc-spark-dot-pos{fill:var(--green)}
+.pf-thc-spark-dot-neg{fill:var(--red)}
+.pf-thc-scn{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2);border-top:1px solid rgba(255,255,255,.05);padding-top:var(--s3);font-variant-numeric:tabular-nums}
+.pf-thc-scn-col{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 6px;border-radius:5px;background:rgba(255,255,255,.02)}
+.pf-thc-scn-bull{background:rgba(63,185,80,.06);border:1px solid rgba(63,185,80,.18)}
+.pf-thc-scn-base{background:rgba(139,148,158,.06);border:1px solid rgba(139,148,158,.18)}
+.pf-thc-scn-bear{background:rgba(248,81,73,.06);border:1px solid rgba(248,81,73,.18)}
+.pf-thc-scn-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.pf-thc-scn-lbl-bull{color:var(--green)}
+.pf-thc-scn-lbl-base{color:var(--mut)}
+.pf-thc-scn-lbl-bear{color:var(--red)}
+.pf-thc-scn-px{font-size:14px;font-weight:700;color:var(--txt);line-height:1}
+.pf-thc-scn-ret{font-size:var(--fs-micro);font-weight:700}
+.pf-thc-scn-ret-pos{color:var(--green)}
+.pf-thc-scn-ret-neg{color:var(--red)}
+.pf-thc-devil{display:flex;align-items:flex-start;gap:var(--s2);padding:var(--s2);border-radius:5px;border:1px solid rgba(210,153,34,.25);background:rgba(210,153,34,.04)}
+.pf-thc-devil-reject{border-color:rgba(248,81,73,.35);background:rgba(248,81,73,.05)}
+.pf-thc-devil-icon{flex-shrink:0;font-weight:700;font-size:11px;letter-spacing:.04em;padding:2px 6px;border-radius:3px;text-transform:uppercase;background:rgba(210,153,34,.18);color:var(--accent);line-height:1.2;white-space:nowrap}
+.pf-thc-devil-icon-reject{background:rgba(248,81,73,.18);color:var(--red)}
+.pf-thc-devil-txt{font-size:var(--fs-micro);color:var(--mut);line-height:1.45;flex:1}
+.pf-thc-devil-lbl{font-weight:700;color:var(--txt);text-transform:uppercase;letter-spacing:.04em;font-size:9px}
+.pf-thc-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.55}
+.pf-thc-an{font-size:var(--fs-micro);color:var(--mut);font-weight:600}
 /* Korrelationsmatrix — Diversifikations-Diagnose (HED-137 Zyklus 86): pairwise 30d return correlation */
 .pf-corr{margin-top:var(--s3);padding:var(--s3)}
 .pf-corr-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3);font-weight:700;font-size:var(--fs-h2);text-transform:none;letter-spacing:0;color:var(--txt)}
@@ -8278,7 +8337,173 @@ function calibSvg(buckets){
     }
   }
 
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Thesis-Karten — Investment Case per aktivem Call (HED-150 Zyklus 152)
+  // For each active portfolio thesis, renders a card with:
+  // - direction + conviction badge
+  // - thesis label
+  // - baseline → current price + 30d sparkline
+  // - Bull/Base/Bear scenario range from analyst PT band (sector_view.consensus)
+  //   with direction-adjusted % return per scenario
+  // - Devil's Advocate counter (track_record.devil)
+  let thcPanelHtml="";
+  {
+    // PT and spark lookups from sector_view
+    const _ptMap2={}, _sparkMap={}, _curPxMap={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>{
+      (s.tickers||[]).forEach(t=>{
+        if(!t||!t.ticker) return;
+        const sym=t.ticker.toUpperCase();
+        const c=t.consensus||{};
+        if(c.pt_low!=null&&c.pt_high!=null){
+          _ptMap2[sym]={
+            ptLow:Number(c.pt_low),ptHigh:Number(c.pt_high),
+            ptMean:c.pt_mean!=null?Number(c.pt_mean):null,
+            anCount:c.analyst_count!=null?Number(c.analyst_count):null
+          };
+        }
+        if(Array.isArray(t.spark)) _sparkMap[sym]=t.spark;
+        if(t.price!=null) _curPxMap[sym]=Number(t.price);
+      });
+    });
+
+    // Helpers
+    function _fmtPx(v){ return "$"+Number(v).toFixed(v>=100?0:2); }
+    function _fmtPct(v){ const s=v>=0?"+":""; return s+v.toFixed(1)+"%"; }
+    function _esc(s){ return String(s||"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    // Build sparkline SVG (30d price line + baseline dashed)
+    function _sparkSvg(spark, baseline, dirSign){
+      if(!Array.isArray(spark)||spark.length<2) return "";
+      const w=320, h=48, pad=2;
+      const mn=Math.min(...spark, baseline||spark[0]);
+      const mx=Math.max(...spark, baseline||spark[0]);
+      const rng=mx-mn || 1;
+      function _y(v){ return h-pad - (v-mn)/rng*(h-2*pad); }
+      function _x(i){ return pad + i/(spark.length-1)*(w-2*pad); }
+      const pts=spark.map((v,i)=>`${_x(i).toFixed(1)},${_y(v).toFixed(1)}`).join(" ");
+      const lastPx=spark[spark.length-1];
+      // Direction-adjusted line color: rising for LONG = green
+      const moved = (lastPx-spark[0]) * dirSign;
+      const cls = moved>=0 ? "pos" : "neg";
+      const baseY = baseline!=null ? _y(baseline) : null;
+      const baseLine = baseY!=null ? `<line class="pf-thc-spark-base" x1="${pad}" y1="${baseY.toFixed(1)}" x2="${(w-pad).toFixed(1)}" y2="${baseY.toFixed(1)}"/>` : "";
+      // Fill area under curve
+      const fillPts = pts + ` ${_x(spark.length-1).toFixed(1)},${(h-pad).toFixed(1)} ${pad},${(h-pad).toFixed(1)}`;
+      return `<svg class="pf-thc-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+        <polygon class="pf-thc-spark-fill pf-thc-spark-fill-${cls}" points="${fillPts}"/>
+        ${baseLine}
+        <polyline class="pf-thc-spark-line pf-thc-spark-line-${cls}" points="${pts}"/>
+        <circle class="pf-thc-spark-dot pf-thc-spark-dot-${cls}" cx="${_x(spark.length-1).toFixed(1)}" cy="${_y(lastPx).toFixed(1)}"/>
+      </svg>`;
+    }
+
+    const cards = active.map(thesis=>{
+      const dir=(thesis.direction||"long").toLowerCase();
+      const isShort=dir==="short";
+      const dirSign=isShort?-1:1;
+      const tks=(thesis.tickers||[]).map(s=>s.toUpperCase());
+      const tkLabel=tks.join("·");
+      // Use first ticker for PT/spark (multi-ticker theses are rare)
+      const primary=tks[0];
+      const pt=_ptMap2[primary]||null;
+      const spark=_sparkMap[primary]||null;
+      const baseline=Number(thesis.baseline_price);
+      const curPx=_curPxMap[primary]!=null?_curPxMap[primary]:(spark&&spark.length?spark[spark.length-1]:null);
+
+      // Baseline → Current price movement (direction-adjusted)
+      const moveRaw = curPx!=null && baseline ? (curPx-baseline)/baseline*100 : null;
+      const moveAdj = moveRaw!=null ? moveRaw*dirSign : null;
+      const moveClass = moveAdj==null?"":(moveAdj>=0?"pf-thc-px-mv-pos":"pf-thc-px-mv-neg");
+
+      // Scenarios: Bull/Base/Bear (direction-adjusted from PT band)
+      let scnHtml="";
+      if(pt){
+        const bullPx = isShort?pt.ptLow:pt.ptHigh;
+        const basePx = pt.ptMean!=null?pt.ptMean:(pt.ptLow+pt.ptHigh)/2;
+        const bearPx = isShort?pt.ptHigh:pt.ptLow;
+        const bullRet=(bullPx-baseline)/baseline*100*dirSign;
+        const baseRet=(basePx-baseline)/baseline*100*dirSign;
+        const bearRet=(bearPx-baseline)/baseline*100*dirSign;
+        function _col(lbl,cls,px,ret){
+          const retCls = ret>=0?"pf-thc-scn-ret-pos":"pf-thc-scn-ret-neg";
+          return `<div class="pf-thc-scn-col pf-thc-scn-${cls}">
+            <div class="pf-thc-scn-lbl pf-thc-scn-lbl-${cls}">${lbl}</div>
+            <div class="pf-thc-scn-px">${_fmtPx(px)}</div>
+            <div class="pf-thc-scn-ret ${retCls}">${_fmtPct(ret)}</div>
+          </div>`;
+        }
+        scnHtml=`<div class="pf-thc-scn" title="Szenarien aus Street-Analystenkonsensus (n=${pt.anCount||"?"}) · direction-adjusted">
+          ${_col("Bull","bull",bullPx,bullRet)}
+          ${_col("Base","base",basePx,baseRet)}
+          ${_col("Bear","bear",bearPx,bearRet)}
+        </div>`;
+      }
+
+      // Devil's Advocate
+      let devilHtml="";
+      const d=thesis.devil||{};
+      if(d.verdict||d.note){
+        const dv=(d.verdict||"caution").toLowerCase();
+        const isReject=dv==="reject";
+        const verdictLbl=dv.toUpperCase();
+        devilHtml=`<div class="pf-thc-devil ${isReject?'pf-thc-devil-reject':''}" title="Track-Record Devil's-Advocate Verdict">
+          <span class="pf-thc-devil-icon ${isReject?'pf-thc-devil-icon-reject':''}">${verdictLbl}</span>
+          <div class="pf-thc-devil-txt"><span class="pf-thc-devil-lbl">Devil:</span> ${_esc(d.note||"—")}</div>
+        </div>`;
+      }
+
+      // Sparkline + price row
+      const sparkHtml = spark ? _sparkSvg(spark, baseline, dirSign) : "";
+      const pxRow = `<div class="pf-thc-px-row">
+        <span><span class="pf-thc-px-base">Entry</span> ${_fmtPx(baseline)}</span>
+        ${curPx!=null?`<span class="pf-thc-px-curr">${_fmtPx(curPx)}</span>`:""}
+        ${moveAdj!=null?`<span class="pf-thc-px-mv ${moveClass}">${_fmtPct(moveAdj)}</span>`:""}
+      </div>`;
+
+      const conv=Number(thesis.conviction||0);
+      const convPct=Math.round(conv*100);
+      const horizon=_esc(thesis.horizon||"");
+      const anText = pt&&pt.anCount ? `<span class="pf-thc-an">${pt.anCount} Analysten</span>` : "";
+
+      return `<div class="pf-thc-card">
+        <div class="pf-thc-hd">
+          <div>
+            <div class="pf-thc-tk">${_esc(tkLabel)}</div>
+            <div class="pf-thc-meta">
+              <span class="pf-thc-dir pf-thc-dir-${isShort?'short':'long'}">${isShort?'SHORT':'LONG'}</span>
+              ${horizon?`<span class="pf-thc-hor">${horizon}</span>`:""}
+              ${anText}
+            </div>
+          </div>
+          <div class="pf-thc-conv" title="Conviction-Score (0–100)">
+            <div class="pf-thc-conv-val">${convPct}</div>
+            <div class="pf-thc-conv-lbl">Conv.</div>
+            <div class="pf-thc-conv-bar"><div class="pf-thc-conv-fill" style="width:${convPct}%"></div></div>
+          </div>
+        </div>
+        <div class="pf-thc-thesis">${_esc(thesis.label||tkLabel)}</div>
+        ${sparkHtml}
+        ${pxRow}
+        ${scnHtml}
+        ${devilHtml}
+      </div>`;
+    });
+
+    if(cards.length){
+      thcPanelHtml=`<div class="panel pf-thc">
+        <div class="pf-thc-h">
+          <div>
+            <div class="pf-thc-title">Thesis-Karten — Investment Case per aktivem Call</div>
+            <div class="pf-thc-sub">Direction · Conviction · 30d Price-Action · Bull/Base/Bear-Szenario (Analyst-PT-Band, direction-adjustiert) · Devil's-Advocate-Counter</div>
+          </div>
+        </div>
+        <div class="pf-thc-grid">${cards.join("")}</div>
+        <div class="pf-thc-foot">Szenarien aus yfinance-aggregiertem Street-Analystenkonsensus (pt_low/pt_mean/pt_high). Returns direction-adjustiert: für SHORT-Calls ist Bull-Szenario = pt_low (untere Schiene = ideal für Short). Devil's Advocate stammt aus dem Track-Record-Eintrag der These (CAUTION = berechtigter Counter, REJECT = strukturelle Schwäche). Sparkline: 30d Schlusskurse, Baseline gestrichelt.</div>
+      </div>`;
+    }
+  }
+
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${thcPanelHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
