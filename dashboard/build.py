@@ -1617,6 +1617,66 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .tr-progress .tr-pb-label{display:flex;justify-content:space-between;font-size:var(--fs-cap);color:var(--mut);margin-bottom:4px}
 .tr-progress .tr-pb-track{height:6px;background:var(--panel2);border-radius:3px;border:1px solid var(--line);overflow:hidden}
 .tr-progress .tr-pb-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .3s}
+/* Thesis cards: per-call mini-chart + scenario grid (HED-137 cycle 114) — replaces
+   tr-pending table for active calls. Mobile-first single column, 2-col on wider. */
+.thp-cap{margin-top:var(--s4);margin-bottom:var(--s2);font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
+.thp-grid{display:grid;grid-template-columns:1fr;gap:var(--s3)}
+@media (min-width:780px){.thp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.thp-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:var(--s3);display:flex;flex-direction:column;gap:var(--s2)}
+.thp-h{display:flex;justify-content:space-between;align-items:center;gap:var(--s2);flex-wrap:wrap}
+.thp-h-left{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.thp-h-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.thp-tickers{display:inline-flex;gap:4px;font-weight:700;font-size:var(--fs-body);letter-spacing:.02em}
+.thp-tk{color:var(--txt);text-decoration:none;border-bottom:1px dotted rgba(138,160,189,.4)}
+.thp-tk:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.thp-dir{font-size:var(--fs-micro);padding:1px 6px;border-radius:4px;letter-spacing:.04em}
+.thp-hz{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.04em;color:var(--mut);border:1px solid var(--line);padding:1px 5px;border-radius:4px}
+.thp-pnl{font-variant-numeric:tabular-nums;font-weight:700;font-size:var(--fs-body);padding:2px 8px;border-radius:6px}
+.thp-pnl-pos{color:var(--green);background:rgba(63,185,80,.10)}
+.thp-pnl-neg{color:var(--red);background:rgba(248,81,73,.10)}
+.thp-pnl-unp{color:var(--mut);background:var(--panel)}
+.thp-conv{font-variant-numeric:tabular-nums;font-weight:600;font-size:var(--fs-cap);padding:2px 7px;border-radius:6px;background:var(--panel);border:1px solid var(--line)}
+.thp-conv.conv-hi{color:var(--green);border-color:rgba(63,185,80,.4)}
+.thp-conv.conv-mid{color:var(--amber);border-color:rgba(210,153,34,.4)}
+.thp-conv.conv-lo{color:var(--mut)}
+.thp-label{font-size:var(--fs-body);font-weight:600;color:var(--txt);line-height:1.35}
+.thp-chart{position:relative;height:64px;width:100%;background:var(--panel);border-radius:6px;overflow:hidden}
+.thp-chart-svg{width:100%;height:100%;display:block}
+.thp-chart-empty{display:flex;align-items:center;justify-content:center;font-size:var(--fs-cap)}
+.thp-meta{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s3);font-size:var(--fs-cap);color:var(--mut);font-variant-numeric:tabular-nums;align-items:baseline}
+.thp-base,.thp-cur,.thp-range,.thp-score{white-space:nowrap}
+.thp-base{color:var(--txt)}
+.thp-cur{color:var(--txt)}
+.thp-score{margin-left:auto}
+.thp-score b{color:var(--txt);font-weight:600}
+.thp-scen{display:flex;flex-direction:column;gap:3px;margin-top:var(--s1);border-top:1px solid var(--line);padding-top:var(--s2)}
+.thp-sc-row{display:grid;grid-template-columns:36px 70px auto 1fr;gap:8px;align-items:center;font-size:var(--fs-cap);line-height:1.3}
+.thp-sc-lbl{font-size:var(--fs-micro);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.thp-sc-bull .thp-sc-lbl{color:var(--green)}
+.thp-sc-base .thp-sc-lbl{color:var(--accent)}
+.thp-sc-bear .thp-sc-lbl{color:var(--red)}
+.thp-sc-prob{position:relative;display:inline-block;height:14px;background:var(--panel);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.thp-sc-pbar{position:absolute;left:0;top:0;bottom:0;background:rgba(138,160,189,.25)}
+.thp-sc-bull .thp-sc-pbar{background:rgba(63,185,80,.35)}
+.thp-sc-base .thp-sc-pbar{background:rgba(77,163,255,.35)}
+.thp-sc-bear .thp-sc-pbar{background:rgba(248,81,73,.35)}
+.thp-sc-pn{position:relative;display:inline-block;padding:0 4px;font-size:var(--fs-micro);font-variant-numeric:tabular-nums;color:var(--txt);font-weight:600}
+.thp-sc-tgt{font-variant-numeric:tabular-nums;color:var(--txt);font-weight:600}
+.thp-sc-trig{color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.thp-exit{font-size:var(--fs-cap);color:var(--mut);display:flex;gap:6px;align-items:baseline}
+.thp-exit-lbl{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.05em;color:var(--amber);font-weight:700}
+.thp-devil{font-size:var(--fs-cap);line-height:1.4;color:var(--txt);padding:var(--s2);border-radius:6px;border:1px solid var(--line);background:var(--panel)}
+.thp-devil-reject{border-color:rgba(248,81,73,.4);background:rgba(248,81,73,.06)}
+.thp-devil-caution{border-color:rgba(210,153,34,.35);background:rgba(210,153,34,.05)}
+.thp-devil-lbl{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--amber)}
+.thp-devil-reject .thp-devil-lbl{color:var(--red)}
+.thp-devil-note{color:var(--mut)}
+@media (max-width:430px){
+  .thp-h-right{width:100%;justify-content:flex-end}
+  .thp-sc-row{grid-template-columns:32px 56px auto;}
+  .thp-sc-trig{display:none}
+  .thp-score{margin-left:0}
+}
 .tr-pending{width:100%;border-collapse:collapse;margin-top:var(--s4);font-size:var(--fs-cap)}
 .tr-pending thead th{color:var(--mut);font-weight:500;text-align:left;padding:3px 8px 3px 0;border-bottom:1px solid var(--line);white-space:nowrap}
 .tr-pending td,.tr-pending tbody th{padding:5px 8px 5px 0;border-bottom:1px solid var(--panel2);vertical-align:top}
@@ -4264,31 +4324,148 @@ function calibSvg(buckets){
       return `<span class="${cls}" style="font-size:var(--fs-cap);font-variant-numeric:tabular-nums" title="Baseline $${t.baseline_price} → jetzt $${cur.toFixed(2)}">${up?"+":"−"}${Math.abs(pnl).toFixed(1)}%</span>`;
     }
     const pendingTheses=(tr.theses||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+    // Per-thesis sparkline source: 30 daily closes from sector_view (already fetched by build.py).
+    // Card embeds the chart with: dashed baseline line, entry chevron, current-price dot,
+    // P&L pill colored by direction-adjusted move. The strongest trust signal — institutional
+    // investors expect to see price-action context, not just numbers in a table (HED-137 cycle 114).
+    const _thpSparkMap={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>{
+      (s.tickers||[]).forEach(t=>{ if(t&&t.ticker&&Array.isArray(t.spark)&&t.spark.length>=5) _thpSparkMap[String(t.ticker).toUpperCase()]=t.spark; });
+    });
+    const _thpAsOf=((D.sector_view||{}).as_of_iso||(D.sector_view||{}).as_of||"").replace(/ UTC.*/,"").slice(0,10);
+    function _thpBdaysBack(dStr, asOfStr){
+      if(!dStr||!asOfStr) return null;
+      try{ const d1=new Date(dStr+"T00:00:00Z"); const d2=new Date(asOfStr+"T00:00:00Z");
+        if(isNaN(d1)||isNaN(d2)||d1>d2) return null;
+        let cur=new Date(d1), n=0; while(cur<d2){ cur.setUTCDate(cur.getUTCDate()+1); const dow=cur.getUTCDay(); if(dow!==0&&dow!==6) n++; } return n;
+      }catch(e){ return null; }
+    }
+    function _thpEntryIdx(spark, baseline, dateStr){
+      if(!spark||!spark.length||baseline==null) return -1;
+      if(dateStr && _thpAsOf){
+        const back=_thpBdaysBack(dateStr, _thpAsOf);
+        if(back!=null){ const idx=spark.length-1-back;
+          if(idx>=0 && idx<spark.length && Math.abs(spark[idx]-baseline)/baseline<0.05) return idx; }
+      }
+      const start=Math.max(0, spark.length-6); let best=-1, bestDiff=Infinity;
+      for(let i=start;i<spark.length;i++){ const d=Math.abs(spark[i]-baseline); if(d<bestDiff){ bestDiff=d; best=i; } }
+      return (best>=0 && Math.abs(spark[best]-baseline)/baseline<0.01) ? best : -1;
+    }
+    // Inline sparkline SVG with baseline line + entry marker + current dot.
+    // viewBox is content-only (no padding); CSS provides the box. preserveAspectRatio=none
+    // lets the chart stretch to fill the container — sparklines, not precision charts.
+    function _thpSpark(spark, baseline, dir){
+      if(!spark||spark.length<3) return "";
+      const w=300, h=64, pad=4;
+      const vals=spark.slice();
+      const lo=Math.min.apply(null, baseline!=null?vals.concat(baseline):vals);
+      const hi=Math.max.apply(null, baseline!=null?vals.concat(baseline):vals);
+      const range=Math.max(0.0001, hi-lo);
+      const stepX=(w-pad*2)/(vals.length-1);
+      const yOf=v=>pad+(h-pad*2)-((v-lo)/range)*(h-pad*2);
+      const xOf=i=>pad+i*stepX;
+      const last=vals[vals.length-1];
+      const sign=(dir||"").toLowerCase()==="short"?-1:1;
+      const pnl=baseline!=null?((last-baseline)/baseline*100)*sign:0;
+      const stroke=baseline==null?"var(--accent)":pnl>=0?"var(--green)":"var(--red)";
+      const fillCol=baseline==null?"77,163,255":pnl>=0?"63,185,80":"248,81,73";
+      const d="M"+vals.map((v,i)=>`${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" L");
+      const area=d+` L${xOf(vals.length-1).toFixed(1)},${(h-pad).toFixed(1)} L${xOf(0).toFixed(1)},${(h-pad).toFixed(1)} Z`;
+      const baseY=baseline!=null?yOf(baseline):null;
+      const eIdx=baseline!=null?_thpEntryIdx(vals, baseline, null):-1;
+      const baselineLine=baseY!=null?`<line x1="${pad}" y1="${baseY.toFixed(1)}" x2="${(w-pad).toFixed(1)}" y2="${baseY.toFixed(1)}" stroke="var(--mut)" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>`:"";
+      const entryMark=eIdx>=0?`<g transform="translate(${xOf(eIdx).toFixed(1)},${yOf(vals[eIdx]).toFixed(1)})">
+        <circle r="3.5" fill="var(--panel)" stroke="var(--mut)" stroke-width="1.2"/>
+      </g>`:"";
+      const lastDot=`<circle cx="${xOf(vals.length-1).toFixed(1)}" cy="${yOf(last).toFixed(1)}" r="3" fill="${stroke}"/>`;
+      return `<svg class="thp-chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+        <path d="${area}" fill="rgba(${fillCol},0.08)"/>
+        ${baselineLine}
+        <path d="${d}" fill="none" stroke="${stroke}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+        ${entryMark}${lastDot}
+      </svg>`;
+    }
     const pendingTbl=pendingTheses.length ? (()=>{
       const rows=pendingTheses.slice().sort((x,y)=>
-        (x.earliest_score_date||"").localeCompare(y.earliest_score_date||""));
+        ((y.conviction||0)-(x.conviction||0)) ||
+        ((x.earliest_score_date||"").localeCompare(y.earliest_score_date||"")));
       const _cc=c=>c==null?"":c>=0.6?"conv-hi":c>=0.35?"conv-mid":"conv-lo";
-      const devNote=t=>t.devil&&t.devil.note?` title="⚖ ${esc(t.devil.verdict||"?")} — ${esc(t.devil.note)}" style="cursor:help"`:""
-      const exitNote=t=>t.exit_trigger?`<div class="exit-trigger" title="Exit wenn: ${esc(t.exit_trigger)}">🚪 <span>${esc(t.exit_trigger)}</span></div>`:"";
-      const scenNote=t=>{
+      const exitNote=t=>t.exit_trigger?`<div class="thp-exit" title="Exit wenn: ${esc(t.exit_trigger)}"><span class="thp-exit-lbl">Exit</span> <span>${esc(t.exit_trigger)}</span></div>`:"";
+      // Scenario grid: Bull/Base/Bear stacked rows with prob bar + target. Recognition>recall —
+      // PM should see all three scenarios at once, not parse a one-line CSV.
+      const scenGrid=t=>{
         const sc=t.scenarios; if(!sc) return "";
-        const fmt=(k,s)=>{if(!s)return null;const tgt=s.target?` ${s.target}`:"";const p=`(P=${Math.round((s.prob||0)*100)}%)`;return `${k}${s.trigger?" "+esc(s.trigger):""}${tgt} ${p}`;};
-        const parts=[fmt("Bull",sc.bull),fmt("Base",sc.base),fmt("Bear",sc.bear)].filter(Boolean);
-        return parts.length?`<div class="sc-line muted">${parts.join(" · ")}</div>`:"";
+        const items=[["Bull","sc-bull",sc.bull],["Base","sc-base",sc.base],["Bear","sc-bear",sc.bear]]
+          .filter(x=>x[2]);
+        if(!items.length) return "";
+        const rows=items.map(([lbl,cls,s])=>{
+          const p=Math.round((s.prob||0)*100);
+          const tgt=s.target?esc(s.target):"";
+          const trig=s.trigger?esc(s.trigger):"";
+          return `<div class="thp-sc-row thp-${cls}">
+            <span class="thp-sc-lbl">${lbl}</span>
+            <span class="thp-sc-prob"><span class="thp-sc-pbar" style="width:${p}%"></span><span class="thp-sc-pn">${p}%</span></span>
+            <span class="thp-sc-tgt">${tgt}</span>
+            <span class="thp-sc-trig">${trig}</span>
+          </div>`;
+        }).join("");
+        return `<div class="thp-scen" aria-label="Szenario-Zusammenfassung">${rows}</div>`;
       };
-      return `<table class="tr-pending"><caption class="tr-cap">Offene Thesen — zu früh für Wertung</caption>
-        <thead><tr><th scope="col">Diese</th><th scope="col">Richtung</th><th scope="col">Conv.</th><th scope="col">Unrealis. P&amp;L</th><th scope="col">Wertung ab</th></tr></thead>
-        <tbody>${rows.map(t=>`<tr${devNote(t)}>
-          <th scope="row" data-label="These"><span class="t" style="font-weight:600">${esc(t.label||"?")}</span>
-            ${(t.tickers||[]).length?" <span class='muted'>("+
-              (t.tickers||[]).map(tk=>`<a class="tkl" href="https://finance.yahoo.com/quote/${encodeURIComponent(tk)}" target="_blank" rel="noopener">${esc(tk)}</a>`).join(", ")+
-            ")</span>":""}
-            ${exitNote(t)}${scenNote(t)}</th>
-          <td data-label="Richtung"><span class="cd ${dirClass(t.direction)}">${esc(t.direction||"—")}</span></td>
-          <td class="num" data-label="Conv."><span class="${_cc(t.conviction)}" style="font-variant-numeric:tabular-nums">${t.conviction!=null?t.conviction.toFixed(2):"—"}</span></td>
-          <td class="num" data-label="P&L">${_mtm(t)||'<span class="muted">—</span>'}</td>
-          <td class="sd" data-label="Wertung ab">${esc(t.earliest_score_date||"—")}</td>
-        </tr>`).join("")}</tbody></table>`;
+      const cards=rows.map(t=>{
+        const tks=(t.tickers||[]).map(x=>String(x).toUpperCase());
+        const primaryTk=tks[0]||"";
+        const spark=primaryTk?_thpSparkMap[primaryTk]:null;
+        const cur=primaryTk?_priceMap[primaryTk]:null;
+        const base=t.baseline_price;
+        const dir=(t.direction||"").toLowerCase();
+        const sign=dir==="short"?-1:1;
+        const pnl=(base!=null && cur!=null) ? ((cur-base)/base*100)*sign : null;
+        const pnlCls=pnl==null?"thp-pnl-unp":pnl>=0?"thp-pnl-pos":"thp-pnl-neg";
+        const pnlTxt=pnl==null?"—":`${pnl>=0?"+":"−"}${Math.abs(pnl).toFixed(2)}%`;
+        const lo=spark?Math.min.apply(null,spark):null;
+        const hi=spark?Math.max.apply(null,spark):null;
+        const scaleNote=spark
+          ? `<span class="thp-range">30d $${lo.toFixed(0)}–$${hi.toFixed(0)}</span>`
+          : `<span class="thp-range muted">kein Chart</span>`;
+        const baseTag=base!=null?`<span class="thp-base">Entry $${base}</span>`:"";
+        const curTag=cur!=null?`<span class="thp-cur">aktuell $${cur.toFixed(2)}</span>`:"";
+        const chart=spark
+          ? `<div class="thp-chart">${_thpSpark(spark, base, dir)}</div>`
+          : `<div class="thp-chart thp-chart-empty muted">kein Sparkline-Datenpunkt</div>`;
+        const tickersHtml=tks.length
+          ? tks.map(tk=>`<a class="thp-tk" href="https://finance.yahoo.com/quote/${encodeURIComponent(tk)}" target="_blank" rel="noopener">${esc(tk)}</a>`).join(" ")
+          : `<span class="muted">—</span>`;
+        const devil=t.devil&&t.devil.note
+          ? `<div class="thp-devil thp-devil-${esc(t.devil.verdict||"caution")}" title="Devil's Advocate"><span class="thp-devil-lbl">⚖ ${esc(t.devil.verdict||"caution")}</span> <span class="thp-devil-note">${esc(t.devil.note)}</span></div>`
+          : "";
+        const horizon=t.horizon?`<span class="thp-hz">${esc(t.horizon)}</span>`:"";
+        return `<article class="thp-card">
+          <header class="thp-h">
+            <div class="thp-h-left">
+              <span class="thp-tickers">${tickersHtml}</span>
+              <span class="cd ${dirClass(t.direction)} thp-dir">${esc((t.direction||"—").toUpperCase())}</span>
+              ${horizon}
+            </div>
+            <div class="thp-h-right">
+              <span class="thp-pnl ${pnlCls}">${pnlTxt}</span>
+              <span class="thp-conv ${_cc(t.conviction)}" title="Conviction">${t.conviction!=null?t.conviction.toFixed(2):"—"}</span>
+            </div>
+          </header>
+          <div class="thp-label">${esc(t.label||"?")}</div>
+          ${chart}
+          <div class="thp-meta">
+            ${baseTag}
+            ${curTag}
+            ${scaleNote}
+            <span class="thp-score">Wertung ab <b>${esc(t.earliest_score_date||"—")}</b></span>
+          </div>
+          ${scenGrid(t)}
+          ${exitNote(t)}
+          ${devil}
+        </article>`;
+      }).join("");
+      return `<div class="thp-cap">Offene Thesen — zu früh für Wertung · <span class="muted">Sortiert nach Conviction</span></div>
+        <div class="thp-grid">${cards}</div>`;
     })() : "";
     $("trbody").innerHTML=`<div class="panel"><div class="empty">
       <div class="g" aria-hidden="true">⏳</div>
