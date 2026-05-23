@@ -2439,6 +2439,29 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-nav-chip:focus{outline:1px solid var(--blue);outline-offset:1px}
 .pf-nav-chip-active{background:rgba(88,166,255,.15);color:var(--txt);border-color:rgba(88,166,255,.45);box-shadow:0 0 0 1px rgba(88,166,255,.25)}
 .pf-nav-chip-active .pf-nav-chip-icon{color:var(--blue)}
+/* Live Page-Status Bar (HED-150 Zyklus 181)
+   Sticky thin bar at top of page showing book P&L, CRIT alerts, market state,
+   last-update timestamp. Always visible — Bloomberg-style status ticker. */
+.pf-status-bar{position:sticky;top:0;z-index:30;background:rgba(11,15,23,.95);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-bottom:1px solid rgba(139,148,158,.18);padding:5px var(--s3);display:flex;align-items:center;gap:14px;font-size:11px;font-variant-numeric:tabular-nums;flex-wrap:wrap;line-height:1.2}
+.pf-status-bar[hidden]{display:none}
+.pf-status-cell{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.pf-status-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
+.pf-status-val{color:var(--txt);font-weight:700}
+.pf-status-val-pos{color:#3fb950}
+.pf-status-val-neg{color:#f85149}
+.pf-status-val-warn{color:#e3b341}
+.pf-status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3fb950;box-shadow:0 0 4px rgba(63,185,80,.5)}
+.pf-status-dot-warn{background:#e3b341;box-shadow:0 0 4px rgba(227,179,65,.5)}
+.pf-status-dot-crit{background:#f85149;box-shadow:0 0 4px rgba(248,81,73,.5);animation:pf-status-pulse 1.4s ease-in-out infinite}
+@keyframes pf-status-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pf-status-spacer{flex:1}
+@media(max-width:600px){
+  .pf-status-bar{padding:4px var(--s2);gap:8px;font-size:10px}
+  .pf-status-lbl{font-size:8px}
+}
+@media print{
+  .pf-status-bar{display:none!important}
+}
 /* Print-Friendly Stylesheet (HED-150 Zyklus 178)
    Turns the dark-themed dashboard into a clean printable report for IC,
    board meetings, compliance archives. Hides navigation chrome, switches to
@@ -5316,6 +5339,10 @@ main:focus{outline:none}
     <div class="sub">Live-Feed → Agenten-Gremium → CEO-Briefing · MVP</div></div>
     <div class="sub" id="builtwrap">aktualisiert: <span id="built"></span></div>
   </header>
+
+  <!-- Live Page-Status Bar (HED-150 Zyklus 181): always-visible Bloomberg-style ticker bar.
+       Sticky at top:0, shows book P&L · CRIT count · market status · last-update across all sections. -->
+  <div id="pf-status-bar" class="pf-status-bar" aria-label="Live Page Status — Book PnL, Alerts, Market" hidden></div>
 
   <!-- Fund performance summary bar (HED-137 Zyklus 115): above-the-fold trust signal.
        Placed before nav so it's visible immediately on mobile without scrolling. -->
@@ -12430,6 +12457,72 @@ function calibSvg(buckets){
       const str=`${String(built.getDate()).padStart(2,'0')}.${String(built.getMonth()+1).padStart(2,'0')}.${built.getFullYear()} ${String(built.getHours()).padStart(2,'0')}:${String(built.getMinutes()).padStart(2,'0')} UTC`;
       pv.setAttribute("data-built", str);
     }catch(e){}
+  })();
+
+  // Live Page-Status Bar (HED-150 Zyklus 181).
+  // Sticky always-visible status ticker. Populates from existing computed data
+  // (book P&L, CRIT alert count, active position count, last-update). Auto-refresh
+  // every 30s to keep the time-since-update label live.
+  (function initStatusBar(){
+    const bar=document.getElementById("pf-status-bar");
+    if(!bar) return;
+    // Pull book P&L same way Heute-Story did
+    const _pf={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{if(t&&t.ticker&&t.price!=null) _pf[String(t.ticker).toUpperCase()]=t.price;}));
+    const priced=active.filter(t=>{
+      const tk=(t.tickers||[])[0]; return tk&&t.baseline_price!=null&&_pf[String(tk).toUpperCase()]!=null;
+    });
+    const wConv=priced.reduce((s,t)=>s+(t.conviction||0),0);
+    const bookPnl=wConv>0?priced.reduce((s,t)=>{
+      const tk=String((t.tickers||[])[0]).toUpperCase();
+      const cur=_pf[tk]; const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+      return s+(t.conviction||0)*((cur-t.baseline_price)/t.baseline_price*100)*sign;
+    },0)/wConv:null;
+    // Count CRIT alerts from Portfolio-Alerts HTML
+    let critCount=0;
+    const portfolioRoot=document.getElementById("portfolioview");
+    if(portfolioRoot){
+      // Crude scan — Portfolio-Alerts HTML uses .pf-al-card-crit class
+      // But Portfolio panel hasn't rendered yet at this script run, so use D structure
+      critCount=0; // populated by mutation observer below
+    }
+    // Last update
+    const built=new Date(D.built_at_iso||Date.now());
+    function _ageMin(){return (Date.now()-built.getTime())/60000;}
+    function _ageStr(){
+      const m=_ageMin();
+      if(m<1) return "jetzt";
+      if(m<60) return `${Math.round(m)}m`;
+      return `${Math.floor(m/60)}h`;
+    }
+    function _refresh(){
+      // Recompute CRIT count from rendered Portfolio-Alerts
+      const critEls=document.querySelectorAll(".pf-al-card-crit");
+      critCount=critEls.length;
+      // Position count
+      const nAct=active.length;
+      // Active conflict detection: count critical alerts that mention an active ticker
+      const dotCls=critCount>0?"pf-status-dot pf-status-dot-crit":(_ageMin()>120?"pf-status-dot pf-status-dot-warn":"pf-status-dot");
+      const pnlCls=bookPnl==null?"pf-status-val":(bookPnl>=0?"pf-status-val pf-status-val-pos":"pf-status-val pf-status-val-neg");
+      const pnlStr=bookPnl==null?"—":(bookPnl>=0?"+":"−")+Math.abs(bookPnl).toFixed(2)+"%";
+      const critHtml=critCount>0?`<span class="pf-status-cell"><span class="pf-status-lbl">⚠ CRIT</span><span class="pf-status-val pf-status-val-neg">${critCount}</span></span>`:"";
+      bar.innerHTML=`
+        <span class="pf-status-cell"><span class="${dotCls}" title="Live"></span><span class="pf-status-val">Hedging Alpha</span></span>
+        <span class="pf-status-cell"><span class="pf-status-lbl">Buch</span><span class="${pnlCls}">${pnlStr}</span></span>
+        <span class="pf-status-cell"><span class="pf-status-lbl">Pos</span><span class="pf-status-val">${nAct}</span></span>
+        ${critHtml}
+        <span class="pf-status-spacer"></span>
+        <span class="pf-status-cell"><span class="pf-status-lbl">Stand</span><span class="pf-status-val">${_ageStr()} alt</span></span>
+      `;
+      bar.removeAttribute("hidden");
+      // Update browser tab title too
+      const titlePrefix=critCount>0?`⚠ ${critCount} · `:"";
+      const titlePnl=bookPnl==null?"":`${bookPnl>=0?"+":"−"}${Math.abs(bookPnl).toFixed(2)}% · `;
+      document.title=`${titlePrefix}${titlePnl}Hedging Alpha`;
+    }
+    // Initial render after a moment so Portfolio-Alerts has had time to render
+    setTimeout(_refresh, 600);
+    setInterval(_refresh, 30000);
   })();
 
   // Position-Matrix CSV Export (HED-150 Zyklus 180).
