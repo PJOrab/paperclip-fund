@@ -2439,6 +2439,32 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-nav-chip:focus{outline:1px solid var(--blue);outline-offset:1px}
 .pf-nav-chip-active{background:rgba(88,166,255,.15);color:var(--txt);border-color:rgba(88,166,255,.45);box-shadow:0 0 0 1px rgba(88,166,255,.25)}
 .pf-nav-chip-active .pf-nav-chip-icon{color:var(--blue)}
+/* Keyboard-Shortcut Overlay (HED-150 Zyklus 182)
+   Bloomberg-style g+letter quick-jumps. "?" opens an overlay listing all
+   shortcuts. Esc closes. "/" focuses universe filter. Power-user UX. */
+.pf-kb-overlay{position:fixed;inset:0;background:rgba(11,15,23,.78);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;padding:var(--s4);animation:pf-kb-fade .15s ease-out}
+.pf-kb-overlay[hidden]{display:none}
+@keyframes pf-kb-fade{from{opacity:0}to{opacity:1}}
+.pf-kb-card{background:var(--bg);border:1px solid rgba(139,148,158,.25);border-radius:8px;padding:var(--s4);max-width:480px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.pf-kb-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--s3);padding-bottom:var(--s2);border-bottom:1px solid rgba(139,148,158,.15)}
+.pf-kb-title{font-weight:700;font-size:var(--fs-h3);color:var(--txt)}
+.pf-kb-close{background:transparent;border:1px solid rgba(139,148,158,.2);color:var(--mut);cursor:pointer;border-radius:4px;padding:3px 8px;font-size:11px;font-family:inherit}
+.pf-kb-close:hover{background:rgba(139,148,158,.1);color:var(--txt)}
+.pf-kb-section{margin-bottom:var(--s3)}
+.pf-kb-section-h{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--mut);margin-bottom:var(--s2)}
+.pf-kb-list{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 14px;font-size:var(--fs-cap)}
+.pf-kb-row{display:flex;align-items:center;gap:8px;padding:3px 0}
+.pf-kb-key{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;font-size:10px;color:var(--txt);background:rgba(139,148,158,.12);border:1px solid rgba(139,148,158,.2);border-radius:3px;padding:2px 6px;min-width:32px;text-align:center;flex-shrink:0;line-height:1}
+.pf-kb-desc{color:var(--mut);font-size:11px}
+.pf-kb-hint{position:fixed;bottom:var(--s3);right:var(--s3);font-size:10px;color:var(--mut);opacity:.4;pointer-events:none;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:rgba(11,15,23,.5);padding:3px 8px;border-radius:3px;z-index:5;transition:opacity .2s}
+.pf-kb-hint:hover{opacity:.9}
+@media(max-width:600px){
+  .pf-kb-list{grid-template-columns:1fr}
+  .pf-kb-hint{display:none}
+}
+@media print{
+  .pf-kb-overlay,.pf-kb-hint{display:none!important}
+}
 /* Live Page-Status Bar (HED-150 Zyklus 181)
    Sticky thin bar at top of page showing book P&L, CRIT alerts, market state,
    last-update timestamp. Always visible — Bloomberg-style status ticker. */
@@ -5343,6 +5369,46 @@ main:focus{outline:none}
   <!-- Live Page-Status Bar (HED-150 Zyklus 181): always-visible Bloomberg-style ticker bar.
        Sticky at top:0, shows book P&L · CRIT count · market status · last-update across all sections. -->
   <div id="pf-status-bar" class="pf-status-bar" aria-label="Live Page Status — Book PnL, Alerts, Market" hidden></div>
+
+  <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
+  <div id="pf-kb-overlay" class="pf-kb-overlay" role="dialog" aria-modal="true" aria-label="Keyboard Shortcuts" hidden>
+    <div class="pf-kb-card">
+      <div class="pf-kb-h">
+        <span class="pf-kb-title">Keyboard Shortcuts</span>
+        <button class="pf-kb-close" id="pf-kb-close-btn" type="button">Esc</button>
+      </div>
+      <div class="pf-kb-section">
+        <div class="pf-kb-section-h">Quick-Jump (Portfolio)</div>
+        <div class="pf-kb-list">
+          <div class="pf-kb-row"><span class="pf-kb-key">g a</span><span class="pf-kb-desc">Alerts</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g m</span><span class="pf-kb-desc">Matrix</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g f</span><span class="pf-kb-desc">Funnel</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g r</span><span class="pf-kb-desc">Sektor-Rotation</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g t</span><span class="pf-kb-desc">Thesen</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g e</span><span class="pf-kb-desc">Equity-Curve</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g c</span><span class="pf-kb-desc">Calibration</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g v</span><span class="pf-kb-desc">Fundamentals (Value)</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g i</span><span class="pf-kb-desc">Ideas</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g x</span><span class="pf-kb-desc">Events (eXpiry)</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g n</span><span class="pf-kb-desc">News</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g s</span><span class="pf-kb-desc">Scanner</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g d</span><span class="pf-kb-desc">InsiDer-Flow</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g y</span><span class="pf-kb-desc">analYse</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g p</span><span class="pf-kb-desc">Pipeline</span></div>
+        </div>
+      </div>
+      <div class="pf-kb-section">
+        <div class="pf-kb-section-h">Actions</div>
+        <div class="pf-kb-list">
+          <div class="pf-kb-row"><span class="pf-kb-key">/</span><span class="pf-kb-desc">Focus Universe-Filter</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">?</span><span class="pf-kb-desc">Toggle this overlay</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">Esc</span><span class="pf-kb-desc">Close overlay</span></div>
+          <div class="pf-kb-row"><span class="pf-kb-key">g g</span><span class="pf-kb-desc">Top of page</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="pf-kb-hint" id="pf-kb-hint">Press <b>?</b> for shortcuts</div>
 
   <!-- Fund performance summary bar (HED-137 Zyklus 115): above-the-fold trust signal.
        Placed before nav so it's visible immediately on mobile without scrolling. -->
@@ -12457,6 +12523,85 @@ function calibSvg(buckets){
       const str=`${String(built.getDate()).padStart(2,'0')}.${String(built.getMonth()+1).padStart(2,'0')}.${built.getFullYear()} ${String(built.getHours()).padStart(2,'0')}:${String(built.getMinutes()).padStart(2,'0')} UTC`;
       pv.setAttribute("data-built", str);
     }catch(e){}
+  })();
+
+  // Keyboard-Shortcut Handler (HED-150 Zyklus 182).
+  // Bloomberg-style g+letter quick-jumps. "?" opens overlay, Esc closes, "/" focuses filter.
+  (function initKbShortcuts(){
+    const overlay=document.getElementById("pf-kb-overlay");
+    const closeBtn=document.getElementById("pf-kb-close-btn");
+    const hint=document.getElementById("pf-kb-hint");
+    if(!overlay) return;
+    const jumpMap={
+      a:"pf-alerts", m:"pf-matrix", f:"pf-funnel", r:"pf-rotation",
+      t:"pf-theses", e:"pf-equity", c:"pf-calmap", v:"pf-fundamentals",
+      i:"pf-ideas", x:"pf-events", n:"pf-news", s:"pf-scanner",
+      d:"pf-insider", y:"pf-analysis", p:"pf-pipeline", g:"__top__"
+    };
+    let pendingG=false;
+    let pendingTimer=null;
+    function _openOverlay(){overlay.removeAttribute("hidden"); if(hint) hint.style.display="none";}
+    function _closeOverlay(){overlay.setAttribute("hidden",""); if(hint) hint.style.display="";}
+    function _isInputFocused(){
+      const el=document.activeElement;
+      if(!el) return false;
+      const tag=el.tagName||"";
+      return tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT"||el.isContentEditable;
+    }
+    function _jumpTo(id){
+      if(id==="__top__"){window.scrollTo({top:0,behavior:"smooth"}); return;}
+      const target=document.getElementById(id);
+      if(target){target.scrollIntoView({behavior:"smooth",block:"start"});}
+    }
+    document.addEventListener("keydown",function(e){
+      if(e.metaKey||e.ctrlKey||e.altKey) return;
+      // Close overlay with Esc regardless
+      if(e.key==="Escape"){
+        if(!overlay.hasAttribute("hidden")){_closeOverlay(); e.preventDefault(); return;}
+      }
+      // If user is typing in an input, ignore shortcuts (except Esc handled above)
+      if(_isInputFocused()) return;
+      // "?" toggle overlay
+      if(e.key==="?"){
+        if(overlay.hasAttribute("hidden")) _openOverlay(); else _closeOverlay();
+        e.preventDefault(); return;
+      }
+      // "/" focus universe filter
+      if(e.key==="/"){
+        const inp=document.getElementById("pf-us-filter-input");
+        if(inp){
+          inp.focus();
+          // Scroll universe scanner into view
+          const panel=document.querySelector(".pf-us-panel");
+          if(panel) panel.scrollIntoView({behavior:"smooth",block:"start"});
+          e.preventDefault();
+        }
+        return;
+      }
+      // "g" + letter quick-jump sequence
+      if(e.key==="g"&&!pendingG){
+        pendingG=true;
+        clearTimeout(pendingTimer);
+        pendingTimer=setTimeout(()=>{pendingG=false;}, 1200);
+        e.preventDefault(); return;
+      }
+      if(pendingG && jumpMap[e.key.toLowerCase()]){
+        pendingG=false;
+        clearTimeout(pendingTimer);
+        _jumpTo(jumpMap[e.key.toLowerCase()]);
+        e.preventDefault();
+        return;
+      }
+      if(pendingG){
+        // Any other key cancels g sequence
+        pendingG=false;
+        clearTimeout(pendingTimer);
+      }
+    });
+    if(closeBtn) closeBtn.addEventListener("click",_closeOverlay);
+    overlay.addEventListener("click",function(e){if(e.target===overlay) _closeOverlay();});
+    // Auto-hide hint after 8s
+    if(hint){setTimeout(()=>{hint.style.transition="opacity 1s";hint.style.opacity="0.25";},8000);}
   })();
 
   // Live Page-Status Bar (HED-150 Zyklus 181).
