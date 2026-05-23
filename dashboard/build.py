@@ -347,29 +347,6 @@ border-radius:8px;padding:var(--s3);margin-bottom:10px;scroll-margin-top:80px}
 .devil{margin-top:var(--s2);padding:var(--s2) 10px;background:var(--devil-bg);border:1px solid var(--devil-line);
 border-radius:8px;font-size:var(--fs-h2)}
 .devil .v{font-weight:600;text-transform:uppercase;font-size:var(--fs-micro)}
-/* thesis-card sparkline: 30-day price trend inline with heading (HED-130, ported from /srv Zyklus 71) */
-.tc-spark{display:inline-flex;align-items:center;gap:4px;vertical-align:middle;margin-left:var(--s2)}
-.tc-spark .spark{width:72px;height:22px}
-.tc-spark-chg{font-size:var(--fs-cap);font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
-/* thesis-card scenario block: bull/bear/catalysts (HED-130) */
-.tc-scen{margin-top:var(--s3)}
-.tc-scen-lbl{font-size:var(--fs-micro);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
-.tc-bull{border-left:3px solid var(--green);padding-left:8px;margin-bottom:var(--s2)}
-.tc-bear{border-left:3px solid var(--red);padding-left:8px;margin-bottom:var(--s2)}
-.tc-cat{border-left:3px solid var(--accent);padding-left:8px}
-.tc-scen ul{margin:0;padding-left:14px;font-size:var(--fs-cap);line-height:1.5;color:var(--txt)}
-.tc-scen li{margin-bottom:2px}.tc-scen li:last-child{margin-bottom:0}
-.tc-hz{display:inline-block;font-size:var(--fs-micro);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-top:4px;color:var(--mut)}
-/* thesis-card analyst block: key_facts + key_uncertainty + read (HED-130) */
-.tc-analys{margin-top:var(--s3);border-left:3px solid var(--mut);padding-left:8px}
-.tc-analys-hd{display:flex;align-items:center;gap:var(--s2);margin-bottom:4px}
-.tc-analys-lbl{font-size:var(--fs-micro);font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
-.tc-analys ul{margin:0;padding-left:14px;font-size:var(--fs-cap);line-height:1.5;color:var(--txt)}
-.tc-analys li{margin-bottom:2px}.tc-analys li:last-child{margin-bottom:0}
-.tc-ku{margin-top:var(--s2);font-size:var(--fs-cap);color:var(--amber);line-height:1.45}
-/* portfolio correlation note banner (HED-130) */
-.corr-note{background:var(--devil-bg);border:1px solid var(--devil-line);border-radius:8px;padding:var(--s2) 12px;margin-bottom:var(--s3);font-size:var(--fs-cap);line-height:1.55}
-.corr-note-lbl{font-size:var(--fs-micro);font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#c084fc;display:block;margin-bottom:2px}
 .brief{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:20px 24px;
 max-width:var(--measure);margin-inline:0;line-height:1.75}
 /* two-column briefing on wide viewports: prose left at reading measure, thesis+Devil's-Advocate cards right — fills the desktop void beside the 72ch column, surfaces counter-arguments next to the call, shortens scroll (Gestalt Common Region/Proximity, F-pattern, Goal-Gradient) */
@@ -444,6 +421,21 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .exit-trigger{font-size:var(--fs-cap);color:var(--mut);margin-top:3px;max-width:320px;white-space:normal;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;cursor:help}
 .exit-trigger span{font-style:italic}
 .sc-line{font-size:var(--fs-cap);margin-top:2px}
+/* analytical depth: surface bull_case / bear_case / catalysts that already live in the thesis payload but never rendered — direction-agnostic labels (Pro/Risiken/Katalysatoren), color-coded left rails */
+.ta{margin-top:var(--s3);border-top:1px solid var(--line);padding-top:var(--s2)}
+.ta-sect{border-left:2px solid var(--line);padding:var(--s1) 0 var(--s1) var(--s3);margin-top:var(--s2)}
+.ta-sect--pro{border-left-color:var(--green)}
+.ta-sect--contra{border-left-color:var(--red)}
+.ta-sect--cat{border-left-color:var(--accent)}
+.ta-h{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.05em;color:var(--mut);font-weight:600;margin-bottom:var(--s1);display:flex;align-items:baseline;gap:6px}
+.ta-h .ta-n{color:var(--txt);font-variant-numeric:tabular-nums}
+.ta-list{margin:0;padding-left:18px;list-style:disc;font-size:var(--fs-cap);color:var(--txt);line-height:1.5}
+.ta-list li{margin-bottom:var(--s1)}
+.ta-list li:last-child{margin-bottom:0}
+.ta-list li::marker{color:var(--mut)}
+/* horizon badge on thesis card: shows time-frame of the call without crowding the header */
+.th-horizon{font-size:var(--fs-micro);font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:4px;background:var(--panel);border:1px solid var(--line);color:var(--mut);margin-left:auto;flex-shrink:0}
+.thesis .h{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
 /* portfolio view */
 .pf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--s3);margin-bottom:var(--s3)}
 .pf-bar-wrap{margin-top:var(--s3)}
@@ -456,6 +448,41 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-sec-name{flex:1;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pf-sec-bar{flex:0 0 80px;height:6px;background:var(--accent);border-radius:3px}
 .pf-sec-pct{width:32px;text-align:right;color:var(--mut)}
+/* concentration-risk readout: descriptive bars → actual risk signal (amber+icon when a threshold breaches) */
+.pf-risk{margin-top:var(--s3)}
+.pf-risk-h{font-size:var(--fs-cap);color:var(--mut);margin-bottom:var(--s2)}
+.pf-risk-chips{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.pf-risk-chip{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-cap);
+  padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);
+  color:var(--mut);cursor:help;font-variant-numeric:tabular-nums}
+.pf-risk-chip b{color:var(--txt);font-weight:600}
+.pf-risk-chip--warn{border-color:var(--amber);color:var(--amber)}
+.pf-risk-chip--warn b{color:var(--amber)}
+.pf-risk-mark{font-weight:700}
+/* Buch-Performance (unrealisiert): per-call P&L bars + aggregate KPI coloring */
+.pf-pnl-h{font-size:var(--fs-cap);color:var(--mut);margin-bottom:var(--s2);display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3)}
+.pf-pnl-h .pf-pnl-meta{font-size:var(--fs-micro)}
+.pf-pnl-row{display:grid;grid-template-columns:minmax(72px,auto) 26px 1fr 58px;align-items:center;gap:var(--s2);padding:5px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.pf-pnl-row:first-of-type{border-top:0}
+.pf-pnl-tk{display:flex;align-items:center;gap:6px;font-size:var(--fs-cap);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-pnl-tk .pf-pnl-lbl{color:var(--mut);font-size:var(--fs-micro);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-pnl-dir{font-size:var(--fs-micro);padding:1px 5px;border-radius:3px;font-weight:600;letter-spacing:.04em}
+.pf-pnl-track{position:relative;height:10px;background:transparent;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.pf-pnl-track::before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--line)}
+.pf-pnl-bar{position:absolute;top:1px;bottom:1px;border-radius:2px}
+.pf-pnl-bar-pos{background:var(--green);left:50%}
+.pf-pnl-bar-neg{background:var(--red);right:50%}
+.pf-pnl-val{text-align:right;font-size:var(--fs-cap);font-weight:600}
+.pf-pnl-empty{font-size:var(--fs-micro);color:var(--mut);padding:var(--s2) 0}
+.kpi--pos{color:var(--green)}
+.kpi--neg{color:var(--red)}
+@media(max-width:560px){
+  .pf-pnl-row{grid-template-columns:1fr 50px;grid-template-areas:"tk val" "bar bar";row-gap:3px}
+  .pf-pnl-row > .pf-pnl-tk{grid-area:tk;min-width:0}
+  .pf-pnl-row > .pf-pnl-dir{display:none}
+  .pf-pnl-row > .pf-pnl-track{grid-area:bar}
+  .pf-pnl-row > .pf-pnl-val{grid-area:val}
+}
 /* conviction color ramp */
 .conv-lo{color:var(--mut)}
 .conv-mid{color:var(--txt)}
@@ -778,28 +805,12 @@ function sparklineSvg(data,w,h){
   const cls=flat?"spark-flat":up?"spark-up":"spark-dn";
   return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline class="spark-line ${cls}" points="${pts}"/></svg>`;
 }
-// Labeled inline sparkline for thesis-card headings (HED-130, ported from /srv): trend-colored
-// polyline + endpoint dot, scaled to min/max; aria-label carries the 30d move in words.
-function sparkline(series, label){
-  const W=76,H=24,pad=2;
-  const lo=Math.min(...series),hi=Math.max(...series),span=(hi-lo)||1;
-  const n=series.length;
-  const X=i=>pad+i*((W-2*pad)/(n-1));
-  const Y=v=>H-pad-((v-lo)/span)*(H-2*pad);
-  const up=series[n-1]>=series[0];
-  const col=up?"var(--green)":"var(--red)";
-  const pts=series.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
-  const lx=X(n-1).toFixed(1),ly=Y(series[n-1]).toFixed(1);
-  return `<svg class="spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${lx}" cy="${ly}" r="2" fill="${col}"/></svg>`;
-}
 const b = D.briefing;
 if(!b){ $("briefing").innerHTML='<div class="panel muted">Noch kein Briefing. Sobald der n8n-Workflow lief, erscheint es hier.</div>'; }
 else{
   const rawTheses=((b.theses||{}).theses)||[];
-  // Deduplicate: keep only highest-conviction call per unique ticker group
-  const _bestByTicker={};
-  rawTheses.forEach(t=>{const k=(t.tickers||[]).join(',');if(!(k in _bestByTicker)||(t.conviction??-1)>(_bestByTicker[k].conviction??-1))_bestByTicker[k]=t;});
-  const theses=rawTheses.filter(t=>_bestByTicker[(t.tickers||[]).join(',')]===t);
+  // Show ALL theses sorted by conviction desc — distinct horizons on same ticker are complementary, not duplicates
+  const theses=rawTheses.slice().sort((a,b)=>(b.conviction??-1)-(a.conviction??-1));
   const crit=((b.devils_advocate||{}).critiques)||[];
   const cmap={}; crit.forEach(c=>cmap[c.id]=c);
   let html='';
@@ -895,72 +906,22 @@ else{
   }
   html+=`</div>`; // .brief-main
   if(theses.length){
-    // Ticker→analysis map (first-ticker join) for the Faktenbasis block (HED-130, from /srv)
-    const _analyses=((b.analysis||{}).analyses)||[];
-    const _amap={};
-    _analyses.forEach(a=>(a.tickers||[]).forEach(tk=>{if(!_amap[String(tk).toUpperCase()])_amap[String(tk).toUpperCase()]=a;}));
-    const HZ_MAP={'days':'Tage','weeks':'Wochen','months':'Monate','quarters':'Quartale'};
-    // 30-day close series per ticker from sector_view, for thesis-card sparklines (HED-130)
-    const _sparkByTicker={};
-    ((D.sector_view||{}).sectors||[]).forEach(s=>(s.tickers||[]).forEach(tk=>{
-      if(tk&&tk.ticker!=null&&Array.isArray(tk.spark)&&tk.spark.length>=3)
-        _sparkByTicker[String(tk.ticker).toUpperCase()]=tk.spark;
-    }));
-    // Portfolio-level correlation note: surfaces when all calls share the same risk factor
-    const corrNote=(b.devils_advocate||{}).correlation_note;
-    let asideHtml='<div class="brief-aside"><h2 class="brief-aside-h2">Thesen & Devil\'s Advocate</h2>';
-    if(corrNote){
-      asideHtml+=`<div class="corr-note" role="note"><span class="corr-note-lbl" aria-hidden="true">⚠ Portfolio-Konzentration</span><span lang="en">${esc(corrNote)}</span></div>`;
-    }
-    asideHtml+=theses.map((t,i)=>{
+    html+='<div class="brief-aside"><h2 class="brief-aside-h2">Thesen & Devil\'s Advocate</h2>';
+    html+=theses.map((t,i)=>{
       const c=cmap[t.id]||{};
-      // Analyst Faktenbasis: top-3 key_facts + read badge + key_uncertainty (HED-130)
-      const firstTk=String((t.tickers||[])[0]||"").toUpperCase();
-      const an=_amap[firstTk]||{};
-      let analysHtml="";
-      if(an.key_facts&&an.key_facts.length){
-        const readCls=an.read==="bullish"?"ok":an.read==="bearish"?"err":"warn";
-        const readLbl=an.read==="bullish"?"Bullish":an.read==="bearish"?"Bearish":"Gemischt";
-        const facts=(an.key_facts||[]).slice(0,3).map(f=>`<li lang="en">${esc(f)}</li>`).join("");
-        const ku=(an.key_uncertainty||"").replace(/\s*HED-\d+[^.]*\.?/g,"").trim();
-        const kuHtml=ku?`<div class="tc-ku"><span aria-hidden="true">⚠</span> ${esc(ku)}</div>`:"";
-        analysHtml=`<div class="tc-analys"><div class="tc-analys-hd"><span class="tc-analys-lbl">Faktenbasis</span><span class="pill pill--${readCls}" style="font-size:var(--fs-micro);padding:0 6px">${readLbl}</span></div><ul>${facts}</ul>${kuHtml}</div>`;
-      }
-      // Scenario block: bull/bear/catalysts + horizon pill (HED-130)
-      let scenHtml="";
-      const bull=(t.bull_case||[]);
-      const bear=(t.bear_case||[]);
-      const cat=(t.catalysts||[]);
-      if(bull.length||bear.length||cat.length){
-        const bullHtml=bull.length?`<div class="tc-bull"><span class="tc-scen-lbl" style="color:var(--green)">▲ Bull-Case</span><ul lang="en">${bull.map(s=>`<li>${esc(s)}</li>`).join("")}</ul></div>`:"";
-        const bearHtml=bear.length?`<div class="tc-bear"><span class="tc-scen-lbl" style="color:var(--red)">▼ Bär-Case</span><ul lang="en">${bear.map(s=>`<li>${esc(s)}</li>`).join("")}</ul></div>`:"";
-        const catHtml=cat.length?`<div class="tc-cat"><span class="tc-scen-lbl" style="color:var(--accent)">◇ Katalysatoren</span><ul lang="en">${cat.map(s=>`<li>${esc(s)}</li>`).join("")}</ul></div>`:"";
-        const hzLabel=t.horizon?HZ_MAP[t.horizon]||t.horizon:"";
-        const hzHtml=hzLabel?`<div class="tc-hz">Horizont: ${esc(hzLabel)}</div>`:"";
-        scenHtml=`<div class="tc-scen">${bullHtml}${bearHtml}${catHtml}${hzHtml}</div>`;
-      }
-      // Sparkline: 30-day price trend inline in the thesis-card heading (HED-130)
-      const tcSpark=_sparkByTicker[firstTk];
-      let tcSparkHtml="";
-      if(tcSpark&&tcSpark.length>=3){
-        const chg=((tcSpark[tcSpark.length-1]-tcSpark[0])/Math.abs(tcSpark[0]||1))*100;
-        const sign=chg>=0?"+":"−";
-        const lbl=`30 Tage ${esc(firstTk)}: ${sign}${Math.abs(chg).toFixed(1)}%`;
-        tcSparkHtml=`<div class="tc-spark">${sparkline(tcSpark,lbl)}<span class="tc-spark-chg ${chg>=0?"move-up":"move-dn"}">${sign}${Math.abs(chg).toFixed(1)}%</span></div>`;
-      }
       return `<div class="thesis" id="thesis-${i+1}" tabindex="-1"><div class="h"><span class="idx-badge" aria-label="These ${i+1}">${i+1}</span>${(t.tickers||[]).join(", ")}
         <span class="cd ${dirClass(t.direction)}">${t.direction||""}</span>
-        <span class="${t.conviction!=null?convCls(t.conviction):'muted'}" title="${t.conviction!=null?convTip(t.conviction):''}">· Conv ${t.conviction!=null?t.conviction.toFixed(2):"—"}</span>${tcSparkHtml?` ${tcSparkHtml}`:""}</div>
+        <span class="${t.conviction!=null?convCls(t.conviction):'muted'}" title="${t.conviction!=null?convTip(t.conviction):''}">· Conv ${t.conviction!=null?t.conviction.toFixed(2):"—"}</span>
+        ${t.horizon?`<span class="th-horizon" title="Zeithorizont der These">${esc(t.horizon)}</span>`:""}</div>
         <div lang="en" style="margin-top:4px">${esc(t.thesis||"")}</div>
         ${t.edge&&t.is_differentiated?`<div class="edge-line">🎯 ${esc(t.edge)}</div>`:""}
         ${t.scenarios?(()=>{const s=t.scenarios;const fmtS=(k,c)=>{if(!c)return null;const tgt=c.target?` → ${esc(c.target)}`:"";const p=c.prob!=null?` (P=${Math.round(c.prob*100)}%)`:"";return `${k}${c.trigger?" "+esc(c.trigger):""}${tgt}${p}`;};const parts=[fmtS("Bull",s.bull),fmtS("Base",s.base),fmtS("Bear",s.bear)].filter(Boolean);return parts.length?`<div class="sc-line">📐 ${parts.join(" | ")}</div>`:""})():""}
         ${t.exit_trigger?`<div class="exit-trigger">🚪 Exit: ${esc(t.exit_trigger)}</div>`:""}
-        ${analysHtml}${scenHtml}
+        ${(()=>{const pro=Array.isArray(t.bull_case)?t.bull_case.filter(Boolean):[];const con=Array.isArray(t.bear_case)?t.bear_case.filter(Boolean):[];const cat=Array.isArray(t.catalysts)?t.catalysts.filter(Boolean):[];if(!pro.length&&!con.length&&!cat.length)return"";const sect=(cls,icon,label,items)=>items.length?`<div class="ta-sect ta-sect--${cls}"><div class="ta-h"><span aria-hidden="true">${icon}</span> ${label} <span class="ta-n">${items.length}</span></div><ul class="ta-list" lang="en">${items.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:"";return `<div class="ta">${sect("pro","✅","Pro-These",pro)}${sect("contra","⚠️","Risiken",con)}${sect("cat","🗓","Katalysatoren",cat)}</div>`;})()}
         ${c.strongest_counter?`<div class="devil" lang="en"><span class="v">⚖️ Devil's Advocate (${c.verdict||"?"})</span><br>${esc(c.strongest_counter)}
         ${c.blind_spot?`<br><span class="muted">Blind spot: ${esc(c.blind_spot)}</span>`:""}</div>`:""}
       </div>`;}).join("");
-    asideHtml+=`</div>`; // .brief-aside
-    html+=asideHtml;
+    html+=`</div>`; // .brief-aside
   }
   html+=`</div>`; // .brief-region
   $("briefing").innerHTML=html||'<div class="panel muted">Briefing vorhanden, aber leer.</div>';
@@ -1150,15 +1111,40 @@ function calibSvg(buckets){
   // Devil cautions / rejects
   const rejects=active.filter(t=>t.devil&&t.devil.verdict==="reject").length;
   const cautions=active.filter(t=>t.devil&&t.devil.verdict==="caution").length;
-  // KPI strip
+  // Live price map for mark-to-market — same source the pending-theses table uses
+  const _pricePf={};
+  ((D.sector_view||{}).sectors||[]).forEach(s=>{
+    (s.tickers||[]).forEach(t=>{if(t&&t.ticker&&t.price!=null)_pricePf[String(t.ticker).toUpperCase()]=t.price;});
+  });
+  // Per-call mark-to-market: average per-ticker % move, sign-flipped for shorts.
+  // Multi-ticker baskets (e.g. TSM+AVGO) get the unweighted mean — they entered together.
+  function _callPnl(t){
+    const tks=(t.tickers||[]).map(x=>String(x).toUpperCase());
+    if(!tks.length||t.baseline_price==null) return null;
+    const moves=tks.map(tk=>{const cur=_pricePf[tk];return cur!=null?(cur-t.baseline_price)/t.baseline_price*100:null;}).filter(v=>v!=null);
+    if(!moves.length) return null;
+    const raw=moves.reduce((a,b)=>a+b,0)/moves.length;
+    return (t.direction||"").toLowerCase()==="short" ? -raw : raw;
+  }
+  const pnlRows=active.map(t=>({t,pnl:_callPnl(t)}));
+  const priced=pnlRows.filter(r=>r.pnl!=null);
+  const unpriced=pnlRows.length-priced.length;
+  // Conviction-weighted aggregate book P&L (the "is my book up?" answer)
+  const wConv=priced.reduce((s,r)=>s+(r.t.conviction||0),0);
+  const bookPnl=wConv>0?priced.reduce((s,r)=>s+(r.t.conviction||0)*r.pnl,0)/wConv:null;
+  const bookSign=bookPnl==null?"":bookPnl>=0?"+":"−";
+  const bookCls=bookPnl==null?"kpi--pending":bookPnl>=0.05?"kpi--pos":bookPnl<=-0.05?"kpi--neg":"";
+  const bookTxt=bookPnl==null?"—":`${bookSign}${Math.abs(bookPnl).toFixed(2)}%`;
+  // KPI strip — Buch-P&L leads (Recognition>Recall: PM scans this first)
   const kpis=[
-    ["Aktive Calls", active.length, false],
-    ["Long / Short", `${longCalls.length} / ${shortCalls.length}`, false],
-    ["Net-Exposure", `${netPct>=0?"+":""}${netPct}%`, false],
-    ["⚖ Devil (Reject)", rejects, rejects>0],
+    ['Buch P&amp;L <span class="muted" style="font-weight:400">(unrealis.)</span>', bookTxt, bookCls, "Konviktions-gewichtete unrealisierte Performance aller aktiven Calls (sign-flipped für Shorts) gegen Live-Kurse"],
+    ["Aktive Calls", active.length, "", null],
+    ["Long / Short", `${longCalls.length} / ${shortCalls.length}`, "", null],
+    ["Net-Exposure", `${netPct>=0?"+":""}${netPct}%`, "", null],
+    ["⚖ Devil (Reject)", rejects, rejects>0?"kpi--pending":"", null],
   ];
-  const kpiHtml=kpis.map(([k,v,warn])=>
-    `<dl class="panel kpi-dl"><dt class="muted">${k}</dt><dd class="kpi${warn?" kpi--pending":""}">${v}</dd></dl>`
+  const kpiHtml=kpis.map(([k,v,cls,tip])=>
+    `<dl class="panel kpi-dl"${tip?` title="${esc(tip)}"`:""}><dt class="muted">${k}</dt><dd class="kpi ${cls||""}">${v}</dd></dl>`
   ).join("");
   // Net long/short bar
   const longPct=totalConv>0?Math.round(longConv/totalConv*100):0;
@@ -1177,7 +1163,62 @@ function calibSvg(buckets){
       <span class="pf-sec-pct">${Math.round(cv/totalConv*100)}%</span>
     </div>`).join("")}
   </div>`:"";
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>`;
+  // Konzentrationsrisiko: turn the descriptive bars into an actual risk readout a PM would scan
+  const dirPct=Math.max(longPct,shortPct);
+  const dirSide=longPct>=shortPct?"Long":"Short";
+  const nNames=new Set(active.flatMap(t=>(t.tickers||[]).map(x=>String(x).toUpperCase()))).size;
+  const topSecPct=secEntries.length?Math.round(secEntries[0][1]/totalConv*100):0;
+  const topSecId=secEntries.length?String(secEntries[0][0]).split(" ")[0]:"—";
+  const nSectors=secEntries.length;
+  const riskChip=(label,val,warn,tip)=>
+    `<span class="pf-risk-chip${warn?" pf-risk-chip--warn":""}" title="${esc(tip)}" aria-label="${esc(label+": "+val+(warn?" — Risiko erhöht":" — im Rahmen"))}">${warn?'<span class="pf-risk-mark" aria-hidden="true">⚠</span>':""}${label} · <b>${esc(val)}</b></span>`;
+  const riskHtml=`<div class="panel pf-risk">
+    <div class="pf-risk-h">Konzentrationsrisiko</div>
+    <div class="pf-risk-chips">
+      ${riskChip("Richtung",`${dirPct}% ${dirSide}`,dirPct>=80,"Einseitig positioniert — kein Gegen-Hedge bei Marktrückgang (Schwelle ≥80%)")}
+      ${riskChip("Top-Sektor",`${topSecId} ${topSecPct}%`,topSecPct>=50,"Hohe Konzentration auf einen Sektor (Schwelle ≥50%)")}
+      ${riskChip("Streuung",`${nSectors} Sekt. · ${nNames} Titel`,nSectors<=2,"Geringe Diversifikation über Sektoren (Schwelle ≤2 Sektoren)")}
+    </div>
+  </div>`;
+  // Per-call P&L bars: best→worst signed. Diverging chart around 0, half-track each side.
+  let pnlPanelHtml="";
+  if(priced.length){
+    const maxAbs=Math.max(...priced.map(r=>Math.abs(r.pnl)),0.5); // floor at 0.5% so tiny moves still register
+    const sorted=priced.slice().sort((a,b)=>b.pnl-a.pnl);
+    const dirCls=d=>d==="long"?"cd-long":d==="short"?"cd-short":"cd-pair";
+    const bestPnl=sorted[0].pnl, worstPnl=sorted[sorted.length-1].pnl;
+    const rowsHtml=sorted.map(r=>{
+      const t=r.t, tks=(t.tickers||[]).join("·"), pnl=r.pnl;
+      const up=pnl>=0;
+      const w=Math.min(48,Math.abs(pnl)/maxAbs*48); // each half is 48% of track (margin for axis labels)
+      const barCls=up?"pf-pnl-bar-pos":"pf-pnl-bar-neg";
+      const valCls=up?"move-up":"move-dn";
+      const dir=(t.direction||"").toLowerCase();
+      const sign=up?"+":"−";
+      const tip=`${esc(t.label||"")} — Baseline $${t.baseline_price} · ${tks} · ${dir.toUpperCase()}${t.conviction!=null?" · Conv "+t.conviction.toFixed(2):""}`;
+      return `<div class="pf-pnl-row" title="${tip}"><div class="pf-pnl-tk"><b>${esc(tks)}</b><span class="pf-pnl-lbl">${esc(t.label||"")}</span></div>`+
+        `<span class="pf-pnl-dir cd ${dirCls(dir)}" aria-label="${esc(dir.toUpperCase())}">${esc(dir.toUpperCase().slice(0,1))}</span>`+
+        `<div class="pf-pnl-track" aria-label="${sign}${Math.abs(pnl).toFixed(2)} Prozent"><div class="pf-pnl-bar ${barCls}" style="width:${w}%"></div></div>`+
+        `<span class="pf-pnl-val ${valCls}">${sign}${Math.abs(pnl).toFixed(2)}%</span></div>`;
+    }).join("");
+    // Best/worst caption — gives PM the headline before he scans the bars
+    const bestTk=(sorted[0].t.tickers||[])[0]||"?";
+    const worstTk=(sorted[sorted.length-1].t.tickers||[])[0]||"?";
+    const meta=sorted.length>1
+      ? `Bester: <b>${esc(bestTk)}</b> ${bestPnl>=0?"+":"−"}${Math.abs(bestPnl).toFixed(2)}% · Schwächster: <b>${esc(worstTk)}</b> ${worstPnl>=0?"+":"−"}${Math.abs(worstPnl).toFixed(2)}%`
+      : "";
+    const unpricedNote=unpriced>0?` <span class="muted">· ${unpriced} ohne Live-Kurs</span>`:"";
+    pnlPanelHtml=`<div class="panel" style="margin-top:var(--s3)">
+      <div class="pf-pnl-h"><span>Buch-Performance — per Call (unrealisiert)${unpricedNote}</span><span class="pf-pnl-meta muted">${meta}</span></div>
+      ${rowsHtml}
+    </div>`;
+  } else if(active.length){
+    pnlPanelHtml=`<div class="panel" style="margin-top:var(--s3)">
+      <div class="pf-pnl-h"><span>Buch-Performance — per Call (unrealisiert)</span></div>
+      <div class="pf-pnl-empty">Noch keine Live-Kurse für die aktiven Calls. Wird mit dem nächsten Sector-View-Refresh befüllt.</div>
+    </div>`;
+  }
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${riskHtml}`;
   root.setAttribute("aria-busy","false");
 })();
 
@@ -1357,6 +1398,16 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
 
 
 
