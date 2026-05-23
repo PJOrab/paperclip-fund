@@ -3671,6 +3671,86 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .pf-kelly-tbl thead th.pk-th-bar{width:38%;text-align:center;font-size:9px}
   .pk-bar{min-width:0;height:14px}
 }
+/* Crowding-Score per Position (HED-137 Zyklus 123).
+   Aggregiert Konsens-Tilt aus 4 Daten-Lentilles: Sell-side-EPS-Revisionen,
+   Insider-Flow (Form-4), Short-Interest-Positionierung, Analyst-PT-Konsens.
+   Pro Call: 0–100 Score (100 = vollständig auf Konsens-Seite = crowded;
+   0 = contrarian zur Konsens-Linse). Klassische "crowded trade"-Risk-Diagnose:
+   wo ist ein Call already-positioned vs. wo ist marginale Demand übrig? */
+.pf-crowd{padding:var(--s3);margin-top:var(--s3)}
+.pf-crowd-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3)}
+.pf-crowd-h-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-crowd-h-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400;margin-top:2px}
+.pf-crowd-chip{display:inline-block;padding:2px 8px;border-radius:99px;font-size:var(--fs-micro);font-weight:600;border:1px solid var(--line);background:var(--panel2);color:var(--mut)}
+.pf-crowd-chip.is-good{color:var(--green);border-color:rgba(63,185,80,.4)}
+.pf-crowd-chip.is-warn{color:#e8b341;border-color:rgba(232,179,65,.4)}
+.pf-crowd-chip.is-bad{color:var(--red);border-color:rgba(248,81,73,.4)}
+.pf-crowd-chip.is-neutral{color:var(--accent);border-color:rgba(77,163,255,.4)}
+.pf-crowd-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s2);margin-bottom:var(--s3)}
+.pf-crowd-kpi{background:var(--panel2);border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.pf-crowd-kpi-lbl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.pf-crowd-kpi-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;color:var(--txt);white-space:nowrap}
+.pf-crowd-kpi-val.is-headline{font-size:22px;letter-spacing:-.01em;color:var(--accent)}
+.pf-crowd-kpi-val.move-up{color:var(--green)}
+.pf-crowd-kpi-val.move-dn{color:var(--red)}
+.pf-crowd-kpi-sub{font-size:var(--fs-micro);color:var(--mut);font-variant-numeric:tabular-nums}
+.pf-crowd-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pf-crowd-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+.pf-crowd-tbl thead th{font-size:var(--fs-micro);font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);padding:6px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.pf-crowd-tbl thead th.pc-th-name{text-align:left}
+.pf-crowd-tbl thead th.pc-th-bar{text-align:center;width:30%}
+.pf-crowd-tbl thead th.pc-th-comp{text-align:center;width:24%}
+.pf-crowd-tbl tbody td{padding:7px 6px;border-top:1px solid var(--line);text-align:right;vertical-align:middle}
+.pf-crowd-tbl tbody tr:first-child td{border-top:0}
+.pf-crowd-tbl tbody tr:hover{background:rgba(77,163,255,.06)}
+.pc-name{text-align:left;font-weight:700;color:var(--txt);white-space:nowrap}
+.pc-name .pc-dir{display:inline-block;margin-left:6px;vertical-align:middle}
+.pc-score{font-weight:700;font-size:15px;min-width:42px;font-variant-numeric:tabular-nums}
+.pc-score.is-contrarian{color:var(--green)}
+.pc-score.is-different{color:var(--accent)}
+.pc-score.is-mainstream{color:#e8b341}
+.pc-score.is-crowded{color:var(--red)}
+.pc-bar-cell{padding-left:0!important;padding-right:0!important}
+.pc-bar{position:relative;height:18px;background:var(--panel2);border-radius:3px;border:1px solid var(--line);min-width:120px;overflow:hidden}
+.pc-bar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px 0 0 2px;transition:width .3s}
+.pc-bar-fill.is-contrarian{background:linear-gradient(90deg,rgba(63,185,80,.7),rgba(63,185,80,.5))}
+.pc-bar-fill.is-different{background:linear-gradient(90deg,rgba(77,163,255,.7),rgba(77,163,255,.5))}
+.pc-bar-fill.is-mainstream{background:linear-gradient(90deg,rgba(232,179,65,.7),rgba(232,179,65,.55))}
+.pc-bar-fill.is-crowded{background:linear-gradient(90deg,rgba(248,81,73,.7),rgba(248,81,73,.55))}
+.pc-bar-tick{position:absolute;top:0;bottom:0;width:1px;background:var(--mut);opacity:.35;z-index:1}
+.pc-bar-lbl{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:700;color:rgba(255,255,255,.85);z-index:3;pointer-events:none;text-shadow:0 0 2px rgba(0,0,0,.8)}
+.pc-comp-cell{padding-left:0!important;padding-right:0!important;text-align:center;white-space:nowrap}
+.pc-comp{display:inline-block;width:16px;height:16px;margin:0 2px;border-radius:3px;vertical-align:middle;font-size:9px;font-weight:700;line-height:16px;text-align:center;color:#fff;cursor:help}
+.pc-comp.is-na{background:var(--panel);color:var(--mut);border:1px dashed var(--line)}
+.pc-comp.is-lo{background:rgba(63,185,80,.7)}
+.pc-comp.is-md{background:rgba(232,179,65,.7)}
+.pc-comp.is-hi{background:rgba(248,81,73,.75)}
+.pc-verdict{display:inline-block;padding:1px 6px;border-radius:4px;font-size:var(--fs-micro);font-weight:600}
+.pc-verdict.is-contrarian{background:rgba(63,185,80,.14);color:var(--green)}
+.pc-verdict.is-different{background:rgba(77,163,255,.14);color:var(--accent)}
+.pc-verdict.is-mainstream{background:rgba(232,179,65,.14);color:#e8b341}
+.pc-verdict.is-crowded{background:rgba(248,81,73,.14);color:var(--red)}
+.pf-crowd-verd{margin-top:var(--s3);font-size:var(--fs-cap);line-height:1.5;color:var(--txt)}
+.pf-crowd-verd b{font-weight:700}
+.pf-crowd-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s2);line-height:1.45}
+.pf-crowd-legend{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s2);font-size:var(--fs-micro);color:var(--mut)}
+.pf-crowd-legend span{display:inline-flex;align-items:center;gap:4px}
+.pf-crowd-legend i{display:inline-block;width:10px;height:10px;border-radius:2px}
+@media(max-width:640px){
+  .pf-crowd-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pf-crowd-kpi-val{font-size:15px}
+  .pf-crowd-kpi-val.is-headline{font-size:18px}
+  .pf-crowd-wrap{overflow-x:hidden}
+  .pf-crowd-tbl{table-layout:fixed;width:100%}
+  .pf-crowd-tbl thead th,.pf-crowd-tbl tbody td{padding:5px 4px;font-size:var(--fs-micro)}
+  .pc-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:72px}
+  .pf-crowd-tbl .col-hide-m{display:none}
+  .pf-crowd-tbl thead th.pc-th-name{width:24%}
+  .pf-crowd-tbl thead th.pc-th-bar{width:34%}
+  .pf-crowd-tbl thead th.pc-th-comp{width:26%}
+  .pc-bar{min-width:0;height:14px}
+  .pc-comp{width:14px;height:14px;line-height:14px;font-size:8px;margin:0 1px}
+}
 /* conviction color ramp */
 .conv-lo{color:var(--mut)}
 .conv-mid{color:var(--txt)}
@@ -6566,6 +6646,245 @@ function calibSvg(buckets){
     }
   }
 
+  // Crowding-Score per Position (HED-137 Zyklus 123).
+  // For each active call, aggregate consensus-alignment across 4 independent
+  // positioning lenses into a single 0–100 "crowded-trade" score:
+  //   C1 Sell-side EPS revisions (analyst herd direction)
+  //   C2 Insider flow last 30d (Form-4 net-dollar, smart-money tilt)
+  //   C3 Short interest level (positioning vs. our direction)
+  //   C4 Analyst PT consensus (price-target upside vs. our direction)
+  // 100 = fully on consensus side (crowded trade, marginal-demand exhausted,
+  // vulnerable to consensus rotation); 0 = contrarian to every lens (edge
+  // potential but counter-flow risk). Classic crowded-trade risk diagnostic
+  // (Stein 2009 "Sophisticated Investors and Market Efficiency", Pedersen
+  // "Efficiently Inefficient" ch.5).
+  let crowdPanelHtml="";
+  {
+    // Build lookup maps from already-collected envelope data
+    const erMap={};
+    ((D.eps_revisions||{}).tickers||[]).forEach(r=>{ erMap[String(r.ticker).toUpperCase()]=r; });
+    const insMap2={};
+    ((D.insider_tape||{}).tickers||[]).forEach(r=>{ insMap2[String(r.ticker).toUpperCase()]=r; });
+    const siMap={};
+    ((D.short_squeeze||{}).tickers||[]).forEach(r=>{ siMap[String(r.ticker).toUpperCase()]=r; });
+    const consMap={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{
+      if(!t||!t.ticker||!t.consensus||t.consensus.pt_mean==null||t.price==null) return;
+      consMap[String(t.ticker).toUpperCase()]={
+        pt_upside: (t.consensus.pt_mean-t.price)/t.price*100,
+        n: t.consensus.analyst_count||null
+      };
+    }));
+
+    // Per-call component scoring (each 0–100, higher = more aligned w/ consensus)
+    function _c1_revisions(tk, isLong){
+      const r=erMap[tk]; if(!r||!r.direction) return null;
+      const aligned=(isLong&&r.direction==="POSITIVE")||(!isLong&&r.direction==="NEGATIVE");
+      const up30=r.up30||0, dn30=r.down30||0, n=up30+dn30;
+      if(n<3) return aligned?70:30;
+      const net=(up30-dn30)/n;          // −1..+1
+      const strength=Math.abs(net);     // 0..1
+      return aligned ? 50+50*strength : 50-50*strength;
+    }
+    function _c2_insiders(tk, isLong){
+      const r=insMap2[tk]; if(!r||r.net_dollar==null) return null;
+      const net=r.net_dollar;
+      const gross=Math.abs(r.buy_dollar||0)+Math.abs(r.sell_dollar||0);
+      if(gross<10000) return null;       // too small to read
+      const tilt=Math.max(-1,Math.min(1, net/Math.max(gross,1)));  // −1..+1
+      const aligned=(isLong&&tilt>0)||(!isLong&&tilt<0);
+      const mag=Math.abs(tilt);
+      return aligned ? 50+40*mag : 50-40*mag;
+    }
+    function _c3_shortInterest(tk, isLong){
+      const r=siMap[tk]; if(!r||r.si==null) return null;
+      const si=r.si;
+      // For a long: low SI = nobody contesting = consensus long (crowded);
+      //             high SI = active opposition (contrarian / contested)
+      // For a short: high SI = crowded short / squeeze risk; low SI = lonely
+      if(isLong){
+        if(si<3) return 90;
+        if(si<5) return 75;
+        if(si<10) return 55;
+        if(si<20) return 25;
+        return 10;
+      } else {
+        if(si>=20) return 95;
+        if(si>=10) return 75;
+        if(si>=5) return 55;
+        if(si>=3) return 35;
+        return 15;
+      }
+    }
+    function _c4_analystPT(tk, isLong){
+      const c=consMap[tk]; if(!c||c.pt_upside==null) return null;
+      const up=c.pt_upside;
+      // For long: higher PT-upside = more bullish consensus = more crowded long
+      // For short: lower (negative) PT-upside = bearish consensus = crowded short
+      // Map ±25% upside band to 0..100 range
+      const norm=Math.max(-25,Math.min(25,up))/25;  // −1..+1
+      return isLong ? 50+50*norm : 50-50*norm;
+    }
+
+    const _crowdRows=[];
+    active.forEach(t=>{
+      const tk=(t.tickers||[])[0];
+      if(!tk) return;
+      const dir=(t.direction||"").toLowerCase();
+      if(dir!=="long"&&dir!=="short") return;     // skip pair trades — no single-direction crowding interpretation
+      const isLong=(dir==="long");
+      const TK=String(tk).toUpperCase();
+      const comps=[
+        {key:"REV", val:_c1_revisions(TK,isLong),     lbl:"Sell-side EPS-Revisionen"},
+        {key:"INS", val:_c2_insiders(TK,isLong),      lbl:"Insider-Flow 30d"},
+        {key:"SI",  val:_c3_shortInterest(TK,isLong), lbl:"Short-Interest-Positionierung"},
+        {key:"PT",  val:_c4_analystPT(TK,isLong),     lbl:"Analyst-PT-Konsens"}
+      ];
+      const valid=comps.filter(c=>c.val!=null);
+      if(valid.length<2) return;                  // need ≥2 lenses for meaningful composite
+      const score=valid.reduce((s,c)=>s+c.val,0)/valid.length;
+      _crowdRows.push({
+        t, tk:TK,
+        label:(t.tickers||[]).join("·")||tk,
+        dir, isLong,
+        conv:typeof t.conviction==="number"?t.conviction:null,
+        score,
+        comps, nComps:valid.length
+      });
+    });
+
+    if(_crowdRows.length){
+      _crowdRows.sort((a,b)=>b.score-a.score);   // most-crowded first
+      const _tier=v=>v>=70?"is-crowded":v>=55?"is-mainstream":v>=35?"is-different":"is-contrarian";
+      const _tierLbl=v=>v>=70?"Überlaufen":v>=55?"Mainstream":v>=35?"Differenziert":"Contrarian";
+      // KPIs
+      const scores=_crowdRows.map(r=>r.score).sort((a,b)=>a-b);
+      const _med=arr=>{const m=Math.floor(arr.length/2); return arr.length%2?arr[m]:(arr[m-1]+arr[m])/2;};
+      const medScore=_med(scores);
+      // Conv-weighted score: vulnerability-weighted by book sizing
+      const totalConv=_crowdRows.reduce((s,r)=>s+(r.conv||0),0);
+      const convWtScore=totalConv>0
+        ? _crowdRows.reduce((s,r)=>s+r.score*(r.conv||0),0)/totalConv
+        : medScore;
+      const nCrowded=_crowdRows.filter(r=>r.score>=70).length;
+      const nContrarian=_crowdRows.filter(r=>r.score<35).length;
+      const topCrowded=_crowdRows[0];
+      const topContra=_crowdRows[_crowdRows.length-1];
+
+      // Verdict prose
+      let verdCls,verdLbl,verdProse;
+      if(convWtScore>=68){
+        verdCls="is-bad"; verdLbl="Buch überlaufen";
+        verdProse=`Buch ist <b>conv-gewichtet überlaufen</b> (${convWtScore.toFixed(0)}/100) — Größte Positionen sitzen auf der Konsens-Seite. `;
+        verdProse+=`<b>${nCrowded} Call${nCrowded!==1?"s":""}</b> ≥70 (überlaufen), darunter <b>${topCrowded.label}</b> (${topCrowded.score.toFixed(0)}). `;
+        verdProse+=`Marginaler Käufer-/Verkäufer-Pool ausgeschöpft — Performance hängt an Continuation, nicht an Repricing. Vulnerable bei Konsens-Rotation.`;
+      } else if(convWtScore<=42){
+        verdCls="is-good"; verdLbl="Buch contrarian";
+        verdProse=`Buch ist <b>conv-gewichtet contrarian</b> (${convWtScore.toFixed(0)}/100) — Größte Positionen liegen quer zum Konsens. `;
+        verdProse+=`<b>${nContrarian} Call${nContrarian!==1?"s":""}</b> <35 (contrarian), Kontrarstärkste: <b>${topContra.label}</b> (${topContra.score.toFixed(0)}). `;
+        verdProse+=`Edge-Potenzial wenn Konsens falsch liegt — aber gegen-Tape-Druck, Liquiditäts-Risiko bei Stop-outs.`;
+      } else if(nCrowded>0&&nContrarian>0){
+        verdCls="is-warn"; verdLbl="Barbell";
+        verdProse=`Barbell-Positionierung: <b>${nCrowded}</b> überlaufen, <b>${nContrarian}</b> contrarian, Median ${medScore.toFixed(0)}/100. `;
+        verdProse+=`Stärkster Konsens-Trade: <b>${topCrowded.label}</b> (${topCrowded.score.toFixed(0)}) — geringe Marginal-Demand. `;
+        verdProse+=`Stärkster Contrarian: <b>${topContra.label}</b> (${topContra.score.toFixed(0)}) — Konsens-Beweis-Last. Beide Profile aktiv zu monitoren.`;
+      } else {
+        verdCls="is-neutral"; verdLbl="Differenziert";
+        verdProse=`Buch ist <b>differenziert</b> (Median ${medScore.toFixed(0)}/100, conv-gewichtet ${convWtScore.toFixed(0)}) — weder vollständig auf Konsens noch contrarian. `;
+        verdProse+=`Größter Konsens-Tilt: <b>${topCrowded.label}</b> (${topCrowded.score.toFixed(0)}). Positionierung trägt kein systematisches Crowding-Risiko.`;
+      }
+
+      const kpiHtml3=`<div class="pf-crowd-kpis">
+        <div class="pf-crowd-kpi" title="Conviction-gewichteter Crowding-Score: Σ (conv × score) ÷ Σ conv. Misst Buch-Vulnerabilität gewichtet nach Sizing.">
+          <span class="pf-crowd-kpi-lbl">Buch-Score (conv-gewichtet)</span>
+          <span class="pf-crowd-kpi-val is-headline ${_tier(convWtScore).replace('is-','pc-')}" style="color:${convWtScore>=70?'var(--red)':convWtScore>=55?'#e8b341':convWtScore>=35?'var(--accent)':'var(--green)'}">${convWtScore.toFixed(0)}<span style="font-size:11px;color:var(--mut);margin-left:3px">/100</span></span>
+          <span class="pf-crowd-kpi-sub">${_tierLbl(convWtScore)}</span>
+        </div>
+        <div class="pf-crowd-kpi" title="Median über alle ${_crowdRows.length} Calls — robuster Lagewert, unabhängig von Sizing.">
+          <span class="pf-crowd-kpi-lbl">Median Score</span>
+          <span class="pf-crowd-kpi-val">${medScore.toFixed(0)}</span>
+          <span class="pf-crowd-kpi-sub">über ${_crowdRows.length} Calls</span>
+        </div>
+        <div class="pf-crowd-kpi" title="Calls mit Score ≥70 — überlaufene Trades. Marginale Demand-Erschöpfung, Rotation-Risiko.">
+          <span class="pf-crowd-kpi-lbl">Überlaufen (≥70)</span>
+          <span class="pf-crowd-kpi-val ${nCrowded>0?'move-dn':''}">${nCrowded}</span>
+          <span class="pf-crowd-kpi-sub">Crowded Calls</span>
+        </div>
+        <div class="pf-crowd-kpi" title="Calls mit Score <35 — quer zum Konsens. Edge-Kandidaten, aber gegen den Tape.">
+          <span class="pf-crowd-kpi-lbl">Contrarian (&lt;35)</span>
+          <span class="pf-crowd-kpi-val ${nContrarian>0?'move-up':''}">${nContrarian}</span>
+          <span class="pf-crowd-kpi-sub">Edge-Kandidaten</span>
+        </div>
+      </div>`;
+
+      // Component dot rendering — per-component pill showing alignment
+      function _compDot(c){
+        if(c.val==null) return `<span class="pc-comp is-na" title="${c.lbl}: keine Daten">·</span>`;
+        const cls=c.val>=70?"is-hi":c.val>=40?"is-md":"is-lo";
+        const tipVal=c.val.toFixed(0);
+        return `<span class="pc-comp ${cls}" title="${c.lbl}: ${tipVal}/100">${c.key}</span>`;
+      }
+
+      const tblRows3=_crowdRows.map(r=>{
+        const dirCls=r.isLong?"cd cd-long":"cd cd-short";
+        const dirLbl=r.isLong?"L":"S";
+        const tier=_tier(r.score);
+        const tierLbl=_tierLbl(r.score);
+        const barW=Math.max(2,Math.min(100,r.score)).toFixed(1);
+        const tick50='<div class="pc-bar-tick" style="left:50%"></div>';
+        const tick70='<div class="pc-bar-tick" style="left:70%"></div>';
+        const compsHtml=r.comps.map(_compDot).join("");
+        const convCell=r.conv!=null?`${(r.conv*100).toFixed(0)}%`:"—";
+        return `<tr>
+          <td class="pc-name"><span title="${esc(r.label)}">${esc(r.label)}</span><span class="${dirCls} pc-dir">${dirLbl}</span></td>
+          <td class="pc-score ${tier}">${r.score.toFixed(0)}</td>
+          <td class="col-hide-m">${convCell}</td>
+          <td class="pc-bar-cell">
+            <div class="pc-bar" title="Crowding-Score ${r.score.toFixed(0)}/100 (${tierLbl}) · n=${r.nComps} Linsen">
+              ${tick50}${tick70}
+              <div class="pc-bar-fill ${tier}" style="width:${barW}%"></div>
+              <span class="pc-bar-lbl">${r.score.toFixed(0)}</span>
+            </div>
+          </td>
+          <td class="pc-comp-cell">${compsHtml}</td>
+          <td class="col-hide-m"><span class="pc-verdict ${tier}">${tierLbl}</span></td>
+        </tr>`;
+      }).join("");
+
+      crowdPanelHtml=`<div class="panel pf-crowd">
+        <div class="pf-crowd-h">
+          <div>
+            <div class="pf-crowd-h-title">Crowding-Score per Position</div>
+            <div class="pf-crowd-h-sub">Konsens-Alignment über 4 Positionierungs-Linsen — wo ist Buch überlaufen, wo contrarian?</div>
+          </div>
+          <span class="pf-crowd-chip ${verdCls}">${verdLbl}</span>
+        </div>
+        ${kpiHtml3}
+        <div class="pf-crowd-wrap">
+          <table class="pf-crowd-tbl" role="table" aria-label="Crowding-Score pro offenem Call">
+            <thead><tr>
+              <th scope="col" class="pc-th-name">Position</th>
+              <th scope="col">Score</th>
+              <th scope="col" class="col-hide-m">Conv</th>
+              <th scope="col" class="pc-th-bar">0 ─ contrarian ─── überlaufen ─ 100</th>
+              <th scope="col" class="pc-th-comp">Komponenten</th>
+              <th scope="col" class="col-hide-m">Urteil</th>
+            </tr></thead>
+            <tbody>${tblRows3}</tbody>
+          </table>
+        </div>
+        <div class="pf-crowd-legend">
+          <span><i style="background:rgba(63,185,80,.7)"></i> contrarian (&lt;35)</span>
+          <span><i style="background:rgba(77,163,255,.7)"></i> differenziert (35–55)</span>
+          <span><i style="background:rgba(232,179,65,.7)"></i> mainstream (55–70)</span>
+          <span><i style="background:rgba(248,81,73,.75)"></i> überlaufen (≥70)</span>
+        </div>
+        <div class="pf-crowd-verd">${verdProse}</div>
+        <div class="pf-crowd-foot">Crowding-Score = Mittelwert vorhandener Konsens-Linsen, jeweils 0–100 (100 = vollständig auf Konsens-Seite zur Trade-Direction). Linsen: <b>REV</b> Sell-side-EPS-Revisionen-Direction (analyst herd) · <b>INS</b> Insider-Flow 30d Net-Dollar (smart-money tilt) · <b>SI</b> Short-Interest-Level (für Long: niedrig=Konsens; für Short: hoch=crowded) · <b>PT</b> Analyst-PT-Konsens-Upside (gegen aktuellen Spot). Hohe Scores = überlaufen → marginale Demand erschöpft, Rotation-Risiko. Niedrige Scores = contrarian → Edge-Potenzial, aber gegen-Tape. Conv-gewichteter Buch-Score gewichtet jedes Call-Risk mit deklarierter Conviction (Sizing-bewusste Aggregation). Berechnet nur wenn ≥2 Linsen Daten haben; fehlende Linsen erscheinen als gestrichelter "·"-Marker. Klassisches Crowded-Trade-Risk-Framework (Stein 2009; Pedersen "Efficiently Inefficient" Ch.5; Khandani-Lo 2007).</div>
+      </div>`;
+    }
+  }
+
   // Earnings-Konzentration — Event-Risiko Buch-Rollup (HED-137 Zyklus 120).
   // For each active call: days-to-next-ER (calendar ≤14d, or quarterly-cadence
   // projection = last_q + 91d for 15-30d window), historical |1d| event-vol and
@@ -7527,7 +7846,7 @@ function calibSvg(buckets){
       </div>`;
     }
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${erPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
