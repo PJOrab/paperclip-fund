@@ -2505,6 +2505,12 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-status-dot-crit{background:#f85149;box-shadow:0 0 4px rgba(248,81,73,.5);animation:pf-status-pulse 1.4s ease-in-out infinite}
 @keyframes pf-status-pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .pf-status-spacer{flex:1}
+/* Session-Delta Indicator (HED-150 Zyklus 185) */
+.pf-status-delta{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;line-height:1.4;animation:pf-status-fade-in .4s ease-out}
+.pf-status-delta-up{background:rgba(35,134,54,.15);color:#3fb950}
+.pf-status-delta-down{background:rgba(248,81,73,.15);color:#f85149}
+.pf-status-delta-flat{background:rgba(139,148,158,.12);color:var(--mut)}
+@keyframes pf-status-fade-in{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:translateX(0)}}
 @media(max-width:600px){
   .pf-status-bar{padding:4px var(--s2);gap:8px;font-size:10px}
   .pf-status-lbl{font-size:8px}
@@ -12775,7 +12781,38 @@ function calibSvg(buckets){
       if(m<60) return `${Math.round(m)}m`;
       return `${Math.floor(m/60)}h`;
     }
+    // Session-Delta: compare current bookPnl to last-saved value in localStorage
+    // (HED-150 Zyklus 185). Persists across visits within same browser.
+    function _sessionDelta(){
+      if(bookPnl==null) return "";
+      const KEY="pf-prev-book-pnl-v1";
+      const TS_KEY="pf-prev-book-pnl-ts-v1";
+      let priorRaw=null, priorTs=null;
+      try{priorRaw=localStorage.getItem(KEY); priorTs=localStorage.getItem(TS_KEY);}catch(e){}
+      const prior=priorRaw==null?null:parseFloat(priorRaw);
+      const priorMs=priorTs==null?null:parseInt(priorTs,10);
+      // Only show delta if prior exists AND was saved at least 5 minutes ago AND no more than 30 days
+      let html="";
+      if(typeof prior==="number"&&isFinite(prior)&&priorMs){
+        const ageMin=(Date.now()-priorMs)/60000;
+        if(ageMin>=5 && ageMin<=43200){
+          const delta=bookPnl-prior;
+          const ageStr=ageMin<60?`${Math.round(ageMin)}m`:ageMin<1440?`${Math.floor(ageMin/60)}h`:`${Math.floor(ageMin/1440)}d`;
+          let cls="pf-status-delta-flat", arrow="→";
+          if(delta>0.05){cls="pf-status-delta-up"; arrow="↑";}
+          else if(delta<-0.05){cls="pf-status-delta-down"; arrow="↓";}
+          const sign=delta>=0?"+":"−";
+          html=`<span class="pf-status-delta ${cls}" title="Veränderung seit letztem Besuch (${ageStr} alt)">${arrow} ${sign}${Math.abs(delta).toFixed(2)}pp · ${ageStr}</span>`;
+        }
+      }
+      // Save current for next visit
+      try{localStorage.setItem(KEY, String(bookPnl)); localStorage.setItem(TS_KEY, String(Date.now()));}catch(e){}
+      return html;
+    }
+    let sessionDeltaHtml="";
     function _refresh(){
+      // Compute session delta on first refresh only (don't keep flashing every 30s)
+      if(!sessionDeltaHtml) sessionDeltaHtml=_sessionDelta();
       // Recompute CRIT count from rendered Portfolio-Alerts
       const critEls=document.querySelectorAll(".pf-al-card-crit");
       critCount=critEls.length;
@@ -12788,7 +12825,7 @@ function calibSvg(buckets){
       const critHtml=critCount>0?`<span class="pf-status-cell"><span class="pf-status-lbl">⚠ CRIT</span><span class="pf-status-val pf-status-val-neg">${critCount}</span></span>`:"";
       bar.innerHTML=`
         <span class="pf-status-cell"><span class="${dotCls}" title="Live"></span><span class="pf-status-val">Hedging Alpha</span></span>
-        <span class="pf-status-cell"><span class="pf-status-lbl">Buch</span><span class="${pnlCls}">${pnlStr}</span></span>
+        <span class="pf-status-cell"><span class="pf-status-lbl">Buch</span><span class="${pnlCls}">${pnlStr}</span>${sessionDeltaHtml}</span>
         <span class="pf-status-cell"><span class="pf-status-lbl">Pos</span><span class="pf-status-val">${nAct}</span></span>
         ${critHtml}
         <span class="pf-status-spacer"></span>
