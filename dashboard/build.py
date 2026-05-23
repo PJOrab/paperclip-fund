@@ -2456,7 +2456,7 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-gl-term{font-weight:700;color:var(--txt);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.4}
 .pf-gl-def{color:var(--mut);line-height:1.5;font-size:11px}
 .pf-gl-def b{color:var(--txt);font-weight:600}
-.pf-gl-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;font-size:11px;font-weight:700;color:var(--mut);background:rgba(139,148,158,.12);border:1px solid rgba(139,148,158,.2);cursor:pointer;font-family:inherit;line-height:1;padding:0;margin-left:5px;transition:all .12s}
+.pf-gl-btn{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:9px;font-size:11px;font-weight:700;color:var(--mut);background:rgba(139,148,158,.12);border:1px solid rgba(139,148,158,.2);cursor:pointer;font-family:inherit;line-height:1;padding:0 6px;margin-left:5px;transition:all .12s}
 .pf-gl-btn:hover{background:rgba(88,166,255,.15);color:var(--blue);border-color:rgba(88,166,255,.35)}
 .pf-gl-empty{padding:var(--s3);text-align:center;color:var(--mut);font-size:var(--fs-cap);font-style:italic}
 @media(max-width:600px){
@@ -13077,13 +13077,23 @@ function calibSvg(buckets){
         ${critHtml}
         <span class="pf-status-spacer"></span>
         <span class="pf-status-cell"><span class="pf-status-lbl">Stand</span><span class="pf-status-val">${_ageStr()} alt</span></span>
+        <button class="pf-gl-btn" id="pf-status-cp-btn" type="button" title="Universal Search (oder Cmd/Ctrl+K) — Panels, Ticker, Begriffe" aria-label="Universal Search öffnen" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px">⌘K</button>
         <button class="pf-gl-btn" id="pf-status-gl-btn" type="button" title="Glossar — Begriffs-Erklärungen (oder Tasten g h)" aria-label="Glossar öffnen">?</button>
       `;
-      // Re-wire glossary button (innerHTML rebuilds DOM)
+      // Re-wire glossary + search-palette buttons (innerHTML rebuilds DOM)
       const glBtn=document.getElementById("pf-status-gl-btn");
       const glOverlay=document.getElementById("pf-gl-overlay");
       if(glBtn && glOverlay){
         glBtn.addEventListener("click",function(){glOverlay.removeAttribute("hidden");});
+      }
+      const cpBtn=document.getElementById("pf-status-cp-btn");
+      const cpOverlay=document.getElementById("pf-cp-overlay");
+      const cpInput=document.getElementById("pf-cp-input");
+      if(cpBtn && cpOverlay){
+        cpBtn.addEventListener("click",function(){
+          cpOverlay.removeAttribute("hidden");
+          if(cpInput){cpInput.value=""; setTimeout(()=>cpInput.focus(),50); cpInput.dispatchEvent(new Event("input"));}
+        });
       }
       bar.removeAttribute("hidden");
       // Update browser tab title too
