@@ -476,6 +476,37 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .pf-pnl-empty{font-size:var(--fs-micro);color:var(--mut);padding:var(--s2) 0}
 .kpi--pos{color:var(--green)}
 .kpi--neg{color:var(--red)}
+/* Buch-Equity-Kurve: marquee performance chart — conviction-weighted, since-inception (HED-137 cycle 81) */
+.ec-panel{padding:var(--s3) var(--s3) var(--s2)}
+.ec-h{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--s3);margin-bottom:var(--s2);flex-wrap:wrap}
+.ec-h-l{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ec-title{font-size:var(--fs-cap);color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.ec-h-sub{font-size:var(--fs-micro)}
+.ec-kpis{display:flex;gap:var(--s4);font-variant-numeric:tabular-nums;flex-shrink:0}
+.ec-kpi{display:flex;flex-direction:column;gap:1px;font-size:var(--fs-micro);text-align:right;cursor:help}
+.ec-kpi b{font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.ec-svg{width:100%;height:auto;display:block;max-height:160px}
+.ec-line{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ec-line.ec-pos{stroke:var(--green)}
+.ec-line.ec-neg{stroke:var(--red)}
+.ec-area{opacity:.15}
+.ec-area.ec-pos{fill:var(--green)}
+.ec-area.ec-neg{fill:var(--red)}
+.ec-dot{stroke:var(--bg);stroke-width:2}
+.ec-dot.ec-pos{fill:var(--green)}
+.ec-dot.ec-neg{fill:var(--red)}
+.ec-tick{fill:var(--mut);opacity:.55;cursor:help}
+.ec-zero{stroke:var(--line);stroke-width:1;stroke-dasharray:2 3}
+.ec-ylab{font-size:10px;fill:var(--mut);font-variant-numeric:tabular-nums;font-family:inherit}
+.ec-xlab{font-size:10px;fill:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-family:inherit}
+.ec-foot{font-size:var(--fs-micro);margin-top:6px;line-height:1.4}
+@media(max-width:640px){
+  .ec-h{flex-direction:column;align-items:stretch;gap:var(--s2)}
+  .ec-kpis{justify-content:space-between;gap:var(--s3)}
+  .ec-kpi{text-align:left}
+  .ec-kpi b{font-size:15px}
+  .ec-svg{max-height:130px}
+}
 /* Thesis price-context bar: Bloomberg-style market data row embedded in each call card */
 .th-mkt{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin:var(--s2) 0 var(--s3);
   background:var(--bg);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-variant-numeric:tabular-nums}
@@ -1348,7 +1379,146 @@ function calibSvg(buckets){
       <div class="pf-pnl-empty">Noch keine Live-Kurse für die aktiven Calls. Wird mit dem nächsten Sector-View-Refresh befüllt.</div>
     </div>`;
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div><div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${riskHtml}`;
+  // Buch-Equity-Kurve: konviktions-gewichtete Performance-Linie seit Inception.
+  // Quelle: spark (letzte 30 Tagesschlüsse) je Ticker im sector_view; Entry-Tag wird
+  // anhand des Spark-Index ermittelt, der dem baseline_price am nächsten liegt — kein
+  // Datums-Schema im Spark, daher Auto-Snap. Kurve wächst täglich.
+  const _sparkMap={};
+  ((D.sector_view||{}).sectors||[]).forEach(s=>{
+    (s.tickers||[]).forEach(t=>{ if(t&&t.ticker&&Array.isArray(t.spark)&&t.spark.length>=2) _sparkMap[String(t.ticker).toUpperCase()]=t.spark; });
+  });
+  // Map thesis entry date → spark index. Spark[-1] = last close before sv.as_of (today).
+  // Count business days between entry-date and as_of-date to derive the offset.
+  // Verify against baseline_price within 5% (slack: baselines sometimes set at prior-day close).
+  // Fall back to tight auto-snap within last 5 trading days only — prevents misleading older snaps.
+  const _asOfDateStr=((D.sector_view||{}).as_of_iso||(D.sector_view||{}).as_of||"").replace(/ UTC.*/,"").slice(0,10);
+  function _bdaysBack(dStr, asOfStr){
+    if(!dStr||!asOfStr) return null;
+    try{
+      const d1=new Date(dStr+"T00:00:00Z");
+      const d2=new Date(asOfStr+"T00:00:00Z");
+      if(isNaN(d1)||isNaN(d2)||d1>d2) return null;
+      let cur=new Date(d1), n=0;
+      while(cur<d2){ cur.setUTCDate(cur.getUTCDate()+1); const dow=cur.getUTCDay(); if(dow!==0&&dow!==6) n++; }
+      return n;
+    }catch(e){ return null; }
+  }
+  function _entryIdx(spark, baseline, dateStr){
+    if(!spark||!spark.length||baseline==null) return -1;
+    if(dateStr && _asOfDateStr){
+      const back=_bdaysBack(dateStr, _asOfDateStr);
+      if(back!=null){
+        const idx=spark.length-1-back;
+        if(idx>=0 && idx<spark.length && Math.abs(spark[idx]-baseline)/baseline<0.05) return idx;
+      }
+    }
+    const start=Math.max(0, spark.length-6);
+    let best=-1, bestDiff=Infinity;
+    for(let i=start;i<spark.length;i++){
+      const d=Math.abs(spark[i]-baseline);
+      if(d<bestDiff){ bestDiff=d; best=i; }
+    }
+    return (best>=0 && Math.abs(spark[best]-baseline)/baseline<0.01) ? best : -1;
+  }
+  const _curveSrc=[];
+  active.forEach(t=>{
+    const tk=(t.tickers||[])[0];
+    if(!tk||t.baseline_price==null) return;
+    const sp=_sparkMap[String(tk).toUpperCase()];
+    if(!sp||sp.length<2) return;
+    const eIdx=_entryIdx(sp, t.baseline_price, t.date);
+    if(eIdx<0||eIdx>=sp.length-1) return;
+    const eOff=sp.length-1-eIdx;
+    const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+    _curveSrc.push({conv:(t.conviction!=null?t.conviction:0.5), baseline:t.baseline_price, spark:sp, eOff, sign});
+  });
+  let curvePanelHtml="";
+  if(_curveSrc.length){
+    const _incep=Math.max(..._curveSrc.map(s=>s.eOff));
+    const _curve=[];
+    for(let off=_incep; off>=0; off--){
+      let wS=0, rS=0, n=0;
+      _curveSrc.forEach(s=>{
+        if(s.eOff>=off){
+          const idx=s.spark.length-1-off;
+          if(idx>=0){
+            const close=s.spark[idx];
+            const r=(close-s.baseline)/s.baseline*100*s.sign;
+            wS+=s.conv; rS+=s.conv*r; n++;
+          }
+        }
+      });
+      if(wS>0) _curve.push({off, pct:rS/wS, n});
+    }
+    if(_curve.length){
+      const W=720, H=140;
+      const pad={l:42,r:16,t:14,b:24};
+      const iW=W-pad.l-pad.r, iH=H-pad.t-pad.b;
+      const pcts=_curve.map(c=>c.pct);
+      let lo=Math.min(0,...pcts), hi=Math.max(0,...pcts);
+      if(hi-lo<1){ const mid=(hi+lo)/2; lo=mid-0.5; hi=mid+0.5; }
+      const yPad=(hi-lo)*0.15; lo-=yPad; hi+=yPad;
+      const yPct=v=>pad.t+(hi-v)/(hi-lo)*iH;
+      const yZero=yPct(0);
+      const xStep=_curve.length>1?iW/(_curve.length-1):0;
+      const ptCoords=_curve.map((c,i)=>[pad.l+i*xStep, yPct(c.pct)]);
+      const linePts=ptCoords.map(([x,y])=>`${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+      const lastPct=_curve[_curve.length-1].pct;
+      const lineCls=lastPct>=0?"ec-pos":"ec-neg";
+      const areaPath = ptCoords.length>1
+        ? `M ${pad.l},${yZero.toFixed(1)} ` + ptCoords.map(([x,y])=>`L ${x.toFixed(1)},${y.toFixed(1)}`).join(" ") + ` L ${(pad.l+(ptCoords.length-1)*xStep).toFixed(1)},${yZero.toFixed(1)} Z`
+        : "";
+      const fmt=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
+      const showZeroLab = (yZero>pad.t+8 && yZero<pad.t+iH-8);
+      const yLabHtml = [
+        `<text class="ec-ylab" x="${pad.l-6}" y="${(pad.t+4).toFixed(1)}" text-anchor="end">${fmt(hi)}</text>`,
+        showZeroLab ? `<text class="ec-ylab" x="${pad.l-6}" y="${(yZero+3).toFixed(1)}" text-anchor="end">0.00%</text>` : "",
+        `<text class="ec-ylab" x="${pad.l-6}" y="${(pad.t+iH).toFixed(1)}" text-anchor="end">${fmt(lo)}</text>`
+      ].filter(Boolean).join("");
+      const xLabHtml = `<text class="ec-xlab" x="${pad.l}" y="${(H-7).toFixed(1)}">Inception</text>`+
+                       `<text class="ec-xlab" x="${(pad.l+iW).toFixed(1)}" y="${(H-7).toFixed(1)}" text-anchor="end">Heute</text>`;
+      const zeroLine = `<line class="ec-zero" x1="${pad.l}" y1="${yZero.toFixed(1)}" x2="${(pad.l+iW).toFixed(1)}" y2="${yZero.toFixed(1)}"/>`;
+      const lastP=ptCoords[ptCoords.length-1];
+      const lastDot = `<circle class="ec-dot ${lineCls}" cx="${lastP[0].toFixed(1)}" cy="${lastP[1].toFixed(1)}" r="4"/>`;
+      const dots = ptCoords.map(([x,y],i)=>{
+        const c=_curve[i];
+        return `<circle class="ec-tick" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5"><title>Tag −${c.off}: ${fmt(c.pct)} (${c.n} aktive Calls)</title></circle>`;
+      }).join("");
+      const svg = `<svg class="ec-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Buch-Equity-Kurve seit Inception als Liniendiagramm — aktuell ${fmt(lastPct)}">
+        ${zeroLine}
+        ${areaPath?`<path class="ec-area ${lineCls}" d="${areaPath}"/>`:""}
+        ${_curve.length>1?`<polyline class="ec-line ${lineCls}" points="${linePts}"/>`:""}
+        ${dots}
+        ${lastDot}
+        ${yLabHtml}
+        ${xLabHtml}
+      </svg>`;
+      const daysLive=_curve.length-1;
+      const peakPct=Math.max(0,...pcts);
+      let runMax=-Infinity, maxDD=0;
+      pcts.forEach(p=>{ if(p>runMax) runMax=p; const dd=p-runMax; if(dd<maxDD) maxDD=dd; });
+      const lastCls=lastPct>=0?"move-up":"move-dn";
+      const peakCls=peakPct>0?"move-up":"muted";
+      const ddCls=maxDD<-0.05?"move-dn":"muted";
+      const inceptDate=(active.map(t=>t.date).filter(Boolean).sort()[0])||null;
+      curvePanelHtml=`<div class="panel ec-panel" style="margin-top:var(--s3)">
+        <div class="ec-h">
+          <div class="ec-h-l">
+            <div class="ec-title">Buch-Equity-Kurve <span class="muted" style="font-weight:400">(seit Inception, konv-gewichtet)</span></div>
+            ${inceptDate?`<div class="ec-h-sub muted">Erste Position: ${esc(inceptDate)} · ${daysLive} Handelstag${daysLive===1?"":"e"} live · ${_curveSrc.length} Calls</div>`:""}
+          </div>
+          <div class="ec-kpis">
+            <div class="ec-kpi" title="Aktuelle konviktions-gewichtete Buch-Performance"><span class="muted">Aktuell</span><b class="${lastCls}">${fmt(lastPct)}</b></div>
+            <div class="ec-kpi" title="Höchster Buch-Stand seit Inception"><span class="muted">Hoch</span><b class="${peakCls}">${fmt(peakPct)}</b></div>
+            <div class="ec-kpi" title="Größter Rückgang vom Hoch (Drawdown)"><span class="muted">Max DD</span><b class="${ddCls}">${maxDD<-0.005?fmt(maxDD):"0.00%"}</b></div>
+          </div>
+        </div>
+        ${svg}
+        <div class="ec-foot muted">Honestes Inception-Tracking — die Kurve wächst mit jedem Handelstag. Indexiert bei 0% am Entry-Tag, sign-flipped für Shorts.</div>
+      </div>`;
+    }
+  }
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${riskHtml}`;
   root.setAttribute("aria-busy","false");
 })();
 
