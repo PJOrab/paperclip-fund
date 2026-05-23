@@ -1701,6 +1701,43 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 /* horizon badge on thesis card: shows time-frame of the call without crowding the header */
 .th-horizon{font-size:var(--fs-micro);font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:4px;background:var(--panel);border:1px solid var(--line);color:var(--mut);margin-left:auto;flex-shrink:0}
 .thesis .h{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+/* Fund-Performance Summary Bar (HED-137 Zyklus 115) — above-the-fold trust signal.
+   Bloomberg PRTU-style: headline P&L number + active-book context. Visible on every load,
+   before the investor scrolls. No skeleton — renders synchronously from embedded JSON. */
+#fund-summary-bar{margin-bottom:var(--s3)}
+.fsb{display:grid;grid-template-columns:auto 1fr auto;align-items:stretch;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.fsb-main{display:flex;flex-wrap:wrap;align-items:center;gap:0;padding:var(--s3) var(--s4);
+  border-right:1px solid var(--line);min-width:0}
+.fsb-pnl-lbl{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.08em;font-weight:700;
+  color:var(--mut);margin-right:var(--s2)}
+.fsb-pnl-val{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;margin-right:var(--s3)}
+.fsb-pnl-pos{color:var(--green)}
+.fsb-pnl-neg{color:var(--red)}
+.fsb-pnl-flat{color:var(--mut)}
+.fsb-pnl-tag{font-size:var(--fs-micro);color:var(--mut);display:block;margin-top:2px}
+.fsb-stats{display:flex;flex-wrap:wrap;gap:0;align-items:stretch;padding:0 var(--s2);flex:1;min-width:0}
+.fsb-stat{display:flex;flex-direction:column;justify-content:center;padding:var(--s3) var(--s4);
+  border-right:1px solid var(--line);min-width:0;flex-shrink:0}
+.fsb-stat:last-child{border-right:none}
+.fsb-stat-lbl{font-size:var(--fs-micro);text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:600;white-space:nowrap}
+.fsb-stat-val{font-size:var(--fs-body);font-weight:700;font-variant-numeric:tabular-nums;color:var(--txt);white-space:nowrap;margin-top:2px}
+.fsb-stat-val.move-up{color:var(--green)}
+.fsb-stat-val.move-dn{color:var(--red)}
+.fsb-spark{display:flex;align-items:center;padding:var(--s3) var(--s4)}
+.fsb-spark-svg{display:block;flex-shrink:0}
+@media (max-width:760px){
+  .fsb{grid-template-columns:1fr}
+  .fsb-main{border-right:none;border-bottom:1px solid var(--line)}
+  .fsb-stat{border-right:none;border-bottom:1px solid var(--line)}
+  .fsb-stat:last-child{border-bottom:none}
+  .fsb-spark{display:none}
+}
+@media (max-width:430px){
+  .fsb-pnl-val{font-size:22px}
+  .fsb-stats{gap:0}
+  .fsb-stat{padding:var(--s2) var(--s3)}
+}
 /* portfolio view */
 .pf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--s3);margin-bottom:var(--s3)}
 .pf-bar-wrap{margin-top:var(--s3)}
@@ -3513,7 +3550,9 @@ main:focus{outline:none}
   outline-offset:0;border-radius:12px}
 .tkl:focus-visible{border-radius:2px}
 /* Section nav: compact in-page jump strip (Recognition>Recall, WCAG 2.4.1, landmark complement) */
-.sec-nav{display:flex;gap:var(--s2);flex-wrap:wrap;margin:var(--s3) 0 var(--s4)}
+.sec-nav{display:flex;gap:var(--s2);flex-wrap:wrap;margin:var(--s3) 0 var(--s4);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.sec-nav::-webkit-scrollbar{display:none}
+@media (max-width:760px){.sec-nav{flex-wrap:nowrap;padding-bottom:var(--s1)}}
 .sec-nav a{display:inline-block;padding:3px var(--s3);border:1px solid var(--line);
   border-radius:12px;font-size:var(--fs-cap);text-transform:uppercase;letter-spacing:.04em;
   color:var(--mut);text-decoration:none;transition:color .15s,border-color .15s,background .15s}
@@ -3567,6 +3606,10 @@ main:focus{outline:none}
     <div class="sub">Live-Feed → Agenten-Gremium → CEO-Briefing · MVP</div></div>
     <div class="sub" id="builtwrap">aktualisiert: <span id="built"></span></div>
   </header>
+
+  <!-- Fund performance summary bar (HED-137 Zyklus 115): above-the-fold trust signal.
+       Placed before nav so it's visible immediately on mobile without scrolling. -->
+  <div id="fund-summary-bar" aria-label="Fund Performance Summary" style="margin:var(--s4) 0 var(--s3)"></div>
 
   <details class="wf-details">
     <summary class="wf-summary">Workflow — Pipeline-Status</summary>
@@ -4474,6 +4517,130 @@ function calibSvg(buckets){
       ${cd}
     </div>${pendingTbl}</div>`;
   }
+})();
+
+// Fund Performance Summary Bar (HED-137 Zyklus 115) — above-the-fold PRTU-style trust signal.
+// Shows the headline conviction-weighted book P&L, active call count, Long/Short split,
+// SPX 30d benchmark, and score countdown. First number an investor sees on page load.
+(function renderFundSummaryBar(){
+  const root=$("fund-summary-bar");
+  if(!root) return;
+  const tr=D.track_record;
+  const active=(tr&&tr.theses||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  if(!active.length){ root.style.display="none"; return; }
+  // Build live price map from sector_view
+  const _pf={};
+  ((D.sector_view||{}).sectors||[]).forEach(s=>{
+    (s.tickers||[]).forEach(t=>{ if(t&&t.ticker&&t.price!=null) _pf[String(t.ticker).toUpperCase()]=t.price; });
+  });
+  // Conviction-weighted book P&L (same formula as renderPortfolio)
+  const priced=active.filter(t=>{
+    const tk=(t.tickers||[])[0]; return tk&&t.baseline_price!=null&&_pf[String(tk).toUpperCase()]!=null;
+  });
+  const wConv=priced.reduce((s,t)=>s+(t.conviction||0),0);
+  const bookPnl=wConv>0?priced.reduce((s,t)=>{
+    const tk=String((t.tickers||[])[0]).toUpperCase();
+    const cur=_pf[tk]; const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+    return s+(t.conviction||0)*((cur-t.baseline_price)/t.baseline_price*100)*sign;
+  },0)/wConv:null;
+  // Long/Short split
+  const longs=active.filter(t=>(t.direction||"").toLowerCase()==="long").length;
+  const shorts=active.filter(t=>(t.direction||"").toLowerCase()==="short").length;
+  // Days to first score
+  const esd=(tr&&tr.earliest_score_date)||null;
+  const daysToScore=esd?Math.ceil((new Date(esd+"T00:00:00Z")-Date.now())/864e5):null;
+  // SPX benchmark 30d return
+  const spxSpark=((D.sector_view||{}).benchmarks||{})?.SPY?.spark||null;
+  const spxPnl=spxSpark&&spxSpark.length>=2
+    ? ((spxSpark[spxSpark.length-1]-spxSpark[0])/spxSpark[0]*100) : null;
+  // Book equity mini-sparkline: last N days of conviction-weighted daily book value.
+  // Reuse _curveSrc pattern from portfolio section — spark map + entry index.
+  const _sparkMap={};
+  ((D.sector_view||{}).sectors||[]).forEach(s=>{
+    (s.tickers||[]).forEach(t=>{ if(t&&t.ticker&&Array.isArray(t.spark)&&t.spark.length>=2) _sparkMap[String(t.ticker).toUpperCase()]=t.spark; });
+  });
+  const _asOf=((D.sector_view||{}).as_of_iso||(D.sector_view||{}).as_of||"").replace(/ UTC.*/,"").slice(0,10);
+  function _bd(dStr,asOf){ if(!dStr||!asOf) return null;
+    try{ const d1=new Date(dStr+"T00:00:00Z"),d2=new Date(asOf+"T00:00:00Z"); if(isNaN(d1)||isNaN(d2)||d1>d2) return null;
+      let c=new Date(d1),n=0; while(c<d2){ c.setUTCDate(c.getUTCDate()+1); const dw=c.getUTCDay(); if(dw&&dw!==6) n++; } return n;
+    }catch(e){ return null; } }
+  function _eIdx(spark,baseline,dateStr){ if(!spark||!spark.length||baseline==null) return -1;
+    if(dateStr&&_asOf){ const b=_bd(dateStr,_asOf); if(b!=null){ const i=spark.length-1-b;
+      if(i>=0&&i<spark.length&&Math.abs(spark[i]-baseline)/baseline<0.05) return i; } }
+    const start=Math.max(0,spark.length-6); let best=-1,bd=Infinity;
+    for(let i=start;i<spark.length;i++){ const d=Math.abs(spark[i]-baseline); if(d<bd){ bd=d; best=i; } }
+    return (best>=0&&Math.abs(spark[best]-baseline)/baseline<0.01)?best:-1; }
+  const curveSrc=[];
+  active.forEach(t=>{ const tk=(t.tickers||[])[0]; if(!tk||t.baseline_price==null) return;
+    const sp=_sparkMap[String(tk).toUpperCase()]; if(!sp||sp.length<2) return;
+    const eIdx=_eIdx(sp,t.baseline_price,t.date); if(eIdx<0||eIdx>=sp.length-1) return;
+    const eOff=sp.length-1-eIdx;
+    curveSrc.push({conv:(t.conviction??0.5),baseline:t.baseline_price,spark:sp,eOff,sign:(t.direction||"").toLowerCase()==="short"?-1:1});
+  });
+  let sparkHtml="";
+  if(curveSrc.length>=1){
+    const incep=Math.max(...curveSrc.map(s=>s.eOff));
+    const curve=[];
+    for(let off=incep;off>=0;off--){
+      let wS=0,rS=0; curveSrc.forEach(s=>{ if(s.eOff>=off){ const idx=s.spark.length-1-off;
+        if(idx>=0){ const r=(s.spark[idx]-s.baseline)/s.baseline*100*s.sign; wS+=s.conv; rS+=s.conv*r; } }});
+      curve.push(wS>0?rS/wS:0);
+    }
+    const W=120,H=40;
+    const lo=Math.min.apply(null,curve), hi=Math.max.apply(null,curve);
+    const rng=Math.max(0.0001,hi-lo);
+    const stepX=(W-4)/(curve.length-1);
+    const xOf=i=>2+i*stepX, yOf=v=>H-2-((v-lo)/rng)*(H-4);
+    const pts=curve.map((v,i)=>`${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
+    const last=curve[curve.length-1];
+    const scls=last>=0?"spark-up":"spark-dn";
+    const fill=last>=0?"rgba(63,185,80,0.08)":"rgba(248,81,73,0.08)";
+    const areaD=`M${xOf(0).toFixed(1)},${yOf(curve[0]).toFixed(1)} `+
+      curve.slice(1).map((v,i)=>`L${xOf(i+1).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ")+
+      ` L${xOf(curve.length-1).toFixed(1)},${(H-2).toFixed(1)} L${xOf(0).toFixed(1)},${(H-2).toFixed(1)} Z`;
+    sparkHtml=`<svg class="fsb-spark-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+      <path d="${areaD}" fill="${fill}"/>
+      <polyline class="spark-line ${scls}" points="${pts}" style="stroke-width:1.8"/>
+    </svg>`;
+  }
+  // Render
+  const pnlTxt=bookPnl==null?"—":`${bookPnl>=0?"+":"−"}${Math.abs(bookPnl).toFixed(2)}%`;
+  const pnlCls=bookPnl==null?"fsb-pnl-flat":bookPnl>=0.01?"fsb-pnl-pos":"fsb-pnl-neg";
+  const pnlTag=bookPnl==null?"kein Live-Kurs":"unrealisiert · konviktions-gew.";
+  const spxTxt=spxPnl==null?"—":`${spxPnl>=0?"+":"−"}${Math.abs(spxPnl).toFixed(2)}%`;
+  const spxCls=spxPnl==null?"":spxPnl>=0?"move-up":"move-dn";
+  const scoreTxt=daysToScore==null?"—":daysToScore>0?`in ${daysToScore}d`:"fällig";
+  const alpha=bookPnl!=null&&spxPnl!=null?bookPnl-spxPnl:null;
+  const alphaTxt=alpha==null?"—":`${alpha>=0?"+":"−"}${Math.abs(alpha).toFixed(2)}%`;
+  const alphaCls=alpha==null?"":alpha>=0?"move-up":"move-dn";
+  root.innerHTML=`<div class="fsb" role="region" aria-label="Fund Performance">
+    <div class="fsb-main">
+      <span class="fsb-pnl-lbl">Buch P&amp;L</span>
+      <div>
+        <span class="fsb-pnl-val ${pnlCls}">${pnlTxt}</span>
+        <span class="fsb-pnl-tag">${pnlTag}</span>
+      </div>
+    </div>
+    <div class="fsb-stats">
+      <div class="fsb-stat">
+        <span class="fsb-stat-lbl">Positionen</span>
+        <span class="fsb-stat-val">${active.length} Call${active.length===1?"":"s"} · ${longs}L ${shorts}S</span>
+      </div>
+      <div class="fsb-stat">
+        <span class="fsb-stat-lbl">SPY 30d</span>
+        <span class="fsb-stat-val ${spxCls}">${spxTxt}</span>
+      </div>
+      <div class="fsb-stat">
+        <span class="fsb-stat-lbl">Alpha vs SPY</span>
+        <span class="fsb-stat-val ${alphaCls}">${alphaTxt}</span>
+      </div>
+      <div class="fsb-stat">
+        <span class="fsb-stat-lbl">Score-Window</span>
+        <span class="fsb-stat-val">${scoreTxt}</span>
+      </div>
+    </div>
+    ${sparkHtml?`<div class="fsb-spark" title="Buch-Equity-Kurve seit Inception (konviktions-gewichtet)">${sparkHtml}</div>`:""}
+  </div>`;
 })();
 
 // Portfolio-Übersicht: aktive Calls aus Track-Record + Sektorkonzentration
