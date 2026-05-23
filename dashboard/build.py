@@ -643,11 +643,49 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 /* call-direction confirm/diverge tint on the since-call cell */
 .th-mkt-cell.mkt-confirm{background:rgba(63,185,80,.08);border-bottom:2px solid var(--green)}
 .th-mkt-cell.mkt-against{background:rgba(248,81,73,.08);border-bottom:2px solid var(--red)}
+/* embedded 30-day price chart in thesis cards (HED-137 cycle 88):
+   makes baseline-vs-current visible at a glance, P&L shown as shaded area between
+   baseline reference line and price polyline. Direction-aware (shorts: down=green). */
+.th-ch{position:relative;margin:var(--s2) 0 var(--s3);background:var(--panel2);
+  border:1px solid var(--line);border-radius:8px;overflow:hidden;height:68px}
+.th-ch svg{display:block;width:100%;height:100%}
+.th-ch-line{fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;
+  vector-effect:non-scaling-stroke}
+.th-ch-line-up{stroke:var(--green)}
+.th-ch-line-dn{stroke:#f78166}
+.th-ch-line-flat{stroke:var(--mut)}
+.th-ch-base{stroke:var(--amber);stroke-width:1;stroke-dasharray:3 2;opacity:.75;
+  vector-effect:non-scaling-stroke}
+.th-ch-area-up{fill:var(--green);fill-opacity:.14}
+.th-ch-area-dn{fill:#f78166;fill-opacity:.14}
+.th-ch-area-flat{fill:var(--mut);fill-opacity:.08}
+.th-ch-pt-up{fill:var(--green)}
+.th-ch-pt-dn{fill:#f78166}
+.th-ch-pt-flat{fill:var(--mut)}
+.th-ch-tag{position:absolute;top:4px;left:6px;font-size:9px;font-weight:700;
+  letter-spacing:.05em;color:var(--mut);background:rgba(20,26,38,.6);padding:1px 5px;
+  border-radius:3px;font-variant-numeric:tabular-nums}
+.th-ch-cur{position:absolute;top:4px;right:6px;font-size:10px;font-weight:700;
+  color:var(--txt);font-variant-numeric:tabular-nums;background:rgba(20,26,38,.6);
+  padding:1px 5px;border-radius:3px}
+.th-ch-base-lbl{position:absolute;right:6px;font-size:9px;color:var(--amber);
+  font-weight:700;font-variant-numeric:tabular-nums;transform:translateY(-50%);
+  background:rgba(11,15,23,.85);padding:0 4px;border-radius:3px;line-height:1.4;
+  white-space:nowrap;pointer-events:none}
+.th-ch-pnl{position:absolute;bottom:4px;right:6px;font-size:10px;font-weight:800;
+  font-variant-numeric:tabular-nums;background:rgba(11,15,23,.85);padding:1px 5px;
+  border-radius:3px;letter-spacing:.01em}
+.th-ch-pnl-up{color:var(--green)}
+.th-ch-pnl-dn{color:#f78166}
+.th-ch-pnl-flat{color:var(--mut)}
+.th-ch-empty{padding:18px;text-align:center;font-size:var(--fs-micro);color:var(--mut)}
 @media(max-width:430px){
   .th-mkt{flex-wrap:wrap}
   .th-mkt-cell{flex:1 1 46%;min-width:80px;padding:4px var(--s2)}
   .th-mkt-cell:nth-child(even){border-right:none}
   .th-mkt-cell:nth-child(odd):not(:last-child){border-right:1px solid var(--line)}
+  .th-ch{height:60px}
+  .th-ch-tag,.th-ch-cur,.th-ch-base-lbl,.th-ch-pnl{font-size:9px}
 }
 @media(max-width:560px){
   .pf-pnl-row{grid-template-columns:1fr 50px;grid-template-areas:"tk val" "bar bar";row-gap:3px}
@@ -1222,6 +1260,61 @@ else{
     }).filter(Boolean).join("");
     return cells?`<div class="th-mkt">${cells}</div>`:"";
   }
+  // thChart: 30-day price-history mini-chart embedded inside the thesis card.
+  // Visualises the call's risk/reward visually: baseline reference, current price endpoint,
+  // and the P&L area between baseline and price (direction-aware coloring: shorts invert).
+  function thChart(t){
+    const tks=(t.tickers||[]).map(x=>String(x).toUpperCase()).filter(Boolean);
+    if(!tks.length) return "";
+    const tk=tks[0];
+    const m=_mktMap[tk];
+    if(!m||!Array.isArray(m.spark)||m.spark.length<5) return "";
+    const closes=m.spark.slice();
+    if(m.price!=null && Math.abs(m.price-closes[closes.length-1])>0.005) closes.push(m.price);
+    const dir=(t.direction||(_baseMap[tk]&&_baseMap[tk].dir)||"").toLowerCase();
+    const baseline=_baseMap[tk]?_baseMap[tk].bp:null;
+    const W=400,H=68,padT=10,padB=10;
+    const vals=baseline!=null?closes.concat([baseline]):closes;
+    let yMin=Math.min(...vals),yMax=Math.max(...vals);
+    const buf=(yMax-yMin)*0.05||yMax*0.02||1;
+    yMin-=buf; yMax+=buf;
+    const rng=(yMax-yMin)||1;
+    const xStep=W/(closes.length-1);
+    const xAt=i=>i*xStep;
+    const yAt=v=>padT+(yMax-v)/rng*(H-padT-padB);
+    const linePts=closes.map((v,i)=>`${xAt(i).toFixed(1)},${yAt(v).toFixed(1)}`).join(" ");
+    const cur=closes[closes.length-1];
+    let pnlPct=null;
+    if(baseline!=null){
+      const rawPct=((cur-baseline)/baseline)*100;
+      pnlPct=dir==="short"?-rawPct:rawPct;
+    }
+    const sem=pnlPct==null?"flat":pnlPct>=0.1?"up":pnlPct<=-0.1?"dn":"flat";
+    let areaShade="",baseLine="";
+    if(baseline!=null){
+      const by=yAt(baseline).toFixed(1);
+      const rev=`${xAt(closes.length-1).toFixed(1)},${by} ${xAt(0).toFixed(1)},${by}`;
+      areaShade=`<polygon class="th-ch-area-${sem}" points="${linePts} ${rev}"/>`;
+      baseLine=`<line class="th-ch-base" x1="0" y1="${by}" x2="${W}" y2="${by}"/>`;
+    }
+    const lastX=xAt(closes.length-1),lastY=yAt(cur);
+    const dot=`<circle class="th-ch-pt-${sem}" cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="2.8"/>`;
+    const fmt=v=>v<10?v.toFixed(2):v<100?v.toFixed(1):v.toFixed(0);
+    const baseLblTop=baseline!=null?`${(yAt(baseline)/H*100).toFixed(1)}%`:null;
+    const overlays=[
+      `<span class="th-ch-tag">30D · ${esc(tk)}</span>`,
+      `<span class="th-ch-cur">$${fmt(cur)}</span>`,
+      baseline!=null?`<span class="th-ch-base-lbl" style="top:${baseLblTop}">$${fmt(baseline)} Call</span>`:"",
+      pnlPct!=null?`<span class="th-ch-pnl th-ch-pnl-${sem}">${pnlPct>=0?"+":"−"}${Math.abs(pnlPct).toFixed(1)}%</span>`:""
+    ].filter(Boolean).join("");
+    const tip=`${tk} — 30 Tage Preisverlauf${baseline!=null?` · Baseline $${baseline.toFixed(2)}`:""} · aktuell $${cur.toFixed(2)}${pnlPct!=null?` (${pnlPct>=0?"+":"−"}${Math.abs(pnlPct).toFixed(1)}% seit Call ${dir.toUpperCase()})`:""}`;
+    return `<div class="th-ch" title="${esc(tip)}" role="img" aria-label="${esc(tip)}">
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" width="100%" height="${H}">
+        ${areaShade}${baseLine}
+        <polyline class="th-ch-line th-ch-line-${sem}" points="${linePts}"/>
+        ${dot}
+      </svg>${overlays}</div>`;
+  }
   if(theses.length){
     html+='<div class="brief-aside"><h2 class="brief-aside-h2">Thesen & Devil\'s Advocate</h2>';
     html+=theses.map((t,i)=>{
@@ -1231,6 +1324,7 @@ else{
         <span class="${t.conviction!=null?convCls(t.conviction):'muted'}" title="${t.conviction!=null?convTip(t.conviction):''}">· Conv ${t.conviction!=null?t.conviction.toFixed(2):"—"}</span>
         ${t.horizon?`<span class="th-horizon" title="Zeithorizont der These">${esc(t.horizon)}</span>`:""}</div>
         ${thMktHtml(t)}
+        ${thChart(t)}
         <div lang="en" style="margin-top:4px">${esc(t.thesis||"")}</div>
         ${t.edge&&t.is_differentiated?`<div class="edge-line">🎯 ${esc(t.edge)}</div>`:""}
         ${t.scenarios?(()=>{const s=t.scenarios;const fmtS=(k,c)=>{if(!c)return null;const tgt=c.target?` → ${esc(c.target)}`:"";const p=c.prob!=null?` (P=${Math.round(c.prob*100)}%)`:"";return `${k}${c.trigger?" "+esc(c.trigger):""}${tgt}${p}`;};const parts=[fmtS("Bull",s.bull),fmtS("Base",s.base),fmtS("Bear",s.bear)].filter(Boolean);return parts.length?`<div class="sc-line">📐 ${parts.join(" | ")}</div>`:""})():""}
