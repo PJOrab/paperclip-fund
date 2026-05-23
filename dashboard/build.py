@@ -11771,18 +11771,62 @@ function calibSvg(buckets){
       // Track relevant tickers (active + ideas)
       const relevant=new Set([..._activeTk, ..._ideaLongs, ..._ideaShorts]);
 
-      // Filter recent items by ticker mention (word-boundary)
+      // Filter recent items by ticker mention with SOURCE-AWARE rules to suppress
+      // false positives from short tickers that match English words (NOW, ARM, MU).
       const tickerItems={}; // tk -> [items]
       const tkRe={};
       Array.from(relevant).forEach(tk=>{tkRe[tk]=new RegExp("\\b"+tk+"\\b");});
+      // Short tickers prone to false positives — require stricter context match
+      const _ambigSet=new Set(["NOW","ARM","MU","ON","AI","T","C","V","D"]);
+      // Finance keywords for context-validation on news/social items (uppercased text)
+      const _finRe=/\b(STOCK|SHARES|EARNINGS|REVENUE|GUIDANCE|ANALYST|UPGRADE|DOWNGRADE|PRICE TARGET|PT|MARGIN|PRINT|QUARTER|EPS|TICKER|YIELD|BUYBACK|DIVIDEND|FILED|FORM-?[48]K?|SEC|NASDAQ|NYSE|OUTPERFORM|HOLD|BUY RATING|SELL RATING)\b/;
+      // Cashtag pattern for HN/X
+      const _cashRe=t=>new RegExp("\\$"+t+"\\b");
 
       recent.forEach(item=>{
         const text=(item.text||"").toUpperCase();
+        const src=(item.source||"").toLowerCase();
+        // Yahoo Finance items have [TICKER] prefix — high-confidence
+        const yahooPrefix=src==="yahoo_finance"?(item.text||"").match(/^\[([A-Z][A-Z.]{0,5})\]/):null;
+        const yahooTk=yahooPrefix?yahooPrefix[1].toUpperCase():null;
+
         Array.from(relevant).forEach(tk=>{
-          if(tkRe[tk].test(text)){
+          if(!tkRe[tk].test(text)) return;
+          const isAmbig=_ambigSet.has(tk);
+          // High-confidence sources: SEC (always), Yahoo with matching prefix
+          if(src.startsWith("sec_")){
+            // SEC items are per-CIK filings; the ticker mention is meaningful
             if(!tickerItems[tk]) tickerItems[tk]=[];
             tickerItems[tk].push(item);
+            return;
           }
+          if(src==="yahoo_finance"){
+            // Trust only if matches the [TICKER] prefix OR ticker is unambiguous
+            if(yahooTk===tk || !isAmbig){
+              if(!tickerItems[tk]) tickerItems[tk]=[];
+              tickerItems[tk].push(item);
+            }
+            return;
+          }
+          if(src.startsWith("x_")||src==="hackernews"){
+            // Social: cashtag $TICKER OR unambiguous + finance keyword
+            if(_cashRe(tk).test(item.text||"") || (!isAmbig && _finRe.test(text))){
+              if(!tickerItems[tk]) tickerItems[tk]=[];
+              tickerItems[tk].push(item);
+            }
+            return;
+          }
+          // tech_news, press_wire, other: require finance context for ambig tickers
+          if(isAmbig){
+            if(_finRe.test(text)){
+              if(!tickerItems[tk]) tickerItems[tk]=[];
+              tickerItems[tk].push(item);
+            }
+            return;
+          }
+          // Unambiguous ticker in any source → keep
+          if(!tickerItems[tk]) tickerItems[tk]=[];
+          tickerItems[tk].push(item);
         });
       });
 
