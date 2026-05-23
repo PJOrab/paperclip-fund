@@ -3547,6 +3547,66 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .pf-life-bar-wrap{grid-area:bar;grid-column:1/-1}
   .pf-life-age{display:none}
 }
+/* Trade-Pfad-Effizienz — MAE/MFE per offenem Call (HED-137 Zyklus 121).
+   Bloomberg BLOTTER/POMS-Pendant: trennt These-Korrektheit (MFE>0) von
+   Exit-Timing (Capture = Current ÷ MFE). Klassische Bulkowski/Sweeney
+   Trade-Quality-Diagnose: war die Idee richtig, halten wir die Bewegung? */
+.pf-mae{padding:var(--s3);margin-top:var(--s3)}
+.pf-mae-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3)}
+.pf-mae-h-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-mae-h-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400;margin-top:2px}
+.pf-mae-chip{display:inline-block;padding:2px 8px;border-radius:99px;font-size:var(--fs-micro);font-weight:600;border:1px solid var(--line);background:var(--panel2);color:var(--mut)}
+.pf-mae-chip.is-good{color:var(--green);border-color:rgba(63,185,80,.4)}
+.pf-mae-chip.is-warn{color:#e8b341;border-color:rgba(210,153,34,.4)}
+.pf-mae-chip.is-bad{color:var(--red);border-color:rgba(248,81,73,.4)}
+.pf-mae-chip.is-neutral{color:var(--accent);border-color:rgba(88,166,255,.4)}
+.pf-mae-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s2);margin-bottom:var(--s3)}
+.pf-mae-kpi{background:var(--panel2);border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.pf-mae-kpi-lbl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.pf-mae-kpi-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;color:var(--txt);white-space:nowrap}
+.pf-mae-kpi-val.is-headline{font-size:22px;letter-spacing:-.01em;color:var(--accent)}
+.pf-mae-kpi-val.move-up{color:var(--green)}
+.pf-mae-kpi-val.move-dn{color:var(--red)}
+.pf-mae-kpi-sub{font-size:var(--fs-micro);color:var(--mut);font-variant-numeric:tabular-nums}
+.pf-mae-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pf-mae-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+.pf-mae-tbl thead th{font-size:var(--fs-micro);font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);padding:6px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.pf-mae-tbl thead th.pf-mae-th-name{text-align:left}
+.pf-mae-tbl thead th.pf-mae-th-bar{text-align:center;width:34%}
+.pf-mae-tbl tbody td{padding:7px 6px;border-top:1px solid var(--line);text-align:right;vertical-align:middle}
+.pf-mae-tbl tbody tr:first-child td{border-top:0}
+.pf-mae-tbl tbody tr:hover{background:rgba(77,163,255,.06)}
+.pf-mae-name{text-align:left;font-weight:700;color:var(--txt);white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
+.pf-mae-name .pf-mae-dir{display:inline-block;margin-left:6px;vertical-align:middle}
+.pf-mae-num{font-weight:600;min-width:62px}
+.pf-mae-num.move-up{color:var(--green)}
+.pf-mae-num.move-dn{color:var(--red)}
+.pf-mae-num.is-cur-strong{font-weight:700}
+.pf-mae-bar-cell{padding-left:0!important;padding-right:0!important}
+.pf-mae-bar{position:relative;height:16px;background:var(--panel2);border-radius:3px;border:1px solid var(--line);min-width:140px}
+.pf-mae-bar-zero{position:absolute;top:-2px;bottom:-2px;width:1px;background:var(--mut);opacity:.6;z-index:2}
+.pf-mae-bar-mae{position:absolute;right:50%;top:1px;bottom:1px;background:linear-gradient(90deg,rgba(248,81,73,.85),rgba(248,81,73,.55));border-radius:2px 0 0 2px;z-index:1}
+.pf-mae-bar-mfe{position:absolute;left:50%;top:1px;bottom:1px;background:linear-gradient(90deg,rgba(63,185,80,.55),rgba(63,185,80,.85));border-radius:0 2px 2px 0;z-index:1}
+.pf-mae-bar-cur{position:absolute;top:-3px;bottom:-3px;width:3px;background:var(--accent);box-shadow:0 0 0 1px var(--bg);z-index:3;border-radius:1px}
+.pf-mae-verd{margin-top:var(--s3);font-size:var(--fs-cap);line-height:1.5;color:var(--txt)}
+.pf-mae-verd b{font-weight:700}
+.pf-mae-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s2);line-height:1.45}
+@media(max-width:640px){
+  .pf-mae-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pf-mae-kpi-val{font-size:15px}
+  .pf-mae-kpi-val.is-headline{font-size:18px}
+  .pf-mae-tbl thead th,.pf-mae-tbl tbody td{padding:5px 4px;font-size:var(--fs-micro)}
+  .pf-mae-wrap{overflow-x:hidden}
+  .pf-mae-tbl{table-layout:fixed;width:100%}
+  .pf-mae-tbl thead th,.pf-mae-tbl tbody td{padding:5px 5px}
+  .pf-mae-tbl thead th{white-space:normal}
+  .pf-mae-num{min-width:0;width:48px}
+  .pf-mae-bar{min-width:0;height:12px}
+  .pf-mae-tbl .col-hide-m{display:none}
+  .pf-mae-name{max-width:none;width:auto;font-size:var(--fs-micro);overflow:hidden;text-overflow:ellipsis}
+  .pf-mae-tbl thead th.pf-mae-th-name{width:28%}
+  .pf-mae-tbl thead th.pf-mae-th-bar{width:36%;text-align:center;font-size:9px;letter-spacing:.02em}
+}
 /* conviction color ramp */
 .conv-lo{color:var(--mut)}
 .conv-mid{color:var(--txt)}
@@ -6155,6 +6215,151 @@ function calibSvg(buckets){
       </div>`;
     }
   }
+  // Trade-Pfad-Effizienz — MAE/MFE per offenem Call (HED-137 Zyklus 121).
+  // For each active call: post-entry path of direction-adjusted returns yields
+  //   MFE = max(path)          — theoretical peak profit since entry
+  //   MAE = min(path)          — worst drawdown since entry
+  //   Current = path[end]      — live P&L
+  //   Capture = Current/MFE    — fraction of peak still held
+  // Classical Bulkowski/Sweeney trade-quality view; Bloomberg BLOTTER/POMS
+  // equivalent. Separates *was the idea right?* (MFE>0) from *did we hold it?*
+  // (Capture high). PM's hold/trim/cut decision lens — a winning thesis with
+  // 10% Capture means we already gave the move back.
+  let maePanelHtml="";
+  {
+    const _rows=[];
+    active.forEach(t=>{
+      const tk=(t.tickers||[])[0];
+      if(!tk||t.baseline_price==null) return;
+      const sp=_sparkMap[String(tk).toUpperCase()];
+      if(!sp||sp.length<3) return;
+      const eIdx=_entryIdx(sp, t.baseline_price, t.date);
+      if(eIdx<0||eIdx>=sp.length-1) return;
+      const dir=(t.direction||"").toLowerCase();
+      if(dir!=="long"&&dir!=="short"&&dir!=="pair") return;
+      const sign=dir==="short"?-1:1;
+      const path=[];
+      for(let i=eIdx;i<sp.length;i++){
+        path.push(sign*(sp[i]-t.baseline_price)/t.baseline_price*100);
+      }
+      if(path.length<2) return;
+      const current=path[path.length-1];
+      const mfe=Math.max.apply(null, path);
+      const mae=Math.min.apply(null, path);
+      // Capture-Ratio: share of theoretical peak still held.
+      // mfe>0.1%  → current/mfe (1.0 = on peak, 0 = gave it all back, <0 = below entry)
+      // mfe≤0.1%  → never went favorable; capture is 0 (no peak to hold)
+      let capture=null;
+      if(mfe>0.1) capture=current/mfe;
+      else if(mae<-0.1) capture=0;
+      _rows.push({t, tk:(t.tickers||[]).join("·")||tk, dir, sign,
+                  conv:t.conviction||0, current, mfe, mae, capture,
+                  daysHeld:path.length-1});
+    });
+    if(_rows.length){
+      _rows.sort((a,b)=>Math.abs(b.current)-Math.abs(a.current));
+      const wSumAll=_rows.reduce((s,r)=>s+r.conv,0)||1;
+      const wMFE=_rows.reduce((s,r)=>s+r.conv*r.mfe,0)/wSumAll;
+      const wMAE=_rows.reduce((s,r)=>s+r.conv*r.mae,0)/wSumAll;
+      const wCur=_rows.reduce((s,r)=>s+r.conv*r.current,0)/wSumAll;
+      const capRows=_rows.filter(r=>r.capture!=null);
+      const capWSum=capRows.reduce((s,r)=>s+r.conv,0);
+      const wCap=capWSum>0?capRows.reduce((s,r)=>s+r.conv*r.capture,0)/capWSum:null;
+      // Path-quality verdict
+      let verdLbl, verdCls, verdProse;
+      if(wCap==null){
+        verdLbl="Zu früh"; verdCls="is-neutral";
+        verdProse=`Calls bewegen sich seit Entry kaum — Trade-Pfad noch nicht aussagekräftig.`;
+      } else if(wCap>=0.8){
+        verdLbl="Hält Peak"; verdCls="is-good";
+        verdProse=`Buch sitzt auf <b>${(wCap*100).toFixed(0)}%</b> des theoretischen Peak-Gewinns — Pfad-Effizienz hoch, These und Exit-Timing beide korrekt.`;
+      } else if(wCap>=0.4){
+        verdLbl="Teilweise"; verdCls="is-warn";
+        verdProse=`Buch hat <b>${((1-wCap)*100).toFixed(0)}%</b> der theoretischen Bewegung wieder abgegeben — These greift, Exit-Timing mittelmäßig.`;
+      } else if(wCap>=0){
+        verdLbl="Gegeben"; verdCls="is-bad";
+        verdProse=`Buch sitzt nur auf <b>${(wCap*100).toFixed(0)}%</b> des Peak-Moves — These war richtig, aber die Bewegung wurde komplett zurückgegeben.`;
+      } else {
+        verdLbl="Unter Wasser"; verdCls="is-bad";
+        verdProse=`Calls sind nach favorablem Move zurück durch Entry gefallen — Capture negativ, Peak-Profit komplett verloren.`;
+      }
+      const fmt=v=>{ if(v==null||!isFinite(v)) return "—"; return (v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%"; };
+      const fmtCap=v=>{ if(v==null||!isFinite(v)) return "—"; return (v>=0?"":"−")+Math.abs(v*100).toFixed(0)+"%"; };
+      const scale=Math.max(1.5, ..._rows.map(r=>Math.max(Math.abs(r.mae),Math.abs(r.mfe))));
+      const bodyRows=_rows.map(r=>{
+        const dirCls=r.dir==="long"?"cd-long":r.dir==="short"?"cd-short":"cd-pair";
+        const dirChip=`<span class="cd pf-mae-dir ${dirCls}">${(r.dir.slice(0,1)||"·").toUpperCase()}</span>`;
+        const curCls=r.current>=0.25?"move-up":r.current<=-0.25?"move-dn":"muted";
+        const mfePct=(Math.max(0,r.mfe)/scale)*50;
+        const maePct=(Math.abs(Math.min(0,r.mae))/scale)*50;
+        const curPos=Math.max(0, Math.min(100, 50+(r.current/scale)*50));
+        const capCls=r.capture==null?"":r.capture>=0.7?"move-up":r.capture>=0.3?"":"move-dn";
+        const tip=`MFE ${fmt(r.mfe)} (Peak seit Entry) · Current ${fmt(r.current)} · MAE ${fmt(r.mae)} (Tief) · ${r.daysHeld}d gehalten · Capture ${fmtCap(r.capture)}`;
+        return `<tr>
+          <td class="pf-mae-name"><span>${esc(r.tk)}</span>${dirChip}</td>
+          <td class="pf-mae-num move-up col-hide-m" title="Max Favorable Excursion: theoretischer Peak-Profit seit Entry">${fmt(r.mfe)}</td>
+          <td class="pf-mae-num is-cur-strong ${curCls}" title="Aktueller P&amp;L seit Entry (direction-adjusted)">${fmt(r.current)}</td>
+          <td class="pf-mae-num move-dn col-hide-m" title="Max Adverse Excursion: schlimmster Drawdown seit Entry">${fmt(r.mae)}</td>
+          <td class="pf-mae-bar-cell">
+            <div class="pf-mae-bar" role="img" aria-label="${esc(tip)}" title="${esc(tip)}">
+              <div class="pf-mae-bar-zero" style="left:50%"></div>
+              <div class="pf-mae-bar-mae" style="right:50%;width:${maePct.toFixed(2)}%"></div>
+              <div class="pf-mae-bar-mfe" style="left:50%;width:${mfePct.toFixed(2)}%"></div>
+              <div class="pf-mae-bar-cur" style="left:${curPos.toFixed(2)}%"></div>
+            </div>
+          </td>
+          <td class="pf-mae-num ${capCls}" title="Capture-Ratio: aktueller P&amp;L als Anteil des Peak-Gewinns. 100% = noch auf Peak, 0% = komplett zurückgegeben, negativ = unter Entry.">${fmtCap(r.capture)}</td>
+        </tr>`;
+      }).join("");
+      const kpiHtml=`<div class="pf-mae-kpis">
+        <div class="pf-mae-kpi" title="Konv.-gewichtete max favorable excursion: theoretischer Peak-P&amp;L des Buchs seit Entries.">
+          <span class="pf-mae-kpi-lbl">Ø MFE</span>
+          <span class="pf-mae-kpi-val move-up">${fmt(wMFE)}</span>
+          <span class="pf-mae-kpi-sub">Peak (theor.)</span>
+        </div>
+        <div class="pf-mae-kpi" title="Konv.-gewichteter aktueller Buch-P&amp;L (live mark-to-market).">
+          <span class="pf-mae-kpi-lbl">Ø Current</span>
+          <span class="pf-mae-kpi-val ${wCur>=0?"move-up":"move-dn"}">${fmt(wCur)}</span>
+          <span class="pf-mae-kpi-sub">Live</span>
+        </div>
+        <div class="pf-mae-kpi" title="Konv.-gewichtete max adverse excursion: schlimmster Buch-Drawdown seit Entry.">
+          <span class="pf-mae-kpi-lbl">Ø MAE</span>
+          <span class="pf-mae-kpi-val move-dn">${fmt(wMAE)}</span>
+          <span class="pf-mae-kpi-sub">Tief (worst)</span>
+        </div>
+        <div class="pf-mae-kpi" title="Capture-Ratio: aktueller P&amp;L als Anteil des Peak-Gewinns. Trade-Quality-Score.">
+          <span class="pf-mae-kpi-lbl">Capture</span>
+          <span class="pf-mae-kpi-val is-headline">${fmtCap(wCap)}</span>
+          <span class="pf-mae-kpi-sub">of peak held</span>
+        </div>
+      </div>`;
+      maePanelHtml=`<div class="panel pf-mae">
+        <div class="pf-mae-h">
+          <div>
+            <div class="pf-mae-h-title">Trade-Pfad-Effizienz — MAE/MFE</div>
+            <div class="pf-mae-h-sub">Max Favorable / Max Adverse Excursion seit Entry · Capture-Ratio = Current ÷ MFE · Bloomberg BLOTTER-Sicht auf Trade-Quality</div>
+          </div>
+          <span class="pf-mae-chip ${verdCls}">${verdLbl}</span>
+        </div>
+        ${kpiHtml}
+        <div class="pf-mae-wrap">
+          <table class="pf-mae-tbl" role="table" aria-label="Trade-Pfad-Effizienz pro offenem Call">
+            <thead><tr>
+              <th scope="col" class="pf-mae-th-name">Position</th>
+              <th scope="col" class="col-hide-m" title="Max Favorable Excursion (Peak-Profit seit Entry)">MFE</th>
+              <th scope="col">Current</th>
+              <th scope="col" class="col-hide-m" title="Max Adverse Excursion (schlimmster Drawdown)">MAE</th>
+              <th scope="col" class="pf-mae-th-bar">MAE  ←  Entry  →  MFE</th>
+              <th scope="col" title="Capture: Current ÷ MFE">Capture</th>
+            </tr></thead>
+            <tbody>${bodyRows}</tbody>
+          </table>
+        </div>
+        <div class="pf-mae-verd">${verdProse}</div>
+        <div class="pf-mae-foot">Konv.-gewichtet aggregiert über ${_rows.length} Call${_rows.length===1?"":"s"} mit Entry-Pfad ≥2 Bars. Skala: ±${scale.toFixed(1)}%. <b>MFE</b> = max direction-adjusted Return seit Entry, <b>MAE</b> = min. <b>Capture</b> = Current ÷ MFE — 100% wenn aktuell auf Peak, 0% wenn Peak komplett zurückgegeben, negativ wenn unter Entry. Klassische Bulkowski/Sweeney Trade-Quality-Diagnose: trennt These-Korrektheit (MFE&gt;0) von Exit-Timing (Capture). PM-Hold/Trim/Cut-Lens.</div>
+      </div>`;
+    }
+  }
   // Earnings-Konzentration — Event-Risiko Buch-Rollup (HED-137 Zyklus 120).
   // For each active call: days-to-next-ER (calendar ≤14d, or quarterly-cadence
   // projection = last_q + 91d for 15-30d window), historical |1d| event-vol and
@@ -7116,7 +7321,7 @@ function calibSvg(buckets){
       </div>`;
     }
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${erPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${erPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
