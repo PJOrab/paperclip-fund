@@ -3607,6 +3607,70 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .pf-mae-tbl thead th.pf-mae-th-name{width:28%}
   .pf-mae-tbl thead th.pf-mae-th-bar{width:36%;text-align:center;font-size:9px;letter-spacing:.02em}
 }
+/* Kelly-Sizing vs. Conviction — Kalibrierung (HED-137 Zyklus 122).
+   Kelly-Kriterium f(K)=p−(1−p)/b, wobei p=Conviction, b=MFE/|MAE|.
+   Vergleich: sind unsere Überzeugungsgewichte Kelly-kalibriert? */
+.pf-kelly{padding:var(--s3);margin-top:var(--s3)}
+.pf-kelly-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:var(--s2);margin-bottom:var(--s3)}
+.pf-kelly-h-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-kelly-h-sub{font-size:var(--fs-micro);color:var(--mut);font-weight:400;margin-top:2px}
+.pf-kelly-chip{display:inline-block;padding:2px 8px;border-radius:99px;font-size:var(--fs-micro);font-weight:600;border:1px solid var(--line);background:var(--panel2);color:var(--mut)}
+.pf-kelly-chip.is-good{color:var(--green);border-color:rgba(63,185,80,.4)}
+.pf-kelly-chip.is-warn{color:#e8b341;border-color:rgba(232,179,65,.4)}
+.pf-kelly-chip.is-bad{color:var(--red);border-color:rgba(248,81,73,.4)}
+.pf-kelly-chip.is-neutral{color:var(--accent);border-color:rgba(77,163,255,.4)}
+.pf-kelly-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s2);margin-bottom:var(--s3)}
+.pf-kelly-kpi{background:var(--panel2);border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.pf-kelly-kpi-lbl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.pf-kelly-kpi-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;color:var(--txt);white-space:nowrap}
+.pf-kelly-kpi-val.is-headline{font-size:22px;letter-spacing:-.01em;color:var(--accent)}
+.pf-kelly-kpi-val.move-up{color:var(--green)}
+.pf-kelly-kpi-val.move-dn{color:var(--red)}
+.pf-kelly-kpi-sub{font-size:var(--fs-micro);color:var(--mut);font-variant-numeric:tabular-nums}
+.pf-kelly-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pf-kelly-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:var(--fs-cap)}
+.pf-kelly-tbl thead th{font-size:var(--fs-micro);font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);padding:6px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.pf-kelly-tbl thead th.pk-th-name{text-align:left}
+.pf-kelly-tbl thead th.pk-th-bar{text-align:center;width:38%}
+.pf-kelly-tbl tbody td{padding:7px 6px;border-top:1px solid var(--line);text-align:right;vertical-align:middle}
+.pf-kelly-tbl tbody tr:first-child td{border-top:0}
+.pf-kelly-tbl tbody tr:hover{background:rgba(77,163,255,.06)}
+.pk-name{text-align:left;font-weight:700;color:var(--txt);white-space:nowrap}
+.pk-name .pk-dir{display:inline-block;margin-left:6px;vertical-align:middle}
+.pk-num{font-weight:600;min-width:52px;font-size:var(--fs-cap)}
+.pk-num.move-up{color:var(--green)}
+.pk-num.move-dn{color:var(--red)}
+.pk-delta{font-weight:700;font-size:var(--fs-cap);min-width:52px}
+.pk-delta.over{color:var(--red)}
+.pk-delta.under{color:var(--green)}
+.pk-delta.ok{color:var(--mut)}
+.pk-verdict{display:inline-block;padding:1px 6px;border-radius:4px;font-size:var(--fs-micro);font-weight:600}
+.pk-verdict.over{background:rgba(248,81,73,.12);color:var(--red)}
+.pk-verdict.under{background:rgba(63,185,80,.12);color:var(--green)}
+.pk-verdict.ok{background:var(--panel2);color:var(--mut)}
+/* Dual-bar: conviction (accent) vs kelly (dashed outline) */
+.pk-bar-cell{padding-left:0!important;padding-right:0!important}
+.pk-bar{position:relative;height:20px;background:var(--panel2);border-radius:3px;border:1px solid var(--line);min-width:120px}
+.pk-bar-conv{position:absolute;left:0;top:2px;bottom:2px;background:rgba(77,163,255,.55);border-radius:2px;z-index:1;transition:width .3s}
+.pk-bar-kelly{position:absolute;left:0;top:0;bottom:0;border-right:2px dashed rgba(255,255,255,.7);z-index:2;border-radius:0}
+.pk-bar-lbl-k{position:absolute;top:50%;transform:translateY(-50%);font-size:8px;font-weight:700;color:rgba(255,255,255,.85);z-index:3;white-space:nowrap;pointer-events:none}
+.pf-kelly-verd{margin-top:var(--s3);font-size:var(--fs-cap);line-height:1.5;color:var(--txt)}
+.pf-kelly-verd b{font-weight:700}
+.pf-kelly-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s2);line-height:1.45}
+@media(max-width:640px){
+  .pf-kelly-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pf-kelly-kpi-val{font-size:15px}
+  .pf-kelly-kpi-val.is-headline{font-size:18px}
+  .pf-kelly-wrap{overflow-x:hidden}
+  .pf-kelly-tbl{table-layout:fixed;width:100%}
+  .pf-kelly-tbl thead th,.pf-kelly-tbl tbody td{padding:5px 4px;font-size:var(--fs-micro)}
+  .pk-num,.pk-delta{min-width:0;width:42px}
+  .pf-kelly-tbl .col-hide-m{display:none}
+  .pk-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px}
+  .pf-kelly-tbl thead th.pk-th-name{width:26%}
+  .pf-kelly-tbl thead th.pk-th-bar{width:38%;text-align:center;font-size:9px}
+  .pk-bar{min-width:0;height:14px}
+}
 /* conviction color ramp */
 .conv-lo{color:var(--mut)}
 .conv-mid{color:var(--txt)}
@@ -6360,6 +6424,148 @@ function calibSvg(buckets){
       </div>`;
     }
   }
+  // Kelly-Sizing vs. Conviction — Kalibrierung (HED-137 Zyklus 122).
+  // Kelly-Kriterium: f(K)=p−(1−p)/b, p=Conviction (0–1), b=MFE/|MAE| (edge ratio).
+  // Compares declared conviction weights to Kelly-optimal sizing — answers:
+  // "are we over- or under-betting relative to what the excursion history justifies?"
+  // Uses same data pipeline as MAE panel (_sparkMap, _entryIdx, active).
+  let kellyPanelHtml="";
+  {
+    const _rows=[];
+    active.forEach(t=>{
+      const tk=(t.tickers||[])[0];
+      if(!tk||t.baseline_price==null||typeof t.conviction!=="number") return;
+      const sp=_sparkMap[String(tk).toUpperCase()];
+      if(!sp||sp.length<3) return;
+      const eIdx=_entryIdx(sp, t.baseline_price, t.date);
+      if(eIdx<0||eIdx>=sp.length-1) return;
+      const dir=(t.direction||"").toLowerCase();
+      if(dir!=="long"&&dir!=="short"&&dir!=="pair") return;
+      const sign=dir==="short"?-1:1;
+      const path=[];
+      for(let i=eIdx;i<sp.length;i++) path.push(sign*(sp[i]-t.baseline_price)/t.baseline_price*100);
+      if(path.length<2) return;
+      const mfe=Math.max.apply(null,path);
+      const mae=Math.min.apply(null,path);
+      const absMae=Math.abs(mae);
+      // Kelly requires positive edge (mfe>0) and loss scenario (mae<0 → absMae>0)
+      // If absMae==0 treat as unconstrained (kelly = conviction); clip to [0,1]
+      let kelly=t.conviction;
+      if(mfe>0.05&&absMae>0.05){
+        const b=mfe/absMae;  // win/loss magnitude ratio
+        const p=t.conviction;
+        kelly=p-(1-p)/b;     // classic Kelly fraction
+        kelly=Math.max(0,Math.min(1,kelly));
+      }
+      const delta=t.conviction-kelly;        // >0 = overbet, <0 = underbet
+      _rows.push({t, tk:(t.tickers||[]).join("·")||tk, dir,
+                  conv:t.conviction, kelly, delta, mfe, mae});
+    });
+
+    if(_rows.length){
+      // Sort by |delta| desc (worst-calibrated first)
+      _rows.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
+
+      // KPIs
+      const medKelly=(()=>{ const s=_rows.map(r=>r.kelly).sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; })();
+      const medConv =(()=>{ const s=_rows.map(r=>r.conv).sort((a,b)=>a-b);  const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; })();
+      const maxOver =Math.max(..._rows.map(r=>r.delta));
+      const maxUnder=Math.min(..._rows.map(r=>r.delta));
+      const avgDelta=_rows.reduce((s,r)=>s+r.delta,0)/_rows.length;
+
+      // Verdict chip
+      const overbet =_rows.filter(r=>r.delta>0.08).length;
+      const underbet=_rows.filter(r=>r.delta<-0.08).length;
+      let verdCls,verdLbl,verdProse;
+      if(overbet>0&&overbet>=_rows.length/2){
+        verdCls="is-bad"; verdLbl=`${overbet} Über-gewichtet`;
+        verdProse=`<b>${overbet} von ${_rows.length} Calls</b> liegen deutlich über ihrer Kelly-optimalen Größe (Δ>8pp). `;
+        verdProse+=`Stärkster Übergewichtler: <b>${_rows.filter(r=>r.delta>0.08).sort((a,b)=>b.delta-a.delta)[0].tk}</b> (+${(_rows.filter(r=>r.delta>0.08).sort((a,b)=>b.delta-a.delta)[0].delta*100).toFixed(0)}pp über Kelly). `;
+        verdProse+=`Mediane Kelly-Fraktion ${(medKelly*100).toFixed(0)}% vs. Ø Conviction ${(medConv*100).toFixed(0)}% — Überzeugung übersteigt historisch belegtes Edge.`;
+      }else if(underbet>0&&underbet>=_rows.length/2){
+        verdCls="is-good"; verdLbl=`${underbet} Unter-gewichtet`;
+        verdProse=`<b>${underbet} von ${_rows.length} Calls</b> liegen unter der Kelly-optimalen Größe — das Excursion-Profil rechtfertigt mehr Überzeugung als gezeigt. `;
+        verdProse+=`Mediane Kelly ${(medKelly*100).toFixed(0)}% vs. Ø Conviction ${(medConv*100).toFixed(0)}% — Edge wird nicht voll ausgeschöpft.`;
+      }else if(Math.abs(avgDelta)<0.05){
+        verdCls="is-good"; verdLbl="Kalibriert";
+        verdProse=`Portfolio-Conviction gut kalibriert: mittlere Abweichung ${(Math.abs(avgDelta)*100).toFixed(1)}pp vom Kelly-Optimum. `;
+        verdProse+=`Median Kelly ${(medKelly*100).toFixed(0)}% vs. Median Conviction ${(medConv*100).toFixed(0)}% — Größengebung historisch konsistent.`;
+      }else{
+        verdCls="is-warn"; verdLbl="Gemischt";
+        verdProse=`Gemischtes Bild: ${overbet} Call${overbet!==1?"s":""} übergewichtet, ${underbet} untergewichtet. `;
+        verdProse+=`Median Kelly ${(medKelly*100).toFixed(0)}% vs. Median Conviction ${(medConv*100).toUpperCase().replace("NAN","—")||"—"}% — prüfe Ausreißer.`;
+      }
+
+      // KPI strip
+      const kpiHtml2=`<div class="pf-kelly-kpis">
+        <div class="pf-kelly-kpi"><div class="pf-kelly-kpi-lbl">Median Kelly</div><div class="pf-kelly-kpi-val is-headline">${(medKelly*100).toFixed(0)}%</div><div class="pf-kelly-kpi-sub">Kelly-Fraktion über ${_rows.length} Calls</div></div>
+        <div class="pf-kelly-kpi"><div class="pf-kelly-kpi-lbl">Median Conviction</div><div class="pf-kelly-kpi-val">${(medConv*100).toFixed(0)}%</div><div class="pf-kelly-kpi-sub">Deklarierte Ø Überzeugung</div></div>
+        <div class="pf-kelly-kpi"><div class="pf-kelly-kpi-lbl">Max Überwetteinsatz</div><div class="pf-kelly-kpi-val ${maxOver>0.08?"move-dn":""}">${maxOver>0?("+"):""}${(maxOver*100).toFixed(0)}pp</div><div class="pf-kelly-kpi-sub">Größte positive Abweichung</div></div>
+        <div class="pf-kelly-kpi"><div class="pf-kelly-kpi-lbl">Max Unterwetteinsatz</div><div class="pf-kelly-kpi-val ${maxUnder<-0.08?"move-up":""}">${(maxUnder*100).toFixed(0)}pp</div><div class="pf-kelly-kpi-sub">Größte negative Abweichung</div></div>
+      </div>`;
+
+      // Table rows
+      const maxConv=Math.max(..._rows.map(r=>Math.max(r.conv,r.kelly)));
+      const scaleW=maxConv>0?maxConv:1;
+      const tblRows=_rows.map(r=>{
+        const dirCls=r.dir==="long"?"cd cd-long":r.dir==="short"?"cd cd-short":"cd cd-pair";
+        const dirLbl=r.dir==="long"?"L":r.dir==="short"?"S":"P";
+        const convW=(r.conv/scaleW*100).toFixed(1);
+        const kellyW=(r.kelly/scaleW*100).toFixed(1);
+        const kellySide=r.kelly>r.conv?"right":"";
+        // position label for kelly dashed line
+        const kLeft=(r.kelly/scaleW*100).toFixed(1);
+        // label shows K% value, placed just right of the dashed mark
+        const kLblLeft=Math.min(parseFloat(kLeft)+1, 90).toFixed(0);
+        const kLblTxt=(r.kelly*100).toFixed(0)+"%";
+        const deltaCls=r.delta>0.08?"over":r.delta<-0.08?"under":"ok";
+        const deltaSign=r.delta>0?"+":"";
+        const verdictLbl=r.delta>0.08?"Überbet":r.delta<-0.08?"Unterbet":"OK";
+        const bRatio=(r.mfe>0.05&&Math.abs(r.mae)>0.05)?(r.mfe/Math.abs(r.mae)).toFixed(2):"—";
+        return `<tr>
+          <td class="pk-name"><span title="${esc(r.tk)}">${esc(r.tk)}</span><span class="${dirCls} pk-dir">${dirLbl}</span></td>
+          <td class="pk-num">${(r.conv*100).toFixed(0)}%</td>
+          <td class="pk-num ${r.kelly>r.conv?"move-up":r.kelly<r.conv?"move-dn":""}">${(r.kelly*100).toFixed(0)}%</td>
+          <td class="pk-delta ${deltaCls} col-hide-m">${deltaSign}${(r.delta*100).toFixed(0)}pp</td>
+          <td class="pk-bar-cell">
+            <div class="pk-bar" title="Conviction ${(r.conv*100).toFixed(0)}% (blau) | Kelly-Optimum ${(r.kelly*100).toFixed(0)}% (gestrichelt) | b-Ratio ${bRatio}">
+              <div class="pk-bar-conv" style="width:${convW}%"></div>
+              <div class="pk-bar-kelly" style="left:${kellyW}%"></div>
+              <span class="pk-bar-lbl-k" style="left:${kLblLeft}%">${kLblTxt}</span>
+            </div>
+          </td>
+          <td class="col-hide-m"><span class="pk-verdict ${deltaCls}">${verdictLbl}</span></td>
+        </tr>`;
+      }).join("");
+
+      kellyPanelHtml=`<div class="panel pf-kelly">
+        <div class="pf-kelly-h">
+          <div>
+            <div class="pf-kelly-h-title">Kelly-Sizing vs. Conviction</div>
+            <div class="pf-kelly-h-sub">Überzeugungsgewichte vs. Kelly-Optimum — sind wir kalibriert? Kelly f(K)=p−(1−p)/b, b=MFE/|MAE|</div>
+          </div>
+          <span class="pf-kelly-chip ${verdCls}">${verdLbl}</span>
+        </div>
+        ${kpiHtml2}
+        <div class="pf-kelly-wrap">
+          <table class="pf-kelly-tbl" role="table" aria-label="Kelly-Sizing vs Conviction pro offenem Call">
+            <thead><tr>
+              <th scope="col" class="pk-th-name">Position</th>
+              <th scope="col">Conviction</th>
+              <th scope="col">Kelly</th>
+              <th scope="col" class="col-hide-m">Δ (pp)</th>
+              <th scope="col" class="pk-th-bar">Conviction (▓) vs Kelly-Optimum (╎)</th>
+              <th scope="col" class="col-hide-m">Urteil</th>
+            </tr></thead>
+            <tbody>${tblRows}</tbody>
+          </table>
+        </div>
+        <div class="pf-kelly-verd">${verdProse}</div>
+        <div class="pf-kelly-foot">Kelly-Kriterium: f(K)=p−(1−p)/b · p=Conviction · b=MFE÷|MAE| (Gewinn-/Verlust-Magnitude-Ratio aus realem Excursion-Pfad). Blauer Balken = deklarierte Conviction, gestrichelte Linie = Kelly-Optimum. <b>Δ&gt;+8pp</b> = Übergewichtet (zu aggressiv vs Edge), <b>Δ&lt;−8pp</b> = Untergewichtet (Edge nicht ausgeschöpft). Berechnung nur möglich wenn MFE&gt;0 und |MAE|&gt;0 (&gt;0.05%) — bei flachen Pfaden fällt Kelly auf Conviction zurück. Klassisches Risikomanagement-Tool (Kelly 1956, Thorp 1962).</div>
+      </div>`;
+    }
+  }
+
   // Earnings-Konzentration — Event-Risiko Buch-Rollup (HED-137 Zyklus 120).
   // For each active call: days-to-next-ER (calendar ≤14d, or quarterly-cadence
   // projection = last_q + 91d for 15-30d window), historical |1d| event-vol and
@@ -7321,7 +7527,7 @@ function calibSvg(buckets){
       </div>`;
     }
   }
-  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${erPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  root.innerHTML=`<div class="pf-grid">${kpiHtml}</div>${curvePanelHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${erPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
