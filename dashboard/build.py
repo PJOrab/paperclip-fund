@@ -2146,6 +2146,70 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tr-ec-kpi{align-items:flex-start;flex:1;min-width:0}
   .tr-ec-kpi-val{font-size:16px}
 }
+/* Conviction-Performance Kalibrierungs-Map (HED-150 Zyklus 169)
+   2D scatter: X = Conviction (0-1), Y = current unrealized PnL %. Quadrants test
+   the fundamental calibration question — does my conviction predict outcomes?
+   Even with few data points, the FRAMEWORK is the institutional value. */
+.pf-cp-panel{padding:var(--s3)}
+.pf-cp-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.pf-cp-title{font-weight:700;font-size:var(--fs-h2);color:var(--txt)}
+.pf-cp-sub{font-size:var(--fs-micro);margin-top:3px;color:var(--mut);line-height:1.4}
+.pf-cp-stats{display:flex;gap:var(--s3);flex-wrap:wrap;flex-shrink:0;align-items:flex-end}
+.pf-cp-stat{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:60px}
+.pf-cp-stat-val{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;color:var(--txt)}
+.pf-cp-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--mut)}
+.pf-cp-stat-val-pos{color:#3fb950}
+.pf-cp-stat-val-neg{color:#f85149}
+.pf-cp-body{display:grid;grid-template-columns:1.3fr 1fr;gap:var(--s3);align-items:stretch}
+.pf-cp-chart-wrap{background:rgba(139,148,158,.03);border:1px solid rgba(139,148,158,.08);border-radius:6px;padding:var(--s3);min-height:300px;position:relative}
+.pf-cp-chart{width:100%;display:block;height:auto;max-height:340px}
+.pf-cp-qlabel{position:absolute;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);pointer-events:none;line-height:1.2}
+.pf-cp-qlabel-tl{top:10px;left:12px;color:var(--blue)}
+.pf-cp-qlabel-tr{top:10px;right:12px;color:#3fb950}
+.pf-cp-qlabel-bl{bottom:30px;left:12px;color:#a855f7}
+.pf-cp-qlabel-br{bottom:30px;right:12px;color:#f85149}
+.pf-cp-axis-x,.pf-cp-axis-y{stroke:rgba(139,148,158,.3);stroke-width:0.6}
+.pf-cp-axis-mid{stroke:rgba(139,148,158,.5);stroke-width:0.6;stroke-dasharray:3,3}
+.pf-cp-axis-zero{stroke:rgba(139,148,158,.5);stroke-width:0.6}
+.pf-cp-axis-lbl{font-size:9px;fill:var(--mut);font-family:inherit;font-variant-numeric:tabular-nums}
+.pf-cp-axis-title{font-size:10px;fill:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.pf-cp-dot circle{stroke:var(--bg);stroke-width:1.5;transition:r .12s}
+.pf-cp-dot-pos circle{fill:#3fb950}
+.pf-cp-dot-neg circle{fill:#f85149}
+.pf-cp-dot-flat circle{fill:var(--mut)}
+.pf-cp-dot:hover circle{r:8}
+.pf-cp-dot-lbl{font-size:11px;font-weight:700;fill:var(--txt);text-anchor:middle;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.pf-cp-tbl-wrap{display:flex;flex-direction:column;gap:5px}
+.pf-cp-tbl-h{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:2px;padding-bottom:3px;border-bottom:1px solid rgba(139,148,158,.12)}
+.pf-cp-tbl-row{display:grid;grid-template-columns:60px 1fr auto;gap:8px;align-items:center;padding:6px 8px;background:rgba(139,148,158,.04);border:1px solid rgba(139,148,158,.08);border-radius:5px;border-left:3px solid rgba(139,148,158,.3)}
+.pf-cp-tbl-row-confirmed{border-left-color:#3fb950}
+.pf-cp-tbl-row-tested{border-left-color:#f85149}
+.pf-cp-tbl-row-lucky{border-left-color:var(--blue)}
+.pf-cp-tbl-row-trim{border-left-color:#a855f7}
+.pf-cp-tbl-tk{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;font-size:13px;color:var(--txt);letter-spacing:.02em}
+.pf-cp-tbl-mid{display:flex;flex-direction:column;gap:1px;min-width:0}
+.pf-cp-tbl-quad{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.pf-cp-tbl-quad-confirmed{color:#3fb950}
+.pf-cp-tbl-quad-tested{color:#f85149}
+.pf-cp-tbl-quad-lucky{color:var(--blue)}
+.pf-cp-tbl-quad-trim{color:#a855f7}
+.pf-cp-tbl-note{font-size:9px;color:var(--mut);line-height:1.3}
+.pf-cp-tbl-vals{display:flex;flex-direction:column;align-items:flex-end;gap:1px;font-variant-numeric:tabular-nums;font-size:11px}
+.pf-cp-tbl-conv{color:var(--mut)}
+.pf-cp-tbl-pnl{font-weight:700}
+.pf-cp-tbl-pnl-pos{color:#3fb950}
+.pf-cp-tbl-pnl-neg{color:#f85149}
+.pf-cp-tbl-pnl-flat{color:var(--mut)}
+.pf-cp-foot{font-size:var(--fs-micro);color:var(--mut);margin-top:var(--s3);line-height:1.5}
+@media(max-width:900px){
+  .pf-cp-body{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .pf-cp-h{flex-direction:column}
+  .pf-cp-stats{width:100%;justify-content:space-between}
+  .pf-cp-tbl-row{grid-template-columns:50px 1fr auto;gap:6px;padding:5px}
+  .pf-cp-tbl-tk{font-size:12px}
+}
 /* News-Flow — Relevant für Buch & Ideen (HED-150 Zyklus 168)
    Filters the unified `recent` feed to items mentioning active positions + trade
    ideas. Groups by ticker, sorted by engagement priority (active > LONG-idea >
@@ -11768,7 +11832,172 @@ function calibSvg(buckets){
     }
   }
 
-  root.innerHTML=`${subNavHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
+  // Conviction-Performance Kalibrierungs-Map (HED-150 Zyklus 169).
+  // 2D scatter: X = Conviction (0-1), Y = current unrealized PnL %. Tests
+  // the fundamental fund-process question: does my conviction predict outcomes?
+  // Quadrants: Confirmed/Tested/Lucky/Trim — each with action interpretation.
+  let calMapHtml="";
+  if(active.length){
+    const _sv={};
+    ((D.sector_view||{}).sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{if(t&&t.ticker) _sv[t.ticker.toUpperCase()]=t;}));
+
+    const pts=[];
+    active.forEach(t=>{
+      const tk=String((t.tickers||[])[0]||"").toUpperCase();
+      const sv=_sv[tk]||{};
+      const price=sv.price||t.current_price;
+      const baseline=t.baseline_price;
+      const conv=t.conviction||0.5;
+      const dir=(t.direction||"long").toLowerCase();
+      const sign=dir==="short"?-1:1;
+      if(price==null||baseline==null) return;
+      const pnl=(price-baseline)/baseline*100*sign;
+      // Classify quadrant — split at conv 0.5 and pnl 0
+      let quadrant, quadLbl, quadCls, note;
+      if(conv>=0.5 && pnl>=0){
+        quadrant="confirmed";
+        quadLbl="Conviction Confirmed";
+        quadCls="confirmed";
+        note="High conv + positive PnL — These hält, conviction validiert";
+      } else if(conv>=0.5 && pnl<0){
+        quadrant="tested";
+        quadLbl="Conviction Tested";
+        quadCls="tested";
+        note="High conv + negative PnL — Thesis-Stress, Re-Eval erwägen";
+      } else if(conv<0.5 && pnl>=0){
+        quadrant="lucky";
+        quadLbl="Lucky (Low-Conv Winner)";
+        quadCls="lucky";
+        note="Low conv + positive PnL — Conviction unter-kalibriert? Add erwägen";
+      } else {
+        quadrant="trim";
+        quadLbl="Trim Candidate";
+        quadCls="trim";
+        note="Low conv + negative PnL — Cut-Candidate, Position-Größe reduzieren";
+      }
+      pts.push({tk, conv, pnl, dir, quadrant, quadLbl, quadCls, note});
+    });
+
+    if(pts.length){
+      // Tally per quadrant
+      const tally={confirmed:0, tested:0, lucky:0, trim:0};
+      pts.forEach(p=>tally[p.quadrant]++);
+
+      // Compute correlation between conv and pnl (rank correlation since small n)
+      // Simple: Pearson r
+      const meanC=pts.reduce((s,p)=>s+p.conv,0)/pts.length;
+      const meanP=pts.reduce((s,p)=>s+p.pnl,0)/pts.length;
+      let num=0, denC=0, denP=0;
+      pts.forEach(p=>{
+        num+=(p.conv-meanC)*(p.pnl-meanP);
+        denC+=(p.conv-meanC)**2;
+        denP+=(p.pnl-meanP)**2;
+      });
+      const r=(denC>0&&denP>0)?num/Math.sqrt(denC*denP):null;
+      const rLbl=r==null?"n/a":r>=0?"+"+r.toFixed(2):r.toFixed(2);
+      const rCls=r==null?"":r>=0.3?"pf-cp-stat-val-pos":r<=-0.3?"pf-cp-stat-val-neg":"";
+      const calVerdict=r==null?"Insufficient":r>=0.3?"Calibrated":r<=-0.3?"Inverted (!)":"Noise";
+
+      // Chart dimensions
+      const W=480, H=300;
+      const pad={top:24, right:24, bottom:42, left:48};
+      const innerW=W-pad.left-pad.right;
+      const innerH=H-pad.top-pad.bottom;
+
+      // Y range
+      const pnls=pts.map(p=>p.pnl);
+      const pnlMin=Math.min(...pnls, 0), pnlMax=Math.max(...pnls, 0);
+      const yPad=Math.max(0.5, (pnlMax-pnlMin)*0.2);
+      const yLo=pnlMin-yPad, yHi=pnlMax+yPad;
+
+      function xOf(c){return pad.left + c*innerW;}
+      function yOf(p){return pad.top + (1-(p-yLo)/(yHi-yLo))*innerH;}
+
+      const xMid=xOf(0.5), yMid=yOf(0);
+
+      const dotsHtml=pts.map(p=>{
+        const cx=xOf(p.conv), cy=yOf(p.pnl);
+        const cls=p.pnl>=0.01?"pf-cp-dot pf-cp-dot-pos":p.pnl<=-0.01?"pf-cp-dot pf-cp-dot-neg":"pf-cp-dot pf-cp-dot-flat";
+        const tip=`${p.tk}: Conv ${p.conv.toFixed(2)}, PnL ${p.pnl>=0?'+':''}${p.pnl.toFixed(2)}% — ${p.quadLbl}`;
+        return `<g class="${cls}"><title>${esc(tip)}</title><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="6"/><text class="pf-cp-dot-lbl" x="${cx.toFixed(1)}" y="${(cy-10).toFixed(1)}">${esc(p.tk)}</text></g>`;
+      }).join("");
+
+      // X axis ticks at 0, 0.25, 0.5, 0.75, 1
+      const xTicks=[0, 0.25, 0.5, 0.75, 1];
+      const xLblsHtml=xTicks.map(t=>{
+        const x=xOf(t);
+        return `<text class="pf-cp-axis-lbl" x="${x.toFixed(1)}" y="${(pad.top+innerH+12).toFixed(1)}" text-anchor="middle">${t.toFixed(2)}</text>`;
+      }).join("");
+      // Y axis: at yLo, 0, yHi
+      const yTicks=[];
+      const step=(yHi-yLo)>10?5:(yHi-yLo)>4?1:0.5;
+      for(let v=Math.ceil(yLo/step)*step; v<=yHi; v+=step) yTicks.push(v);
+      const yLblsHtml=yTicks.map(t=>{
+        const y=yOf(t);
+        return `<text class="pf-cp-axis-lbl" x="${(pad.left-6).toFixed(1)}" y="${(y+3).toFixed(1)}" text-anchor="end">${t>=0?'+':''}${t.toFixed(1)}%</text>`;
+      }).join("");
+
+      const chartSvg=`<svg class="pf-cp-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+        <line class="pf-cp-axis-x" x1="${pad.left}" y1="${pad.top+innerH}" x2="${pad.left+innerW}" y2="${pad.top+innerH}"/>
+        <line class="pf-cp-axis-y" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top+innerH}"/>
+        <line class="pf-cp-axis-mid" x1="${xMid.toFixed(1)}" y1="${pad.top}" x2="${xMid.toFixed(1)}" y2="${pad.top+innerH}"/>
+        <line class="pf-cp-axis-zero" x1="${pad.left}" y1="${yMid.toFixed(1)}" x2="${pad.left+innerW}" y2="${yMid.toFixed(1)}"/>
+        ${xLblsHtml}${yLblsHtml}
+        <text class="pf-cp-axis-title" x="${(pad.left+innerW/2).toFixed(1)}" y="${(pad.top+innerH+30).toFixed(1)}" text-anchor="middle">Conviction</text>
+        <text class="pf-cp-axis-title" transform="rotate(-90 14 ${(pad.top+innerH/2).toFixed(1)})" x="14" y="${(pad.top+innerH/2).toFixed(1)}" text-anchor="middle">Unrealisierte PnL</text>
+        ${dotsHtml}
+      </svg>`;
+
+      // Table on right
+      pts.sort((a,b)=>{const order={tested:0,trim:1,lucky:2,confirmed:3}; return order[a.quadrant]-order[b.quadrant];});
+      const tblRows=pts.map(p=>{
+        const pnlCls=p.pnl>=0.01?"pf-cp-tbl-pnl-pos":p.pnl<=-0.01?"pf-cp-tbl-pnl-neg":"pf-cp-tbl-pnl-flat";
+        const pnlStr=p.pnl==null?"—":(p.pnl>=0?"+":"−")+Math.abs(p.pnl).toFixed(2)+"%";
+        return `<div class="pf-cp-tbl-row pf-cp-tbl-row-${p.quadCls}">
+          <span class="pf-cp-tbl-tk">${esc(p.tk)}</span>
+          <div class="pf-cp-tbl-mid">
+            <span class="pf-cp-tbl-quad pf-cp-tbl-quad-${p.quadCls}">${esc(p.quadLbl)}</span>
+            <span class="pf-cp-tbl-note">${esc(p.note)}</span>
+          </div>
+          <div class="pf-cp-tbl-vals">
+            <span class="pf-cp-tbl-conv">Conv ${p.conv.toFixed(2)}</span>
+            <span class="pf-cp-tbl-pnl ${pnlCls}">${pnlStr}</span>
+          </div>
+        </div>`;
+      }).join("");
+
+      calMapHtml=`<div class="panel pf-cp-panel">
+        <div class="pf-cp-h">
+          <div>
+            <div class="pf-cp-title">Conviction-Performance Kalibrierungs-Map</div>
+            <div class="pf-cp-sub">Testet die Process-Frage: prognostiziert meine Conviction die Ergebnisse? · ${pts.length} aktive Positionen · Quadranten-Split bei Conv 0.5 / PnL 0 · Korrelations-Verdikt aus Pearson-r</div>
+          </div>
+          <div class="pf-cp-stats">
+            <div class="pf-cp-stat"><span class="pf-cp-stat-val ${rCls}">${rLbl}</span><span class="pf-cp-stat-lbl">Pearson r</span></div>
+            <div class="pf-cp-stat"><span class="pf-cp-stat-val">${esc(calVerdict)}</span><span class="pf-cp-stat-lbl">Verdict</span></div>
+            <div class="pf-cp-stat"><span class="pf-cp-stat-val pf-cp-stat-val-pos">${tally.confirmed}</span><span class="pf-cp-stat-lbl">Confirmed</span></div>
+            <div class="pf-cp-stat"><span class="pf-cp-stat-val pf-cp-stat-val-neg">${tally.tested}</span><span class="pf-cp-stat-lbl">Tested</span></div>
+          </div>
+        </div>
+        <div class="pf-cp-body">
+          <div class="pf-cp-chart-wrap">
+            <span class="pf-cp-qlabel pf-cp-qlabel-tl">▲ Lucky</span>
+            <span class="pf-cp-qlabel pf-cp-qlabel-tr">▲ Confirmed</span>
+            <span class="pf-cp-qlabel pf-cp-qlabel-bl">▼ Trim</span>
+            <span class="pf-cp-qlabel pf-cp-qlabel-br">▼ Tested</span>
+            ${chartSvg}
+          </div>
+          <div class="pf-cp-tbl-wrap">
+            <div class="pf-cp-tbl-h">Per-Position Quadrant + Action-Read</div>
+            ${tblRows}
+          </div>
+        </div>
+        <div class="pf-cp-foot">Quadranten-Definition: <b>Confirmed</b> (Conv ≥0.5 + PnL ≥0) = These bestätigt, halten · <b>Tested</b> (Conv ≥0.5 + PnL &lt;0) = Stress-Test der These, Re-Eval erwägen · <b>Lucky</b> (Conv &lt;0.5 + PnL ≥0) = under-kalibriert, evtl. Conviction erhöhen · <b>Trim</b> (Conv &lt;0.5 + PnL &lt;0) = Cut-Kandidat. Pearson-r misst lineare Korrelation Conv ↔ PnL: ≥+0.3 = kalibriert, ≤−0.3 = invertiert (Warnung), dazwischen = Noise. Mit n=${pts.length} ist statistische Signifikanz limitiert — der Wert liegt im FRAMEWORK, nicht im heutigen r.</div>
+      </div>`;
+    }
+  }
+
+  root.innerHTML=`${subNavHtml}${storyHtml}<div class="pf-grid">${kpiHtml}</div>${_anchor("pf-alerts")}${alertsPanelHtml}${_anchor("pf-matrix")}${positionMatrixHtml}<div class="grid two-col" style="gap:var(--s3)">${barHtml}${secBarHtml}</div>${_anchor("pf-rotation")}${sectorRotationHtml}${mpcPanelHtml}${_anchor("pf-theses")}${thcPanelHtml}${_anchor("pf-equity")}${curvePanelHtml}${_anchor("pf-calmap")}${calMapHtml}${_anchor("pf-fundamentals")}${fundQuadHtml}${_anchor("pf-ideas")}${tradeIdeaHtml}${_anchor("pf-events")}${earningsCalHtml}${eventHorizonHtml}${_anchor("pf-news")}${newsFlowHtml}${_anchor("pf-scanner")}${universPanelHtml}${_anchor("pf-insider")}${insiderFlowHtml}${_anchor("pf-analysis")}${analysisPanelHtml}${_anchor("pf-pipeline")}${researchPipelineHtml}${riskStatsPanelHtml}${stressPanelHtml}${liveMonitorHtml}${techPanelHtml}${allocHtml}${pnlPanelHtml}${attribPanelHtml}${selPanelHtml}${lifePanelHtml}${maePanelHtml}${kellyPanelHtml}${crowdPanelHtml}${erPanelHtml}${asymPanelHtml}${convPanelHtml}${scatterPanelHtml}${corrPanelHtml}${riskDecompPanelHtml}${netBetaPanelHtml}${riskHtml}`;
   // Live-Monitor sort — attach after innerHTML so DOM nodes exist.
   // Re-orders <tr> nodes by parsing numeric data-* attrs stamped here.
   (function initLmSort(){
