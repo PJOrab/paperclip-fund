@@ -15,13 +15,44 @@ Zum Testen ohne briefing_runs-Tabelle:
 """
 import argparse
 import json
+import os
 import sys
+import urllib.request
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 
 from ingestion.db import client
 from . import prompts as P
 from . import claude_cli as C
 from fund_skills.validate_output import validate as _validate
+
+
+def _telegram_alert(text: str) -> None:
+    """Send a plain-text alert to Telegram. Silently no-ops if env vars missing.
+    Stdlib-only (no `requests` dep) — matches ingestion/run_ingest.py pattern."""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        try:
+            from dotenv import load_dotenv  # type: ignore
+            load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+            token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+            chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+        except ImportError:
+            pass
+    if not token or not chat_id:
+        return
+    try:
+        payload = json.dumps({"chat_id": chat_id, "text": text[:4096]}).encode()
+        req = urllib.request.Request(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=10)  # noqa: S310
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _check(schema: str, data: dict) -> None:
@@ -176,8 +207,12 @@ def _update(run_id: str, fields: dict) -> None:
 
 
 def _fail(run_id: str, stage: str, e: Exception):
-    _update(run_id, {"status": "error", "error": f"{stage}: {type(e).__name__}: {e}"})
+    err = f"{type(e).__name__}: {e}"
+    _update(run_id, {"status": "error", "error": f"{stage}: {err}"})
     _log(f"[{stage}] FAILED: {e}")
+    _telegram_alert(
+        f"🚨 BRIEFING-PIPELINE FAIL\nStage: {stage}\nRun: {str(run_id)[:8]}\n{err[:600]}"
+    )
     raise SystemExit(1)
 
 
@@ -247,22 +282,34 @@ def stage_editor():
         print(md)  # stdout → n8n Telegram-Node
     except Exception as e:
         _fail(rid, "editor", e)
-    # Post-briefing QC: flag missed big events as coverage-bug tickets (best-effort)
+    # Post-briefing side-effects: each is best-effort and isolated, but a silent
+    # failure here means we lose the side-effect's value for every future run
+    # (coverage-QC blind spot, stale track record, no reliability drift, stale
+    # dashboard). Telegram-alert on failure so the operator sees the regression
+    # the same morning instead of weeks later. Alerts are rate-limit-cheap and
+    # no-op without creds (see _telegram_alert).
+    def _side_effect_fail(label: str, err: Exception) -> None:
+        _log(f"[editor] {label} non-fatal error: {err}")
+        _telegram_alert(
+            f"⚠️ POST-EDITOR {label} FAIL\nRun: {str(rid)[:8]}\n{type(err).__name__}: {str(err)[:500]}"
+        )
+
+    # Post-briefing QC: flag missed big events as coverage-bug tickets
     try:
         from agents.coverage_qc import main as _qc_main
         import sys as _sys
         _sys.argv = ["coverage_qc", "--run-id", rid]
         _qc_main()
     except Exception as qc_err:
-        _log(f"[editor] coverage_qc non-fatal error: {qc_err}")
-    # Post-briefing track-record update: score past theses vs price action (best-effort)
+        _side_effect_fail("coverage_qc", qc_err)
+    # Post-briefing track-record update: score past theses vs price action
     try:
         from agents.score_past_calls import write_track_record as _score
         summary = _score(days=60)
         _log(f"[editor] {summary}")
     except Exception as score_err:
-        _log(f"[editor] score_past_calls non-fatal error: {score_err}")
-    # Post-briefing reliability audit: surface source drift vs configured scores (best-effort, report-only)
+        _side_effect_fail("score_past_calls", score_err)
+    # Post-briefing reliability audit: surface source drift vs configured scores
     try:
         import subprocess as _sp, sys as _sys
         _res = _sp.run([_sys.executable, "-m", "agents.reliability_audit", "--runs", "20"],
@@ -270,8 +317,8 @@ def stage_editor():
         if _res.stdout.strip():
             _log(f"[editor] reliability_audit:\n{_res.stdout.strip()[:800]}")
     except Exception as rel_err:
-        _log(f"[editor] reliability_audit non-fatal error: {rel_err}")
-    # Post-briefing sector-view refresh + dashboard rebuild (best-effort)
+        _side_effect_fail("reliability_audit", rel_err)
+    # Post-briefing sector-view refresh + dashboard rebuild
     try:
         import subprocess as _sp, sys as _sys
         # Refresh live sector prices (30 tickers via Yahoo Finance); capped at 90s
@@ -280,7 +327,7 @@ def stage_editor():
         _sp.run([_sys.executable, "-m", "dashboard.build"], check=True, timeout=60)
         _log("[editor] dashboard rebuilt after briefing")
     except Exception as build_err:
-        _log(f"[editor] dashboard rebuild non-fatal error: {build_err}")
+        _side_effect_fail("dashboard_build", build_err)
 
 
 def stage_coverage_qc(run_id: str | None = None, open_tickets: bool = True,

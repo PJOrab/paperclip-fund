@@ -527,6 +527,43 @@ def test_guidance_extraction() -> None:
     print("ok: guidance extraction correct")
 
 
+def test_pipeline_alerts_wired() -> None:
+    """Pipeline-failure observability: _fail() and the post-editor side-effects
+    must page the operator via Telegram. Without this, a broken adapter or a
+    failing post-editor side-effect (coverage_qc, score_past_calls,
+    reliability_audit, dashboard build) silently degrades the live pipeline
+    until the CEO complains. This test guards the wiring; the helper itself
+    no-ops without TELEGRAM_BOT_TOKEN/CHAT_ID so it's safe at import time."""
+    import inspect
+    import os
+
+    os.environ.pop("TELEGRAM_BOT_TOKEN", None)
+    os.environ.pop("TELEGRAM_CHAT_ID", None)
+    from agents import run as R
+
+    # 1. _telegram_alert exists, is stdlib-only (no `requests` import in source),
+    #    and no-ops cleanly without creds.
+    src_helper = inspect.getsource(R._telegram_alert)
+    _check("_telegram_alert is stdlib-only (no `requests` import)",
+           "import requests" not in src_helper and "urllib.request" in src_helper)
+    R._telegram_alert("UNIT-TEST — should silently no-op (no creds)")
+    _check("_telegram_alert no-ops without creds", True)
+
+    # 2. _fail() pages on any stage crash.
+    src_fail = inspect.getsource(R._fail)
+    _check("_fail wires _telegram_alert", "_telegram_alert" in src_fail)
+    _check("_fail alert is tagged BRIEFING-PIPELINE FAIL",
+           "BRIEFING-PIPELINE FAIL" in src_fail)
+
+    # 3. stage_editor pages on each of the four post-editor side-effects.
+    src_editor = inspect.getsource(R.stage_editor)
+    for side_effect in ("coverage_qc", "score_past_calls",
+                        "reliability_audit", "dashboard_build"):
+        _check(f"stage_editor pages on {side_effect} failure",
+               f'_side_effect_fail("{side_effect}"' in src_editor)
+    print("ok: pipeline-failure Telegram alerts wired")
+
+
 def main() -> None:
     test_parse_json()
     test_cross_check()
@@ -536,6 +573,7 @@ def main() -> None:
     test_dedup()
     test_triage_user_prompt()
     test_guidance_extraction()
+    test_pipeline_alerts_wired()
     print("\nALL PIPELINE TESTS PASSED")
 
 
