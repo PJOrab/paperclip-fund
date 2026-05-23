@@ -247,9 +247,15 @@ def gen_sector_view() -> dict:
         sectors.append({"id": s["id"], "name": s["name"],
                         "note": s.get("note"), "tickers": enriched})
     earnings_cal = _earnings_calendar()
+    benchmarks = {}
+    for bm in ["SPY", "QQQ"]:
+        q = _yahoo_quote(bm)
+        if q and q.get("spark"):
+            benchmarks[bm] = {"ticker": bm, "price": q["price"], "spark": q["spark"]}
     return {"as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
             "as_of_iso": datetime.now(timezone.utc).isoformat(),
             "sectors": sectors,
+            "benchmarks": benchmarks,
             "earnings_calendar": earnings_cal}
 
 
@@ -500,6 +506,15 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 .ec-ylab{font-size:10px;fill:var(--mut);font-variant-numeric:tabular-nums;font-family:inherit}
 .ec-xlab{font-size:10px;fill:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-family:inherit}
 .ec-foot{font-size:var(--fs-micro);margin-top:6px;line-height:1.4}
+.ec-bm{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:4 3;opacity:.75}
+.ec-bm-spy{stroke:var(--mut)}
+.ec-bm-qqq{stroke:#9b8cf4}
+.ec-legend{display:flex;gap:var(--s3);align-items:center;flex-wrap:wrap;margin-top:6px}
+.ec-leg-item{display:flex;align-items:center;gap:4px;color:var(--mut)}
+.ec-leg-line{display:inline-block;width:18px;height:2px;border-radius:1px;flex-shrink:0}
+.ec-leg-book{background:currentColor}
+.ec-leg-spy{background:var(--mut)}
+.ec-leg-qqq{background:#9b8cf4}
 @media(max-width:640px){
   .ec-h{flex-direction:column;align-items:stretch;gap:var(--s2)}
   .ec-kpis{justify-content:space-between;gap:var(--s3)}
@@ -1455,7 +1470,19 @@ function calibSvg(buckets){
       const pad={l:42,r:16,t:14,b:24};
       const iW=W-pad.l-pad.r, iH=H-pad.t-pad.b;
       const pcts=_curve.map(c=>c.pct);
-      let lo=Math.min(0,...pcts), hi=Math.max(0,...pcts);
+      // Benchmark curves: SPY/QQQ normalized to same inception day (off=_incep → 0%)
+      const _bmRaw=(D.sector_view||{}).benchmarks||{};
+      const _bmCurves={};
+      ["SPY","QQQ"].forEach(bm=>{
+        const bd=_bmRaw[bm]; if(!bd||!Array.isArray(bd.spark)||bd.spark.length<2) return;
+        const sp=bd.spark, inceptIdx=sp.length-1-_incep;
+        if(inceptIdx<0) return;
+        const base=sp[inceptIdx]; if(!base) return;
+        const bc=[]; for(let off=_incep;off>=0;off--){ const idx=sp.length-1-off; if(idx>=0&&idx<sp.length) bc.push((sp[idx]/base-1)*100); }
+        if(bc.length>=2) _bmCurves[bm]=bc;
+      });
+      const _bmAllPcts=Object.values(_bmCurves).flat();
+      let lo=Math.min(0,...pcts,..._bmAllPcts), hi=Math.max(0,...pcts,..._bmAllPcts);
       if(hi-lo<1){ const mid=(hi+lo)/2; lo=mid-0.5; hi=mid+0.5; }
       const yPad=(hi-lo)*0.15; lo-=yPad; hi+=yPad;
       const yPct=v=>pad.t+(hi-v)/(hi-lo)*iH;
@@ -1484,8 +1511,14 @@ function calibSvg(buckets){
         const c=_curve[i];
         return `<circle class="ec-tick" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5"><title>Tag −${c.off}: ${fmt(c.pct)} (${c.n} aktive Calls)</title></circle>`;
       }).join("");
+      const _bmSvg=Object.entries(_bmCurves).map(([bm,bc])=>{
+        if(bc.length<2) return "";
+        const pts=bc.map((v,i)=>`${(pad.l+i*xStep).toFixed(1)},${yPct(v).toFixed(1)}`).join(" ");
+        return `<polyline class="ec-bm ec-bm-${bm.toLowerCase()}" points="${pts}"><title>${bm} normiert auf Inception (${fmt(bc[bc.length-1])} seit Entry)</title></polyline>`;
+      }).join("");
       const svg = `<svg class="ec-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Buch-Equity-Kurve seit Inception als Liniendiagramm — aktuell ${fmt(lastPct)}">
         ${zeroLine}
+        ${_bmSvg}
         ${areaPath?`<path class="ec-area ${lineCls}" d="${areaPath}"/>`:""}
         ${_curve.length>1?`<polyline class="ec-line ${lineCls}" points="${linePts}"/>`:""}
         ${dots}
@@ -1508,13 +1541,21 @@ function calibSvg(buckets){
             ${inceptDate?`<div class="ec-h-sub muted">Erste Position: ${esc(inceptDate)} · ${daysLive} Handelstag${daysLive===1?"":"e"} live · ${_curveSrc.length} Calls</div>`:""}
           </div>
           <div class="ec-kpis">
-            <div class="ec-kpi" title="Aktuelle konviktions-gewichtete Buch-Performance"><span class="muted">Aktuell</span><b class="${lastCls}">${fmt(lastPct)}</b></div>
+            <div class="ec-kpi" title="Konviktions-gewichtete Buch-Performance seit Inception"><span class="muted">Buch</span><b class="${lastCls}">${fmt(lastPct)}</b></div>
             <div class="ec-kpi" title="Höchster Buch-Stand seit Inception"><span class="muted">Hoch</span><b class="${peakCls}">${fmt(peakPct)}</b></div>
             <div class="ec-kpi" title="Größter Rückgang vom Hoch (Drawdown)"><span class="muted">Max DD</span><b class="${ddCls}">${maxDD<-0.005?fmt(maxDD):"0.00%"}</b></div>
+            ${Object.entries(_bmCurves).map(([bm,bc])=>{ const v=bc[bc.length-1]; const vc=v>=0?"move-up":"move-dn"; return `<div class="ec-kpi" title="${bm} — normiert auf selben Inception-Tag, Benchmark-Vergleich"><span class="muted">${bm}</span><b class="${vc}">${fmt(v)}</b></div>`; }).join("")}
           </div>
         </div>
         ${svg}
-        <div class="ec-foot muted">Honestes Inception-Tracking — die Kurve wächst mit jedem Handelstag. Indexiert bei 0% am Entry-Tag, sign-flipped für Shorts.</div>
+        <div class="ec-foot muted">
+          <div class="ec-legend">
+            <span class="ec-leg-item ${lastPct>=0?"move-up":"move-dn"}"><span class="ec-leg-line ec-leg-book"></span>Buch (konv-gewichtet)</span>
+            ${_bmCurves.SPY?`<span class="ec-leg-item"><span class="ec-leg-line ec-leg-spy"></span>SPY (normiert)</span>`:""}
+            ${_bmCurves.QQQ?`<span class="ec-leg-item"><span class="ec-leg-line ec-leg-qqq"></span>QQQ (normiert)</span>`:""}
+          </div>
+          Inception-Tracking: 0% = Entry-Tag, sign-flip bei Shorts. Benchmarks normiert auf denselben Tag.
+        </div>
       </div>`;
     }
   }
