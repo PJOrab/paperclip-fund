@@ -2250,6 +2250,189 @@ class EpsRevisionsAdapter:
         }
 
 
+class AnalystConsensusAdapter:
+    """
+    Sell-side analyst price-target & recommendation consensus per liquid
+    watchlist ticker. The complement to EpsRevisionsAdapter: EPS revisions
+    capture estimate-momentum (PEAD), this adapter captures VALUATION-anchor
+    (PT-implied upside/downside vs current price) + DISPERSION (high-low PT
+    spread = analyst disagreement) + 3-month RATING DRIFT (bucket migration
+    from strong-buy/buy → hold/sell or vice versa).
+
+    Free yfinance fields (no key):
+      - targetMeanPrice / targetHighPrice / targetLowPrice / targetMedianPrice
+      - numberOfAnalystOpinions, recommendationMean (1=SB ... 5=S), recommendationKey
+      - currentPrice / regularMarketPrice (the spot to anchor implied upside against)
+      - Ticker.recommendations DataFrame: per-month rating-bucket counts (0m,
+        -1m, -2m, -3m) → drift = (strongBuy+buy)@0m − (strongBuy+buy)@-3m
+        minus (sell+strongSell)@0m − @-3m. Positive = upgrades, negative = downgrades.
+
+    Same 17 liquid watchlist names as EpsRevisions / Options / ShortInterest.
+    Quant funds (Millennium, Citadel, Point72) pay FactSet / Refinitiv /
+    Bloomberg EE/ANR mid-five-figures/yr for the same aggregated consensus;
+    we get it free from Yahoo's IBES-derived feed.
+
+    Emits per ticker ONLY when at least one trigger fires (keeps signal
+    density high):
+      - |implied_upside| ≥ UPSIDE_MIN (20%) — directional valuation anchor
+      - dispersion = (high − low) / mean ≥ DISPERSION_MIN (75%) — analyst
+        disagreement, often setup for post-earnings re-rating
+      - |3m rating drift| ≥ DRIFT_MIN (4) — bucket migration over a quarter,
+        a forward-return signal in Womack (1996) / Jegadeesh-Kim research
+
+    Stable dedup per (ticker, upside-bucket-5pp, recommendation-key) so
+    re-runs within the same state collapse to one row; a 5pp move in
+    implied upside (e.g. price rallies into PT) or a recommendationKey
+    transition (buy → strong_buy) re-emits.
+
+    Source: 'analyst_consensus'. Reliability 0.83 — Yahoo-aggregated IBES
+    consensus (above editorial tech_news 0.60, parallel to options_market
+    0.82, below primary SEC filings 0.95+). Forward-looking opinion, not
+    confirmed fact.
+    """
+
+    SOURCE = "analyst_consensus"
+    RELIABILITY = 0.83
+    TICKERS = [
+        "NVDA", "MSFT", "GOOGL", "META", "AMZN", "AAPL",
+        "AMD", "TSM", "ASML", "ARM", "AVGO", "PLTR",
+        "ORCL", "NOW", "CRM", "SNOW", "CRWD",
+    ]
+    UPSIDE_MIN = 0.20         # ≥20% implied upside/downside vs spot
+    DISPERSION_MIN = 0.75     # high−low spread ≥75% of mean PT
+    DRIFT_MIN = 4             # |3m bucket migration| ≥ 4 net analysts
+    MIN_ANALYSTS = 8          # require ≥8 analysts for the consensus to be meaningful
+
+    def fetch(self) -> list[dict]:
+        try:
+            import yfinance as yf
+        except ImportError:
+            return []
+        out = []
+        for ticker in self.TICKERS:
+            try:
+                item = self._fetch_one(ticker, yf)
+                if item:
+                    out.append(item)
+                time.sleep(0.2)
+            except Exception:
+                # One ticker failing must never kill the adapter — yfinance
+                # info dicts go empty for delisted/halted/sparse tickers.
+                pass
+        return out
+
+    def _fetch_one(self, ticker: str, yf) -> dict | None:
+        t = yf.Ticker(ticker)
+        try:
+            info = t.info or {}
+        except Exception:
+            return None
+        mean = info.get("targetMeanPrice")
+        high = info.get("targetHighPrice")
+        low = info.get("targetLowPrice")
+        n = info.get("numberOfAnalystOpinions") or 0
+        rec_mean = info.get("recommendationMean")
+        rec_key = (info.get("recommendationKey") or "").strip()
+        px = info.get("currentPrice") or info.get("regularMarketPrice")
+        try:
+            n_int = int(n)
+        except (TypeError, ValueError):
+            n_int = 0
+        if not (mean and px) or n_int < self.MIN_ANALYSTS:
+            return None
+        try:
+            mean_f = float(mean)
+            px_f = float(px)
+            high_f = float(high) if high else None
+            low_f = float(low) if low else None
+        except (TypeError, ValueError):
+            return None
+        if px_f <= 0 or mean_f <= 0:
+            return None
+        upside = (mean_f - px_f) / px_f
+        dispersion = None
+        if high_f is not None and low_f is not None and mean_f:
+            dispersion = (high_f - low_f) / mean_f
+        # 3-month rating drift from the recommendations bucket table
+        drift = self._rating_drift(t)
+        # Trigger gates
+        upside_notable = abs(upside) >= self.UPSIDE_MIN
+        disp_notable = dispersion is not None and dispersion >= self.DISPERSION_MIN
+        drift_notable = drift is not None and abs(drift) >= self.DRIFT_MIN
+        if not (upside_notable or disp_notable or drift_notable):
+            return None
+        # Direction tag for triage — anchor on implied upside when present,
+        # otherwise fall back to drift direction
+        if upside_notable:
+            direction = "BULLISH" if upside > 0 else "BEARISH"
+        elif drift_notable and drift is not None:
+            direction = "UPGRADES" if drift > 0 else "DOWNGRADES"
+        else:
+            direction = "DISPERSION"
+        # Build the text
+        sign = "+" if upside >= 0 else ""
+        parts = [
+            f"[{ticker}] Analyst-Konsens {direction}: "
+            f"PT-Mittel ${mean_f:.2f} vs Spot ${px_f:.2f} → {sign}{upside*100:.1f}% implied"
+        ]
+        if high_f is not None and low_f is not None:
+            parts.append(f"Range ${low_f:.2f}-${high_f:.2f}")
+        rec_label = rec_key.replace("_", " ").title() if rec_key else ""
+        if rec_mean is not None:
+            try:
+                rec_str = f"Rating-Mean {float(rec_mean):.2f}"
+                if rec_label:
+                    rec_str += f" ({rec_label})"
+                parts.append(rec_str)
+            except (TypeError, ValueError):
+                pass
+        parts.append(f"{n_int} Analysten")
+        if dispersion is not None and disp_notable:
+            parts.append(f"Spread ±{dispersion*100:.0f}% (Disagreement)")
+        if drift_notable and drift is not None:
+            dsign = "+" if drift > 0 else ""
+            label = "Upgrades" if drift > 0 else "Downgrades"
+            parts.append(f"3m-Drift {dsign}{drift} net ({label})")
+        text = " — ".join(parts)
+        # Stable dedup: bucket implied upside in 5pp steps + rec key
+        upside_bucket = int(round(upside * 20)) * 5  # 5pp granularity
+        rec_bucket = rec_key or "na"
+        dedup_url = (
+            f"https://finance.yahoo.com/quote/{ticker}/analysis"
+            f"?pt_up={upside_bucket}&rec={rec_bucket}"
+        )
+        return {
+            "text": text,
+            "source": self.SOURCE,
+            "url": dedup_url,
+            "reliability": self.RELIABILITY,
+        }
+
+    @staticmethod
+    def _rating_drift(ticker_obj) -> int | None:
+        """Return net rating-bucket migration over the last 3 months.
+        Positive = net upgrades (bullish), negative = net downgrades.
+        ``(strongBuy+buy)`` shift minus ``(sell+strongSell)`` shift between
+        the 0m and -3m rows of ``Ticker.recommendations``."""
+        try:
+            df = ticker_obj.recommendations
+            if df is None or df.empty:
+                return None
+            row_0 = df[df["period"] == "0m"]
+            row_3 = df[df["period"] == "-3m"]
+            if row_0.empty or row_3.empty:
+                return None
+            r0 = row_0.iloc[0]
+            r3 = row_3.iloc[0]
+            bull_0 = int(r0["strongBuy"]) + int(r0["buy"])
+            bull_3 = int(r3["strongBuy"]) + int(r3["buy"])
+            bear_0 = int(r0["sell"]) + int(r0["strongSell"])
+            bear_3 = int(r3["sell"]) + int(r3["strongSell"])
+            return (bull_0 - bull_3) - (bear_0 - bear_3)
+        except Exception:
+            return None
+
+
 class GovContractsAdapter:
     """
     US Federal contract awards per watchlist company via USAspending.gov.
@@ -2877,4 +3060,160 @@ class TechnicalLevelsAdapter:
             "source": self.SOURCE,
             "url": dedup_url,
             "reliability": reliability,
+        }
+
+
+class TaiwanSemiRevenueAdapter:
+    """
+    Taiwan semiconductor monthly-revenue feed — supply-chain lead indicator for
+    the AI-semi book (NVDA / AMD / AVGO / ARM / SMCI / ASML upstream demand).
+
+    Investor edge:
+      Listed Taiwanese semis are legally required to disclose net revenue by the
+      10th of the following month — typically 3-6 weeks BEFORE the corresponding
+      US-listed customer/peer reports its quarter. TSMC's monthly revenue is the
+      hardest publicly-available leading indicator for the data-center capex
+      cycle: when TSMC's wafer billings accelerate YoY, the H100/B200/MI300
+      pull-through is already booked; when they decelerate, the AI-capex pause
+      shows up here before it hits any Nvidia print. Quant funds buy this signal
+      via Bloomberg or pay Taipei-based shops five figures/month for the same
+      data; TWSE publishes it free in structured JSON.
+
+    Source: TWSE OpenAPI `t187ap05_L` (Monthly Operating Revenue of TWSE-listed
+    companies). One row per company per data-month with:
+      - 資料年月 (data year-month, ROC fmt e.g. "11504" = 2026-04)
+      - 出表日期 (publication date, ROC fmt)
+      - 營業收入-當月營收 (current-month revenue, NTD thousands)
+      - 營業收入-上月比較增減(%) (MoM %)
+      - 營業收入-去年同月增減(%) (YoY %)
+      - 累計營業收入-前期比較增減(%) (YTD YoY %)
+
+    Coverage (5 large-cap Taiwan semis with the tightest read on AI demand):
+      2330 TSMC      — foundry leader, AI accelerator wafer billings
+      2303 UMC       — mature-node foundry, broad-based semi demand proxy
+      2454 MediaTek  — fabless, edge-AI / smartphone SoC demand
+      3711 ASE       — OSAT (advanced packaging — CoWoS bottleneck visibility)
+      2317 Hon Hai   — Foxconn, AI-server assembly (NVDA/SMCI/DELL customer)
+
+    Emits one item per (ticker, data-month). Dedup key is the ROC year-month in
+    the URL so daily re-runs after the monthly press date don't flood raw_items
+    until the next month's release lands.
+
+    Reliability 0.92 (TWSE official mandatory disclosure; same tier as sec_13dg
+    and sec_registration — primary regulatory source with strict legal deadlines).
+    """
+
+    SOURCE = "tw_semi_revenue"
+    RELIABILITY = 0.92
+    ENDPOINT = "https://openapi.twse.com.tw/v1/opendata/t187ap05_L"
+
+    # Code → (display name, peer/customer hook for triage)
+    COMPANIES: dict[str, tuple[str, str]] = {
+        "2330": ("TSMC",     "foundry · NVDA/AMD/AVGO/AAPL wafer demand"),
+        "2303": ("UMC",      "mature-node foundry · broad semi demand proxy"),
+        "2454": ("MediaTek", "fabless SoC · edge-AI / smartphone demand"),
+        "3711": ("ASE",      "OSAT · CoWoS advanced packaging (NVDA bottleneck)"),
+        "2317": ("Hon Hai",  "Foxconn · AI-server assembly (NVDA/SMCI/DELL)"),
+    }
+
+    def fetch(self) -> list[dict]:
+        data = fetch_json(self.ENDPOINT, timeout=25)
+        if not isinstance(data, list):
+            return []
+        out: list[dict] = []
+        for row in data:
+            code = (row.get("公司代號") or "").strip()
+            meta = self.COMPANIES.get(code)
+            if not meta:
+                continue
+            label, hook = meta
+            item = self._build_item(code, label, hook, row)
+            if item:
+                out.append(item)
+        return out
+
+    @staticmethod
+    def _roc_to_iso_month(roc_ym: str) -> tuple[int, int] | None:
+        """Convert ROC year-month string '11504' → (2026, 4). Returns None on failure."""
+        s = (roc_ym or "").strip()
+        if len(s) < 5 or not s.isdigit():
+            return None
+        roc_year = int(s[:-2])
+        month = int(s[-2:])
+        if not (1 <= month <= 12):
+            return None
+        return roc_year + 1911, month
+
+    @staticmethod
+    def _fmt_revenue_ntd(rev_k_ntd: float) -> str:
+        """Format thousands-NTD as 'NT$X.X bn' or 'NT$XXX m'. Negative values get a sign."""
+        ntd = rev_k_ntd * 1_000.0
+        if abs(ntd) >= 1e9:
+            return f"NT${ntd/1e9:,.1f} bn"
+        if abs(ntd) >= 1e6:
+            return f"NT${ntd/1e6:,.0f} m"
+        return f"NT${ntd:,.0f}"
+
+    @staticmethod
+    def _fmt_pct(p: float) -> str:
+        return f"{p:+.1f}%"
+
+    def _build_item(self, code: str, label: str, hook: str, row: dict) -> dict | None:
+        ym = self._roc_to_iso_month(row.get("資料年月", ""))
+        if not ym:
+            return None
+        year, month = ym
+        try:
+            rev = float(row.get("營業收入-當月營收") or 0)
+        except (TypeError, ValueError):
+            return None
+        if rev <= 0:
+            return None
+        try:
+            mom = float(row.get("營業收入-上月比較增減(%)") or 0)
+        except (TypeError, ValueError):
+            mom = 0.0
+        try:
+            yoy = float(row.get("營業收入-去年同月增減(%)") or 0)
+        except (TypeError, ValueError):
+            yoy = 0.0
+        try:
+            ytd_yoy = float(row.get("累計營業收入-前期比較增減(%)") or 0)
+        except (TypeError, ValueError):
+            ytd_yoy = 0.0
+
+        month_label = f"{year}-{month:02d}"
+        rev_disp = self._fmt_revenue_ntd(rev)
+
+        # Direction tag for triage: a |YoY| >=15% is institutional-actionable.
+        # |YoY| <5% is a non-event; intermediate is noted as steady.
+        if yoy >= 15.0:
+            tag = "accelerating"
+        elif yoy <= -10.0:
+            tag = "contracting"
+        elif yoy >= 5.0:
+            tag = "expanding"
+        elif yoy <= -5.0:
+            tag = "softening"
+        else:
+            tag = "steady"
+
+        text = (
+            f"[TWSE Monthly Revenue · {label}] {month_label}: {rev_disp} — "
+            f"MoM {self._fmt_pct(mom)} / YoY {self._fmt_pct(yoy)} "
+            f"(YTD YoY {self._fmt_pct(ytd_yoy)}, {tag}). {hook}."
+        )
+
+        # Stable dedup per (ticker, ROC year-month). The MOPS company-page URL
+        # is the canonical public artefact for TWSE-listed monthly revenue.
+        dedup_url = (
+            f"https://mops.twse.com.tw/mops/web/t05st10_ifrs"
+            f"?co_id={code}&ym={year}{month:02d}"
+        )
+
+        return {
+            "text": text[:450],
+            "source": self.SOURCE,
+            "url": dedup_url,
+            "reliability": self.RELIABILITY,
         }

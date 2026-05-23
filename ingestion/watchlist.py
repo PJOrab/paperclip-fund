@@ -322,6 +322,16 @@ SOURCE_RELIABILITY = {
     # competitor analogue costs six figures/yr from FactSet/Refinitiv. We emit
     # only when there's clear directional momentum (filtered tug-of-war noise).
     "eps_revisions": 0.85,
+    # Sell-side analyst price-target & recommendation consensus per ticker via
+    # yfinance — the valuation/dispersion complement to eps_revisions (which
+    # captures estimate-momentum). Emits implied upside vs spot, high-low PT
+    # dispersion (analyst disagreement), and 3-month rating-bucket drift
+    # (Womack 1996 / Jegadeesh-Kim forward-return signal). Quant funds pay
+    # FactSet / Refinitiv EE / Bloomberg ANR mid-five-figures/yr for the same
+    # aggregated consensus; we get it free. Forward-looking opinion, not fact,
+    # so reliability sits below SEC primary filings and slightly below
+    # eps_revisions (estimate counts are more granular than PT aggregation).
+    "analyst_consensus": 0.83,
     # US Federal contract awards from USAspending.gov per watchlist company.
     # Official US Treasury / SAM.gov data — same authoritative tier as Fed/BLS.
     # Contract obligations typically appear in USAspending 7-14 days BEFORE the
@@ -376,6 +386,15 @@ SOURCE_RELIABILITY = {
     # below SEC filings: the ATS data is the company's actual hiring system,
     # but it's a directional indicator, not a confirmed financial fact.
     "job_postings": 0.85,
+    # Taiwan Stock Exchange (TWSE) monthly operating revenue — mandatory legal
+    # disclosure by the 10th of the following month from TWSE-listed companies.
+    # Same authoritative tier as sec_13dg (0.93): primary regulator filing with
+    # strict statutory deadlines. Tier-1 supply-chain lead indicator for the
+    # AI-semi book (TSMC wafer billings → NVDA/AMD/AVGO/ARM customer pull-through;
+    # ASE OSAT → CoWoS advanced-packaging bottleneck visibility; Hon Hai → AI-
+    # server assembly demand from NVDA/SMCI/DELL). Bloomberg/Refinitiv users pay
+    # for the same series; TWSE publishes it free in structured JSON.
+    "tw_semi_revenue": 0.92,
 }
 
 # Job-posting velocity targets — public Greenhouse + Lever boards. Source the
