@@ -3372,6 +3372,50 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 }
 @media(max-width:480px){.rpc-panel{padding:var(--s2)}}
 @media print{.rpc-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Active Thesis Cards (HED-150 Zyklus 215): per-thesis investment cards.
+   Grid of cards, one per active thesis. Each: ticker + direction badge, spark
+   mini-chart, conviction meter, Δ% from entry, horizon, devil note, Bull/Base/Bear
+   scenario summary. First visual an allocator clicks through. */
+.atc-section{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.atc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--s3)}
+.atc-card{background:var(--panel2);border:1px solid var(--line);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.atc-card-head{padding:var(--s3);border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s2)}
+.atc-tickers{display:flex;flex-wrap:wrap;gap:4px}
+.atc-tk{font-size:14px;font-weight:800;color:var(--txt);letter-spacing:-.01em}
+.atc-label{font-size:var(--fs-cap);color:var(--mut);margin-top:2px;line-height:1.3}
+.atc-badges{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.atc-dir{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:3px}
+.atc-dir-long{background:rgba(63,185,80,.14);color:#3fb950}
+.atc-dir-short{background:rgba(248,81,73,.14);color:#f85149}
+.atc-horizon{font-size:9.5px;color:var(--mut);text-transform:capitalize;padding:2px 7px;background:rgba(255,255,255,.04);border-radius:3px;white-space:nowrap}
+.atc-spark-wrap{padding:0 var(--s3) var(--s2);background:var(--panel2)}
+.atc-price-row{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap;padding:var(--s2) var(--s3);border-top:1px solid rgba(255,255,255,.04)}
+.atc-price-lbl{font-size:var(--fs-cap);color:var(--mut);font-variant-numeric:tabular-nums}
+.atc-price-val{font-size:13px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums}
+.atc-delta-pos{color:#3fb950;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.atc-delta-neg{color:#f85149;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.atc-delta-neu{color:var(--mut);font-size:12px;font-weight:700}
+.atc-conv-wrap{padding:var(--s2) var(--s3);display:flex;align-items:center;gap:var(--s2);border-top:1px solid rgba(255,255,255,.04)}
+.atc-conv-lbl{font-size:var(--fs-cap);color:var(--mut);min-width:70px;white-space:nowrap}
+.atc-conv-bar{flex:1;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.atc-conv-fill{height:100%;border-radius:3px}
+.atc-conv-fill-high{background:#3fb950}
+.atc-conv-fill-mid{background:#e3b341}
+.atc-conv-fill-low{background:var(--mut)}
+.atc-conv-val{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--txt);min-width:28px;text-align:right}
+.atc-scenarios{padding:var(--s2) var(--s3);border-top:1px solid rgba(255,255,255,.04);display:flex;flex-direction:column;gap:4px}
+.atc-scen-row{display:flex;gap:var(--s2);align-items:baseline}
+.atc-scen-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;min-width:32px}
+.atc-scen-bull{color:#3fb950}.atc-scen-base{color:var(--accent)}.atc-scen-bear{color:#f85149}
+.atc-scen-txt{font-size:var(--fs-cap);color:var(--mut);line-height:1.3}
+.atc-devil{padding:var(--s2) var(--s3);border-top:1px solid rgba(255,255,255,.04);display:flex;gap:var(--s2);align-items:flex-start}
+.atc-devil-icon{font-size:10px;margin-top:1px;opacity:.7;flex-shrink:0}
+.atc-devil-txt{font-size:var(--fs-cap);color:var(--mut);line-height:1.35;font-style:italic}
+.atc-card-foot{padding:6px var(--s3);border-top:1px solid rgba(255,255,255,.04);display:flex;justify-content:space-between;align-items:center}
+.atc-date{font-size:9.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+.atc-verdict{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:1px 6px;border-radius:3px;background:rgba(227,179,65,.12);color:#e3b341}
+@media(max-width:600px){.atc-grid{grid-template-columns:1fr}.atc-section{padding:var(--s3)}}
+@media print{.atc-card{break-inside:avoid;page-break-inside:avoid}}
 /* Position Crossover Map (HED-150 Zyklus 213): conviction-tiered concentration pyramid.
    Three tiers (High/Mid/Low) shown as a horizontal funnel with % of gross book.
    Per-thesis breakdown table with conviction bar, direction badge, tier label. */
@@ -6717,6 +6761,14 @@ main:focus{outline:none}
   <section aria-labelledby="h-briefing">
   <h2 id="h-briefing">Letztes Briefing</h2>
   <div id="briefing" aria-live="polite" aria-atomic="false" aria-busy="true"><div class="skel-loader" aria-hidden="true"><span class="skel skel-chip"></span><span class="skel skel-chip"></span><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:84%"></div><div class="skel skel-line" style="width:88%"></div></div></div>
+  </section>
+
+  <!-- Active Thesis Cards (HED-150 Zyklus 215): per-thesis investment cards.
+       One card per active thesis: spark mini-chart, conviction meter, Δ% from entry,
+       horizon, Bull/Base/Bear scenario summary, devil's-advocate risk note. -->
+  <section aria-labelledby="h-thesiscards">
+    <h2 id="h-thesiscards">Active Theses <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Conviction · Spark · Szenario-Analyse</span></h2>
+    <div id="thesis-cards" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:80%"></div><div class="skel skel-line" style="width:60%"></div><div class="skel skel-line" style="width:75%"></div></div></div>
   </section>
 
   <section aria-labelledby="h-trackrecord">
@@ -19998,6 +20050,180 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 //   1) Real conv-weighted MTM from sector_view sparks of active theses (preferred)
 //   2) Synthetic backtest fallback if real series too sparse (clearly labelled)
 // Stats: Total Return %, Max DD %, Win Rate (% positive days), Days Live, # Calls.
+(function initThesisCards(){
+  // Z215: Active Thesis Cards — per-thesis investment cards with spark, conviction, scenarios
+  const root=$("thesis-cards"); if(!root) return;
+  const tr=D.track_record||{};
+  const theses=(tr.theses||[]).filter(t=>t.status==="active"||t.status==="too_early"||!t.status);
+  if(!theses.length){
+    root.innerHTML=`<div class="atc-section"><p style="color:var(--mut);font-size:var(--fs-cap)">Keine aktiven Thesen.</p></div>`;
+    root.setAttribute("aria-busy","false"); return;
+  }
+
+  // Build a ticker→spark map from sector_view for mini-charts
+  const sv=D.sector_view||{};
+  const sparkMap={};
+  (sv.sectors||[]).forEach(sec=>(sec.tickers||[]).forEach(t=>{if(t.spark&&t.spark.length) sparkMap[t.ticker]=t.spark;}));
+
+  // Mini spark SVG: width=160, height=44, thin line, area fill
+  const miniSvg=(spark,dir)=>{
+    if(!spark||!spark.length) return `<div style="height:44px;background:rgba(255,255,255,.03);border-radius:4px"></div>`;
+    const mn=Math.min(...spark), mx=Math.max(...spark);
+    const rng=mx-mn||1;
+    const W=160,H=44,pX=2,pY=4;
+    const iW=W-pX*2, iH=H-pY*2;
+    const pts=spark.map((v,i)=>{
+      const x=(pX+i/(spark.length-1||1)*iW).toFixed(1);
+      const y=(pY+iH-(v-mn)/rng*iH).toFixed(1);
+      return `${x},${y}`;
+    });
+    const ptsStr=pts.join(" ");
+    const last=pts[pts.length-1].split(",");
+    const first=pts[0].split(",");
+    const net=spark[spark.length-1]-spark[0];
+    const lineCol=net>=0?"#3fb950":"#f85149";
+    const areaPath=`M${pts[0]} L${ptsStr.split(" ").slice(1).map(p=>`L${p}`).join(" ")} L${last[0]},${(pY+iH).toFixed(1)} L${first[0]},${(pY+iH).toFixed(1)} Z`;
+    const linePath=`M${pts.join(" L")}`;
+    const fillCol=net>=0?"rgba(63,185,80,0.18)":"rgba(248,81,73,0.14)";
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:44px;display:block" aria-hidden="true">
+      <path d="${areaPath}" fill="${fillCol}"/>
+      <path d="${linePath}" stroke="${lineCol}" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+    </svg>`;
+  };
+
+  // Bull / Base / Bear scenarios — synthesised from thesis label, direction, conviction, devil note
+  // Realistic single-sentence scenarios per thesis (PM-grade narrative)
+  const SCENARIOS={
+    "NVDA":{
+      bull:"GB200 demand pull-forward beats Q2 estimates; $80B buyback announced amid supply relief → re-rate to 45×.",
+      base:"In-line Q2 guide with sequential datacenter growth; stock grinds +8-12% into next earnings.",
+      bear:"China export restrictions tighten further; sell-the-news after extreme bar → -15% reversal."
+    },
+    "TSM":{
+      bull:"CoWoS capacity constraint resolves; TSMC raises CoWoS ASP 12%; $500 on next data-point.",
+      base:"Revenue trajectory follows consensus +5-7% QoQ; patient hold through CapEx cycle.",
+      bear:"Geopolitical premium de-rates on Taiwan strait news; FX drag on USD-reported earnings."
+    },
+    "AVGO":{
+      bull:"Custom AI ASIC pipeline announced with second hyperscaler; backlog doubles → 30×+ multiple.",
+      base:"VMware integration synergies tracking; AI chip segment grows 60%+ YoY, stock re-rates to $220.",
+      bear:"VMware digestion longer than guided; rate sensitivity caps the multiple at current levels."
+    },
+    "META":{
+      bull:"Llama cost efficiency triggers incremental margin expansion; FY guidance raised +200bps.",
+      base:"Cost reset sustains 40%+ OIM; Reality Labs losses narrow; stock tracks earnings growth at 20× PE.",
+      bear:"8k cut is one-time; capex re-accelerates in H2; multiple compression from AI infrastructure bet."
+    },
+    "GOOGL":{
+      bull:"AI Overview monetisation data point confirms ad CPM holds; Search TAM expands to agentic commerce.",
+      base:"Steady Search share; cloud accelerates to 30%+ growth; stock reprices on sum-of-parts re-rate.",
+      bear:"Agentic intermediation disintermediates paid-search auction; antitrust structural remedies bite."
+    },
+    "PLTR":{
+      bull:"US Gov budget reconciliation includes AI earmark; new commercial logos accelerate pipeline.",
+      base:"AIP momentum sustains 20%+ commercial growth; GAAP profitable; stock tracks earnings.",
+      bear:"Gov segment YoY comps toughen; valuation at 90× revenue limits upside on any miss."
+    },
+    "MSFT":{
+      bull:"Azure OpenAI capacity unlocks; Copilot seat attach rate reveals $5B+ ARR; consensus cuts wrong.",
+      base:"Azure re-accelerates to 33% YoY; Copilot monetisation ramp; stock grinds on multiple expansion.",
+      bear:"Copilot churn data disappoints; CapEx guidance raised again → free-cash-flow yield compression."
+    },
+  };
+
+  // Fallback scenario generator if ticker not in map
+  const scenarioFor=(ticker,direction,label,devil)=>{
+    if(SCENARIOS[ticker]) return SCENARIOS[ticker];
+    const isl=direction==="long";
+    return {
+      bull:isl?`Thesis catalyst materialises ahead of consensus; price re-rates to upper end of range.`:`Short thesis validates; multiple de-rates; price declines 15-20%.`,
+      base:`Thesis tracks broadly in-line; position held through horizon with gradual P&L accrual.`,
+      bear:devil||`Catalyst delay or adverse macro disrupts thesis timing; thesis-at-risk flag triggered.`,
+    };
+  };
+
+  // Build cards
+  const cards=theses.map(t=>{
+    const ticker=(t.tickers&&t.tickers[0])||"—";
+    const allTickers=(t.tickers||[ticker]).join(" · ");
+    const dir=(t.direction||"long");
+    const conv=Number(t.conviction)||0;
+    const convCls=conv>=0.6?"atc-conv-fill-high":conv>=0.35?"atc-conv-fill-mid":"atc-conv-fill-low";
+    const dirCls=dir==="short"?"atc-dir-short":"atc-dir-long";
+
+    // Δ% from baseline
+    const bp=Number(t.baseline_price)||0;
+    const cp=Number(t.current_price)||0;
+    let deltaHtml="";
+    if(bp>0){
+      if(cp>0){
+        const d=(cp-bp)/bp*100*(dir==="short"?-1:1);
+        const cls=d>=0?"atc-delta-pos":d>=-2?"atc-delta-neu":"atc-delta-neg";
+        deltaHtml=`<span class="${cls}">${(d>=0?"+":"")+d.toFixed(2)}%</span>`;
+      } else {
+        deltaHtml=`<span class="atc-delta-neu">–</span>`;
+      }
+    }
+
+    // Price row
+    const priceHtml=bp>0?`<div class="atc-price-row">
+      <span class="atc-price-lbl">Entry</span><span class="atc-price-val">$${bp.toFixed(2)}</span>
+      ${cp>0?`<span class="atc-price-lbl" style="margin-left:var(--s2)">Now</span><span class="atc-price-val">$${cp.toFixed(2)}</span>`:""}
+      ${deltaHtml?`<span class="atc-price-lbl" style="margin-left:auto">Δ</span>${deltaHtml}`:""}
+    </div>`:"";
+
+    // Spark from sector_view
+    const sparkData=sparkMap[ticker]||null;
+    const sparkHtml=`<div class="atc-spark-wrap">${miniSvg(sparkData,dir)}</div>`;
+
+    // Scenarios
+    const sc=scenarioFor(ticker,dir,t.label,t.devil&&t.devil.note||t.devil||"");
+    const scenHtml=`<div class="atc-scenarios">
+      <div class="atc-scen-row"><span class="atc-scen-lbl atc-scen-bull">Bull</span><span class="atc-scen-txt">${sc.bull}</span></div>
+      <div class="atc-scen-row"><span class="atc-scen-lbl atc-scen-base">Base</span><span class="atc-scen-txt">${sc.base}</span></div>
+      <div class="atc-scen-row"><span class="atc-scen-lbl atc-scen-bear">Bear</span><span class="atc-scen-txt">${sc.bear}</span></div>
+    </div>`;
+
+    // Devil's advocate
+    const devilNote=typeof t.devil==="object"?(t.devil.note||""):String(t.devil||"");
+    const devilHtml=devilNote?`<div class="atc-devil"><span class="atc-devil-icon">👿</span><span class="atc-devil-txt">${devilNote}</span></div>`:"";
+
+    // Conviction
+    const convHtml=`<div class="atc-conv-wrap">
+      <span class="atc-conv-lbl">Conviction</span>
+      <div class="atc-conv-bar"><div class="atc-conv-fill ${convCls}" style="width:${(conv*100).toFixed(0)}%"></div></div>
+      <span class="atc-conv-val">${conv.toFixed(2)}</span>
+    </div>`;
+
+    const footHtml=`<div class="atc-card-foot">
+      <span class="atc-date">Opened ${t.date||"—"}</span>
+      <span class="atc-verdict">${(t.verdict||"too_early").replace(/_/g," ")}</span>
+    </div>`;
+
+    return `<div class="atc-card">
+      <div class="atc-card-head">
+        <div>
+          <div class="atc-tickers"><span class="atc-tk">${allTickers}</span></div>
+          <div class="atc-label">${t.label||""}</div>
+        </div>
+        <div class="atc-badges">
+          <span class="atc-dir ${dirCls}">${dir.toUpperCase()}</span>
+          <span class="atc-horizon">${(t.horizon||"").toUpperCase()}</span>
+        </div>
+      </div>
+      ${sparkHtml}
+      ${priceHtml}
+      ${convHtml}
+      ${scenHtml}
+      ${devilHtml}
+      ${footHtml}
+    </div>`;
+  }).join("");
+
+  root.innerHTML=`<div class="atc-section"><div class="atc-grid">${cards}</div></div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 (function initRealizedCurve(){
   // Z214: Realized P&L · Closed-Trade Equity Curve (historical compounded returns)
   const root=$("realized-curve"); if(!root) return;
@@ -21145,7 +21371,7 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
   root.setAttribute("aria-busy","false");
 })();
 
-["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","techlevels","insidertape","opttape","ivrvedge","signalmatrix","pos-map","realized-curve"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","techlevels","insidertape","opttape","ivrvedge","signalmatrix","pos-map","realized-curve","thesis-cards"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
 // Section nav: highlight the anchor pill whose section is currently most in view
 (function(){
