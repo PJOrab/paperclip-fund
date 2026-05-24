@@ -3143,6 +3143,37 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .rl-cur{font-size:20px}
 }
 @media print{.rl-panel{break-inside:avoid;page-break-inside:avoid}.rl-tile{break-inside:avoid;page-break-inside:avoid}}
+/* Sektor-Heatmap (HED-150 Zyklus 208) — relative-strength matrix 1d/5d/30d.
+   Rows = sectors, columns = timeframe. Each cell = equal-weight avg return for that
+   bucket, coloured by intensity (red-to-green). Right column: sector sparkline. */
+.sh-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.sh-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.sh-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.sh-asof{font-size:9.5px;color:var(--mut)}
+.sh-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.sh-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.sh-table thead th{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:600;padding:6px 10px;text-align:center;border-bottom:1px solid var(--line)}
+.sh-table thead th:first-child{text-align:left;padding-left:4px}
+.sh-table tbody tr{border-bottom:1px solid rgba(38,50,72,.5)}
+.sh-table tbody tr:hover{background:rgba(255,255,255,.025)}
+.sh-sec-nm{font-size:var(--fs-cap);color:var(--txt);font-weight:500;padding:8px 10px 8px 4px;white-space:nowrap;min-width:140px}
+.sh-sec-nm .sh-tickers{font-size:9.5px;color:var(--mut);display:block;margin-top:1px}
+.sh-cell{text-align:center;padding:8px 10px;font-size:13px;font-weight:600;border-radius:0}
+.sh-cell span.sh-val{display:block;font-size:13px;font-weight:700}
+.sh-cell span.sh-label{display:block;font-size:9px;color:rgba(230,237,246,.45);margin-top:1px;text-transform:uppercase;letter-spacing:.04em}
+.sh-spark-td{padding:8px 4px;vertical-align:middle;min-width:80px}
+.sh-spark-svg{display:block}
+.sh-leg{display:flex;gap:var(--s4);margin-top:var(--s3);font-size:9.5px;color:var(--mut);align-items:center;flex-wrap:wrap}
+.sh-leg-swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.sh-best-bar{font-size:9.5px;color:var(--mut);margin-top:var(--s2);padding:6px 8px;background:var(--panel2);border-radius:5px;border-left:3px solid var(--accent)}
+.sh-best-bar b{color:var(--txt)}
+@media(max-width:760px){
+  .sh-panel{padding:var(--s3)}
+  .sh-table thead th,.sh-sec-nm{font-size:9px}
+  .sh-cell span.sh-val{font-size:12px}
+  .sh-spark-td{display:none}
+}
+@media print{.sh-panel{break-inside:avoid;page-break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -6220,6 +6251,14 @@ main:focus{outline:none}
   <section aria-labelledby="h-risklim">
     <h2 id="h-risklim" class="visually-hidden" style="position:absolute;left:-9999px">Risk Limits & Guardrails</h2>
     <div id="risk-limits" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <!-- Sektor-Heatmap (HED-150 Zyklus 208): relative-strength matrix 1d/5d/30d.
+       Sectors as rows, timeframes as columns. Equal-weight avg return per bucket.
+       Bloomberg-MAP equivalent for AI/Tech universe morning scan. -->
+  <section aria-labelledby="h-sektorheat">
+    <h2 id="h-sektorheat">Sektor-Heatmap <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Relative Strength · 1d / 5d / 30d</span></h2>
+    <div id="sektor-heatmap" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:72%"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
   </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
@@ -19660,6 +19699,145 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 })();
 
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
+// Sektor-Heatmap (HED-150 Zyklus 208): relative-strength matrix 1d/5d/30d.
+// Rows = sectors from sector_view, columns = 1d / 5d / 30d timeframes.
+// Each cell = equal-weight avg return for that bucket; coloured by magnitude.
+// Right column: sector-level sparkline (avg of ticker sparks).
+(function initSektorHeatmap(){
+  const root=$("sektor-heatmap"); if(!root) return;
+  const sv=(D.sector_view||{}); const sectors=sv.sectors||[];
+  if(!sectors.length){
+    root.innerHTML='<div class="panel sh-panel"><div class="sh-sub">Sektor-Daten nicht verfügbar — sector_view.json fehlt oder leer.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+
+  // Returns from spark: spark[-1]/spark[-n-1] - 1, or null.
+  const retN=(spark,n)=>{
+    if(!spark||spark.length<n+1) return null;
+    const cur=spark[spark.length-1], base=spark[spark.length-1-n];
+    if(!base||base===0) return null;
+    return (cur-base)/base*100;
+  };
+
+  // For each sector compute equal-weight avg returns over [1,5,30] days + avg spark.
+  const PERIODS=[{n:1,lbl:"1 Day"},{n:5,lbl:"5 Day"},{n:21,lbl:"30 Day"}];
+  const rows=sectors.map(s=>{
+    const tks=(s.tickers||[]).filter(t=>t.spark&&t.spark.length>=6);
+    const rets=PERIODS.map(p=>{
+      const vals=tks.map(t=>retN(t.spark,p.n)).filter(v=>v!=null);
+      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    });
+    // Avg spark: align to shortest length, then avg across tickers.
+    let avgSpark=null;
+    if(tks.length){
+      const minLen=Math.min(...tks.map(t=>t.spark.length));
+      const aligned=tks.map(t=>t.spark.slice(t.spark.length-minLen));
+      avgSpark=aligned[0].map((_,i)=>aligned.reduce((s,a)=>s+a[i],0)/aligned.length);
+    }
+    const tkLabels=tks.map(t=>t.ticker).slice(0,6).join(" · ");
+    return {id:s.id, name:s.name||s.id, rets, avgSpark, tkLabels, tkCount:tks.length};
+  }).filter(r=>r.tkCount>0);
+
+  if(!rows.length){
+    root.innerHTML='<div class="panel sh-panel"><div class="sh-sub">Keine Ticker-Kurse in sector_view — bitte --gen-sector-view ausführen.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+
+  // Colour mapping: red→white→green, symmetric around 0.
+  // Clamp at ±maxAbs per column for better contrast.
+  const colourCell=(val,maxAbs)=>{
+    if(val==null) return {bg:"var(--panel2)",fg:"var(--mut)"};
+    const t=Math.max(-1,Math.min(1,val/Math.max(maxAbs,0.5)));
+    if(t>=0){
+      // 0→white(panel), 1→green
+      const g=Math.round(185*t), a=Math.round(0.08+0.72*t*100)/100;
+      return {bg:`rgba(63,${g>50?g:50},80,${a})`, fg: t>0.4?"#3fb950":"var(--txt)"};
+    } else {
+      // 0→white(panel), -1→red
+      const r=Math.round(248*(-t)), a=Math.round(0.08+0.72*(-t)*100)/100;
+      return {bg:`rgba(${r>80?r:80},81,73,${a})`, fg: (-t)>0.4?"#f85149":"var(--txt)"};
+    }
+  };
+
+  // Per-column max-abs for normalisation
+  const maxAbsCols=PERIODS.map((_,ci)=>{
+    const vals=rows.map(r=>r.rets[ci]).filter(v=>v!=null).map(Math.abs);
+    return vals.length ? Math.max(...vals) : 1;
+  });
+
+  // Mini SVG sparkline (40×18)
+  const miniSpark=(data)=>{
+    if(!data||data.length<3) return '<svg width="70" height="22" class="sh-spark-svg"></svg>';
+    const W=70,H=22,pad=1;
+    const mn=Math.min(...data), mx=Math.max(...data);
+    const rng=mx-mn||1;
+    const pts=data.map((v,i)=>{
+      const x=pad+(i/(data.length-1))*(W-pad*2);
+      const y=H-pad-(v-mn)/rng*(H-pad*2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(" ");
+    const lastV=data[data.length-1], firstV=data[0];
+    const clr=lastV>=firstV?"#3fb950":"#f85149";
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" class="sh-spark-svg"><polyline points="${pts}" fill="none" stroke="${clr}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+  };
+
+  // Best/worst sector per timeframe for the insight bar
+  const insights=PERIODS.map((p,ci)=>{
+    const ranked=[...rows].filter(r=>r.rets[ci]!=null).sort((a,b)=>b.rets[ci]-a.rets[ci]);
+    if(!ranked.length) return null;
+    const best=ranked[0], worst=ranked[ranked.length-1];
+    return {lbl:p.lbl, best:best.name, bestV:best.rets[ci], worst:worst.name, worstV:worst.rets[ci]};
+  }).filter(Boolean);
+
+  const fmt=v=>v==null?"–":(v>=0?"+":"")+v.toFixed(1)+"%";
+
+  // Build table header
+  const hdrCols=PERIODS.map(p=>`<th>${p.lbl}</th>`).join("");
+  const thead=`<thead><tr><th style="text-align:left">Sector</th>${hdrCols}<th>Trend</th></tr></thead>`;
+
+  // Build rows
+  const tbodyRows=rows.map(r=>{
+    const cells=r.rets.map((v,ci)=>{
+      const c=colourCell(v,maxAbsCols[ci]);
+      return `<td class="sh-cell" style="background:${c.bg};color:${c.fg}">
+        <span class="sh-val">${fmt(v)}</span>
+        </td>`;
+    }).join("");
+    const sparkCell=`<td class="sh-spark-td">${miniSpark(r.avgSpark)}</td>`;
+    return `<tr>
+      <td class="sh-sec-nm">${r.name}<span class="sh-tickers">${r.tkLabels}</span></td>
+      ${cells}
+      ${sparkCell}
+    </tr>`;
+  }).join("");
+
+  // Insight bar: top sector per timeframe
+  const insightParts=insights.map(ins=>{
+    const bestFmt=(ins.bestV>=0?"+":"")+ins.bestV.toFixed(1)+"%";
+    const worstFmt=(ins.worstV>=0?"+":"")+ins.worstV.toFixed(1)+"%";
+    return `<b>${ins.lbl}</b>: <span style="color:#3fb950">${ins.best} ${bestFmt}</span> · <span style="color:#f85149">${ins.worst} ${worstFmt}</span>`;
+  }).join(" &nbsp;|&nbsp; ");
+
+  const asOf=sv.as_of||"";
+  root.innerHTML=`<div class="panel sh-panel">
+    <div class="sh-h">
+      <h3 class="sh-title">Sektor Relative Strength</h3>
+      ${asOf?`<span class="sh-asof">as of ${asOf}</span>`:""}
+    </div>
+    <div class="sh-sub">Equal-weight avg-Return pro Sektor × Zeitraum. Grün = outperform, Rot = underperform. Jeder Sektor = Ø aller Universe-Ticker. <b>Trend-Spalte</b>: Avg-Preis-Sparkline über 30 Tage.</div>
+    <div style="overflow-x:auto">
+      <table class="sh-table" role="grid" aria-label="Sektor-Heatmap Relative Strength">
+        ${thead}
+        <tbody>${tbodyRows}</tbody>
+      </table>
+    </div>
+    <div class="sh-best-bar">${insightParts}</div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 ["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","techlevels","insidertape","opttape","ivrvedge","signalmatrix"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
 // Section nav: highlight the anchor pill whose section is currently most in view
