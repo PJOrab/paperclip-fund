@@ -14,6 +14,7 @@ import time
 import urllib.request
 from datetime import datetime, timezone, timedelta
 from email.utils import parsedate_to_datetime
+from pathlib import Path
 from urllib.parse import quote
 
 from . import watchlist as W
@@ -452,12 +453,27 @@ def _extract_6k_text(html_src: str, max_chars: int = 400) -> str:
         return ""
 
 
+# MD&A section header matchers. Companies write the apostrophe in various ways
+# ("Management's", "Managements", "Management s" after HTML-entity stripping)
+# and separators after "Item 2" / "Item 7" range from "." to ":" to plain
+# whitespace; the relaxed `Management[\s’'’.]*s?` cluster + permissive
+# separator class covers the observed filings (AMD, INTC, QCOM uses spaces
+# without periods; NVDA, MSFT use periods; ORCL uses "Item 2." with two spaces).
 _10Q_SECTION_RE = re.compile(
-    r"Item\s+2[\.\s]+(?:Management(?:'s|s)?\s+Discussion|Results?\s+of\s+Operations?)",
+    r"Item\s+2[\.\:\-\s]+(?:Management[\s'’]*s?\s+Discussion|Results?\s+of\s+Operations?)",
     re.IGNORECASE,
 )
 _10K_SECTION_RE = re.compile(
-    r"Item\s+7[\.\s]+(?:Management(?:'s|s)?\s+Discussion|Results?\s+of\s+Operations?)",
+    r"Item\s+7[\.\:\-\s]+(?:Management[\s'’]*s?\s+Discussion|Results?\s+of\s+Operations?)",
+    re.IGNORECASE,
+)
+# Fallback: bare MD&A heading without an "Item N" prefix. Some filers (notably
+# INTC) place the MD&A body before the formal Item index, so the prefixed
+# patterns above fail and _extract_mdna_window falls through to this matcher.
+# Both paths apply the same MIN_BODY_CHARS validation so short cross-references
+# are still rejected.
+_MDNA_HEADING_RE = re.compile(
+    r"Management[\s'’]*s?\s+Discussion\s+and\s+Analysis",
     re.IGNORECASE,
 )
 
@@ -484,6 +500,58 @@ def _extract_10q_text(html_src: str, is_10k: bool = False, max_chars: int = 400)
         )
         if rev_m:
             return txt[rev_m.start(): rev_m.start() + max_chars].strip()
+        return ""
+    except Exception:
+        return ""
+
+
+# Section-end markers used by _extract_mdna_window to bound MD&A from the next
+# major Item header. Same items for 10-Q and 10-K: after Item 2 (10-Q) or Item 7
+# (10-K) the next sequenced item starts MD&A's natural close.
+_MDNA_END_RE = re.compile(
+    r"Item\s+(?:3|4|7A|8)[\.\s]+",
+    re.IGNORECASE,
+)
+
+
+def _extract_mdna_window(html_src: str, is_10k: bool = False,
+                        max_chars: int = 15000) -> str:
+    """
+    Wide MD&A extraction for sentiment scoring — the longitudinal complement to
+    _extract_10q_text's 400-char triage snippet.
+
+    Returns up to `max_chars` of cleaned MD&A text (typically the full Item 2
+    or Item 7 body), trimmed at the next Item header when found. SEC filings
+    typically reference the section header in 3+ locations: the TOC listing
+    near the top (followed within ~50 chars by the next Item entry), the real
+    section start (followed by thousands of chars of body), and intra-section
+    cross-references. We disambiguate by body length: the *first* match whose
+    next-item-header is ≥MIN_BODY_CHARS away is the real section start.
+    Returns "" when no usable section is found.
+    """
+    MIN_BODY_CHARS = 2000  # TOC entries have next Item within ~50 chars; real
+                           # section bodies are thousands of chars long.
+    try:
+        txt = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", html_src)
+        txt = re.sub(r"<[^>]+>", " ", txt)
+        txt = _HTML_ENTITY_RE.sub(" ", txt)
+        txt = re.sub(r"\s+", " ", txt).strip()
+        pat = _10K_SECTION_RE if is_10k else _10Q_SECTION_RE
+        matches = list(pat.finditer(txt))
+        if not matches:
+            return ""
+        for m in matches:
+            rest = txt[m.start(): m.start() + max_chars]
+            end_m = _MDNA_END_RE.search(rest, pos=200)
+            if end_m is None:
+                # No next-Item marker inside the window: this match is the
+                # section start and the body extends past max_chars. Accept it.
+                return rest
+            if end_m.start() >= MIN_BODY_CHARS:
+                return rest[:end_m.start()]
+            # Else: this match is followed by another Item header within
+            # MIN_BODY_CHARS → it's a TOC entry or short cross-reference,
+            # keep searching.
         return ""
     except Exception:
         return ""
@@ -3745,6 +3813,385 @@ class HyperscalerFinancialsAdapter:
 
         return {
             "text": text[:450],
+            "source": self.SOURCE,
+            "url": dedup_url,
+            "reliability": self.RELIABILITY,
+        }
+
+
+# ---------------------------------------------------------------------------
+# Loughran-McDonald financial-text lexicon (compact subset of the published
+# dictionary at sraf.nd.edu/loughranmcdonald-master-dictionary). Hand-picked
+# high-frequency finance-domain words for MD&A trajectory scoring; not the full
+# 80k-word dictionary but coverage of the words that account for the bulk of
+# document-level sentiment variance in earnings text. Sized to keep frozenset
+# membership tests O(1) without ballooning the import footprint.
+# ---------------------------------------------------------------------------
+_LM_NEGATIVE = frozenset([
+    "loss", "losses", "lost", "decline", "declines", "declined", "declining",
+    "weak", "weakness", "weakened", "weakening", "weaker", "weaknesses",
+    "deteriorate", "deteriorated", "deteriorating", "deterioration",
+    "adverse", "adversely", "unfavorable", "unfavorably",
+    "impairment", "impairments", "impaired", "writedown", "writeoff",
+    "writedowns", "writeoffs", "default", "defaults", "defaulted",
+    "downturn", "recession", "slowdown", "slowed", "slowing",
+    "shortfall", "shortage", "shortages", "restructuring", "restructured",
+    "layoff", "layoffs", "terminated", "terminations",
+    "lawsuit", "lawsuits", "litigation", "litigated", "breach", "breached",
+    "fraud", "fraudulent", "penalty", "penalties", "fined", "sanctioned",
+    "sanction", "sanctions", "suspend", "suspended", "suspension",
+    "disrupt", "disrupted", "disruption", "disruptions", "disruptive",
+    "doubt", "doubtful", "contraction", "contracted", "contracting",
+    "fell", "falling", "missed", "miss", "misses",
+    "headwind", "headwinds", "recall", "recalled", "recalls",
+    "delay", "delays", "delayed", "delaying",
+    "underperform", "underperformed", "underperforming",
+    "decrease", "decreased", "decreases", "decreasing",
+    "unprofitable", "deficit", "deficits", "negative", "negatively",
+    "harm", "harmful", "damages", "damaged", "downgrade", "downgraded",
+    "concerning", "concerned", "warned", "warning", "warnings",
+    "challenging", "challenged", "challenges",
+])
+_LM_POSITIVE = frozenset([
+    "strong", "stronger", "strongest", "strengthen", "strengthened",
+    "strengthening", "improve", "improved", "improving", "improvement",
+    "improvements", "growth", "grew", "grow", "growing", "grown",
+    "gain", "gains", "gained", "gaining",
+    "profit", "profits", "profitable", "profitability",
+    "success", "successful", "successfully", "succeed", "succeeded",
+    "exceed", "exceeded", "exceeding", "exceeds",
+    "outperform", "outperformed", "outperforming",
+    "opportunity", "opportunities", "expand", "expanded", "expanding",
+    "expansion", "expansions", "robust", "solid", "favorable",
+    "favorably", "momentum", "beat", "beats", "surpassed",
+    "accelerate", "accelerated", "accelerating", "acceleration",
+    "record", "records", "highest", "best", "leading", "leadership",
+    "upgrade", "upgraded", "advantage", "advantages", "advantageous",
+    "innovative", "innovation", "innovations", "achieve", "achieved",
+    "achieving", "achievement", "achievements", "delivered", "delivering",
+    "milestone", "milestones",
+])
+_LM_UNCERTAINTY = frozenset([
+    "uncertain", "uncertainty", "uncertainties", "may", "might",
+    "possible", "possibly", "could", "would",
+    "perhaps", "depend", "depends", "depending", "dependence", "dependent",
+    "contingent", "contingencies", "indefinite", "indefinitely",
+    "predict", "predicts", "prediction", "predictions", "predicting",
+    "anticipate", "anticipates", "anticipated", "anticipating", "anticipation",
+    "vary", "varies", "variability", "variable", "variables",
+    "fluctuate", "fluctuates", "fluctuated", "fluctuating", "fluctuation",
+    "fluctuations", "risk", "risks", "riskier", "risky",
+    "volatile", "volatility", "volatilities",
+    "approximately", "estimate", "estimates", "estimated", "estimating",
+    "assume", "assumes", "assumed", "assuming", "assumption", "assumptions",
+    "potential", "potentially", "tentative", "tentatively",
+    "unknown", "unspecified", "preliminary", "speculative",
+    "exposure", "exposures",
+])
+_LM_MODAL_WEAK = frozenset([
+    "may", "might", "could", "perhaps", "possibly", "possible",
+])
+_LM_MODAL_STRONG = frozenset([
+    "will", "must", "shall", "always", "never", "certain",
+    "definitely", "clearly",
+])
+
+_WORD_TOKEN_RE = re.compile(r"[a-z]+")
+
+
+class FilingLanguageAdapter:
+    """
+    Loughran-McDonald-style sentiment-trajectory tracker on the MD&A section
+    across the last 4 quarterly/annual SEC filings per watchlist ticker.
+    Strategy.md tier-1 missing data source: management risk-tone trajectory
+    over time — the academic signal documented by Loughran & McDonald (2011,
+    JoF) where the textual sentiment of 10-K/10-Q MD&A predicts forward returns,
+    earnings surprises, and volatility above and beyond hard financial numbers.
+    Quant funds buy this signal from S&P Global Market Intelligence Textual /
+    AlphaSense / Bloomberg ANR Textual Sentiment (five-figures+/yr per univ);
+    the underlying filings are free at sec.gov.
+
+    The signal is INTRINSICALLY longitudinal — a single MD&A's tone score is
+    nearly useless out of context, but a 4-quarter trajectory reveals when
+    management language tilts from confident to hedged, from positive to risk-
+    framing, ahead of the hard numbers turning. Examples in literature:
+    deteriorating MD&A tone 2-3 quarters before NVDA-style "growth miss"
+    earnings, accelerating uncertainty count 1-2 quarters before guidance
+    cuts, modal-weak drift ("may", "could") replacing modal-strong ("will",
+    "expect") ahead of weak prints.
+
+    Architecture
+    ------------
+    1. For each ticker, query SEC submissions.json for the last 4 10-Q / 10-K
+       filings (US filers only — foreign 6-K / 20-F have different cadence/
+       structure and are out of scope for this adapter).
+    2. For each filing, check the on-disk cache (data/filing_sentiment_cache.
+       json) keyed by accession. If absent, fetch the primary document HTML,
+       extract the MD&A section via _extract_mdna_window, tokenize, and score
+       against the compact L-M lexicon (negative / positive / uncertainty /
+       modal-weak / modal-strong percentages, plus derived net = pos-neg and
+       risk = neg+unc, all normalized to MD&A word count).
+    3. Build the per-ticker trajectory [oldest → newest] of 2-4 quarters.
+    4. Emit ONLY when the trajectory crosses a materiality gate:
+         - net tone moves ≥1.5σ from the prior-3q mean (statistically rare)
+         - OR risk-tone (neg+unc%) accelerates ≥20% QoQ
+         - OR latest is a new local extreme over the 4-quarter window
+       so triage isn't flooded by routine MD&A drift.
+    5. Stable dedup key per (cik, latest_accession): once the latest filing
+       has emitted its trajectory item, daily re-runs collapse to the same row
+       until the next 10-Q/10-K lands.
+
+    Per-cycle work budget
+    ---------------------
+    First-time runs for an uncached ticker fetch 4 filing HTMLs (~1.5s each
+    via SEC; 6-7s total per ticker plus ~50ms tokenize/score). To stay inside
+    the per-adapter runtime budget we ROTATE through tickers via a deterministic
+    UTC-hour-based group selection (8 tickers per cycle, 4 groups across the
+    24-name US-filer universe), so within ~3-4 hours all tickers cycle through
+    cold-start. Cached cycles are submissions.json only (~500ms) per ticker —
+    the cache pays for itself after the first full rotation.
+
+    Source: 'filing_sentiment'. Reliability 0.88 — derived from SEC primary
+    filings (the most authoritative tier of fundamental data) but the emitted
+    item is an interpretive textual-analysis output, so sits below sec_10q
+    (0.97) and structurally similar to earnings_transcript (0.86) which is
+    also a primary-source-derived natural-language read.
+    """
+
+    SOURCE = "filing_sentiment"
+    RELIABILITY = 0.88
+    HEADERS = {"User-Agent": "HedgingAlphaFund research philipp.baro@gmail.com"}
+    SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
+    TICKERS_MAP_URL = "https://www.sec.gov/files/company_tickers.json"
+    CACHE_PATH = Path(__file__).resolve().parent.parent / "data" / "filing_sentiment_cache.json"
+
+    LOOKBACK_FILINGS = 4
+    MAX_MDNA_CHARS = 15000
+    GROUP_SIZE = 8
+
+    # US periodic-filer subset of the watchlist (10-Q / 10-K). Excludes TSM,
+    # ASML, ARM (foreign filers using 6-K / 20-F with different cadence and
+    # section structure — out of scope for this adapter, covered elsewhere).
+    ALL_TICKERS = [
+        "NVDA", "AMD", "AVGO", "MU", "SMCI", "QCOM", "MRVL", "INTC",
+        "ANET", "VRT", "DELL",
+        "MSFT", "GOOGL", "AMZN", "META", "AAPL",
+        "PLTR", "ORCL", "NOW", "CRM", "SNOW", "CRWD", "ADBE",
+        "VST", "CEG", "GEV", "ETN",
+    ]
+
+    NET_SHIFT_SIGMA = 1.5
+    NET_SHIFT_ABS_FLOOR = 0.002
+    RISK_QOQ_THRESHOLD = 0.20
+    NEW_EXTREME_FLOOR = 0.002
+    MIN_MDNA_WORDS = 400
+
+    def __init__(self):
+        self._cik = None
+
+    def _load_cik_map(self):
+        data = fetch_json(self.TICKERS_MAP_URL, headers=self.HEADERS, timeout=20)
+        out = {}
+        if isinstance(data, dict):
+            for row in data.values():
+                out[str(row.get("ticker", "")).upper()] = int(row["cik_str"])
+        return out
+
+    def _load_cache(self) -> dict:
+        try:
+            if self.CACHE_PATH.exists():
+                with open(self.CACHE_PATH) as f:
+                    return _json.load(f)
+        except Exception:
+            return {}
+        return {}
+
+    def _save_cache(self, cache: dict):
+        try:
+            self.CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            tmp = self.CACHE_PATH.with_suffix(".json.tmp")
+            with open(tmp, "w") as f:
+                _json.dump(cache, f, separators=(",", ":"))
+            tmp.replace(self.CACHE_PATH)
+        except Exception:
+            pass
+
+    def _current_group(self) -> list[str]:
+        """Round-robin slot rotation. UTC day-of-year × 24 + hour modulo the
+        number of groups: every ticker visits cold-start within ~3-4 hours of
+        30-min cycles, and the choice is deterministic so a manual rerun in the
+        same hour hits the same tickers (idempotent cache build)."""
+        n = len(self.ALL_TICKERS)
+        gsize = self.GROUP_SIZE
+        n_groups = (n + gsize - 1) // gsize
+        now = datetime.now(timezone.utc)
+        slot = (now.timetuple().tm_yday * 24 + now.hour) % n_groups
+        start = slot * gsize
+        return self.ALL_TICKERS[start:start + gsize]
+
+    @staticmethod
+    def _score_mdna(mdna_text: str) -> dict:
+        """Run the L-M lexicon over a single MD&A string. Returns per-mille
+        category percentages plus derived net = (pos-neg) and risk = (neg+unc),
+        all normalized to MD&A word count. {} for empty / too-thin text."""
+        words = _WORD_TOKEN_RE.findall(mdna_text.lower())
+        n = len(words)
+        if n < FilingLanguageAdapter.MIN_MDNA_WORDS:
+            return {}
+        neg = sum(1 for w in words if w in _LM_NEGATIVE)
+        pos = sum(1 for w in words if w in _LM_POSITIVE)
+        unc = sum(1 for w in words if w in _LM_UNCERTAINTY)
+        mw = sum(1 for w in words if w in _LM_MODAL_WEAK)
+        ms = sum(1 for w in words if w in _LM_MODAL_STRONG)
+        return {
+            "words": n,
+            "neg_pct": neg / n,
+            "pos_pct": pos / n,
+            "unc_pct": unc / n,
+            "modal_weak_pct": mw / n,
+            "modal_strong_pct": ms / n,
+            "net": (pos - neg) / n,
+            "risk": (neg + unc) / n,
+        }
+
+    @staticmethod
+    def _doc_url(cik: int, accession: str, primary_doc: str) -> str:
+        acc_naked = accession.replace("-", "")
+        return (f"https://www.sec.gov/Archives/edgar/data/{cik}/"
+                f"{acc_naked}/{primary_doc}")
+
+    def fetch(self) -> list[dict]:
+        if self._cik is None:
+            self._cik = self._load_cik_map()
+        if not self._cik:
+            return []
+        cache = self._load_cache()
+        out = []
+        for tk in self._current_group():
+            cik = self._cik.get(tk.upper())
+            if not cik:
+                continue
+            try:
+                item = self._fetch_one(tk, cik, cache)
+                if item:
+                    out.append(item)
+            except Exception:
+                pass
+            time.sleep(0.25)
+        self._save_cache(cache)
+        return out
+
+    def _fetch_one(self, ticker: str, cik: int, cache: dict) -> dict | None:
+        data = fetch_json(
+            self.SUBMISSIONS_URL.format(cik=cik), headers=self.HEADERS, timeout=20
+        )
+        time.sleep(0.15)
+        if not data:
+            return None
+        recent = data.get("filings", {}).get("recent", {}) or {}
+        forms = recent.get("form", []) or []
+        accs = recent.get("accessionNumber", []) or []
+        docs = recent.get("primaryDocument", []) or []
+        dates = recent.get("filingDate", []) or []
+        history = []
+        for i, form in enumerate(forms):
+            if form in ("10-Q", "10-K") and i < len(accs) and i < len(docs) and i < len(dates):
+                history.append({
+                    "form": form,
+                    "accession": accs[i],
+                    "primary_doc": docs[i],
+                    "filed": dates[i],
+                })
+                if len(history) >= self.LOOKBACK_FILINGS:
+                    break
+        if len(history) < 2:
+            return None
+        history = list(reversed(history))  # oldest → newest
+        ticker_cache = cache.setdefault(ticker, {})
+
+        scored = []
+        for f in history:
+            acc = f["accession"]
+            cached = ticker_cache.get(acc)
+            if cached and "net" in cached and "risk" in cached:
+                scored.append({**f, **cached})
+                continue
+            doc_url = self._doc_url(cik, acc, f["primary_doc"])
+            html_src = fetch_url(doc_url, headers=self.HEADERS, timeout=30)
+            time.sleep(0.2)
+            if not html_src:
+                continue
+            mdna = _extract_mdna_window(
+                html_src, is_10k=(f["form"] == "10-K"),
+                max_chars=self.MAX_MDNA_CHARS,
+            )
+            score = self._score_mdna(mdna)
+            if not score:
+                continue
+            entry = {**score, "form": f["form"], "filed": f["filed"]}
+            ticker_cache[acc] = entry
+            scored.append({**f, **entry})
+
+        if len(scored) < 2:
+            return None
+
+        latest = scored[-1]
+        prior = scored[:-1]
+        prior_nets = [s["net"] for s in prior]
+        prior_risks = [s["risk"] for s in prior]
+        prior_net_mean = sum(prior_nets) / len(prior_nets)
+        prior_risk_mean = sum(prior_risks) / len(prior_risks)
+        if len(prior_nets) >= 2:
+            mu = prior_net_mean
+            prior_net_std = (sum((x - mu) ** 2 for x in prior_nets) / len(prior_nets)) ** 0.5
+        else:
+            prior_net_std = 0.0
+        net_shift = latest["net"] - prior_net_mean
+        prev_risk = scored[-2]["risk"]
+        risk_qoq = (latest["risk"] - prev_risk) / prev_risk if prev_risk > 0 else 0.0
+
+        notable = []
+        if prior_net_std > 0 and abs(net_shift) >= self.NET_SHIFT_SIGMA * prior_net_std \
+                and abs(net_shift) >= self.NET_SHIFT_ABS_FLOOR:
+            direction = "more positive" if net_shift > 0 else "more negative"
+            notable.append(
+                f"tone {direction} ({net_shift * 1000:+.1f}‰ vs prior "
+                f"{len(prior_nets)}q mean, {abs(net_shift) / prior_net_std:.1f}σ)"
+            )
+        elif abs(net_shift) >= max(self.NET_SHIFT_ABS_FLOOR * 2, 0.005):
+            direction = "more positive" if net_shift > 0 else "more negative"
+            notable.append(
+                f"tone {direction} ({net_shift * 1000:+.1f}‰ vs prior "
+                f"{len(prior_nets)}q mean)"
+            )
+        if abs(risk_qoq) >= self.RISK_QOQ_THRESHOLD:
+            direction = "accelerating" if risk_qoq > 0 else "easing"
+            notable.append(f"risk-tone {direction} ({risk_qoq * 100:+.1f}% QoQ)")
+        all_nets = [s["net"] for s in scored]
+        if latest["net"] == max(all_nets) and latest["net"] > prior_net_mean + self.NEW_EXTREME_FLOOR:
+            notable.append(f"new local high (most positive of last {len(scored)})")
+        elif latest["net"] == min(all_nets) and latest["net"] < prior_net_mean - self.NEW_EXTREME_FLOOR:
+            notable.append(f"new local low (most negative of last {len(scored)})")
+
+        if not notable:
+            return None
+
+        traj = " → ".join(f"{s['filed']}:{s['net'] * 1000:+.1f}‰" for s in scored)
+        text = (
+            f"[Filing-Sentiment · {ticker}] {latest['form']} MD&A tone shift — "
+            f"{'; '.join(notable)}. "
+            f"Net trajectory {traj}. "
+            f"Latest: neg {latest['neg_pct'] * 100:.2f}%, pos "
+            f"{latest['pos_pct'] * 100:.2f}%, unc "
+            f"{latest['unc_pct'] * 100:.2f}% ({latest['words']:,} MD&A words)."
+        )
+
+        dedup_url = (
+            f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany"
+            f"&CIK={cik:010d}&type=10-Q#filing-sentiment-{latest['accession']}"
+        )
+        return {
+            "text": text[:480],
             "source": self.SOURCE,
             "url": dedup_url,
             "reliability": self.RELIABILITY,

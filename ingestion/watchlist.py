@@ -415,6 +415,12 @@ SOURCE_RELIABILITY = {
     # IS the company's official 10-Q/10-K financial table after iXBRL re-
     # tagging by EDGAR. Same primary tier as sec_13dg / sec_8k.
     "hyperscaler_financials": 0.95,
+    # MD&A textual-sentiment trajectory across the last 4 10-Q/10-K filings per
+    # US watchlist ticker (Loughran-McDonald compact lexicon). Derived from SEC
+    # primary filings (strictest tier) but emitted as an interpretive textual
+    # read, so sits below sec_10q (0.97) and at par with earnings_transcript
+    # (0.86) which is structurally similar (primary-source NL analysis).
+    "filing_sentiment": 0.88,
 }
 
 # Job-posting velocity targets — public Greenhouse + Lever boards. Source the
