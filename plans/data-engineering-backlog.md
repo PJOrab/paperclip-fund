@@ -63,6 +63,61 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-24 — HED-152 (CIO Master DE Loop Zyklus 1): **FilingLanguageAdapter
+  (`filing_sentiment`) + compact Loughran-McDonald lexicon + TRIAGE_USER /
+  ANALYST_SYSTEM prompt blocks — end-to-end MD&A tone-trajectory factor.**
+  (`ingestion/sources_aitech.py` +442 / `ingestion/adapters.py` +1 /
+  `ingestion/watchlist.py` +6 / `agents/prompts.py` +59 /
+  `ingestion/test_filing_sentiment_prompts.py` new). STRATEGY.md tier-1 closure
+  on the academic textual-sentiment factor (Loughran & McDonald 2011, JoF): MD&A
+  language predicts forward returns, earnings surprises, and volatility BEYOND
+  hard numbers — quant funds buy this from RavenPack / S&P Global Textual /
+  AlphaSense / Bloomberg ANR Textual five-figures+/yr per universe; underlying
+  filings are free at sec.gov. Adapter scores the MD&A of the last 2-4
+  10-Q/10-K per US watchlist ticker (27-name subset; foreign 6-K / 20-F
+  filers out of scope) against an embedded compact L-M lexicon and emits ONLY
+  when the latest filing trips a materiality gate (net tone ≥1.5σ vs prior-3q
+  mean, OR risk-tone (neg+unc) accelerating ≥20% QoQ, OR new local extreme
+  across the 4-quarter window) so triage isn't flooded by routine drift. On-disk
+  cache (`data/filing_sentiment_cache.json`) keyed by accession + deterministic
+  UTC-hour-based 8-ticker group rotation keeps per-cycle work to one cached
+  submissions-JSON-only loop after the first ~3-4 hours of cold-start. Source
+  reliability 0.88 (primary-source-derived NL analysis tier, below sec_10q's
+  0.97, at par with earnings_transcript). The HED-147 pattern: the adapter was
+  in the working tree from a prior cycle but had ZERO prompt integration — so
+  items shipped but downstream stages treated them with the generic-sentiment
+  fallback, losing the σ / QoQ / extreme-aware importance tiering AND the
+  cross-reference recipes that make the signal investment-grade. This cycle
+  closes that loop with two new prompt blocks: TRIAGE_USER FILING SENTIMENT
+  block (importance tiers: 5 paired with imminent earnings_calendar, 4 for
+  ≥1.5σ shifts paired with eps_revisions direction-confirm, 3 for unpaired
+  local extremes, 2 for mild flags; cross-refs with eps_revisions /
+  insider_cluster / earnings_transcript / hyperscaler_financials for the
+  textual + structured + transcript triple-confirm); ANALYST_SYSTEM FILING
+  SENTIMENT CLUSTERS block (magnitude bands ≥2σ OR ≥40% QoQ = HIGH, 1.5-2σ OR
+  20-40% QoQ = MEDIUM, new extreme without σ/QoQ = LOW-MEDIUM; conviction
+  arithmetic +0.05-0.10 when triple-confirmed, +0.03 for isolated risk-tone
+  acceleration since it leads guidance cuts ~6 months academically;
+  differentiation pattern "filing tone repricing the company before the street
+  does — the classic L-M edge"; horizon default 'quarters', 'weeks' only when
+  paired with imminent earnings_calendar; key_facts format anchor with the ‰
+  trajectory line so the model emits 'MD&A net: 2025-08-12:-0.9‰ → … →
+  2026-02-10:-2.6‰ (2.1σ)' verbatim). **Live test (NVDA):** 1 item with
+  4-quarter trajectory `2025-08-27:-1.2‰ → 2025-11-19:+0.6‰ → 2026-02-25:+12.4‰
+  → 2026-05-20:-0.6‰`, risk-tone easing -29.4% QoQ on latest 10-Q
+  (1,777 MD&A words; neg 0.28%, pos 0.23%, unc 0.79%). Adapter count 25 → 26.
+  Full ingestion suite 52/52 green (50 prior + 2 new prompt-presence tests
+  covering materiality gate language, magnitude bands, conviction arithmetic,
+  differentiation pattern, horizon calibration, ‰ key_facts anchor). Investor
+  framing: the briefing previously had ZERO read on management risk-tone
+  evolution across periodic filings — a signal that academically precedes
+  growth misses by 2-3 quarters and guidance cuts by 1-2 quarters. Now the
+  briefing flags a 2σ MD&A deterioration on NVDA before the next print exactly
+  the way RavenPack / S&P Textual subscribers see it; the σ / QoQ thresholds
+  pre-filter the noise so each item reaching analyst is a real materiality
+  event. 5th DE↔CIO loop convergence (cf. memory [[loop-convergence-resolved]])
+  — adapter code byte-identical to a parallel DE-loop plan; residual integration
+  gap closed cleanly with the prompt blocks. Pushed: `62bb45f..a1f2839`.
 - 2026-05-23 — HED-149 (DE Loop Zyklus 92): **HyperscalerFinancialsAdapter — SEC EDGAR XBRL capex / revenue / op-margin velocity (MSFT/GOOGL/AMZN/META/ORCL)**
   (`ingestion/sources_aitech.py`, `ingestion/adapters.py`, `ingestion/watchlist.py`,
   `ingestion/test_hyperscaler_financials.py`, `agents/prompts.py`). STRATEGY.md
