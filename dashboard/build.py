@@ -2740,6 +2740,43 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .ab-title{font-size:var(--fs-body)}
 }
 @media print{.ab-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Position Risk Cards (HED-150 Zyklus 197) — per-call MAE/MFE dossier grid. */
+.pr-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.pr-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s3);flex-wrap:wrap;gap:var(--s2)}
+.pr-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.pr-sub{font-size:var(--fs-cap);color:var(--mut)}
+.pr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--s3)}
+.pr-card{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:var(--s3);display:flex;flex-direction:column;gap:8px;font-variant-numeric:tabular-nums}
+.pr-card-h{display:flex;justify-content:space-between;align-items:center;gap:var(--s2);flex-wrap:wrap}
+.pr-tk{font-size:15px;font-weight:700;color:var(--txt);letter-spacing:.03em}
+.pr-dir{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border-radius:3px;font-weight:700}
+.pr-dir-long{background:rgba(63,185,80,.12);color:#3fb950}
+.pr-dir-short{background:rgba(248,81,73,.12);color:#f85149}
+.pr-conv{font-size:var(--fs-cap);color:var(--mut)}
+.pr-conv b{color:var(--txt);font-weight:600}
+.pr-pnl{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.pr-pnl-pos{color:#3fb950}.pr-pnl-neg{color:#f85149}.pr-pnl-flat{color:var(--mut)}
+.pr-px{display:flex;justify-content:space-between;font-size:var(--fs-cap);color:var(--mut)}
+.pr-px b{color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+.pr-mae{position:relative;height:14px;background:var(--panel);border-radius:3px;overflow:visible;margin:6px 0 2px;border:1px solid var(--line)}
+.pr-mae-track{position:absolute;top:0;bottom:0;left:50%;width:0;background:transparent}
+.pr-mae-mfe-bar{position:absolute;top:0;bottom:0;background:rgba(63,185,80,.22);border-right:1.5px solid #3fb950}
+.pr-mae-mae-bar{position:absolute;top:0;bottom:0;background:rgba(248,81,73,.22);border-left:1.5px solid #f85149}
+.pr-mae-cur{position:absolute;top:-3px;width:2.5px;height:20px;background:#e3b341;z-index:2;border-radius:1px}
+.pr-mae-zero{position:absolute;top:0;bottom:0;left:50%;width:1px;background:rgba(139,148,158,.55)}
+.pr-mae-lbl{display:flex;justify-content:space-between;font-size:9.5px;color:var(--mut)}
+.pr-mae-lbl b{font-weight:600;font-variant-numeric:tabular-nums}
+.pr-mae-lbl-mae{color:#f85149}.pr-mae-lbl-mfe{color:#3fb950}
+.pr-foot{display:flex;justify-content:space-between;font-size:var(--fs-cap);color:var(--mut)}
+.pr-foot b{color:var(--txt);font-weight:600}
+.pr-empty{font-size:var(--fs-cap);color:var(--mut);padding:var(--s3) 0}
+@media(max-width:600px){
+  .pr-panel{padding:var(--s3)}
+  .pr-grid{grid-template-columns:1fr}
+  .pr-tk{font-size:14px}
+  .pr-pnl{font-size:16px}
+}
+@media print{.pr-panel{break-inside:avoid;page-break-inside:avoid}.pr-card{break-inside:avoid;page-break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -5739,6 +5776,14 @@ main:focus{outline:none}
   <section aria-labelledby="h-alpha-bench">
     <h2 id="h-alpha-bench" class="visually-hidden" style="position:absolute;left:-9999px">Alpha vs Benchmark</h2>
     <div id="alpha-bench" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <!-- Position Risk Cards (HED-150 Zyklus 197): per-call MAE/MFE dossier grid.
+       Each card: ticker, direction, entry→current bar, days held, best/worst day since entry,
+       conviction. Bloomberg MAE function as glanceable grid for trim/exit decisions. -->
+  <section aria-labelledby="h-pos-risk">
+    <h2 id="h-pos-risk" class="visually-hidden" style="position:absolute;left:-9999px">Position Risk Cards · MAE/MFE</h2>
+    <div id="pos-risk" aria-live="polite" aria-busy="true"></div>
   </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
@@ -17124,6 +17169,141 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
       <div class="ab-stat" title="Anteil der Tage mit positivem Alpha"><span class="ab-stat-lbl">Outperf-Rate</span><span class="ab-stat-val ${outRateCls}">${outRate.toFixed(0)}%</span></div>
       <div class="ab-stat" title="Anzahl Tage Live-Historie"><span class="ab-stat-lbl">Days Live</span><span class="ab-stat-val">${daysLive}</span></div>
     </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
+// Position Risk Cards (HED-150 Zyklus 197).
+// Per active call: ticker · direction · conviction · entry→current bar · days held ·
+// MAE (worst point since entry) · MFE (best point since entry) · current.
+// The Bloomberg MAE/MFE function as a glanceable card grid for trim/exit decisions.
+(function initPosRisk(){
+  const root=document.getElementById("pos-risk");
+  if(!root) return;
+  const tr=D.track_record;
+  const sv=D.sector_view||{};
+  const sparkMap={};
+  const priceMap={};
+  (sv.sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{
+    if(t&&t.ticker){
+      const k=String(t.ticker).toUpperCase();
+      if(Array.isArray(t.spark)) sparkMap[k]=t.spark;
+      if(t.price!=null) priceMap[k]=t.price;
+    }
+  }));
+  const active=((tr&&tr.theses)||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  if(!active.length){
+    root.innerHTML='<div class="panel pr-panel"><div class="pr-empty">Keine aktiven Calls.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const cards=active.map(t=>{
+    const tks=(t.tickers||[]).map(x=>String(x).toUpperCase());
+    const tk=tks[0]||"";
+    if(!tk||t.baseline_price==null) return null;
+    const sp=sparkMap[tk]||[];
+    const cur=priceMap[tk];
+    const dir=(t.direction||"long").toLowerCase();
+    const sign=dir==="short"?-1:1;
+    // Find entry index in spark = closest to baseline within 5% slack
+    let eIdx=-1, eDiff=Infinity;
+    sp.forEach((v,i)=>{
+      if(v==null) return;
+      const d=Math.abs(v-t.baseline_price)/t.baseline_price;
+      if(d<eDiff){eDiff=d;eIdx=i;}
+    });
+    if(eIdx<0||eDiff>0.05||sp.length<2) {
+      // Still emit a card without MAE/MFE if we have current price
+      const pnlNow=cur!=null?(cur-t.baseline_price)/t.baseline_price*100*sign:null;
+      return {tk,dir,conv:t.conviction||0,baseline:t.baseline_price,cur,pnlNow,daysHeld:null,mfe:null,mae:null,maeMode:"nospark"};
+    }
+    // Walk forward from entry, build sign-adjusted P&L curve, track MAE and MFE
+    let mae=0, mfe=0;
+    for(let i=eIdx;i<sp.length;i++){
+      const v=sp[i]; if(v==null) continue;
+      const pnl=(v-t.baseline_price)/t.baseline_price*100*sign;
+      if(pnl>mfe) mfe=pnl;
+      if(pnl<mae) mae=pnl;
+    }
+    const daysHeld=sp.length-1-eIdx;
+    const lastSpark=sp[sp.length-1];
+    const pnlNow=lastSpark!=null?(lastSpark-t.baseline_price)/t.baseline_price*100*sign:null;
+    return {tk,dir,conv:t.conviction||0,baseline:t.baseline_price,cur:cur||lastSpark,pnlNow,daysHeld,mfe,mae,maeMode:"ok"};
+  }).filter(Boolean);
+
+  if(!cards.length){
+    root.innerHTML='<div class="panel pr-panel"><div class="pr-empty">Keine Position-Cards verfügbar.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  // Sort by absolute current P&L descending (biggest winners/losers first)
+  cards.sort((a,b)=>Math.abs(b.pnlNow??0)-Math.abs(a.pnlNow??0));
+
+  // Determine MAE/MFE scale: max absolute excursion across all cards (for shared bar scale)
+  const maxAbs=Math.max(...cards.map(c=>Math.max(Math.abs(c.mae||0),Math.abs(c.mfe||0),Math.abs(c.pnlNow||0))),1);
+  const _pct=v=>v==null?"—":`${v>=0?"+":"−"}${Math.abs(v).toFixed(2)}%`;
+  const _pCls=v=>v==null?"pr-pnl-flat":v>=0.05?"pr-pnl-pos":v<=-0.05?"pr-pnl-neg":"pr-pnl-flat";
+
+  const cardHtml=cards.map(c=>{
+    const dirCls=c.dir==="short"?"pr-dir-short":"pr-dir-long";
+    const dirLbl=c.dir==="short"?"SHORT":"LONG";
+    const pnlCls=_pCls(c.pnlNow);
+    const baseFmt=c.baseline!=null?`$${c.baseline.toFixed(2)}`:"—";
+    const curFmt=c.cur!=null?`$${c.cur.toFixed(2)}`:"—";
+    const daysFmt=c.daysHeld!=null?`${c.daysHeld}d`:"—";
+    const convFmt=c.conv!=null?c.conv.toFixed(2):"—";
+
+    // MAE/MFE bar visualization
+    // Track is centered at 50% (= entry/breakeven). MFE extends right, MAE extends left.
+    // Current position marker = where pnlNow falls on that range.
+    let maeBar="";
+    if(c.maeMode==="ok"){
+      const mfePct=Math.min(50, Math.abs(c.mfe||0)/maxAbs*50);
+      const maePct=Math.min(50, Math.abs(c.mae||0)/maxAbs*50);
+      const curOffset=c.pnlNow!=null?Math.max(-50,Math.min(50, c.pnlNow/maxAbs*50)):0;
+      const curLeft=50+curOffset; // 50% = entry, >50% = positive
+      maeBar=`<div class="pr-mae" title="MAE (max adverse): ${_pct(c.mae)} · MFE (max favorable): ${_pct(c.mfe)} · Aktuell: ${_pct(c.pnlNow)}">
+        <div class="pr-mae-zero"></div>
+        <div class="pr-mae-mfe-bar" style="left:50%;width:${mfePct.toFixed(1)}%"></div>
+        <div class="pr-mae-mae-bar" style="right:50%;width:${maePct.toFixed(1)}%"></div>
+        <div class="pr-mae-cur" style="left:calc(${curLeft.toFixed(1)}% - 1.25px)"></div>
+      </div>
+      <div class="pr-mae-lbl">
+        <span class="pr-mae-lbl-mae">MAE <b>${_pct(c.mae)}</b></span>
+        <span class="pr-mae-lbl-mfe">MFE <b>${_pct(c.mfe)}</b></span>
+      </div>`;
+    } else {
+      maeBar=`<div class="pr-mae-lbl"><span>MAE/MFE — keine Spark-Historie</span></div>`;
+    }
+
+    return `<div class="pr-card" title="${c.tk} ${dirLbl} · Conv ${convFmt} · Held ${daysFmt}">
+      <div class="pr-card-h">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="pr-tk">${c.tk}</span>
+          <span class="pr-dir ${dirCls}">${dirLbl}</span>
+        </div>
+        <span class="pr-pnl ${pnlCls}" title="Aktuelle unrealisierte Rendite">${_pct(c.pnlNow)}</span>
+      </div>
+      <div class="pr-px">
+        <span>Entry <b>${baseFmt}</b></span>
+        <span>Aktuell <b>${curFmt}</b></span>
+      </div>
+      ${maeBar}
+      <div class="pr-foot">
+        <span>Conv <b>${convFmt}</b></span>
+        <span>Held <b>${daysFmt}</b></span>
+      </div>
+    </div>`;
+  }).join("");
+
+  root.innerHTML=`<div class="panel pr-panel">
+    <div class="pr-h">
+      <div>
+        <h3 class="pr-title">Position Risk · MAE/MFE</h3>
+        <div class="pr-sub">Pro Call: Worst-Point (MAE) und Best-Point (MFE) seit Entry. Goldene Markierung = Aktuell. Trim/Exit-Entscheidungs-Karten.</div>
+      </div>
+    </div>
+    <div class="pr-grid">${cardHtml}</div>
   </div>`;
   root.setAttribute("aria-busy","false");
 })();
