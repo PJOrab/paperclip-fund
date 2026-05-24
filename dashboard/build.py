@@ -3335,6 +3335,50 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tc-stats{grid-template-columns:repeat(2,1fr)}
 }
 @media print{.tc-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Position Crossover Map (HED-150 Zyklus 213): conviction-tiered concentration pyramid.
+   Three tiers (High/Mid/Low) shown as a horizontal funnel with % of gross book.
+   Per-thesis breakdown table with conviction bar, direction badge, tier label. */
+.pcm-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.pcm-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.pcm-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.pcm-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.pcm-body{display:flex;flex-wrap:wrap;gap:var(--s4);align-items:flex-start}
+.pcm-funnel{flex:0 0 260px;display:flex;flex-direction:column;gap:var(--s2)}
+.pcm-tier{display:flex;flex-direction:column;gap:4px}
+.pcm-tier-bar-wrap{position:relative;height:38px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.pcm-tier-bar{height:100%;border-radius:4px;transition:width .4s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;box-sizing:border-box}
+.pcm-tier-bar-high{background:linear-gradient(90deg,rgba(63,185,80,.55),rgba(63,185,80,.75))}
+.pcm-tier-bar-mid{background:linear-gradient(90deg,rgba(227,179,65,.45),rgba(227,179,65,.65))}
+.pcm-tier-bar-low{background:linear-gradient(90deg,rgba(139,148,158,.3),rgba(139,148,158,.45))}
+.pcm-tier-pct{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--txt);position:relative;z-index:1}
+.pcm-tier-meta{display:flex;justify-content:space-between;align-items:center}
+.pcm-tier-lbl{font-size:var(--fs-cap);font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.pcm-tier-lbl-high{color:#3fb950}.pcm-tier-lbl-mid{color:#e3b341}.pcm-tier-lbl-low{color:var(--mut)}
+.pcm-tier-range{font-size:var(--fs-cap);color:var(--mut)}
+.pcm-tier-count{font-size:var(--fs-cap);color:var(--mut)}
+.pcm-kpis{display:flex;flex-direction:column;gap:5px;margin-top:var(--s3)}
+.pcm-kpi{font-size:var(--fs-cap);color:var(--mut);display:flex;justify-content:space-between}
+.pcm-kpi b{color:var(--txt);font-variant-numeric:tabular-nums}
+.pcm-table-wrap{flex:1;min-width:260px;overflow-x:auto}
+.pcm-table{width:100%;border-collapse:collapse;font-size:var(--fs-cap)}
+.pcm-table th{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:600;padding:4px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.pcm-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.pcm-table tr:last-child td{border-bottom:none}
+.pcm-ticker{font-weight:700;color:var(--txt);font-size:var(--fs-sm)}
+.pcm-dir-l{color:#3fb950;font-weight:700;font-size:9.5px;text-transform:uppercase}
+.pcm-dir-s{color:#f85149;font-weight:700;font-size:9.5px;text-transform:uppercase}
+.pcm-conv-wrap{width:80px;height:6px;background:var(--panel2);border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle}
+.pcm-conv-fill{height:100%;border-radius:3px;background:var(--accent)}
+.pcm-conv-fill-high{background:#3fb950}
+.pcm-conv-fill-mid{background:#e3b341}
+.pcm-conv-fill-low{background:var(--mut)}
+.pcm-tier-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.pcm-tier-badge-high{background:rgba(63,185,80,.14);color:#3fb950}
+.pcm-tier-badge-mid{background:rgba(227,179,65,.14);color:#e3b341}
+.pcm-tier-badge-low{background:rgba(139,148,158,.14);color:var(--mut)}
+.pcm-note{margin-top:var(--s3);font-size:10px;color:var(--mut);line-height:1.4;padding:6px 10px;background:rgba(255,255,255,.03);border-radius:5px;border-left:2px solid var(--line)}
+@media(max-width:600px){.pcm-funnel{flex:0 0 100%}.pcm-panel{padding:var(--s3)}}
+@media print{.pcm-panel{break-inside:avoid;page-break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -6429,6 +6473,15 @@ main:focus{outline:none}
   <section aria-labelledby="h-trackcurve">
     <h2 id="h-trackcurve">Track Record · Cumulative Return <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Equity Curve · Drawdown · Stats</span></h2>
     <div id="track-curve" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:80%"></div><div class="skel skel-line" style="width:95%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
+  </section>
+
+  <!-- Position Crossover Map (HED-150 Zyklus 213): conviction-tiered concentration pyramid.
+       Shows how the gross book is distributed across High (≥0.6) / Mid (0.35–0.6) / Low (<0.35)
+       conviction tiers. Answers LP question: "how concentrated is your best-ideas bucket?"
+       Includes per-thesis breakdown table with conviction bar, direction badge, tier label. -->
+  <section aria-labelledby="h-posmap">
+    <h2 id="h-posmap">Position Concentration <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Conviction-Tier Pyramid · Book Distribution</span></h2>
+    <div id="pos-map" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:80%"></div><div class="skel skel-line" style="width:60%"></div><div class="skel skel-line" style="width:70%"></div></div></div>
   </section>
 
   <!-- Watchlist Heat (HED-150 Zyklus 211): pipeline view of non-thesis universe names.
@@ -19899,6 +19952,129 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 //   1) Real conv-weighted MTM from sector_view sparks of active theses (preferred)
 //   2) Synthetic backtest fallback if real series too sparse (clearly labelled)
 // Stats: Total Return %, Max DD %, Win Rate (% positive days), Days Live, # Calls.
+(function initPosMap(){
+  // Z213: Position Crossover Map — conviction-tiered concentration pyramid
+  const root=$("pos-map"); if(!root) return;
+  const tr=D.track_record||{}; const theses=(tr.theses||[]).filter(t=>t.status==="active"||t.status==="too_early");
+  if(!theses.length){
+    root.innerHTML=`<div class="panel pcm-panel"><p style="color:var(--mut);font-size:var(--fs-cap)">Keine aktiven Thesen.</p></div>`;
+    root.setAttribute("aria-busy","false"); return;
+  }
+
+  // Tier classification
+  const tierOf=c=>c>=0.6?"high":c>=0.35?"mid":"low";
+  const TIER_META={
+    high:{lbl:"High Conviction",range:"≥ 0.60",cls:"high",barCls:"pcm-tier-bar-high",fillCls:"pcm-conv-fill-high",badgeCls:"pcm-tier-badge-high"},
+    mid:{lbl:"Mid Conviction",range:"0.35 – 0.59",cls:"mid",barCls:"pcm-tier-bar-mid",fillCls:"pcm-conv-fill-mid",badgeCls:"pcm-tier-badge-mid"},
+    low:{lbl:"Low / Watch",range:"< 0.35",cls:"low",barCls:"pcm-tier-bar-low",fillCls:"pcm-conv-fill-low",badgeCls:"pcm-tier-badge-low"},
+  };
+  const tierOrder=["high","mid","low"];
+
+  // Gross book = sum of all convictions (each thesis weighted by conviction as proxy for position size)
+  const gross=theses.reduce((s,t)=>s+(t.conviction||0),0)||1;
+
+  // Group by tier
+  const groups={high:[],mid:[],low:[]};
+  theses.forEach(t=>groups[tierOf(t.conviction||0)].push(t));
+
+  // Tier stats
+  const tierStats=tierOrder.map(tier=>{
+    const items=groups[tier];
+    const weight=items.reduce((s,t)=>s+(t.conviction||0),0);
+    const pct=gross>0?(weight/gross)*100:0;
+    return {tier,items,weight,pct,count:items.length};
+  });
+
+  // Max pct for bar scaling
+  const maxPct=Math.max(...tierStats.map(s=>s.pct),1);
+
+  // Funnel bars
+  const funnelRows=tierStats.map(s=>{
+    const m=TIER_META[s.tier];
+    const barW=Math.max(s.pct/maxPct*100,2);
+    return `<div class="pcm-tier">
+      <div class="pcm-tier-meta">
+        <span class="pcm-tier-lbl pcm-tier-lbl-${m.cls}">${m.lbl}</span>
+        <span class="pcm-tier-range">${m.range}</span>
+      </div>
+      <div class="pcm-tier-bar-wrap" title="${s.pct.toFixed(1)}% of gross book">
+        <div class="pcm-tier-bar ${m.barCls}" style="width:${barW.toFixed(1)}%">
+          ${s.count?`<span class="pcm-tier-pct">${s.pct.toFixed(0)}%</span>`:""}
+        </div>
+      </div>
+      <div class="pcm-tier-meta">
+        <span class="pcm-tier-count">${s.count} ${s.count===1?"position":"positions"}</span>
+        <span class="pcm-tier-range">${s.weight.toFixed(2)} total conv</span>
+      </div>
+    </div>`;
+  }).join("");
+
+  // Book concentration metrics
+  const highPct=tierStats[0].pct.toFixed(1);
+  const midPct=tierStats[1].pct.toFixed(1);
+  const topN=2; const sorted=[...theses].sort((a,b)=>(b.conviction||0)-(a.conviction||0));
+  const top2Wt=sorted.slice(0,topN).reduce((s,t)=>s+(t.conviction||0),0);
+  const top2Pct=gross>0?(top2Wt/gross)*100:0;
+  const avgConv=gross/theses.length;
+  const hhi=theses.reduce((s,t)=>s+Math.pow((t.conviction||0)/gross,2),0); // Herfindahl
+  const hhiNorm=(hhi-(1/theses.length))/(1-(1/theses.length)||1); // normalised 0-1
+
+  const kpis=[
+    {lbl:"High-Conv %",val:`${highPct}%`},
+    {lbl:"Mid-Conv %",val:`${midPct}%`},
+    {lbl:`Top-${topN} Conc`,val:`${top2Pct.toFixed(0)}%`},
+    {lbl:"Avg Conv",val:avgConv.toFixed(2)},
+    {lbl:"HHI (norm)",val:hhiNorm.toFixed(2)},
+  ].map(k=>`<div class="pcm-kpi"><span>${k.lbl}</span><b>${k.val}</b></div>`).join("");
+
+  // Per-thesis table rows — sorted high→low conviction
+  const rows=sorted.map(t=>{
+    const tier=tierOf(t.conviction||0);
+    const m=TIER_META[tier];
+    const conv=(t.conviction||0);
+    const pctOfBook=gross>0?(conv/gross)*100:0;
+    const dir=(t.direction||"long").toUpperCase();
+    const dirCls=dir==="SHORT"?"pcm-dir-s":"pcm-dir-l";
+    return `<tr>
+      <td class="pcm-ticker">${t.ticker||t.name||"—"}</td>
+      <td><span class="${dirCls}">${dir}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="pcm-conv-wrap"><div class="pcm-conv-fill ${m.fillCls}" style="width:${(conv*100).toFixed(0)}%"></div></div>
+          <span style="font-size:var(--fs-cap);font-variant-numeric:tabular-nums;color:var(--txt)">${conv.toFixed(2)}</span>
+        </div>
+      </td>
+      <td><span class="pcm-tier-badge ${m.badgeCls}">${tier}</span></td>
+      <td style="text-align:right;font-size:var(--fs-cap);color:var(--mut);font-variant-numeric:tabular-nums">${pctOfBook.toFixed(1)}%</td>
+    </tr>`;
+  }).join("");
+
+  const hhiVerdict=hhiNorm>0.6?"Concentrated":hhiNorm>0.3?"Balanced":"Diversified";
+
+  root.innerHTML=`<div class="panel pcm-panel">
+    <div class="pcm-h">
+      <h3 class="pcm-title">Conviction Pyramid</h3>
+    </div>
+    <div class="pcm-sub">Conv-weighted book distribution across tiers. High = highest-conviction ideas ≥0.60; Mid = developing theses 0.35–0.59; Low / Watch = monitoring only. HHI: <b>${hhiVerdict}</b>.</div>
+    <div class="pcm-body">
+      <div class="pcm-funnel">
+        ${funnelRows}
+        <div class="pcm-kpis">${kpis}</div>
+      </div>
+      <div class="pcm-table-wrap">
+        <table class="pcm-table" aria-label="Per-thesis conviction breakdown">
+          <thead><tr>
+            <th>Ticker</th><th>Dir</th><th>Conviction</th><th>Tier</th><th style="text-align:right">% Book</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="pcm-note">Conviction proxy for position size. Gross book = Σ conv weights. HHI (normalised Herfindahl-Hirschman): 0 = perfectly diversified, 1 = single position.</div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 (function initTrackCurve(){
   const root=$("track-curve"); if(!root) return;
 
@@ -20714,7 +20890,7 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
   root.setAttribute("aria-busy","false");
 })();
 
-["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","techlevels","insidertape","opttape","ivrvedge","signalmatrix"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","techlevels","insidertape","opttape","ivrvedge","signalmatrix","pos-map"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
 // Section nav: highlight the anchor pill whose section is currently most in view
 (function(){
