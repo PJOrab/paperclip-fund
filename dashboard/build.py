@@ -2842,6 +2842,36 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .ra-tile-val{font-size:26px}
 }
 @media print{.ra-panel{break-inside:avoid;page-break-inside:avoid}.ra-tile{break-inside:avoid;page-break-inside:avoid}}
+/* Position Correlation Matrix (HED-150 Zyklus 200) — Bloomberg CORR-style heatmap.
+   Pairwise Pearson correlation of daily ticker returns across all active calls.
+   Surfaces hidden factor concentration ("you have 4 calls but 1 bet").  */
+.cm-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.cm-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.cm-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.cm-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.cm-body{display:flex;gap:var(--s4);align-items:flex-start;flex-wrap:wrap}
+.cm-grid-wrap{flex:0 1 auto;overflow-x:auto}
+.cm-grid{display:inline-grid;gap:2px;font-variant-numeric:tabular-nums}
+.cm-cell{width:54px;height:42px;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;border-radius:3px;color:#0e131a;letter-spacing:.01em}
+.cm-cell-lbl{background:transparent;color:var(--txt);font-weight:700;font-size:12px;letter-spacing:.03em}
+.cm-cell-diag{background:rgba(139,148,158,.18);color:var(--mut);font-weight:500}
+.cm-cell-empty{background:transparent}
+.cm-side{flex:1;min-width:200px;display:flex;flex-direction:column;gap:var(--s3)}
+.cm-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--s2) var(--s3)}
+.cm-stat-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
+.cm-stat-val{font-size:18px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums;line-height:1.1;margin-top:1px}
+.cm-stat-sub{font-size:var(--fs-cap);color:var(--mut);margin-top:1px}
+.cm-leg{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:var(--fs-cap);color:var(--mut)}
+.cm-leg-bar{flex:0 0 auto;width:170px;height:10px;border-radius:2px;background:linear-gradient(to right,#1f6feb 0%,#58a6ff 25%,#21262d 50%,#f0883e 75%,#f85149 100%);border:1px solid var(--line)}
+.cm-interp{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;padding:8px 10px;background:rgba(88,166,255,.05);border-left:2px solid #58a6ff;border-radius:3px}
+.cm-interp b{color:var(--txt);font-weight:600}
+.cm-empty{font-size:var(--fs-cap);color:var(--mut);padding:var(--s3) 0}
+@media(max-width:600px){
+  .cm-panel{padding:var(--s3)}
+  .cm-cell{width:42px;height:36px;font-size:10.5px}
+  .cm-cell-lbl{font-size:11px}
+}
+@media print{.cm-panel{break-inside:avoid;page-break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -5863,6 +5893,13 @@ main:focus{outline:none}
   <section aria-labelledby="h-riskadj">
     <h2 id="h-riskadj" class="visually-hidden" style="position:absolute;left:-9999px">Risk-Adjusted Stats</h2>
     <div id="risk-adj" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <!-- Position Correlation Matrix (HED-150 Zyklus 200): Bloomberg CORR-style heatmap.
+       Pairwise Pearson correlation of daily ticker returns; surfaces factor concentration. -->
+  <section aria-labelledby="h-corrmtx">
+    <h2 id="h-corrmtx" class="visually-hidden" style="position:absolute;left:-9999px">Position Correlation Matrix</h2>
+    <div id="corr-mtx" aria-live="polite" aria-busy="true"></div>
   </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
@@ -17744,6 +17781,182 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
     <div class="ra-sub">Sharpe / Sortino / Calmar — annualisiert, Rf=0. Konv.-gewichtete Buchkurve, geometric ann. Return. LP-Sprache: drei Zahlen, die jeder Allocator vor dem zweiten Meeting fragt.</div>
     <div class="ra-grid">${tileHtml}</div>
     ${caveatHtml}
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
+// Position Correlation Matrix (HED-150 Zyklus 200): Bloomberg CORR-style heatmap of pairwise
+// Pearson correlations of daily ticker returns across all active calls. Diverging color scale
+// (blue=neg, dim=neutral, red=pos). Surfaces hidden factor concentration: "you think you have
+// 4 calls but 6 pairs are above 0.8 — it's really one bet."
+(function initCorrMtx(){
+  const root=document.getElementById("corr-mtx");
+  if(!root) return;
+  const tr=D.track_record;
+  const sv=D.sector_view||{};
+  const sparkMap={};
+  (sv.sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{
+    if(t&&t.ticker&&Array.isArray(t.spark)) sparkMap[String(t.ticker).toUpperCase()]=t.spark;
+  }));
+  const active=((tr&&tr.theses)||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  const calls=active.map(t=>{
+    const tk=String((t.tickers||[])[0]||"").toUpperCase();
+    const sp=sparkMap[tk];
+    if(!tk||!sp||sp.length<3) return null;
+    const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+    return {tk,spark:sp,sign,dir:(t.direction||"long").toLowerCase()};
+  }).filter(Boolean);
+  if(calls.length<2){
+    root.innerHTML='<div class="panel cm-panel"><div class="cm-empty">Korrelationsmatrix benötigt ≥ 2 Calls mit Spark-Historie.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+
+  // Use the tail-aligned common window across all sparks. Daily returns from spark.
+  const minLen=Math.min(...calls.map(c=>c.spark.length));
+  const window=Math.min(minLen, 30); // last up-to-30 days
+  // Build daily returns aligned to last `window-1` deltas; sign-adjust by direction.
+  const rets=calls.map(c=>{
+    const tail=c.spark.slice(c.spark.length-window);
+    const r=[];
+    for(let i=1;i<tail.length;i++){
+      const p0=tail[i-1], p1=tail[i];
+      if(p0==null||p1==null||p0===0) {r.push(0); continue;}
+      // Use raw price returns (sign-adjusting confounds correlation: a short call
+      // negatively-correlated to its underlying is still tracking the same factor).
+      r.push((p1/p0-1));
+    }
+    return r;
+  });
+  const Nd=rets[0].length;
+  if(Nd<2){
+    root.innerHTML='<div class="panel cm-panel"><div class="cm-empty">Korrelationsmatrix braucht ≥ 2 tägliche Returns.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+
+  // Pearson correlation
+  const _corr=(a,b)=>{
+    const n=Math.min(a.length,b.length);
+    if(n<2) return 0;
+    let mA=0,mB=0; for(let i=0;i<n;i++){mA+=a[i];mB+=b[i];}
+    mA/=n; mB/=n;
+    let cov=0, vA=0, vB=0;
+    for(let i=0;i<n;i++){const dA=a[i]-mA, dB=b[i]-mB; cov+=dA*dB; vA+=dA*dA; vB+=dB*dB;}
+    const denom=Math.sqrt(vA*vB);
+    return denom>0?(cov/denom):0;
+  };
+
+  const K=calls.length;
+  const M=[];
+  for(let i=0;i<K;i++){
+    M.push([]);
+    for(let j=0;j<K;j++){
+      M[i].push(i===j?1:_corr(rets[i],rets[j]));
+    }
+  }
+
+  // Aggregate stats — average pairwise correlation, max pair, min pair
+  let pairSum=0, pairCount=0;
+  let maxPair={i:-1,j:-1,v:-2}, minPair={i:-1,j:-1,v:2};
+  for(let i=0;i<K;i++) for(let j=i+1;j<K;j++){
+    const v=M[i][j]; pairSum+=v; pairCount++;
+    if(v>maxPair.v) maxPair={i,j,v};
+    if(v<minPair.v) minPair={i,j,v};
+  }
+  const avgPair=pairCount>0?pairSum/pairCount:0;
+  const highCount=[];
+  for(let i=0;i<K;i++) for(let j=i+1;j<K;j++) if(M[i][j]>=0.8) highCount.push({i,j,v:M[i][j]});
+
+  // Color scale: diverging. Lerp between 5 stops.
+  // -1.0 → #1f6feb (dark blue), -0.5 → #58a6ff (light blue), 0 → #21262d (dim panel),
+  // +0.5 → #f0883e (amber), +1.0 → #f85149 (red).
+  const _hex=h=>({r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)});
+  const _lerp=(a,b,t)=>Math.round(a+(b-a)*t);
+  const _mix=(c1,c2,t)=>{const a=_hex(c1), b=_hex(c2);
+    return `rgb(${_lerp(a.r,b.r,t)},${_lerp(a.g,b.g,t)},${_lerp(a.b,b.b,t)})`;};
+  const _col=v=>{
+    const c1="#1f6feb", c2="#58a6ff", c3="#21262d", c4="#f0883e", c5="#f85149";
+    if(v<=-1) return c1;
+    if(v>=1) return c5;
+    if(v<-0.5) return _mix(c1,c2,(v+1)/0.5);
+    if(v<0) return _mix(c2,c3,(v+0.5)/0.5);
+    if(v<0.5) return _mix(c3,c4,v/0.5);
+    return _mix(c4,c5,(v-0.5)/0.5);
+  };
+  // Text color: white when cell is strongly colored, light for dim
+  const _txtCol=v=>(Math.abs(v)>0.35?"#0e131a":"var(--txt)");
+
+  // Build the grid HTML (full square; show all cells for institutional clarity).
+  // Top-left corner is a label row offset; first row = column tickers; first col = row tickers.
+  const tplCols=`auto repeat(${K},auto)`;
+  const cells=[];
+  // Header row
+  cells.push(`<div class="cm-cell cm-cell-empty"></div>`);
+  for(let j=0;j<K;j++) cells.push(`<div class="cm-cell cm-cell-lbl">${calls[j].tk}</div>`);
+  for(let i=0;i<K;i++){
+    cells.push(`<div class="cm-cell cm-cell-lbl" style="text-align:right">${calls[i].tk}</div>`);
+    for(let j=0;j<K;j++){
+      const v=M[i][j];
+      if(i===j){
+        cells.push(`<div class="cm-cell cm-cell-diag" title="${calls[i].tk} self">1.00</div>`);
+      } else {
+        const bg=_col(v), col=_txtCol(v);
+        cells.push(`<div class="cm-cell" style="background:${bg};color:${col}" title="${calls[i].tk} ↔ ${calls[j].tk} · ρ=${v.toFixed(3)} · n=${Nd}">${v.toFixed(2)}</div>`);
+      }
+    }
+  }
+
+  // Side stats
+  const _name=(p)=>`${calls[p.i].tk}↔${calls[p.j].tk}`;
+  const interp = avgPair>=0.7
+    ? `<b>Hohe Konzentration:</b> Avg-Korrelation ${avgPair.toFixed(2)} — das Buch verhält sich wie ein einziger Faktor-Trade. Diversifikation überschätzt.`
+    : avgPair>=0.4
+      ? `<b>Moderate Konzentration:</b> Avg-Korrelation ${avgPair.toFixed(2)} — gemeinsame Tech-Faktor-Exposition. Vertretbar, aber bei Drawdown trifft sie alle gleichzeitig.`
+      : avgPair>=0
+        ? `<b>Solide Diversifikation:</b> Avg-Korrelation ${avgPair.toFixed(2)} — Positionen tragen unabhängiges Risiko.`
+        : `<b>Inverse Korrelation:</b> Avg ${avgPair.toFixed(2)} — Hedging-Effekt zwischen Positionen.`;
+  const highBlock = highCount.length>0
+    ? `<div class="cm-stat-sub"><b style="color:#f85149">⚠ ${highCount.length} Paar${highCount.length===1?"":"e"} ≥ 0.80:</b> ${highCount.slice(0,3).map(p=>`${calls[p.i].tk}↔${calls[p.j].tk} (${p.v.toFixed(2)})`).join(" · ")}</div>`
+    : "";
+
+  root.innerHTML=`<div class="panel cm-panel">
+    <div class="cm-h"><h3 class="cm-title">Position Correlation Matrix · n=${Nd}d</h3></div>
+    <div class="cm-sub">Paarweise Pearson-Korrelation der täglichen <b>Preis</b>-Returns (nicht direction-adjustiert) über die letzten ${Nd} Tage. Bloomberg-CORR-Stil — surfacet versteckte Faktor-Konzentration.</div>
+    <div class="cm-body">
+      <div class="cm-grid-wrap">
+        <div class="cm-grid" style="grid-template-columns:${tplCols}">${cells.join("")}</div>
+      </div>
+      <div class="cm-side">
+        <div class="cm-stat-grid">
+          <div>
+            <div class="cm-stat-lbl">Avg Pairwise ρ</div>
+            <div class="cm-stat-val">${avgPair.toFixed(2)}</div>
+            <div class="cm-stat-sub">${pairCount} Paare</div>
+          </div>
+          <div>
+            <div class="cm-stat-lbl">Max Pair</div>
+            <div class="cm-stat-val" style="color:#f85149">${maxPair.v.toFixed(2)}</div>
+            <div class="cm-stat-sub">${maxPair.i>=0?_name(maxPair):"—"}</div>
+          </div>
+          <div>
+            <div class="cm-stat-lbl">Min Pair</div>
+            <div class="cm-stat-val" style="color:#58a6ff">${minPair.v.toFixed(2)}</div>
+            <div class="cm-stat-sub">${minPair.i>=0?_name(minPair):"—"}</div>
+          </div>
+          <div>
+            <div class="cm-stat-lbl">Hohe Korr (≥0.8)</div>
+            <div class="cm-stat-val">${highCount.length}</div>
+            <div class="cm-stat-sub">von ${pairCount} Paaren</div>
+          </div>
+        </div>
+        <div class="cm-leg">
+          <span>−1</span><span class="cm-leg-bar"></span><span>+1</span>
+        </div>
+        <div class="cm-interp">${interp}</div>
+        ${highBlock}
+      </div>
+    </div>
   </div>`;
   root.setAttribute("aria-busy","false");
 })();
