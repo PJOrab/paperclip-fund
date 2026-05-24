@@ -2949,6 +2949,46 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .pa-foot-grid{grid-template-columns:1fr}
 }
 @media print{.pa-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Earnings Calendar Impact Strip (HED-150 Zyklus 203) — PM-morning earnings view.
+   Upcoming reports in our universe, with owned positions highlighted + expected-move.  */
+.ec-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.ec-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.ec-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.ec-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.ec-summary{display:flex;gap:var(--s4);flex-wrap:wrap;margin-bottom:var(--s3);padding:8px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:6px}
+.ec-summary-i{font-size:var(--fs-cap);color:var(--mut)}
+.ec-summary-i b{color:var(--txt);font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.ec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--s3)}
+.ec-card{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:var(--s3);display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden}
+.ec-card-owned{border-color:#3fb950;background:linear-gradient(135deg,rgba(63,185,80,.06),var(--panel2) 60%)}
+.ec-card-imminent{border-left:3px solid #f0883e}
+.ec-card-owned.ec-card-imminent{border-left:3px solid #f85149;border-color:#3fb950}
+.ec-card-h{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s2)}
+.ec-tk{font-size:17px;font-weight:700;color:var(--txt);letter-spacing:.03em}
+.ec-badge{font-size:9px;text-transform:uppercase;letter-spacing:.07em;padding:2px 6px;border-radius:3px;font-weight:700}
+.ec-badge-owned{background:rgba(63,185,80,.14);color:#3fb950}
+.ec-badge-watch{background:rgba(139,148,158,.12);color:var(--mut)}
+.ec-when{display:flex;align-items:baseline;gap:8px;font-variant-numeric:tabular-nums}
+.ec-days{font-size:22px;font-weight:700;color:var(--txt);line-height:1}
+.ec-days-imminent{color:#f0883e}
+.ec-days-today{color:#f85149}
+.ec-days-unit{font-size:11px;color:var(--mut);font-weight:500}
+.ec-date{font-size:var(--fs-cap);color:var(--mut)}
+.ec-pos{margin-top:4px;padding-top:6px;border-top:1px solid rgba(139,148,158,.18);font-size:var(--fs-cap);color:var(--mut);display:flex;justify-content:space-between;gap:8px}
+.ec-pos b{color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+.ec-dir{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:2px 5px;border-radius:3px;font-weight:700;margin-right:4px;vertical-align:middle}
+.ec-dir-long{background:rgba(63,185,80,.12);color:#3fb950}
+.ec-dir-short{background:rgba(248,81,73,.12);color:#f85149}
+.ec-em{font-size:var(--fs-cap);color:var(--mut);display:flex;justify-content:space-between;gap:8px}
+.ec-em b{color:#e3b341;font-weight:700;font-variant-numeric:tabular-nums}
+.ec-flag{font-size:10px;color:#f0883e;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.ec-flag-crit{color:#f85149}
+.ec-empty{font-size:var(--fs-cap);color:var(--mut);padding:var(--s3) 0}
+@media(max-width:600px){
+  .ec-panel{padding:var(--s3)}
+  .ec-grid{grid-template-columns:1fr}
+}
+@media print{.ec-panel{break-inside:avoid;page-break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -5991,6 +6031,13 @@ main:focus{outline:none}
   <section aria-labelledby="h-posattrib">
     <h2 id="h-posattrib" class="visually-hidden" style="position:absolute;left:-9999px">Position P&L Attribution</h2>
     <div id="pos-attrib" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <!-- Earnings Calendar Impact Strip (HED-150 Zyklus 203): PM-morning earnings view.
+       Upcoming universe reports with portfolio-relevance flags + expected-move estimate. -->
+  <section aria-labelledby="h-earncal">
+    <h2 id="h-earncal" class="visually-hidden" style="position:absolute;left:-9999px">Earnings Calendar Impact</h2>
+    <div id="earn-cal" aria-live="polite" aria-busy="true"></div>
   </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
@@ -18413,6 +18460,119 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
         <div class="pa-callout-sub">Range über alle Calls</div>
       </div>
     </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
+// Earnings Calendar Impact Strip (HED-150 Zyklus 203): PM-morning earnings view.
+// Cross-references sector_view.earnings_calendar with active calls. For each upcoming
+// report: days-until, owned-vs-watch badge, conviction/direction if owned, and an
+// expected-move estimate from recent realized vol (10d σ × √1 × 1.5 heuristic). Cards
+// sorted by days_out. Imminent (<3d) flagged with amber/red border accents.
+(function initEarnCal(){
+  const root=document.getElementById("earn-cal");
+  if(!root) return;
+  const tr=D.track_record;
+  const sv=D.sector_view||{};
+  const cal=Array.isArray(sv.earnings_calendar)?sv.earnings_calendar:[];
+  if(cal.length===0){
+    root.innerHTML='<div class="panel ec-panel"><div class="ec-empty">Keine anstehenden Earnings im 14-Tage-Fenster.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  // Spark map for vol estimation
+  const sparkMap={};
+  (sv.sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{
+    if(t&&t.ticker&&Array.isArray(t.spark)) sparkMap[String(t.ticker).toUpperCase()]=t.spark;
+  }));
+  // Active-call lookup keyed by all tickers in each thesis
+  const ownedMap={};
+  const active=((tr&&tr.theses)||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  active.forEach(t=>{
+    (t.tickers||[]).forEach(tk=>{
+      const k=String(tk).toUpperCase();
+      ownedMap[k]={
+        dir:(t.direction||"long").toLowerCase(),
+        conv:t.conviction||0,
+        title:t.title||"",
+      };
+    });
+  });
+
+  // Expected-move estimate: from last ~10 daily returns of the ticker spark,
+  // realized σ × 1.5 (typical earnings-implied/realized ratio for tech).
+  const _expMove=(sp)=>{
+    if(!Array.isArray(sp)||sp.length<5) return null;
+    const tail=sp.slice(Math.max(0,sp.length-11));
+    const r=[];
+    for(let i=1;i<tail.length;i++){
+      const p0=tail[i-1],p1=tail[i];
+      if(p0==null||p1==null||p0===0) continue;
+      r.push(p1/p0-1);
+    }
+    if(r.length<3) return null;
+    let m=0; r.forEach(v=>m+=v); m/=r.length;
+    let v=0; r.forEach(x=>v+=(x-m)*(x-m));
+    const sd=Math.sqrt(v/Math.max(1,r.length-1));
+    return sd*1.5*100; // single-day expected move in %, ×1.5 IV-realized premium heuristic
+  };
+
+  const events=cal.slice().sort((a,b)=>(a.days_out||999)-(b.days_out||999)).map(e=>{
+    const tk=String(e.ticker||"").toUpperCase();
+    const owned=ownedMap[tk]||null;
+    const sp=sparkMap[tk]||null;
+    const em=_expMove(sp);
+    return {...e,tk,owned,em};
+  });
+
+  const ownedCount=events.filter(e=>e.owned).length;
+  const imminentCount=events.filter(e=>e.days_out<=2).length;
+  const weekCount=events.filter(e=>e.days_out<=7).length;
+
+  const _conv=v=>v.toFixed(2);
+  const _em=v=>v==null?"—":"±"+v.toFixed(1)+"%";
+
+  const cardsHtml=events.map(e=>{
+    const cls=["ec-card"];
+    if(e.owned) cls.push("ec-card-owned");
+    if(e.days_out!=null && e.days_out<=2) cls.push("ec-card-imminent");
+    const dCls = e.days_out===0?"ec-days ec-days-today" : (e.days_out<=2?"ec-days ec-days-imminent":"ec-days");
+    const badge = e.owned
+      ? `<span class="ec-badge ec-badge-owned">Owned</span>`
+      : `<span class="ec-badge ec-badge-watch">Universe</span>`;
+    const posBlock = e.owned ? `
+      <div class="ec-pos">
+        <span><span class="ec-dir ec-dir-${e.owned.dir}">${e.owned.dir==="short"?"S":"L"}</span>Conv <b>${_conv(e.owned.conv)}</b></span>
+      </div>` : "";
+    const flag = e.days_out===0 ? `<div class="ec-flag ec-flag-crit">⚠ Heute reports — Position-Risk LIVE</div>`
+               : (e.days_out!=null && e.days_out<=2 ? `<div class="ec-flag">⚠ ${e.days_out}d — Pre-Earnings-Sizing-Check</div>` : "");
+    const dateLbl = e.date ? new Date(e.date+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"short"}) : "—";
+    return `<div class="${cls.join(" ")}">
+      <div class="ec-card-h">
+        <span class="ec-tk">${e.tk}</span>
+        ${badge}
+      </div>
+      <div class="ec-when">
+        <span class="${dCls}">${e.days_out!=null?e.days_out:"?"}</span>
+        <span class="ec-days-unit">d</span>
+        <span class="ec-date">· ${dateLbl}</span>
+      </div>
+      <div class="ec-em"><span>Erwarteter Move</span><b>${_em(e.em)}</b></div>
+      ${posBlock}
+      ${flag}
+    </div>`;
+  }).join("");
+
+  root.innerHTML=`<div class="panel ec-panel">
+    <div class="ec-h"><h3 class="ec-title">Earnings Calendar Impact · 14-Tage-Fenster</h3></div>
+    <div class="ec-sub">Anstehende Reports im Tech-Universum, sortiert nach Tagen. Owned-Cards (grüner Border) zeigen Direction + Conviction. Erwarteter Move = realisierte 10d-σ × 1.5 (IV-Realized-Heuristik). Imminent &lt; 3 Tage mit Amber-Border, Heute = Rot.</div>
+    <div class="ec-summary">
+      <span class="ec-summary-i"><b>${events.length}</b> Reports gesamt</span>
+      <span class="ec-summary-i">davon <b style="color:#3fb950">${ownedCount}</b> in unserem Buch</span>
+      <span class="ec-summary-i"><b>${weekCount}</b> diese Woche</span>
+      <span class="ec-summary-i"><b style="color:${imminentCount>0?'#f0883e':'var(--txt)'}">${imminentCount}</b> imminent (&lt;3d)</span>
+    </div>
+    <div class="ec-grid">${cardsHtml}</div>
   </div>`;
   root.setAttribute("aria-busy","false");
 })();
