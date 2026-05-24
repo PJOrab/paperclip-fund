@@ -41,6 +41,79 @@ SECTOR_TAXONOMY = [
 ]
 
 
+# Closed-Trade Equity Curve dataset (HED-150 Zyklus 216).
+# Build-time data source for #realized-curve. Replaces JS-inline stubs with a
+# Python-built `closed_trades` list so the data path is auditable from the
+# JSON blob, not buried in the IIFE. When track_record.theses contains real
+# closed verdicts (post 2026-06-04), those are merged in and override stubs.
+_CLOSED_TRADES_STUB: list[dict] = [
+    {"date": "2025-12-04", "ticker": "NVDA",  "direction": "long",  "return_pct":  4.2, "source": "stub"},
+    {"date": "2025-12-18", "ticker": "MSFT",  "direction": "long",  "return_pct":  2.8, "source": "stub"},
+    {"date": "2026-01-08", "ticker": "AMD",   "direction": "long",  "return_pct": -2.1, "source": "stub"},
+    {"date": "2026-01-22", "ticker": "ORCL",  "direction": "long",  "return_pct":  5.6, "source": "stub"},
+    {"date": "2026-02-05", "ticker": "META",  "direction": "long",  "return_pct":  3.4, "source": "stub"},
+    {"date": "2026-02-19", "ticker": "TSLA",  "direction": "short", "return_pct":  3.2, "source": "stub"},
+    {"date": "2026-03-04", "ticker": "PLTR",  "direction": "long",  "return_pct":  6.1, "source": "stub"},
+    {"date": "2026-03-12", "ticker": "NOW",   "direction": "long",  "return_pct": -4.3, "source": "stub"},
+    {"date": "2026-03-25", "ticker": "AMZN",  "direction": "long",  "return_pct": -3.1, "source": "stub"},
+    {"date": "2026-04-08", "ticker": "GOOGL", "direction": "long",  "return_pct": -2.0, "source": "stub"},
+    {"date": "2026-04-15", "ticker": "SNOW",  "direction": "long",  "return_pct":  1.8, "source": "stub"},
+    {"date": "2026-04-29", "ticker": "ARM",   "direction": "long",  "return_pct":  4.9, "source": "stub"},
+    {"date": "2026-05-08", "ticker": "AAPL",  "direction": "long",  "return_pct":  1.6, "source": "stub"},
+    {"date": "2026-05-15", "ticker": "CRM",   "direction": "long",  "return_pct": -1.4, "source": "stub"},
+]
+
+
+def collect_closed_trades(track_record: dict) -> dict:
+    """Build the closed-trade dataset for the Realized P&L equity curve panel.
+
+    Returns:
+      {
+        "trades": [{date, ticker, direction, return_pct, source}, ...],
+        "live_count": int,                # # of real (non-stub) verdicts
+        "stub_count": int,                # # of fallback stub trades
+        "is_live": bool,                  # ≥3 real verdicts → live mode
+        "earliest_score_date": str|None,  # next stub-replacement date
+      }
+    The IIFE reads from D.closed_trades; stats are computed client-side so the
+    chart renders even if Python state is stale.
+    """
+    real: list[dict] = []
+    for t in (track_record.get("theses") or []):
+        v = (t.get("verdict") or "").lower()
+        if not v or v in ("too_early", "pending"):
+            continue
+        mp = t.get("move_pct")
+        if mp is None:
+            continue
+        try:
+            move = float(mp)
+        except (TypeError, ValueError):
+            continue
+        direction = (t.get("direction") or "long").lower()
+        # Direction-adjusted return: short verdict gets sign-flipped move_pct.
+        ret = move * (-1 if direction == "short" else 1)
+        tickers = t.get("tickers") or []
+        ticker = tickers[0] if tickers else (t.get("label") or "—")
+        real.append({
+            "date": t.get("score_date") or t.get("date") or "—",
+            "ticker": ticker,
+            "direction": direction,
+            "return_pct": ret,
+            "source": "verdict",
+        })
+    real.sort(key=lambda r: r["date"])
+    is_live = len(real) >= 3
+    trades = real if is_live else list(_CLOSED_TRADES_STUB)
+    return {
+        "trades": trades,
+        "live_count": len(real),
+        "stub_count": 0 if is_live else len(_CLOSED_TRADES_STUB),
+        "is_live": is_live,
+        "earliest_score_date": track_record.get("earliest_score_date"),
+    }
+
+
 def collect() -> dict:
     c = client()
     total = c.table("raw_items").select("id", count="exact").limit(1).execute().count
@@ -58,6 +131,7 @@ def collect() -> dict:
     except Exception:
         briefing = None
 
+    track_record = load_track_record()
     return {
         "total": total,
         "by_source": dict(Counter(r["source"] for r in rows).most_common()),
@@ -65,7 +139,8 @@ def collect() -> dict:
         "recent": recent,
         "last_run": runs[0] if runs else None,
         "briefing": briefing,
-        "track_record": load_track_record(),
+        "track_record": track_record,
+        "closed_trades": collect_closed_trades(track_record),
         "sector_view": load_sector_view() or {
             "as_of": None,
             "sectors": [{"id": s["id"], "name": s["name"], "note": s.get("note"),
@@ -6547,22 +6622,23 @@ main:focus{outline:none}
     <div id="sektor-heatmap" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:72%"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
   </section>
 
-  <!-- Track Record · Cumulative Return (HED-150 Zyklus 212): Bloomberg-style equity curve.
-       Cumulative %P&L line + HWM + drawdown shading. KPI strip below.
-       Uses real conv-weighted MTM from sector_view sparks when available; synthetic
-       backtest fallback otherwise. The first visual a Bloomberg user looks for. -->
-  <section aria-labelledby="h-trackcurve">
-    <h2 id="h-trackcurve">Track Record · Cumulative Return <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Equity Curve · Drawdown · Stats</span></h2>
-    <div id="track-curve" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:80%"></div><div class="skel skel-line" style="width:95%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
-  </section>
-
-  <!-- Realized P&L · Closed-Trade Equity Curve (HED-150 Zyklus 214): historical track record.
+  <!-- Realized P&L · Closed-Trade Equity Curve (HED-150 Zyklus 214 / 216): canonical track record.
        SVG line chart of compounded % return across closed trades by close date.
        Drawdown shading between HWM and curve. Stats: Total Return, Max DD, Win Rate, Sharpe.
-       Backtest stubs used until first real verdicts close 2026-06-04. -->
+       Z216: data source promoted to D.closed_trades (Python-built, auditable via JSON blob).
+       Backtest stubs in use until ≥3 real verdicts close (next score: 2026-06-04). -->
   <section aria-labelledby="h-realized">
-    <h2 id="h-realized">Realized P&amp;L <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Closed-Trade Equity Curve · Drawdown · Stats</span></h2>
+    <h2 id="h-realized">Track Record · Equity Curve <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Closed Trades · Compounded Return · Drawdown</span></h2>
     <div id="realized-curve" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:78%"></div><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:55%"></div></div></div>
+  </section>
+
+  <!-- Open-Book MTM · Rolling 30-Day (HED-150 Zyklus 212): live MTM of open positions.
+       Cumulative %P&L line + HWM + drawdown shading. KPI strip below.
+       Distinct from the Track Record equity curve above: this curve marks the
+       current open book against the last 30 days of sparks (conv-weighted). -->
+  <section aria-labelledby="h-trackcurve">
+    <h2 id="h-trackcurve">Open-Book MTM <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Rolling 30-Day · Conv-Weighted Sparks</span></h2>
+    <div id="track-curve" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:80%"></div><div class="skel skel-line" style="width:95%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
   </section>
 
   <!-- Position Crossover Map (HED-150 Zyklus 213): conviction-tiered concentration pyramid.
@@ -20225,46 +20301,21 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 })();
 
 (function initRealizedCurve(){
-  // Z214: Realized P&L · Closed-Trade Equity Curve (historical compounded returns)
+  // Z214: Realized P&L · Closed-Trade Equity Curve.
+  // Z216: data source promoted to D.closed_trades (Python-built, auditable via JSON blob).
   const root=$("realized-curve"); if(!root) return;
   const tr=D.track_record||{};
+  const ct=D.closed_trades||{trades:[],is_live:false,live_count:0,stub_count:0};
 
-  // Path 1: Pull closed trades from track_record (verdict != too_early/pending)
-  const closedFromData=(tr.theses||[]).filter(t=>{
-    const v=(t.verdict||"").toLowerCase();
-    return v && v!=="too_early" && v!=="pending" && (t.move_pct!=null);
-  }).map(t=>({
-    date:t.score_date||t.date,
-    ticker:(t.tickers&&t.tickers[0])||t.label||"—",
-    direction:t.direction||"long",
-    return_pct: (t.direction==="short"?-1:1) * (Number(t.move_pct)||0),
-    verdict:t.verdict,
-    real:true,
-  }));
+  const trades=(ct.trades||[]).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  if(!trades.length){
+    root.innerHTML=`<div class="panel rpc-panel"><div class="rpc-h"><h3 class="rpc-title">Realized P&amp;L · Equity Curve</h3></div>
+      <p style="color:var(--mut);font-size:var(--fs-cap)">No closed trades available.</p></div>`;
+    root.setAttribute("aria-busy","false"); return;
+  }
 
-  // Path 2: deterministic backtest stubs (CIO-authorised, Z214 final escalation)
-  // Realistic 6-month track record: 14 closed trades, ~64% win rate, clustered DD phase
-  // mid-March → early-April, recovery into May. Returns are post-cost % of book-weight.
-  const STUB_TRADES=[
-    {date:"2025-12-04",ticker:"NVDA", direction:"long", return_pct:+4.2},
-    {date:"2025-12-18",ticker:"MSFT", direction:"long", return_pct:+2.8},
-    {date:"2026-01-08",ticker:"AMD",  direction:"long", return_pct:-2.1},
-    {date:"2026-01-22",ticker:"ORCL", direction:"long", return_pct:+5.6},
-    {date:"2026-02-05",ticker:"META", direction:"long", return_pct:+3.4},
-    {date:"2026-02-19",ticker:"TSLA", direction:"short",return_pct:+3.2},
-    {date:"2026-03-04",ticker:"PLTR", direction:"long", return_pct:+6.1},
-    {date:"2026-03-12",ticker:"NOW",  direction:"long", return_pct:-4.3},
-    {date:"2026-03-25",ticker:"AMZN", direction:"long", return_pct:-3.1},
-    {date:"2026-04-08",ticker:"GOOGL",direction:"long", return_pct:-2.0},
-    {date:"2026-04-15",ticker:"SNOW", direction:"long", return_pct:+1.8},
-    {date:"2026-04-29",ticker:"ARM",  direction:"long", return_pct:+4.9},
-    {date:"2026-05-08",ticker:"AAPL", direction:"long", return_pct:+1.6},
-    {date:"2026-05-15",ticker:"CRM",  direction:"long", return_pct:-1.4},
-  ];
-
-  const isLive=closedFromData.length>=3;
-  const trades=isLive?closedFromData.sort((a,b)=>a.date.localeCompare(b.date)):STUB_TRADES;
-  const dataTag=isLive?`<span class="rpc-tag">LIVE</span>`:`<span class="rpc-tag rpc-tag-bt">BACKTEST</span>`;
+  const isLive=!!ct.is_live;
+  const dataTag=isLive?`<span class="rpc-tag">LIVE · ${ct.live_count} verdicts</span>`:`<span class="rpc-tag rpc-tag-bt">BACKTEST · ${ct.stub_count} stubs</span>`;
 
   // Compound equity from start=100
   let eq=100, hwm=100;
@@ -20413,8 +20464,8 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 
   const asOf=trades.length?trades[trades.length-1].date:"";
   const subText=isLive
-    ? `Cumulative compounded % return across ${trades.length} closed verdicts. HWM dashed; drawdown shaded red. Last close: ${asOf}.`
-    : `Cumulative compounded % return across stub closed trades — backtest baseline. Switches to LIVE on first verdict close (next score: ${tr.earliest_score_date||"2026-06-04"}). HWM dashed; drawdown shaded red.`;
+    ? `Cumulative compounded % return across ${trades.length} closed verdicts (data: <code>D.closed_trades.trades</code>). HWM dashed; drawdown shaded red. Last close: ${asOf}.`
+    : `Cumulative compounded % return across ${trades.length} backtest stub trades (data: <code>D.closed_trades.trades</code>, source <code>_CLOSED_TRADES_STUB</code>). Switches to LIVE on ≥3 verdict closes (next score: ${ct.earliest_score_date||tr.earliest_score_date||"2026-06-04"}). HWM dashed; drawdown shaded red.`;
 
   root.innerHTML=`<div class="panel rpc-panel">
     <div class="rpc-h">
