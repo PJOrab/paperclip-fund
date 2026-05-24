@@ -2777,6 +2777,38 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .pr-pnl{font-size:16px}
 }
 @media print{.pr-panel{break-inside:avoid;page-break-inside:avoid}.pr-card{break-inside:avoid;page-break-inside:avoid}}
+/* Drawdown Waterfall (HED-150 Zyklus 198) — underwater equity curve + risk stats. */
+.dd-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.dd-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.dd-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.dd-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.dd-svgw{overflow-x:auto;margin:0 calc(var(--s4) * -1) var(--s3);padding:0 var(--s4)}
+.dd-uw-fill{fill:rgba(248,81,73,.22)}
+.dd-uw-line{fill:none;stroke:#f85149;stroke-width:1.4;vector-effect:non-scaling-stroke}
+.dd-zero{stroke:rgba(139,148,158,.45);stroke-width:1;stroke-dasharray:3,3}
+.dd-axis{stroke:rgba(139,148,158,.18);stroke-width:1}
+.dd-axlbl{fill:var(--mut);font-size:10px;font-variant-numeric:tabular-nums}
+.dd-peak-mk{fill:#e3b341;stroke:var(--panel);stroke-width:1.4}
+.dd-trough-mk{fill:#f85149;stroke:var(--panel);stroke-width:1.4}
+.dd-cur-mk{fill:#58a6ff;stroke:var(--panel);stroke-width:1.4}
+.dd-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s2) var(--s3);border-top:1px solid rgba(139,148,158,.15);padding-top:var(--s3)}
+.dd-stat-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:2px}
+.dd-stat-val{font-size:15px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums;line-height:1.1}
+.dd-stat-sub{font-size:var(--fs-cap);color:var(--mut);margin-top:2px}
+.dd-stat-neg .dd-stat-val{color:#f85149}
+.dd-stat-pos .dd-stat-val{color:#3fb950}
+.dd-rec-bar{position:relative;height:5px;background:rgba(139,148,158,.18);border-radius:2px;margin-top:5px;overflow:hidden}
+.dd-rec-fill{position:absolute;top:0;bottom:0;left:0;background:#58a6ff;border-radius:2px}
+.dd-empty{font-size:var(--fs-cap);color:var(--mut);padding:var(--s3) 0}
+.dd-leg{display:flex;gap:var(--s3);font-size:var(--fs-cap);color:var(--mut);margin-bottom:var(--s2);flex-wrap:wrap}
+.dd-leg span{display:inline-flex;align-items:center;gap:5px}
+.dd-leg i{width:9px;height:9px;border-radius:50%;display:inline-block}
+@media(max-width:600px){
+  .dd-panel{padding:var(--s3)}
+  .dd-stats{grid-template-columns:repeat(2,1fr)}
+  .dd-stat-val{font-size:14px}
+}
+@media print{.dd-panel{break-inside:avoid;page-break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -5784,6 +5816,13 @@ main:focus{outline:none}
   <section aria-labelledby="h-pos-risk">
     <h2 id="h-pos-risk" class="visually-hidden" style="position:absolute;left:-9999px">Position Risk Cards · MAE/MFE</h2>
     <div id="pos-risk" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <!-- Drawdown Waterfall (HED-150 Zyklus 198): underwater equity curve + max-DD/recovery stats.
+       Risk-side companion to the alpha panel; first thing a Bloomberg user checks before sizing. -->
+  <section aria-labelledby="h-drawdown">
+    <h2 id="h-drawdown" class="visually-hidden" style="position:absolute;left:-9999px">Drawdown Waterfall</h2>
+    <div id="drawdown" aria-live="polite" aria-busy="true"></div>
   </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
@@ -17304,6 +17343,191 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
       </div>
     </div>
     <div class="pr-grid">${cardHtml}</div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
+// Drawdown Waterfall (HED-150 Zyklus 198): underwater equity curve + max-DD / recovery stats.
+// Re-uses the conviction-weighted aggregate book curve (same construction as hero-perf /
+// alpha-bench) and converts %-returns to an equity multiplier, then computes running peaks
+// and drawdowns. Surfaces: current DD %, max DD %, days in current DD, days since max DD,
+// recovery progress %, % of days underwater. Risk-companion to the alpha panel — first
+// thing a Bloomberg user checks before sizing.
+(function initDrawdown(){
+  const root=document.getElementById("drawdown");
+  if(!root) return;
+  const tr=D.track_record;
+  const sv=D.sector_view||{};
+  const sparkMap={};
+  (sv.sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{
+    if(t&&t.ticker&&Array.isArray(t.spark)) sparkMap[String(t.ticker).toUpperCase()]=t.spark;
+  }));
+  const active=((tr&&tr.theses)||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  const calls=active.map(t=>{
+    const tk=String((t.tickers||[])[0]||"").toUpperCase();
+    const sp=sparkMap[tk];
+    if(!tk||!sp||sp.length<2||t.baseline_price==null) return null;
+    let bestIdx=-1, bestDiff=Infinity;
+    sp.forEach((v,i)=>{
+      if(v==null) return;
+      const d=Math.abs(v-t.baseline_price)/t.baseline_price;
+      if(d<bestDiff){bestDiff=d; bestIdx=i;}
+    });
+    if(bestIdx<0||bestDiff>0.05) return null;
+    const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+    return {tk,spark:sp,eIdx:bestIdx,sign,conv:t.conviction||0,base:t.baseline_price};
+  }).filter(Boolean);
+  if(calls.length===0){
+    root.innerHTML='<div class="panel dd-panel"><div class="dd-empty">Drawdown-Panel nicht verfügbar — keine Calls mit Spark-Historie passend zum Entry.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const eFirst=Math.min(...calls.map(c=>c.eIdx));
+  const bookSparkLen=Math.max(...calls.map(c=>c.spark.length));
+  const bookPct=[];
+  for(let idx=eFirst; idx<bookSparkLen; idx++){
+    let pSum=0, wSum=0;
+    calls.forEach(c=>{
+      if(idx<c.eIdx||idx>=c.spark.length) return;
+      const cur=c.spark[idx]; if(cur==null) return;
+      const pnl=(cur-c.base)/c.base*100*c.sign;
+      pSum+=c.conv*pnl; wSum+=c.conv;
+    });
+    bookPct.push(wSum>0?pSum/wSum:0);
+  }
+  if(bookPct.length<2){
+    root.innerHTML='<div class="panel dd-panel"><div class="dd-empty">Drawdown-Panel braucht ≥ 2 Datentage.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  // Convert percent-return curve to equity-multiplier curve (1.0 at inception)
+  const equity=bookPct.map(p=>1+p/100);
+  const N=equity.length;
+  // Running peak and drawdown series (in %).
+  const peaks=new Array(N); const dd=new Array(N);
+  let curPeak=equity[0];
+  for(let i=0;i<N;i++){
+    if(equity[i]>curPeak) curPeak=equity[i];
+    peaks[i]=curPeak;
+    dd[i]=curPeak>0?((equity[i]-curPeak)/curPeak*100):0;
+  }
+  // Stats
+  let maxDD=0, maxDDIdx=-1;
+  let maxDDPeakIdx=-1;
+  for(let i=0;i<N;i++){
+    if(dd[i]<maxDD){maxDD=dd[i]; maxDDIdx=i;}
+  }
+  // Find the peak that precedes maxDD
+  if(maxDDIdx>=0){
+    for(let i=maxDDIdx;i>=0;i--){ if(equity[i]>=peaks[maxDDIdx]-1e-9){maxDDPeakIdx=i; break;} }
+  }
+  const curDD=dd[N-1];
+  // Days in current drawdown: walk back to most recent peak-touch (dd==0)
+  let curDDDays=0;
+  for(let i=N-1;i>=0;i--){
+    if(dd[i]>-0.0001){ break; }
+    curDDDays++;
+  }
+  // Days since max DD trough
+  const daysSinceMaxDD=maxDDIdx>=0?(N-1-maxDDIdx):0;
+  // Recovery progress vs max DD: 100% means fully recovered to peak; 0% means still at trough
+  let recPct=100;
+  if(maxDD<0){
+    const recDenom=Math.abs(maxDD);
+    const recovered=Math.abs(maxDD)-Math.abs(curDD);
+    recPct=recDenom>0?Math.max(0,Math.min(100,recovered/recDenom*100)):100;
+  }
+  // % of days underwater
+  const uwDays=dd.filter(d=>d<-0.0001).length;
+  const uwPct=N>0?(uwDays/N*100):0;
+
+  // SVG geometry
+  const W=760, H=220;
+  const pL=46, pR=18, pT=18, pB=30;
+  const pw=W-pL-pR, ph=H-pT-pB;
+  const yLo=Math.min(maxDD, -0.5)*1.15; // negative bottom
+  const yHi=0.5; // a hair above zero so the zero line shows
+  const ySpan=yHi-yLo;
+  const _mx=i=>N>1?pL+i/(N-1)*pw:pL+pw/2;
+  const _my=v=>pT+(yHi-v)/ySpan*ph;
+  const yZero=_my(0);
+  const yBot=pT+ph;
+
+  // Underwater area path: from (x0, 0) down to dd curve back up to (xN, 0)
+  let areaPath=`M ${_mx(0).toFixed(1)},${yZero.toFixed(1)}`;
+  for(let i=0;i<N;i++) areaPath+=` L ${_mx(i).toFixed(1)},${_my(dd[i]).toFixed(1)}`;
+  areaPath+=` L ${_mx(N-1).toFixed(1)},${yZero.toFixed(1)} Z`;
+  const linePts=dd.map((v,i)=>`${_mx(i).toFixed(1)},${_my(v).toFixed(1)}`).join(" ");
+
+  // Y-axis ticks: 0, half-max, max
+  const yTicks=[0];
+  if(maxDD<-0.01){ yTicks.push(maxDD*0.5); yTicks.push(maxDD); }
+  const yTickHtml=yTicks.map(t=>{
+    const y=_my(t).toFixed(1);
+    const cls=t===0?"dd-zero":"dd-axis";
+    return `<line class="${cls}" x1="${pL}" x2="${W-pR}" y1="${y}" y2="${y}" />
+            <text class="dd-axlbl" x="${pL-6}" y="${(parseFloat(y)+3).toFixed(1)}" text-anchor="end">${t===0?"0%":(t.toFixed(1)+"%")}</text>`;
+  }).join("");
+
+  // Markers: peak (gold), trough (red), current (blue)
+  const markers=[];
+  if(maxDDPeakIdx>=0){
+    markers.push(`<circle class="dd-peak-mk" cx="${_mx(maxDDPeakIdx).toFixed(1)}" cy="${_my(0).toFixed(1)}" r="3.6"><title>Pre-DD-Peak · Tag ${maxDDPeakIdx+1}</title></circle>`);
+  }
+  if(maxDDIdx>=0){
+    markers.push(`<circle class="dd-trough-mk" cx="${_mx(maxDDIdx).toFixed(1)}" cy="${_my(maxDD).toFixed(1)}" r="3.6"><title>Max-DD-Trough · ${maxDD.toFixed(2)}% · Tag ${maxDDIdx+1}</title></circle>`);
+  }
+  markers.push(`<circle class="dd-cur-mk" cx="${_mx(N-1).toFixed(1)}" cy="${_my(curDD).toFixed(1)}" r="3.6"><title>Aktuell · ${curDD.toFixed(2)}%</title></circle>`);
+
+  const svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Drawdown waterfall — underwater equity curve">
+    ${yTickHtml}
+    <path class="dd-uw-fill" d="${areaPath}" />
+    <polyline class="dd-uw-line" points="${linePts}" />
+    ${markers.join("")}
+  </svg>`;
+
+  // Format helpers
+  const _pctN=v=>(v>=0?"+":"")+v.toFixed(2)+"%";
+  const curCls=curDD<-0.01?"dd-stat-neg":"";
+  const maxCls=maxDD<-0.01?"dd-stat-neg":"";
+  const recCls=recPct>=99.5?"dd-stat-pos":"";
+
+  const statsHtml=`
+    <div class="${curCls}">
+      <div class="dd-stat-lbl">Current Drawdown</div>
+      <div class="dd-stat-val">${_pctN(curDD)}</div>
+      <div class="dd-stat-sub">${curDDDays>0?(curDDDays+" Tage underwater"):"Auf Hoch"}</div>
+    </div>
+    <div class="${maxCls}">
+      <div class="dd-stat-lbl">Max Drawdown</div>
+      <div class="dd-stat-val">${_pctN(maxDD)}</div>
+      <div class="dd-stat-sub">${daysSinceMaxDD===0?"Heute":(daysSinceMaxDD+" Tage her")}</div>
+    </div>
+    <div class="${recCls}">
+      <div class="dd-stat-lbl">Recovery vs Max DD</div>
+      <div class="dd-stat-val">${recPct.toFixed(0)}%</div>
+      <div class="dd-rec-bar"><div class="dd-rec-fill" style="width:${recPct.toFixed(1)}%"></div></div>
+    </div>
+    <div>
+      <div class="dd-stat-lbl">% Days Underwater</div>
+      <div class="dd-stat-val">${uwPct.toFixed(0)}%</div>
+      <div class="dd-stat-sub">${uwDays} / ${N} Tage</div>
+    </div>`;
+
+  root.innerHTML=`<div class="panel dd-panel">
+    <div class="dd-h">
+      <div>
+        <h3 class="dd-title">Drawdown · Underwater Curve</h3>
+      </div>
+    </div>
+    <div class="dd-sub">Equity vs Running-Peak. Konv.-gewichtete Aggregat-Kurve (seit Inception). Bloomberg-Standard Risk-Read: aktueller DD, Max-DD, Recovery-Pfad, % Tage underwater.</div>
+    <div class="dd-leg">
+      <span><i style="background:#e3b341"></i> Pre-DD-Peak</span>
+      <span><i style="background:#f85149"></i> Max-DD-Trough</span>
+      <span><i style="background:#58a6ff"></i> Aktuell</span>
+    </div>
+    <div class="dd-svgw">${svg}</div>
+    <div class="dd-stats">${statsHtml}</div>
   </div>`;
   root.setAttribute("aria-busy","false");
 })();
