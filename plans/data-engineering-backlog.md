@@ -63,6 +63,73 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-24 — HED-153 (DE Loop Zyklus 93): **FilingLanguageAdapter refinement —
+  INTC-layout fallback regex (closed silent zero-output bug) + form-aware
+  trajectory display + 10-K-vs-10-Q form-mix caveats + standalone unit tests.**
+  (`ingestion/sources_aitech.py` modifications / `ingestion/test_filing_sentiment.py`
+  new / `.gitignore` cache-path entry). Sixth DE↔CIO loop convergence (cf.
+  [[loop-convergence-resolved]] / [[loop-convergence-hed147]]): the CIO master
+  loop shipped the adapter end-to-end in commit `a1f2839` "HED-152 Zyklus 1"
+  ~one minute before this cycle landed, so this work is a focused
+  refinement-layer on top, not a duplicate. Three real improvements over the
+  shipped baseline:
+  (1) **INTC silent-empty bug** — INTC's 10-Q (`intc-20260328.htm`) places the
+  MD&A *body* before the formal "Item 2." index (the Item heading is in the
+  back-of-doc exhibits list, not at the section start), so the
+  `_10Q_SECTION_RE` Item-prefixed pattern found zero matches and the extractor
+  returned `""`. I added a bare-heading fallback `_MDNA_HEADING_RE =
+  Management[\s'']*s?\s+Discussion\s+and\s+Analysis` and refactored
+  `_extract_mdna_window` to iterate `(Item-prefixed-pattern, fallback)` —
+  both paths still apply the same MIN_BODY_CHARS=2000 validation so TOC
+  references and short cross-references are still rejected. INTC went from
+  scoring 0 of 4 historical filings to scoring all 4 (Q:-7.1‰ → Q:-9.2‰ →
+  K:+9.6‰ → Q:-9.2‰, **tone more negative + risk accelerating +50.7% QoQ +
+  new local low** — a triple-confirmed bearish read on INTC mgmt language
+  that was completely invisible pre-fix). The MIN_BODY_CHARS guard works
+  because section bodies have thousands of chars before the next Item header,
+  while TOC entries have the next Item within ~50 chars.
+  (2) **10-K-vs-10-Q form-mix bias surfaced** — empirically, 7 of 8 first-cycle
+  tickers showed the 10-K filing as the highest net score in the 4-filing
+  window (10-K MD&A scores systematically ~+10‰ higher than the surrounding
+  10-Qs, a real structural artefact since 10-Q MD&A absorbs risk-factor
+  language that 10-K MD&A delegates to its dedicated Item 1A). Without
+  disclosure, an analyst reading a 4-quarter trajectory like
+  `Q:-12.3‰ → Q:-11.6‰ → Q:-14.4‰ → K:+2.3‰` (MRVL real) would treat the
+  10-K spike as an inflection signal — when it's mostly a form-type artefact.
+  I extended the trajectory output to include the form code (Q / K) on each
+  filed-date, and added two caveats: STRONG (`[caveat: latest is 10-K — 10-K
+  MD&A scores typically run ~+10‰ vs 10-Q baseline; interpret directionally]`)
+  when latest is the lone 10-K with all-10-Q priors, and SOFT (`[note: prior
+  window includes 10-K; form mix may distort σ]`) when the prior window mixes
+  forms but the latest is a 10-Q. This keeps the σ signal in the prompt
+  (still useful for direction) but lets the analyst weight it correctly.
+  (3) **Standalone adapter unit tests** — the CIO commit added only the
+  prompt-integration smoke (`test_filing_sentiment_prompts.py`); I added
+  `test_filing_sentiment.py` (21 tests, pure-fixture / no network) covering
+  the lexicon scoring (sign discrimination, thin-text rejection, normalization
+  invariance), section extraction (TOC skip, AMD's space-apostrophe variant,
+  10-K vs 10-Q distinction, INTC bare-heading fallback, no-header empty),
+  trajectory gates (silent-in-band, σ-shift, risk-QoQ ±20% bound, new-low /
+  new-high), the 24-hour ticker rotation (every ALL_TICKERS entry visits,
+  same-hour determinism), and the cache roundtrip / missing-file behavior.
+  Full ingestion test suite 71/71 green.
+  **Live verification: 8 tickers cold-start in 13.0s; 6 emitted material
+  trajectory signals** — NVDA risk-tone easing -29.4% QoQ; AVGO risk-tone
+  accelerating +180.9% QoQ (sharpest read); MU monotonic improvement
+  +1.0‰→+9.5‰→+10.4‰→+15.5‰ over 4 quarters with risk easing -31.4% QoQ
+  (the kind of structural confidence-build that L-M literature documents as
+  pre-positive-surprise); QCOM steady degradation +6.1‰→+1.0‰→-0.5‰ with
+  new local low; MRVL 10-K outlier at +15.1σ shift (correctly caveated as
+  form-mix artefact); INTC the INTC-bug-fix beneficiary, triple-confirmed
+  bearish. Cached cycles drop to ~5s (submissions.json-only). Investor
+  framing: the adapter's six-source cross-reference recipe — textual tone
+  (filing_sentiment) + estimate momentum (eps_revisions) + valuation consensus
+  (analyst_consensus) + insider conviction (insider_cluster) + structured
+  fundamentals (hyperscaler_financials) + management transcript (earnings_
+  transcript) — collapses the entire pre-print conviction stack onto one
+  ticker, the kind of textual-meets-quantitative combination that Citadel /
+  Millennium PMs pay six figures/yr to assemble manually from Bloomberg
+  terminals and Refinitiv. Pushed: PENDING this cycle.
 - 2026-05-24 — HED-152 (CIO Master DE Loop Zyklus 1): **FilingLanguageAdapter
   (`filing_sentiment`) + compact Loughran-McDonald lexicon + TRIAGE_USER /
   ANALYST_SYSTEM prompt blocks — end-to-end MD&A tone-trajectory factor.**

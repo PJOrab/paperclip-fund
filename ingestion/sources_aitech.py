@@ -537,21 +537,17 @@ def _extract_mdna_window(html_src: str, is_10k: bool = False,
         txt = _HTML_ENTITY_RE.sub(" ", txt)
         txt = re.sub(r"\s+", " ", txt).strip()
         pat = _10K_SECTION_RE if is_10k else _10Q_SECTION_RE
-        matches = list(pat.finditer(txt))
-        if not matches:
-            return ""
-        for m in matches:
-            rest = txt[m.start(): m.start() + max_chars]
-            end_m = _MDNA_END_RE.search(rest, pos=200)
-            if end_m is None:
-                # No next-Item marker inside the window: this match is the
-                # section start and the body extends past max_chars. Accept it.
-                return rest
-            if end_m.start() >= MIN_BODY_CHARS:
-                return rest[:end_m.start()]
-            # Else: this match is followed by another Item header within
-            # MIN_BODY_CHARS → it's a TOC entry or short cross-reference,
-            # keep searching.
+        # Try the Item-prefixed pattern first (the typical layout). If no
+        # match yields a body, fall through to the bare-heading matcher to
+        # catch atypical layouts like INTC's (MD&A body precedes Item index).
+        for cand in (pat, _MDNA_HEADING_RE):
+            for m in cand.finditer(txt):
+                rest = txt[m.start(): m.start() + max_chars]
+                end_m = _MDNA_END_RE.search(rest, pos=200)
+                if end_m is None:
+                    return rest
+                if end_m.start() >= MIN_BODY_CHARS:
+                    return rest[:end_m.start()]
         return ""
     except Exception:
         return ""
@@ -4176,10 +4172,26 @@ class FilingLanguageAdapter:
         if not notable:
             return None
 
-        traj = " → ".join(f"{s['filed']}:{s['net'] * 1000:+.1f}‰" for s in scored)
+        # Trajectory includes form code (Q / K) per filing so the reader can
+        # see the 10-Q vs 10-K mix. 10-K MD&A structurally scores ~10‰ more
+        # positive than 10-Q MD&A because 10-Q MD&A absorbs risk-factor
+        # language that 10-K MD&A delegates to Item 1A — a real, observed bias
+        # across the watchlist. When the latest filing is the ONLY 10-K in the
+        # window we append a caveat so triage doesn't misread the spike.
+        traj = " → ".join(
+            f"{s['filed']} {s['form'][-1]}:{s['net'] * 1000:+.1f}‰"
+            for s in scored
+        )
+        prior_forms = {s["form"] for s in prior}
+        form_caveat = ""
+        if latest["form"] == "10-K" and prior_forms == {"10-Q"}:
+            form_caveat = " [caveat: latest is 10-K — 10-K MD&A scores typically run ~+10‰ vs 10-Q baseline; interpret directionally]"
+        elif latest["form"] == "10-Q" and "10-K" in prior_forms:
+            # Mixed prior with a 10-K reference point — softer caveat.
+            form_caveat = " [note: prior window includes 10-K; form mix may distort σ]"
         text = (
             f"[Filing-Sentiment · {ticker}] {latest['form']} MD&A tone shift — "
-            f"{'; '.join(notable)}. "
+            f"{'; '.join(notable)}.{form_caveat} "
             f"Net trajectory {traj}. "
             f"Latest: neg {latest['neg_pct'] * 100:.2f}%, pos "
             f"{latest['pos_pct'] * 100:.2f}%, unc "
@@ -4191,7 +4203,7 @@ class FilingLanguageAdapter:
             f"&CIK={cik:010d}&type=10-Q#filing-sentiment-{latest['accession']}"
         )
         return {
-            "text": text[:480],
+            "text": text[:600],
             "source": self.SOURCE,
             "url": dedup_url,
             "reliability": self.RELIABILITY,

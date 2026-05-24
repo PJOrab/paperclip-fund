@@ -23,3 +23,8 @@ logs/
 
 # OS / editor
 .DS_Store
+
+# Adapter-local caches (regenerated per cycle; first-run builds them from
+# scratch via SEC submissions API)
+data/filing_sentiment_cache.json
+data/filing_sentiment_cache.json.tmp
