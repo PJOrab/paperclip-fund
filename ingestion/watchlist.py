@@ -421,6 +421,14 @@ SOURCE_RELIABILITY = {
     # read, so sits below sec_10q (0.97) and at par with earnings_transcript
     # (0.86) which is structurally similar (primary-source NL analysis).
     "filing_sentiment": 0.88,
+    # SEC 13F-HR institutional holdings changes from ~14 AI/Tech-focused
+    # institutions (ARK, Tiger Global, Coatue, Baillie Gifford, Viking, etc.)
+    # via EDGAR submissions API + holdings XML. Official SEC primary filing
+    # (same authoritative tier as sec_13dg / sec_8k) but with a 45-day
+    # quarter-end lag — position may have already partially changed by the
+    # time the 13F is public. Still a strong smart-money flow signal that
+    # quant funds pay Novus/Bloomberg five figures/yr for in aggregated form.
+    "institutional_13f": 0.88,
 }
 
 # Job-posting velocity targets — public Greenhouse + Lever boards. Source the

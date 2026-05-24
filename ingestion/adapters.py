@@ -128,6 +128,7 @@ def build_adapters():
         ("Earnings Transcript", S.EarningsTranscriptAdapter()),
         ("Hyperscaler XBRL", S.HyperscalerFinancialsAdapter()),
         ("Filing Sentiment", S.FilingLanguageAdapter()),
+        ("Institutional 13F", S.InstitutionalHoldingsAdapter()),
     ]
     if getattr(m, "NEWSAPI_KEY", ""):
         adapters.append(("NewsAPI AI", S.AITechNewsAPIAdapter()))

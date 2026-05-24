@@ -4208,3 +4208,266 @@ class FilingLanguageAdapter:
             "url": dedup_url,
             "reliability": self.RELIABILITY,
         }
+
+
+class InstitutionalHoldingsAdapter:
+    """
+    SEC 13F-HR institutional holdings tracker for AI/Tech watchlist tickers.
+
+    Monitors quarterly 13F filings from ~15 high-conviction AI/Tech-focused
+    institutions (ARK, Tiger Global, Coatue, Baillie Gifford, Viking, etc.)
+    via SEC EDGAR submissions API + holdings XML.  Emits items only when a
+    notable position change is detected vs. the prior-quarter filing:
+      - New position opened in a watchlist ticker
+      - Full exit (position dropped to zero)
+      - Position size change >= MIN_CHANGE_PCT (default 20%)
+
+    Signal edge: 13F data appears on SEC EDGAR within 45 days of quarter-end.
+    Institutions self-report primary authoritative data.  Smart-money flow in/out
+    of AI-semi and AI-software names often leads public commentary by weeks.
+    Quant funds pay Novus/WHALE WATCHER/Bloomberg mid-five-figures/yr for
+    aggregated 13F analytics; SEC publishes the underlying XML free, no key.
+
+    Source: 'institutional_13f'. Reliability 0.88 — official SEC primary filing
+    (same tier as sec_13dg) but 45-day lag means position may have already moved.
+    """
+
+    SOURCE = "institutional_13f"
+    RELIABILITY = 0.88
+
+    # Emit only when position changes by >= this fraction
+    MIN_CHANGE_PCT = 0.20
+    # Minimum position value ($000s as in 13F) to be material
+    MIN_VALUE_K = 5_000  # $5M
+
+    # AI/Tech-focused institutions: (display_name, CIK_zero_padded)
+    INSTITUTIONS = [
+        ("ARK Investment Management", "0001697748"),
+        ("Tiger Global Management", "0001167483"),
+        ("Coatue Management", "0001336528"),
+        ("Baillie Gifford", "0001006438"),
+        ("Viking Global Investors", "0001103687"),
+        ("Lone Pine Capital", "0001060349"),
+        ("Dragoneer Investment Group", "0001689019"),
+        ("Alkeon Capital Management", "0001540159"),
+        ("Whale Rock Capital Management", "0001437574"),
+        ("D1 Capital Partners", "0001781235"),
+        ("Greenoaks Capital Partners", "0001761240"),
+        ("Durable Capital Partners", "0001783066"),
+        ("Alger Management", "0000003692"),
+        ("Baron Capital Group", "0001006599"),
+    ]
+
+    # Watchlist ticker → CUSIP (9-char).  ADRs (TSM, ASML, ARM) are US-listed
+    # and DO appear in 13F filings.
+    CUSIP_MAP = {
+        "NVDA": "67066G104",
+        "AMD":  "007903107",
+        "AVGO": "11135F101",
+        "MU":   "595112103",
+        "QCOM": "747525103",
+        "MRVL": "G5876H105",
+        "SMCI": "86800U104",
+        "ANET": "040413106",
+        "TSM":  "874039100",
+        "ASML": "A0X1J2185",
+        "ARM":  "04215L100",
+        "MSFT": "594918104",
+        "GOOGL": "02079K305",
+        "AMZN": "023135106",
+        "META": "30303M102",
+        "AAPL": "037833100",
+        "PLTR": "69608A108",
+        "ORCL": "68389X105",
+        "NOW":  "81762P102",
+        "CRM":  "79466L302",
+        "SNOW": "833445115",
+        "CRWD": "22788C105",
+        "ADBE": "00724F101",
+        "DELL": "24703L202",
+        "VRT":  "92338C103",
+        "VST":  "92840M102",
+        "CEG":  "15189T107",
+        "GEV":  "36268T102",
+        "ETN":  "G29183103",
+        "INTC": "458140100",
+    }
+
+    def fetch(self) -> list[dict]:
+        out = []
+        for inst_name, cik in self.INSTITUTIONS:
+            try:
+                out.extend(self._fetch_institution(inst_name, cik))
+            except Exception as exc:
+                print(f"[InstitutionalHoldings] {inst_name} ({cik}): {exc}")
+            time.sleep(0.3)
+        return out
+
+    def _fetch_institution(self, name: str, cik: str) -> list[dict]:
+        filings = self._get_recent_filings(cik)
+        if len(filings) < 2:
+            return []
+        latest_acc, latest_period = filings[0]
+        prior_acc, prior_period = filings[1]
+        latest_h = self._parse_holdings(cik, latest_acc)
+        prior_h = self._parse_holdings(cik, prior_acc)
+        if not latest_h:
+            return []
+        items = []
+        for ticker, cusip in self.CUSIP_MAP.items():
+            item = self._diff(
+                ticker, cusip, name, cik,
+                latest_h, prior_h,
+                latest_period, prior_period,
+            )
+            if item:
+                items.append(item)
+        return items
+
+    def _get_recent_filings(self, cik: str) -> list[tuple[str, str]]:
+        """Return [(accession_no_raw, period), ...] for last 2 13F-HR filings."""
+        url = f"https://data.sec.gov/submissions/CIK{cik.zfill(10)}.json"
+        try:
+            data = fetch_json(url, headers=_DEFAULT_UA)
+        except Exception:
+            return []
+        if not data:
+            return []
+        recent = data.get("filings", {}).get("recent", {})
+        forms = recent.get("form", [])
+        accs = recent.get("accessionNumber", [])
+        periods = recent.get("reportDate", [])
+        results = []
+        for form, acc, period in zip(forms, accs, periods):
+            if form == "13F-HR":
+                results.append((acc.replace("-", ""), period))
+            if len(results) >= 2:
+                break
+        return results
+
+    def _parse_holdings(self, cik: str, acc_raw: str) -> dict[str, int]:
+        """Parse holdings XML → {cusip8: value_k}."""
+        cik_int = int(cik)
+        acc_dashed = f"{acc_raw[:10]}-{acc_raw[10:12]}-{acc_raw[12:]}"
+        index_url = (
+            f"https://www.sec.gov/Archives/edgar/data/{cik_int}/"
+            f"{acc_raw}/{acc_dashed}-index.htm"
+        )
+        try:
+            html_text = fetch_url(index_url, headers=_DEFAULT_UA)
+        except Exception:
+            return {}
+        # Find the primary holdings XML file in the filing index.
+        # SEC 13F-HR uses 'infotable.xml' (newer filings) or a file whose name
+        # contains 'informationtable' / '13finfotable'.  Prefer infotable.xml;
+        # fall back to any non-primary_doc .xml href.
+        import re as _re
+        xml_file = None
+        for line in html_text.splitlines():
+            if ".xml" in line.lower() and "xslform13f" not in line.lower():
+                m = _re.search(r'href="([^"]+\.xml)"', line, _re.I)
+                if not m:
+                    continue
+                href = m.group(1)
+                lhref = href.lower()
+                if any(kw in lhref for kw in (
+                    "infotable", "informationtable", "13finfotable"
+                )):
+                    xml_file = href
+                    break
+        if not xml_file:
+            # Fall back: pick first .xml that is not primary_doc / stylesheet
+            hrefs = _re.findall(r'href="([^"]+\.xml)"', html_text, _re.I)
+            for h in hrefs:
+                if "primary_doc" not in h.lower() and "xslform" not in h.lower():
+                    xml_file = h
+                    break
+        if not xml_file:
+            return {}
+        xml_url = (
+            f"https://www.sec.gov{xml_file}"
+            if xml_file.startswith("/")
+            else f"https://www.sec.gov/Archives/edgar/data/{cik_int}/{acc_raw}/{xml_file}"
+        )
+        try:
+            xml_text = fetch_url(xml_url, headers=_DEFAULT_UA)
+        except Exception:
+            return {}
+        return self._parse_xml(xml_text)
+
+    def _parse_xml(self, xml_text: str) -> dict[str, int]:
+        """Parse 13F informationTable XML → {cusip8: value_k}."""
+        import xml.etree.ElementTree as ET
+        holdings: dict[str, int] = {}
+        try:
+            root = ET.fromstring(xml_text)
+        except ET.ParseError:
+            return {}
+
+        def _tag(el) -> str:
+            t = el.tag
+            return t.split("}")[-1].lower() if "}" in t else t.lower()
+
+        def _walk(node):
+            if _tag(node) == "infotable":
+                cusip_el = next((c for c in node if _tag(c) == "cusip"), None)
+                value_el = next((c for c in node if _tag(c) == "value"), None)
+                if cusip_el is not None and value_el is not None:
+                    cusip8 = (cusip_el.text or "").strip()[:8]
+                    try:
+                        val = int((value_el.text or "0").replace(",", ""))
+                    except ValueError:
+                        val = 0
+                    if cusip8 and val > 0:
+                        holdings[cusip8] = holdings.get(cusip8, 0) + val
+            for child in node:
+                _walk(child)
+
+        _walk(root)
+        return holdings
+
+    def _diff(
+        self,
+        ticker: str, cusip: str, inst_name: str, cik: str,
+        latest: dict[str, int], prior: dict[str, int],
+        latest_period: str, prior_period: str,
+    ) -> dict | None:
+        cusip8 = cusip[:8]
+        lv = latest.get(cusip8, 0)
+        pv = prior.get(cusip8, 0)
+        if lv == 0 and pv == 0:
+            return None
+        if lv < self.MIN_VALUE_K and pv < self.MIN_VALUE_K:
+            return None
+
+        if pv == 0 and lv >= self.MIN_VALUE_K:
+            change_desc = f"opened new ${lv / 1000:.1f}M position"
+        elif lv == 0 and pv >= self.MIN_VALUE_K:
+            change_desc = f"fully exited ${pv / 1000:.1f}M position"
+        else:
+            if pv == 0:
+                return None
+            pct = (lv - pv) / pv
+            if abs(pct) < self.MIN_CHANGE_PCT:
+                return None
+            direction = "added" if pct > 0 else "reduced"
+            change_desc = (
+                f"{direction} {abs(pct) * 100:.0f}% "
+                f"(${pv / 1000:.1f}M → ${lv / 1000:.1f}M)"
+            )
+
+        text = (
+            f"[13F · {ticker}] {inst_name} {change_desc}. "
+            f"As of {latest_period} vs {prior_period}."
+        )
+        dedup_url = (
+            f"https://www.sec.gov/cgi-bin/browse-edgar"
+            f"?action=getcompany&CIK={cik.zfill(10)}&type=13F-HR"
+            f"#13f-{ticker}-{latest_period}"
+        )
+        return {
+            "text": text[:600],
+            "source": self.SOURCE,
+            "url": dedup_url,
+            "reliability": self.RELIABILITY,
+        }
