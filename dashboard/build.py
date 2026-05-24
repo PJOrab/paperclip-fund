@@ -3174,6 +3174,39 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .sh-spark-td{display:none}
 }
 @media print{.sh-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Macro-Sensitivity (HED-150 Zyklus 209) — Bloomberg MARS-style stress matrix.
+   4 shock rows × per-position impact + book total. Red/green intensity = P&L mag. */
+.ms-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.ms-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.ms-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.ms-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.ms-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
+.ms-scenario{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:var(--s3);display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden}
+.ms-scenario-hdr{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ms-scenario-nm{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:700}
+.ms-scenario-shock{font-size:11px;color:var(--txt);font-weight:600;background:rgba(255,255,255,.06);border-radius:3px;padding:1px 6px}
+.ms-impact-val{font-size:30px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
+.ms-impact-pos{color:#3fb950}
+.ms-impact-neg{color:#f85149}
+.ms-impact-neu{color:var(--mut)}
+.ms-impact-sub{font-size:var(--fs-cap);color:var(--mut);margin-top:1px}
+.ms-bar{height:4px;border-radius:2px;margin-top:var(--s2)}
+.ms-bar-pos{background:linear-gradient(90deg,rgba(63,185,80,.15),rgba(63,185,80,.7))}
+.ms-bar-neg{background:linear-gradient(90deg,rgba(248,81,73,.7),rgba(248,81,73,.15))}
+.ms-breakdown{margin-top:var(--s2);display:flex;flex-direction:column;gap:3px;border-top:1px solid var(--line);padding-top:var(--s2)}
+.ms-bk-row{display:flex;align-items:center;justify-content:space-between;font-size:11px}
+.ms-bk-tk{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--txt);font-weight:600;min-width:44px}
+.ms-bk-dir{font-size:9.5px;color:var(--mut);margin-left:4px}
+.ms-bk-impact{font-variant-numeric:tabular-nums;font-weight:600}
+.ms-bk-impact-pos{color:#3fb950}
+.ms-bk-impact-neg{color:#f85149}
+.ms-disclaimer{margin-top:var(--s3);font-size:9.5px;color:var(--mut);line-height:1.4;padding:6px 10px;background:rgba(255,255,255,.03);border-radius:5px;border-left:2px solid var(--line)}
+@media(max-width:760px){
+  .ms-grid{grid-template-columns:1fr}
+  .ms-panel{padding:var(--s3)}
+  .ms-impact-val{font-size:24px}
+}
+@media print{.ms-panel{break-inside:avoid;page-break-inside:avoid}.ms-scenario{break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -6259,6 +6292,14 @@ main:focus{outline:none}
   <section aria-labelledby="h-sektorheat">
     <h2 id="h-sektorheat">Sektor-Heatmap <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Relative Strength · 1d / 5d / 30d</span></h2>
     <div id="sektor-heatmap" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:72%"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
+  </section>
+
+  <!-- Macro-Sensitivity (HED-150 Zyklus 209): Bloomberg MARS-style stress-test matrix.
+       4 shock scenarios × per-thesis impact → book-level P&L estimate.
+       Answers LP: "what happens to the book in a rate shock / vol spike / tech selloff?" -->
+  <section aria-labelledby="h-macrosens">
+    <h2 id="h-macrosens">Macro-Sensitivity <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Stress-Szenarien · Book P&amp;L Impact</span></h2>
+    <div id="macro-sens" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:65%"></div><div class="skel skel-line" style="width:82%"></div></div></div>
   </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
@@ -19699,6 +19740,198 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 })();
 
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
+// Macro-Sensitivity (HED-150 Zyklus 209): Bloomberg MARS-style stress-test matrix.
+// 4 macro shock scenarios × per-thesis impact → conviction-weighted book P&L estimate.
+// Scenarios: Rate Shock (+100bps), VIX Spike (+10pts), Dollar Surge (+3%), Tech Selloff (-15%).
+// Per-ticker sensitivities derived from beta (OLS from spark vs SPY) + sector hard-codes for
+// FX/rate sensitivity. Answers LP: "what happens to the book in a macro dislocation?"
+(function initMacroSens(){
+  const root=$("macro-sens"); if(!root) return;
+
+  // Get active thesis calls from track_record
+  const tr=D.track_record||{};
+  const active=(tr.theses||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+
+  // Build price map from sector_view
+  const priceMap={};
+  ((D.sector_view||{}).sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{
+    priceMap[t.ticker]=t;
+  }));
+  const benchSPY=((D.sector_view||{}).benchmarks||{}).SPY;
+
+  // For each call, compute beta from spark vs SPY spark (same length)
+  function calcBeta(tkSpark, spySpark){
+    if(!tkSpark||!spySpark||tkSpark.length<10||spySpark.length<10) return null;
+    const n=Math.min(tkSpark.length,spySpark.length);
+    const tk=tkSpark.slice(-n), spy=spySpark.slice(-n);
+    // Daily returns
+    const tkR=[], spyR=[];
+    for(let i=1;i<n;i++){
+      if(tk[i-1]&&spy[i-1]&&tk[i-1]!==0&&spy[i-1]!==0){
+        tkR.push((tk[i]-tk[i-1])/tk[i-1]);
+        spyR.push((spy[i]-spy[i-1])/spy[i-1]);
+      }
+    }
+    if(tkR.length<5) return null;
+    const meanX=spyR.reduce((a,b)=>a+b,0)/spyR.length;
+    const meanY=tkR.reduce((a,b)=>a+b,0)/tkR.length;
+    let cov=0, varX=0;
+    for(let i=0;i<tkR.length;i++){cov+=(spyR[i]-meanX)*(tkR[i]-meanY); varX+=(spyR[i]-meanX)**2;}
+    if(varX<1e-12) return null;
+    return cov/varX;
+  }
+
+  // Sector → approximate rate sensitivity (duration proxy) and FX sensitivity
+  // Positive = sector benefits from scenario, negative = hurt
+  const RATE_SENS={
+    "compute_semis": -0.45,    // growth/long-dur: rate up → multiple compression
+    "hyperscaler_bigtech": -0.40,
+    "ai_software": -0.55,      // highest duration multiple
+    "infra_networking": -0.30,
+    "robotics_auto": -0.35,
+    "energy_power": 0.25,      // real assets, rate rise reflates
+  };
+  const FX_SENS={
+    "compute_semis": -0.30,    // export-heavy (TSMC, NVDA global), USD up → revs hit
+    "hyperscaler_bigtech": -0.25,
+    "ai_software": -0.15,
+    "infra_networking": -0.20,
+    "robotics_auto": -0.35,
+    "energy_power": -0.10,
+  };
+
+  // Build per-call data
+  const calls=[];
+  active.forEach(t=>{
+    const tks=(t.tickers||[]).filter(s=>typeof s==="string"&&s.length>0);
+    if(!tks.length) return;
+    const primary=tks[0];
+    const sv=priceMap[primary];
+    if(!sv||!sv.spark||!benchSPY||!benchSPY.spark) return;
+
+    const beta=calcBeta(sv.spark, benchSPY.spark)??1.0;
+    const conv=Number(t.conviction??0.5);
+    const sign=(t.direction||"long").toLowerCase()==="short"?-1:1;
+
+    // Sector id lookup
+    let secId="ai_software";
+    for(const sec of (D.sector_view.sectors||[])){
+      if(sec.tickers.some(st=>st.ticker===primary)){secId=sec.id; break;}
+    }
+
+    calls.push({ticker:primary, beta, conv, sign, secId, price:sv.price??100, change_pct:sv.change_pct??0});
+  });
+
+  if(!calls.length){
+    root.innerHTML='<div class="panel ms-panel"><div class="ms-sub">Keine aktiven Calls — Stress-Szenarien nicht berechenbar. Theses werden nach dem nächsten Briefing-Lauf angezeigt.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+
+  // 4 stress scenarios
+  // Each scenario defines a shock and the sensitivity multiplier per call
+  // Book P&L = Σ conv_i × sign_i × ticker_shock_i  (conviction-weighted, direction-adjusted)
+  const totalConv=calls.reduce((s,c)=>s+c.conv,0)||1;
+
+  const scenarios=[
+    {
+      id:"rate_shock",
+      name:"Rate Shock",
+      shock:"+100 bps",
+      desc:"Fed/10Y yield jump · duration bleed",
+      impact(c){
+        // Rate: β × market impact + rate duration hit
+        const spyHit=-0.05;  // empirical: SPY ~-5% on 100bps surprise
+        const mktImpact=c.beta*spyHit*100;
+        const rateAdj=(RATE_SENS[c.secId]??-0.35)*10; // extra multiple compression
+        return (mktImpact + rateAdj) * c.sign;
+      }
+    },
+    {
+      id:"vix_spike",
+      name:"VIX Spike",
+      shock:"+10 pts",
+      desc:"Vol regime shift · risk-off rotation",
+      impact(c){
+        // VIX +10 → market down ~3-5%, high-beta names hit harder
+        const spyHit=-0.04;
+        const betaAmp=Math.min(c.beta,2.5);  // cap at 2.5× for fat-tail
+        return betaAmp*spyHit*100 * c.sign;
+      }
+    },
+    {
+      id:"usd_surge",
+      name:"Dollar Surge",
+      shock:"DXY +3%",
+      desc:"USD strength · FX headwinds on intl revs",
+      impact(c){
+        const fxHit=(FX_SENS[c.secId]??-0.20)*3;
+        const betaHit=c.beta*(-0.02)*100; // mild risk-off component
+        return (fxHit + betaHit) * c.sign;
+      }
+    },
+    {
+      id:"tech_selloff",
+      name:"Tech Selloff",
+      shock:"QQQ -15%",
+      desc:"AI/Tech rotation out · multiple compression",
+      impact(c){
+        // Use actual beta vs SPY; QQQ typically 1.3× SPY beta for tech names
+        const qqq=-15; const spyImplied=qqq/1.3;
+        return c.beta*(spyImplied/100)*100 * c.sign;
+      }
+    },
+  ];
+
+  const fmtImpact=v=>(v>=0?"+":"")+v.toFixed(1)+"%";
+  const impactCls=v=>v>0?"ms-impact-pos":v<0?"ms-impact-neg":"ms-impact-neu";
+  const bkCls=v=>v>0?"ms-bk-impact-pos":v<0?"ms-bk-impact-neg":"";
+
+  const scenHtml=scenarios.map(sc=>{
+    // Per-call impacts (conv-weighted)
+    const callImpacts=calls.map(c=>({
+      ticker:c.ticker,
+      dir:c.sign>0?"L":"S",
+      impact:sc.impact(c)*c.conv/totalConv,  // weighted contribution to book %
+      rawImpact:sc.impact(c),
+    })).sort((a,b)=>Math.abs(b.impact)-Math.abs(a.impact));
+
+    const bookTotal=callImpacts.reduce((s,c)=>s+c.impact,0);
+    const barW=Math.min(100, Math.abs(bookTotal)*4).toFixed(1); // scale 25% = full bar
+    const barCls=bookTotal>=0?"ms-bar ms-bar-pos":"ms-bar ms-bar-neg";
+
+    // Top 3 contributors
+    const top3=callImpacts.slice(0,3);
+    const bkRows=top3.map(c=>`<div class="ms-bk-row">
+      <span><span class="ms-bk-tk">${c.ticker}</span><span class="ms-bk-dir">${c.dir}</span></span>
+      <span class="ms-bk-impact ${bkCls(c.impact)}">${fmtImpact(c.impact)}</span>
+    </div>`).join("");
+
+    return `<div class="ms-scenario">
+      <div class="ms-scenario-hdr">
+        <span class="ms-scenario-nm">${sc.name}</span>
+        <span class="ms-scenario-shock">${sc.shock}</span>
+      </div>
+      <div class="ms-impact-val ${impactCls(bookTotal)}">${fmtImpact(bookTotal)}</div>
+      <div class="ms-impact-sub">Conv-gewichteter Book-Impact · ${calls.length} Calls · ${sc.desc}</div>
+      <div class="${barCls}" style="width:${barW}%"></div>
+      <div class="ms-breakdown">
+        ${bkRows}
+      </div>
+    </div>`;
+  }).join("");
+
+  root.innerHTML=`<div class="panel ms-panel">
+    <div class="ms-h">
+      <h3 class="ms-title">Macro Stress-Test Matrix</h3>
+    </div>
+    <div class="ms-sub">4 Schock-Szenarien · conviction-gewichteter Book-Impact. Beta aus 30-Tage-Regression vs SPY + Sektor-Zinsempfindlichkeit. LP-Frage: <b>"Was passiert mit dem Buch bei Makro-Stress?"</b></div>
+    <div class="ms-grid">${scenHtml}</div>
+    <div class="ms-disclaimer">Modell-Annahmen: lineare β-Approximation, empirische Sektor-Zinskoeff. Keine Nonlinearitäten, Liquiditäts- oder Spread-Effekte. Orientierungswert — kein Ersatz für Vollsimulation.</div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 // Sektor-Heatmap (HED-150 Zyklus 208): relative-strength matrix 1d/5d/30d.
 // Rows = sectors from sector_view, columns = 1d / 5d / 30d timeframes.
 // Each cell = equal-weight avg return for that bucket; coloured by magnitude.
