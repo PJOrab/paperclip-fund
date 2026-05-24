@@ -3029,6 +3029,40 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .ag-foot{grid-template-columns:repeat(2,1fr)}
 }
 @media print{.ag-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Volatility Contribution (HED-150 Zyklus 205) — per-position σ × weight.
+   "Which position is making the book volatile?" — risk-decomp companion to Z202 P&L. */
+.vc-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.vc-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.vc-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.vc-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.vc-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.vc-tbl thead th{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600;padding:3px 8px 6px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+.vc-tbl thead th:first-child{text-align:left;padding-left:0}
+.vc-tbl tbody td{font-size:var(--fs-sm);padding:8px;border-top:1px solid rgba(255,255,255,.05);text-align:right;vertical-align:middle;white-space:nowrap}
+.vc-tbl tbody td:first-child{text-align:left;padding-left:0}
+.vc-tk{font-weight:700;color:var(--txt);font-size:13px;letter-spacing:.03em}
+.vc-dir{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:2px 5px;border-radius:3px;font-weight:700;margin-left:6px;vertical-align:middle}
+.vc-dir-long{background:rgba(63,185,80,.12);color:#3fb950}
+.vc-dir-short{background:rgba(248,81,73,.12);color:#f85149}
+.vc-bar{position:relative;height:12px;background:var(--panel);border-radius:3px;overflow:hidden;border:1px solid var(--line)}
+.vc-bar-fill{position:absolute;top:0;bottom:0;left:0;background:linear-gradient(90deg,#58a6ff 0%,#e3b341 60%,#f0883e 100%);border-radius:3px}
+.vc-bar-fill-low{background:#58a6ff}
+.vc-bar-fill-mid{background:#e3b341}
+.vc-bar-fill-high{background:#f0883e}
+.vc-bar-fill-xhigh{background:#f85149}
+.vc-pos{color:#3fb950}.vc-neg{color:#f85149}.vc-mut{color:var(--mut)}
+.vc-foot{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s3);margin-top:var(--s3);padding-top:var(--s3);border-top:1px solid var(--line)}
+.vc-callout{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:var(--s2) var(--s3)}
+.vc-callout-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600;margin-bottom:3px}
+.vc-callout-val{font-size:16px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums;line-height:1.1}
+.vc-callout-sub{font-size:var(--fs-cap);color:var(--mut);margin-top:2px}
+.vc-empty{font-size:var(--fs-cap);color:var(--mut);padding:var(--s3) 0}
+@media(max-width:600px){
+  .vc-panel{padding:var(--s3)}
+  .vc-tbl thead th.vc-h-hm,.vc-tbl tbody td.vc-h-hm{display:none}
+  .vc-foot{grid-template-columns:repeat(2,1fr)}
+}
+@media print{.vc-panel{break-inside:avoid;page-break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -6085,6 +6119,13 @@ main:focus{outline:none}
   <section aria-labelledby="h-posaging">
     <h2 id="h-posaging" class="visually-hidden" style="position:absolute;left:-9999px">Position Aging & Score-Window</h2>
     <div id="pos-aging" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <!-- Volatility Contribution (HED-150 Zyklus 205): per-position σ × weight risk decomp.
+       Which position is making the book volatile? Risk-companion to Z202 P&L attribution. -->
+  <section aria-labelledby="h-volctr">
+    <h2 id="h-volctr" class="visually-hidden" style="position:absolute;left:-9999px">Volatility Contribution</h2>
+    <div id="vol-ctr" aria-live="polite" aria-busy="true"></div>
   </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
@@ -18765,6 +18806,142 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
         <div class="ag-callout-lbl">⚠ Late/Overdue</div>
         <div class="ag-callout-val" style="color:${(lateCount+overdueCount)>0?'#f0883e':'var(--txt)'}">${lateCount+overdueCount}</div>
         <div class="ag-callout-sub">${lateCount} late · ${overdueCount} überfällig</div>
+      </div>
+    </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
+// Volatility Contribution (HED-150 Zyklus 205): per-position σ × weight risk decomp.
+// For each active call: 30d realized annualized vol from spark, then vol-contribution =
+// weight × σ_ann. Sorted by contribution. Surfaces which position drives book volatility —
+// risk-side companion to Z202's P&L attribution. (Note: assumes positions are uncorrelated
+// for the sum; book σ from Z199 is the correct correlated answer — this view tells you
+// which calls dominate the marginal risk budget.)
+(function initVolCtr(){
+  const root=document.getElementById("vol-ctr");
+  if(!root) return;
+  const tr=D.track_record;
+  const sv=D.sector_view||{};
+  const sparkMap={};
+  (sv.sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{
+    if(t&&t.ticker&&Array.isArray(t.spark)) sparkMap[String(t.ticker).toUpperCase()]=t.spark;
+  }));
+  const active=((tr&&tr.theses)||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  // Realized 30d annualized vol from spark
+  const _vol=(sp)=>{
+    if(!Array.isArray(sp)||sp.length<3) return null;
+    const tail=sp.slice(Math.max(0,sp.length-31));
+    const r=[];
+    for(let i=1;i<tail.length;i++){
+      const p0=tail[i-1],p1=tail[i];
+      if(p0==null||p1==null||p0===0) continue;
+      r.push(p1/p0-1);
+    }
+    if(r.length<3) return null;
+    let m=0; r.forEach(v=>m+=v); m/=r.length;
+    let v=0; r.forEach(x=>v+=(x-m)*(x-m));
+    const sd=Math.sqrt(v/Math.max(1,r.length-1));
+    return sd*Math.sqrt(252)*100; // annualized %
+  };
+  const calls=active.map(t=>{
+    const tk=String((t.tickers||[])[0]||"").toUpperCase();
+    const sp=sparkMap[tk];
+    const vol=_vol(sp);
+    if(!tk||vol==null) return null;
+    return {tk, dir:(t.direction||"long").toLowerCase(), conv:t.conviction||0, vol};
+  }).filter(Boolean);
+  if(calls.length===0){
+    root.innerHTML='<div class="panel vc-panel"><div class="vc-empty">Vol-Contribution-Panel braucht Spark-Historie für Calls.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const totalConv=calls.reduce((a,c)=>a+c.conv,0)||1;
+  calls.forEach(c=>{
+    c.weight = c.conv/totalConv*100;
+    c.volCtr = c.weight/100 * c.vol; // additive (uncorrelated assumption)
+  });
+  calls.sort((a,b)=>b.volCtr-a.volCtr);
+  const sumVolCtr=calls.reduce((a,c)=>a+c.volCtr,0);
+  const maxVol=Math.max(0.5, ...calls.map(c=>c.vol));
+
+  // Vol band thresholds
+  const _volCls=(v)=>{
+    if(v<25) return "vc-bar-fill-low";
+    if(v<40) return "vc-bar-fill-mid";
+    if(v<60) return "vc-bar-fill-high";
+    return "vc-bar-fill-xhigh";
+  };
+  const _volLbl=(v)=>{
+    if(v<25) return "Low";
+    if(v<40) return "Mid";
+    if(v<60) return "High";
+    return "Extreme";
+  };
+
+  const _pct1=v=>v.toFixed(1)+"%";
+  const _wpct=v=>v.toFixed(1)+"%";
+
+  const rowsHtml=calls.map(c=>{
+    const dirCls=c.dir==="short"?"vc-dir-short":"vc-dir-long";
+    const dirLbl=c.dir==="short"?"S":"L";
+    const fillW=(c.vol/maxVol*100).toFixed(1);
+    const fillCls=_volCls(c.vol);
+    return `<tr>
+      <td>
+        <span class="vc-tk">${c.tk}</span>
+        <span class="vc-dir ${dirCls}">${dirLbl}</span>
+      </td>
+      <td class="vc-h-hm vc-mut">${_wpct(c.weight)}</td>
+      <td><b>${_pct1(c.vol)}</b><span class="vc-mut" style="font-size:9.5px;margin-left:3px">ann.</span></td>
+      <td class="vc-h-hm" style="width:30%;min-width:140px;padding-right:8px">
+        <div class="vc-bar"><div class="vc-bar-fill ${fillCls}" style="width:${fillW}%"></div></div>
+      </td>
+      <td class="vc-h-hm vc-mut">${_volLbl(c.vol)}</td>
+      <td><b>${_pct1(c.volCtr)}</b></td>
+    </tr>`;
+  }).join("");
+
+  // Aggregates
+  const topVol=calls.slice().sort((a,b)=>b.vol-a.vol)[0];
+  const topCtr=calls[0];
+  const lowVol=calls.slice().sort((a,b)=>a.vol-b.vol)[0];
+  const avgVol=calls.reduce((a,c)=>a+c.vol,0)/calls.length;
+
+  root.innerHTML=`<div class="panel vc-panel">
+    <div class="vc-h"><h3 class="vc-title">Volatility Contribution · 30d realized</h3></div>
+    <div class="vc-sub">Pro Position: realisierte 30d annualisierte Vol × Conv-Weight = Vol-Contribution. Sortiert nach Beitrag. <b>Welche Position macht das Buch volatil?</b> Risk-Side-Companion zu Z202 P&L-Attribution. (Aggregat-Sum nimmt unkorrelierte Positionen an — der echte Buch-σ aus Z199 reflektiert Korrelationen.)</div>
+    <table class="vc-tbl">
+      <thead><tr>
+        <th>Position</th>
+        <th class="vc-h-hm">Weight</th>
+        <th>σ ann.</th>
+        <th class="vc-h-hm" style="text-align:right">Vol-Bar</th>
+        <th class="vc-h-hm">Band</th>
+        <th>Contribution</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <div class="vc-foot">
+      <div class="vc-callout">
+        <div class="vc-callout-lbl">Avg Position σ</div>
+        <div class="vc-callout-val">${_pct1(avgVol)}<span class="vc-mut" style="font-size:11px;margin-left:2px">ann.</span></div>
+        <div class="vc-callout-sub">über ${calls.length} Calls</div>
+      </div>
+      <div class="vc-callout">
+        <div class="vc-callout-lbl">Highest σ Name</div>
+        <div class="vc-callout-val">${topVol.tk} · ${_pct1(topVol.vol)}</div>
+        <div class="vc-callout-sub">${_volLbl(topVol.vol)} band</div>
+      </div>
+      <div class="vc-callout">
+        <div class="vc-callout-lbl">Lowest σ Name</div>
+        <div class="vc-callout-val">${lowVol.tk} · ${_pct1(lowVol.vol)}</div>
+        <div class="vc-callout-sub">${_volLbl(lowVol.vol)} band</div>
+      </div>
+      <div class="vc-callout">
+        <div class="vc-callout-lbl">Top Vol Contributor</div>
+        <div class="vc-callout-val">${topCtr.tk} · ${_pct1(topCtr.volCtr)}</div>
+        <div class="vc-callout-sub">${(topCtr.volCtr/sumVolCtr*100).toFixed(0)}% des Risk-Budgets</div>
       </div>
     </div>
   </div>`;
