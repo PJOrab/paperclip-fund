@@ -2872,6 +2872,48 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .cm-cell-lbl{font-size:11px}
 }
 @media print{.cm-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Beta-Adjusted Alpha (HED-150 Zyklus 201) — OLS book-on-SPY regression.
+   Single most important LP question: is this alpha or levered beta?  */
+.ba-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.ba-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.ba-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.ba-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.ba-body{display:flex;gap:var(--s4);align-items:flex-start;flex-wrap:wrap}
+.ba-chart-wrap{flex:1 1 380px;min-width:300px;overflow:hidden}
+.ba-side{flex:1 1 240px;min-width:220px;display:flex;flex-direction:column;gap:var(--s3)}
+.ba-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--s2) var(--s3)}
+.ba-stat-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
+.ba-stat-val{font-size:22px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums;line-height:1.05;margin-top:2px}
+.ba-stat-val-pos{color:#3fb950}
+.ba-stat-val-neg{color:#f85149}
+.ba-stat-unit{font-size:11px;color:var(--mut);font-weight:500;margin-left:3px}
+.ba-stat-sub{font-size:var(--fs-cap);color:var(--mut);margin-top:2px;line-height:1.3}
+.ba-axis{stroke:rgba(139,148,158,.18);stroke-width:1}
+.ba-zero{stroke:rgba(139,148,158,.45);stroke-width:1;stroke-dasharray:3,3}
+.ba-axlbl{fill:var(--mut);font-size:10px;font-variant-numeric:tabular-nums}
+.ba-axttl{fill:var(--mut);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.ba-pt{fill:#58a6ff;stroke:var(--panel);stroke-width:0.8}
+.ba-pt-recent{fill:#e3b341;stroke:var(--panel);stroke-width:1.2}
+.ba-reg{stroke:#f85149;stroke-width:1.8;fill:none;stroke-dasharray:none;vector-effect:non-scaling-stroke}
+.ba-mkt{stroke:rgba(63,185,80,.45);stroke-width:1.2;fill:none;stroke-dasharray:4,3;vector-effect:non-scaling-stroke}
+.ba-leg{display:flex;gap:var(--s3);font-size:var(--fs-cap);color:var(--mut);flex-wrap:wrap;margin-top:var(--s2)}
+.ba-leg span{display:inline-flex;align-items:center;gap:5px}
+.ba-leg-line{display:inline-block;width:14px;height:2px;background:#f85149}
+.ba-leg-line.mkt{background:repeating-linear-gradient(to right,#3fb950 0,#3fb950 3px,transparent 3px,transparent 6px)}
+.ba-leg-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#58a6ff}
+.ba-leg-dot.recent{background:#e3b341}
+.ba-interp{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;padding:8px 10px;background:rgba(63,185,80,.06);border-left:2px solid #3fb950;border-radius:3px}
+.ba-interp.neg{background:rgba(248,81,73,.06);border-left-color:#f85149}
+.ba-interp.neu{background:rgba(88,166,255,.06);border-left-color:#58a6ff}
+.ba-interp b{color:var(--txt);font-weight:600}
+.ba-caveat{font-size:var(--fs-cap);color:var(--mut);padding:6px 10px;background:rgba(227,179,65,.06);border-left:2px solid #e3b341;border-radius:3px;line-height:1.4}
+.ba-caveat b{color:#e3b341;font-weight:600}
+.ba-empty{font-size:var(--fs-cap);color:var(--mut);padding:var(--s3) 0}
+@media(max-width:600px){
+  .ba-panel{padding:var(--s3)}
+  .ba-stat-val{font-size:18px}
+}
+@media print{.ba-panel{break-inside:avoid;page-break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -5900,6 +5942,13 @@ main:focus{outline:none}
   <section aria-labelledby="h-corrmtx">
     <h2 id="h-corrmtx" class="visually-hidden" style="position:absolute;left:-9999px">Position Correlation Matrix</h2>
     <div id="corr-mtx" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <!-- Beta-Adjusted Alpha (HED-150 Zyklus 201): OLS book-on-SPY regression.
+       Single most important LP question: is this alpha or levered beta? -->
+  <section aria-labelledby="h-betaalpha">
+    <h2 id="h-betaalpha" class="visually-hidden" style="position:absolute;left:-9999px">Beta-Adjusted Alpha</h2>
+    <div id="beta-alpha" aria-live="polite" aria-busy="true"></div>
   </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
@@ -17955,6 +18004,246 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
         </div>
         <div class="cm-interp">${interp}</div>
         ${highBlock}
+      </div>
+    </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
+// Beta-Adjusted Alpha (HED-150 Zyklus 201): OLS regression book_r = α + β·SPY_r + ε.
+// β = market sensitivity (beta to SPY). α (annualized) = Jensen's alpha — true excess return
+// after removing the SPY-beta tilt. R² = how much of book variance SPY explains. THE single
+// LP question: "is this alpha or just levered beta?" Pairs with Z196 cumulative alpha and
+// Z200 correlation matrix to give a full risk-adjusted picture.
+(function initBetaAlpha(){
+  const root=document.getElementById("beta-alpha");
+  if(!root) return;
+  const tr=D.track_record;
+  const sv=D.sector_view||{};
+  const spySpark=((sv.benchmarks||{}).SPY||{}).spark;
+  if(!Array.isArray(spySpark)||spySpark.length<3){
+    root.innerHTML='<div class="panel ba-panel"><div class="ba-empty">Beta-Alpha-Panel benötigt SPY-Spark im sector_view.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const sparkMap={};
+  (sv.sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{
+    if(t&&t.ticker&&Array.isArray(t.spark)) sparkMap[String(t.ticker).toUpperCase()]=t.spark;
+  }));
+  const active=((tr&&tr.theses)||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  const calls=active.map(t=>{
+    const tk=String((t.tickers||[])[0]||"").toUpperCase();
+    const sp=sparkMap[tk];
+    if(!tk||!sp||sp.length<2||t.baseline_price==null) return null;
+    let bestIdx=-1, bestDiff=Infinity;
+    sp.forEach((v,i)=>{
+      if(v==null) return;
+      const d=Math.abs(v-t.baseline_price)/t.baseline_price;
+      if(d<bestDiff){bestDiff=d; bestIdx=i;}
+    });
+    if(bestIdx<0||bestDiff>0.05) return null;
+    const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+    return {tk,spark:sp,eIdx:bestIdx,sign,conv:t.conviction||0,base:t.baseline_price};
+  }).filter(Boolean);
+  if(calls.length===0){
+    root.innerHTML='<div class="panel ba-panel"><div class="ba-empty">Beta-Alpha nicht verfügbar — keine Calls mit Spark-Historie passend zum Entry.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const eFirst=Math.min(...calls.map(c=>c.eIdx));
+  const bookSparkLen=Math.max(...calls.map(c=>c.spark.length));
+  const spyOffset=(spySpark.length-1)-(bookSparkLen-1);
+  // Build aggregate book %-cum-return curve and SPY %-cum-return curve over [eFirst..end]
+  const bookPct=[], spyPct=[];
+  const spyBase=spySpark[eFirst+spyOffset];
+  if(spyBase==null||!isFinite(spyBase)){
+    root.innerHTML='<div class="panel ba-panel"><div class="ba-empty">SPY-Inception-Wert fehlt — Spark-Alignment fehlgeschlagen.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  for(let idx=eFirst; idx<bookSparkLen; idx++){
+    let pSum=0, wSum=0;
+    calls.forEach(c=>{
+      if(idx<c.eIdx||idx>=c.spark.length) return;
+      const cur=c.spark[idx]; if(cur==null) return;
+      const pnl=(cur-c.base)/c.base*100*c.sign;
+      pSum+=c.conv*pnl; wSum+=c.conv;
+    });
+    bookPct.push(wSum>0?pSum/wSum:0);
+    const spyVal=spySpark[idx+spyOffset];
+    spyPct.push(spyVal!=null?((spyVal-spyBase)/spyBase*100):0);
+  }
+  // Daily returns (decimals) from cumulative %-curves
+  const N=bookPct.length;
+  if(N<3){
+    root.innerHTML='<div class="panel ba-panel"><div class="ba-empty">Beta-Alpha braucht ≥ 3 Datentage.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const bookR=[], spyR=[];
+  for(let i=1;i<N;i++){
+    const b0=1+bookPct[i-1]/100, b1=1+bookPct[i]/100;
+    const s0=1+spyPct[i-1]/100, s1=1+spyPct[i]/100;
+    bookR.push(b0>0?(b1/b0-1):0);
+    spyR.push(s0>0?(s1/s0-1):0);
+  }
+  const Nd=bookR.length;
+  if(Nd<2){
+    root.innerHTML='<div class="panel ba-panel"><div class="ba-empty">Beta-Alpha braucht ≥ 2 tägliche Returns.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  // OLS regression: book = α + β·SPY
+  let mB=0, mS=0;
+  for(let i=0;i<Nd;i++){mB+=bookR[i]; mS+=spyR[i];}
+  mB/=Nd; mS/=Nd;
+  let covBS=0, varS=0, varB=0;
+  for(let i=0;i<Nd;i++){
+    const dB=bookR[i]-mB, dS=spyR[i]-mS;
+    covBS+=dB*dS; varS+=dS*dS; varB+=dB*dB;
+  }
+  const beta = varS>0 ? covBS/varS : 0;
+  const alphaDaily = mB - beta*mS; // daily Jensen's alpha (intercept)
+  const alphaAnn = Math.pow(1+alphaDaily, 252) - 1; // annualized geometric
+  // R²
+  let ssRes=0;
+  for(let i=0;i<Nd;i++){
+    const pred=alphaDaily + beta*spyR[i];
+    const e=bookR[i]-pred;
+    ssRes+=e*e;
+  }
+  const ssTot=varB; // sum of squared deviations of book around its mean
+  const r2 = ssTot>0 ? Math.max(0, 1 - ssRes/ssTot) : 0;
+  // Correlation (signed) — useful supplementary stat
+  const corrBS = (varS>0 && varB>0) ? (covBS / Math.sqrt(varS*varB)) : 0;
+
+  // Build scatter chart
+  const W=520, H=300;
+  const pL=52, pR=14, pT=14, pB=42;
+  const pw=W-pL-pR, ph=H-pT-pB;
+  const allX=spyR.concat([0]), allY=bookR.concat([0]);
+  let xLo=Math.min(...allX), xHi=Math.max(...allX);
+  let yLo=Math.min(...allY), yHi=Math.max(...allY);
+  const xPad=(xHi-xLo)*0.12||0.005, yPad=(yHi-yLo)*0.12||0.005;
+  xLo-=xPad; xHi+=xPad; yLo-=yPad; yHi+=yPad;
+  const _mx=v=>pL+(v-xLo)/(xHi-xLo)*pw;
+  const _my=v=>pT+(yHi-v)/(yHi-yLo)*ph;
+  const xZero=_mx(0), yZero=_my(0);
+  // Regression line endpoints over visible x-range
+  const yAtX = x => alphaDaily + beta*x;
+  const reg1={x:xLo, y:yAtX(xLo)};
+  const reg2={x:xHi, y:yAtX(xHi)};
+  // Market line (β=1, α=0): book_r = spy_r
+  const mkt1={x:xLo, y:xLo};
+  const mkt2={x:xHi, y:xHi};
+
+  // Axis ticks: 3 on each axis incl. 0
+  const _ticks=(lo,hi)=>{
+    const step=(hi-lo)/4;
+    return [lo+step, lo+2*step, lo+3*step];
+  };
+  const xTicks=[0].concat(_ticks(xLo,xHi));
+  const yTicks=[0].concat(_ticks(yLo,yHi));
+  const _pct1=v=>(v>=0?"+":"")+(v*100).toFixed(1)+"%";
+
+  const xTickHtml=xTicks.map(t=>{
+    const x=_mx(t).toFixed(1);
+    return `<line class="ba-axis" x1="${x}" x2="${x}" y1="${pT}" y2="${pT+ph}" />
+            <text class="ba-axlbl" x="${x}" y="${(pT+ph+13).toFixed(1)}" text-anchor="middle">${_pct1(t)}</text>`;
+  }).join("");
+  const yTickHtml=yTicks.map(t=>{
+    const y=_my(t).toFixed(1);
+    return `<line class="ba-axis" x1="${pL}" x2="${pL+pw}" y1="${y}" y2="${y}" />
+            <text class="ba-axlbl" x="${pL-6}" y="${(parseFloat(y)+3).toFixed(1)}" text-anchor="end">${_pct1(t)}</text>`;
+  }).join("");
+
+  // Points — last point gold (most recent day)
+  const ptHtml=bookR.map((b,i)=>{
+    const x=_mx(spyR[i]).toFixed(1), y=_my(b).toFixed(1);
+    const cls=(i===Nd-1)?"ba-pt-recent":"ba-pt";
+    const r=(i===Nd-1)?4.2:3;
+    return `<circle class="${cls}" cx="${x}" cy="${y}" r="${r}"><title>Tag ${i+1} · SPY ${(spyR[i]*100).toFixed(2)}% · Book ${(b*100).toFixed(2)}%</title></circle>`;
+  }).join("");
+
+  const svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Beta-Adjusted Alpha — Book vs SPY scatter">
+    ${xTickHtml}${yTickHtml}
+    <line class="ba-zero" x1="${pL}" x2="${pL+pw}" y1="${yZero.toFixed(1)}" y2="${yZero.toFixed(1)}" />
+    <line class="ba-zero" x1="${xZero.toFixed(1)}" x2="${xZero.toFixed(1)}" y1="${pT}" y2="${pT+ph}" />
+    <line class="ba-mkt" x1="${_mx(mkt1.x).toFixed(1)}" y1="${_my(mkt1.y).toFixed(1)}" x2="${_mx(mkt2.x).toFixed(1)}" y2="${_my(mkt2.y).toFixed(1)}" />
+    <line class="ba-reg" x1="${_mx(reg1.x).toFixed(1)}" y1="${_my(reg1.y).toFixed(1)}" x2="${_mx(reg2.x).toFixed(1)}" y2="${_my(reg2.y).toFixed(1)}" />
+    ${ptHtml}
+    <text class="ba-axttl" x="${(pL+pw/2).toFixed(1)}" y="${H-6}" text-anchor="middle">SPY Daily Return</text>
+    <text class="ba-axttl" x="${-((pT+ph/2))}" y="13" transform="rotate(-90)" text-anchor="middle">Book Daily Return</text>
+  </svg>`;
+
+  // Interp
+  const _fmtBeta=b=>b.toFixed(2);
+  const _fmtAlpha=a=>(a>=0?"+":"")+(a*100).toFixed(1)+"%";
+  const _fmtR2=r=>(r*100).toFixed(0)+"%";
+  const alphaPos = alphaAnn>0.001;
+  const alphaNeg = alphaAnn<-0.001;
+  let interp, interpCls;
+  if(alphaPos && r2>=0.3){
+    interp = `<b>Echtes Alpha:</b> α=${_fmtAlpha(alphaAnn)} ann. nach Abzug der SPY-Exposition (β=${_fmtBeta(beta)}, R²=${_fmtR2(r2)}). Das Buch generiert messbar Excess Return.`;
+    interpCls="";
+  } else if(alphaPos){
+    interp = `<b>Alpha-Anschein, niedrige Aussagekraft:</b> α=${_fmtAlpha(alphaAnn)} ann., aber R²=${_fmtR2(r2)} bedeutet SPY erklärt nur einen kleinen Teil der Buch-Varianz — Stichprobe zu klein.`;
+    interpCls="neu";
+  } else if(alphaNeg){
+    interp = `<b>Kein Alpha:</b> α=${_fmtAlpha(alphaAnn)} ann. nach Beta-Adjustment — das Buch underperformt vs. eine passive SPY×β-Position.`;
+    interpCls="neg";
+  } else {
+    interp = `<b>Neutrales Alpha:</b> α≈0 — das Buch tracked SPY×β, kein nachweisbarer Skill.`;
+    interpCls="neu";
+  }
+  const betaInterp = beta>1.2 ? `Aggressive Beta-Tilt (β>1.2)` :
+                     beta>0.8 ? `Markt-ähnliches Beta` :
+                     beta>0.3 ? `Defensive Beta` :
+                     beta>-0.3 ? `Markt-neutral` :
+                     `Net-Short-Markt`;
+  const smallN = Nd<30;
+  const caveat = smallN
+    ? `<div class="ba-caveat"><b>Small-N:</b> Nur ${Nd} Datentage. β/α-Schätzungen sind statistisch wackelig — Konfidenz steigt nach 30+ Tagen.</div>`
+    : "";
+
+  root.innerHTML=`<div class="panel ba-panel">
+    <div class="ba-h"><h3 class="ba-title">Beta-Adjusted Alpha · OLS Book on SPY</h3></div>
+    <div class="ba-sub">OLS-Regression der täglichen Buch-Returns auf SPY-Returns: <b>book = α + β·SPY + ε</b>. β = Markt-Sensitivität, α = Jensen's Alpha (annualisiert). Die LP-Schlüsselfrage: Alpha oder geleveragetes Beta?</div>
+    <div class="ba-body">
+      <div class="ba-chart-wrap">
+        ${svg}
+        <div class="ba-leg">
+          <span><i class="ba-leg-dot"></i> Tag</span>
+          <span><i class="ba-leg-dot recent"></i> Heute</span>
+          <span><i class="ba-leg-line"></i> Regression (book on SPY)</span>
+          <span><i class="ba-leg-line mkt"></i> Markt (β=1, α=0)</span>
+        </div>
+      </div>
+      <div class="ba-side">
+        <div class="ba-stat-grid">
+          <div>
+            <div class="ba-stat-lbl">Beta (β)</div>
+            <div class="ba-stat-val">${_fmtBeta(beta)}</div>
+            <div class="ba-stat-sub">${betaInterp}</div>
+          </div>
+          <div>
+            <div class="ba-stat-lbl">Alpha (annualisiert)</div>
+            <div class="ba-stat-val ${alphaPos?'ba-stat-val-pos':(alphaNeg?'ba-stat-val-neg':'')}">${_fmtAlpha(alphaAnn)}<span class="ba-stat-unit">ann.</span></div>
+            <div class="ba-stat-sub">Jensen's α</div>
+          </div>
+          <div>
+            <div class="ba-stat-lbl">R² (Fit)</div>
+            <div class="ba-stat-val">${_fmtR2(r2)}</div>
+            <div class="ba-stat-sub">ρ(book,SPY) = ${corrBS.toFixed(2)}</div>
+          </div>
+          <div>
+            <div class="ba-stat-lbl">Sample</div>
+            <div class="ba-stat-val">${Nd}<span class="ba-stat-unit">Tage</span></div>
+            <div class="ba-stat-sub">${smallN?'< 30 → wackelig':'statistisch belastbar'}</div>
+          </div>
+        </div>
+        <div class="ba-interp ${interpCls}">${interp}</div>
+        ${caveat}
       </div>
     </div>
   </div>`;
