@@ -3093,6 +3093,56 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .bv-stat-val{font-size:16px}
 }
 @media print{.bv-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Risk Limits & Guardrails (HED-150 Zyklus 207) — institutional risk-control matrix.
+   6 tiles: max single position, max β, max corr, max DD, max vol-ctr, max sector conc.
+   Each shows limit, current, gauge, status: OK / Warning / Breach. */
+.rl-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.rl-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.rl-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.rl-headline{font-size:var(--fs-cap);font-weight:600}
+.rl-headline-ok{color:#3fb950}
+.rl-headline-warn{color:#e3b341}
+.rl-headline-breach{color:#f85149}
+.rl-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.rl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s3)}
+.rl-tile{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:var(--s3);display:flex;flex-direction:column;gap:6px;font-variant-numeric:tabular-nums;position:relative}
+.rl-tile-ok{border-color:rgba(63,185,80,.35)}
+.rl-tile-warn{border-color:rgba(227,179,65,.55)}
+.rl-tile-breach{border-color:rgba(248,81,73,.55);background:linear-gradient(135deg,rgba(248,81,73,.06),var(--panel2) 70%)}
+.rl-tile-h{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s2)}
+.rl-tile-nm{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:600}
+.rl-status{font-size:9px;text-transform:uppercase;letter-spacing:.07em;padding:2px 6px;border-radius:3px;font-weight:700}
+.rl-status-ok{background:rgba(63,185,80,.14);color:#3fb950}
+.rl-status-warn{background:rgba(227,179,65,.14);color:#e3b341}
+.rl-status-breach{background:rgba(248,81,73,.16);color:#f85149}
+.rl-vals{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:2px}
+.rl-cur{font-size:24px;font-weight:700;color:var(--txt);line-height:1.05}
+.rl-cur-ok{color:var(--txt)}
+.rl-cur-warn{color:#e3b341}
+.rl-cur-breach{color:#f85149}
+.rl-lim{font-size:var(--fs-cap);color:var(--mut)}
+.rl-lim b{color:var(--txt);font-weight:600}
+.rl-gauge{position:relative;height:8px;background:var(--panel);border-radius:3px;overflow:visible;border:1px solid var(--line);margin-top:6px}
+.rl-gauge-fill{position:absolute;top:0;bottom:0;left:0;border-radius:3px}
+.rl-gauge-fill-ok{background:#3fb950}
+.rl-gauge-fill-warn{background:#e3b341}
+.rl-gauge-fill-breach{background:#f85149}
+.rl-gauge-mark{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--mut);border-radius:1px}
+.rl-gauge-lbl{display:flex;justify-content:space-between;font-size:9.5px;color:var(--mut);margin-top:2px}
+.rl-driver{font-size:var(--fs-cap);color:var(--mut);margin-top:2px;line-height:1.35}
+.rl-driver b{color:var(--txt);font-weight:600}
+.rl-action{font-size:var(--fs-cap);color:#e3b341;font-weight:500;margin-top:4px;padding:5px 8px;background:rgba(227,179,65,.08);border-left:2px solid #e3b341;border-radius:3px;line-height:1.35}
+.rl-action-breach{color:#f85149;background:rgba(248,81,73,.08);border-left-color:#f85149}
+.rl-empty{font-size:var(--fs-cap);color:var(--mut);padding:var(--s3) 0}
+@media(max-width:760px){
+  .rl-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){
+  .rl-panel{padding:var(--s3)}
+  .rl-grid{grid-template-columns:1fr}
+  .rl-cur{font-size:20px}
+}
+@media print{.rl-panel{break-inside:avoid;page-break-inside:avoid}.rl-tile{break-inside:avoid;page-break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -6163,6 +6213,13 @@ main:focus{outline:none}
   <section aria-labelledby="h-betavol">
     <h2 id="h-betavol" class="visually-hidden" style="position:absolute;left:-9999px">Per-Name Beta-Vol Risk Profile</h2>
     <div id="beta-vol" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <!-- Risk Limits & Guardrails (HED-150 Zyklus 207): institutional risk-control matrix.
+       6 named limits, current value, gauge, status. The LP question: "what stops you from blowing up?" -->
+  <section aria-labelledby="h-risklim">
+    <h2 id="h-risklim" class="visually-hidden" style="position:absolute;left:-9999px">Risk Limits & Guardrails</h2>
+    <div id="risk-limits" aria-live="polite" aria-busy="true"></div>
   </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
@@ -19170,6 +19227,235 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
         <div class="bv-interp">${interp}</div>
       </div>
     </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
+// Risk Limits & Guardrails (HED-150 Zyklus 207): institutional risk-control matrix.
+// 6 named limits with threshold + current + gauge + status:
+//   1. Max single position weight (35%)
+//   2. Max gross book beta to SPY (1.50)
+//   3. Max pairwise correlation (0.85)
+//   4. Max drawdown floor (-12%)
+//   5. Max single-name vol contribution share (30%)
+//   6. Max sector concentration (50%)
+// Each tile colored OK / Warning (≥80% of limit) / Breach (>100% of limit). Headline
+// at top shows total breaches. Surfaces "what stops you from blowing up?"
+(function initRiskLimits(){
+  const root=document.getElementById("risk-limits");
+  if(!root) return;
+  const tr=D.track_record;
+  const sv=D.sector_view||{};
+  const sparkMap={}, sectorOfTk={};
+  (sv.sectors||[]).forEach(s=>{
+    const sName=s.name||s.id||"";
+    (s.tickers||[]).forEach(t=>{
+      if(t&&t.ticker){
+        const tk=String(t.ticker).toUpperCase();
+        if(Array.isArray(t.spark)) sparkMap[tk]=t.spark;
+        sectorOfTk[tk]=sName;
+      }
+    });
+  });
+  const spySpark=((sv.benchmarks||{}).SPY||{}).spark||null;
+  const active=((tr&&tr.theses)||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  if(active.length===0){
+    root.innerHTML='<div class="panel rl-panel"><div class="rl-empty">Risk-Limits-Panel braucht aktive Calls.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+
+  // Build per-call enriched view: weight, sparkR returns (30d), vol, sector
+  const totalConv=active.reduce((a,t)=>a+(t.conviction||0),0)||1;
+  const _retsFromTail=(sp,n)=>{
+    if(!Array.isArray(sp)||sp.length<3) return [];
+    const tail=sp.slice(Math.max(0,sp.length-n-1));
+    const r=[];
+    for(let i=1;i<tail.length;i++){
+      const p0=tail[i-1],p1=tail[i];
+      if(p0==null||p1==null||p0===0) continue;
+      r.push(p1/p0-1);
+    }
+    return r;
+  };
+  const spyR=spySpark?_retsFromTail(spySpark,31):[];
+  const calls=active.map(t=>{
+    const tk=String((t.tickers||[])[0]||"").toUpperCase();
+    const sp=sparkMap[tk]||null;
+    const sec=sectorOfTk[tk]||"—";
+    const conv=t.conviction||0;
+    const w=conv/totalConv*100;
+    const r30=sp?_retsFromTail(sp,31):[];
+    let vol=null, beta=null;
+    if(r30.length>=3){
+      let m=0; r30.forEach(v=>m+=v); m/=r30.length;
+      let varSum=0; r30.forEach(v=>varSum+=(v-m)*(v-m));
+      const sd=Math.sqrt(varSum/Math.max(1,r30.length-1));
+      vol=sd*Math.sqrt(252)*100;
+      // beta vs SPY (align tails)
+      if(spyR.length>=3){
+        const n=Math.min(r30.length,spyR.length);
+        const tk30=r30.slice(r30.length-n), spy30=spyR.slice(spyR.length-n);
+        let mS=0; spy30.forEach(v=>mS+=v); mS/=n;
+        let cov=0, varS=0;
+        for(let i=0;i<n;i++){
+          const dT=tk30[i]-m, dS=spy30[i]-mS;
+          cov+=dT*dS; varS+=dS*dS;
+        }
+        beta = varS>0 ? cov/varS : 0;
+      }
+    }
+    return {tk,sec,conv,w,vol,beta,sign:(t.direction||"").toLowerCase()==="short"?-1:1,sp};
+  });
+
+  // Limit 1: max single position weight
+  const topW=calls.slice().sort((a,b)=>b.w-a.w)[0];
+  // Limit 2: gross book beta
+  const bookBeta = calls.reduce((a,c)=>a+(c.beta||0)*(c.w/100)*(c.sign),0);
+  // Limit 3: max pairwise correlation
+  // (Need return arrays paired)
+  let maxCorr=0, maxCorrPair="—";
+  const _corr=(a,b)=>{
+    const n=Math.min(a.length,b.length);
+    if(n<2) return 0;
+    let mA=0,mB=0; for(let i=0;i<n;i++){mA+=a[i];mB+=b[i];}
+    mA/=n; mB/=n;
+    let cv=0,vA=0,vB=0;
+    for(let i=0;i<n;i++){const dA=a[i]-mA,dB=b[i]-mB; cv+=dA*dB; vA+=dA*dA; vB+=dB*dB;}
+    const d=Math.sqrt(vA*vB); return d>0?cv/d:0;
+  };
+  const retsByTk=calls.map(c=>c.sp?_retsFromTail(c.sp,31):[]);
+  for(let i=0;i<calls.length;i++){
+    for(let j=i+1;j<calls.length;j++){
+      if(retsByTk[i].length<3 || retsByTk[j].length<3) continue;
+      const minL=Math.min(retsByTk[i].length, retsByTk[j].length);
+      const a=retsByTk[i].slice(retsByTk[i].length-minL);
+      const b=retsByTk[j].slice(retsByTk[j].length-minL);
+      const r=_corr(a,b);
+      if(Math.abs(r)>Math.abs(maxCorr)){maxCorr=r; maxCorrPair=calls[i].tk+"↔"+calls[j].tk;}
+    }
+  }
+  // Limit 4: max drawdown — recompute aggregate book curve from cumulative %
+  // (Reuse simplified inline computation)
+  let maxDD=0, ddDriver="";
+  if(spySpark){
+    const bookSparkLen=Math.max(...calls.map(c=>c.sp?c.sp.length:0));
+    const eFirst=0; // assume all 30d-window aligned from earliest
+    const bookPct=[];
+    for(let idx=eFirst;idx<bookSparkLen;idx++){
+      let pSum=0,wSum=0;
+      calls.forEach(c=>{
+        if(!c.sp||idx>=c.sp.length||c.sp[0]==null) return;
+        const cur=c.sp[idx]; if(cur==null) return;
+        // use first valid spark price as baseline (since we don't have per-call eIdx aligned here)
+        let base=c.sp[Math.max(0,c.sp.length-31)];
+        if(base==null||base===0) return;
+        const pnl=(cur-base)/base*100*c.sign;
+        pSum+=c.conv*pnl; wSum+=c.conv;
+      });
+      if(wSum>0) bookPct.push(pSum/wSum);
+    }
+    const eq=bookPct.map(p=>1+p/100);
+    let curPeak=eq[0]||1;
+    eq.forEach(v=>{if(v>curPeak)curPeak=v; const d=(v-curPeak)/curPeak*100; if(d<maxDD) maxDD=d;});
+  }
+  // Limit 5: max single-name vol contribution share
+  const volCtrs=calls.filter(c=>c.vol!=null).map(c=>({tk:c.tk, ctr:c.vol*(c.w/100)}));
+  const sumVolCtr=volCtrs.reduce((a,c)=>a+c.ctr,0)||1;
+  const topVC=volCtrs.sort((a,b)=>b.ctr-a.ctr)[0]||{tk:"—",ctr:0};
+  const topVCShare = topVC.ctr/sumVolCtr*100;
+  // Limit 6: max sector concentration
+  const secMap={};
+  calls.forEach(c=>{secMap[c.sec]=(secMap[c.sec]||0)+c.w;});
+  const secList=Object.entries(secMap).sort((a,b)=>b[1]-a[1]);
+  const topSec = secList[0]||["—",0];
+
+  // Build limit definitions
+  const limits=[
+    {
+      nm:"Max Single Position",
+      lim:35, cur:topW.w, unit:"%",
+      driver:`Top: <b>${topW.tk}</b> · ${topW.w.toFixed(1)}%`,
+      action:"Skaliere herunter, falls Konzentration zur Risk-Konzentration wird.",
+    },
+    {
+      nm:"Max Gross Book β",
+      lim:1.5, cur:bookBeta, unit:"",
+      driver:`Aggregate book β vs SPY · ${calls.length} Calls`,
+      action:"Hohe β = Markt-Crash würde Buch überproportional treffen.",
+      reverseSign:false,
+    },
+    {
+      nm:"Max Pair-Correlation",
+      lim:0.85, cur:Math.abs(maxCorr), unit:"",
+      driver:`Höchstes Paar: <b>${maxCorrPair}</b> · ρ ${maxCorr.toFixed(2)}`,
+      action:"Hohe Korrelation = versteckte Faktor-Konzentration.",
+    },
+    {
+      nm:"Max Drawdown Floor",
+      lim:12, cur:Math.abs(maxDD), unit:"%",
+      driver:`Aktueller Max-DD seit Inception`,
+      action:"Bei Annäherung an Floor: De-Risking / Cash-Build.",
+    },
+    {
+      nm:"Max Vol-Concentration",
+      lim:30, cur:topVCShare, unit:"%",
+      driver:`Top: <b>${topVC.tk}</b> · ${topVCShare.toFixed(0)}% des Risk-Budgets`,
+      action:"Eine Position dominiert die Buch-Vol — Sizing prüfen.",
+    },
+    {
+      nm:"Max Sector Concentration",
+      lim:50, cur:topSec[1], unit:"%",
+      driver:`Top: <b>${topSec[0]}</b> · ${topSec[1].toFixed(0)}% Weight`,
+      action:"Sektor-Klumpen-Risk — falls Sektor leidet, leidet Buch.",
+    },
+  ];
+
+  let breachCount=0, warnCount=0;
+  const tilesHtml=limits.map(l=>{
+    const pct = l.lim>0 ? (l.cur/l.lim*100) : 0;
+    let status="ok", statusLbl="OK";
+    if(pct>=100){status="breach"; statusLbl="Breach"; breachCount++;}
+    else if(pct>=80){status="warn"; statusLbl="Warning"; warnCount++;}
+    const fillW=Math.min(100,Math.max(2,pct)).toFixed(1);
+    const _fmt=v=>l.unit==="%"?v.toFixed(1)+"%":v.toFixed(2);
+    const actCls = status==="breach" ? "rl-action rl-action-breach"
+                 : status==="warn"   ? "rl-action"
+                 : "";
+    const actBlock = (status==="breach"||status==="warn")
+      ? `<div class="${actCls}">${l.action}</div>` : "";
+    return `<div class="rl-tile rl-tile-${status}">
+      <div class="rl-tile-h">
+        <span class="rl-tile-nm">${l.nm}</span>
+        <span class="rl-status rl-status-${status}">${statusLbl}</span>
+      </div>
+      <div class="rl-vals">
+        <span class="rl-cur rl-cur-${status}">${_fmt(l.cur)}</span>
+        <span class="rl-lim">Limit <b>${_fmt(l.lim)}</b></span>
+      </div>
+      <div class="rl-gauge">
+        <div class="rl-gauge-fill rl-gauge-fill-${status}" style="width:${fillW}%"></div>
+        <div class="rl-gauge-mark" style="left:80%"></div>
+      </div>
+      <div class="rl-gauge-lbl"><span>0</span><span>Warn 80%</span><span>${_fmt(l.lim)}</span></div>
+      <div class="rl-driver">${l.driver}</div>
+      ${actBlock}
+    </div>`;
+  }).join("");
+
+  const okCount=limits.length-breachCount-warnCount;
+  const headlineCls = breachCount>0 ? "rl-headline-breach" : (warnCount>0 ? "rl-headline-warn" : "rl-headline-ok");
+  const headlineTxt = breachCount>0 ? `⚠ ${breachCount} Breach${breachCount===1?"":"es"} · ${warnCount} Warning${warnCount===1?"":"s"} · ${okCount} OK`
+                                    : warnCount>0 ? `${warnCount} Warning${warnCount===1?"":"s"} · ${okCount} OK · 0 Breaches`
+                                    : `✓ Alle ${limits.length} Limits OK`;
+
+  root.innerHTML=`<div class="panel rl-panel">
+    <div class="rl-h">
+      <h3 class="rl-title">Risk Limits & Guardrails</h3>
+      <span class="rl-headline ${headlineCls}">${headlineTxt}</span>
+    </div>
+    <div class="rl-sub">Sechs harte Limits, current vs. Schwelle. <b>"Was hält uns davon ab, das Buch zu sprengen?"</b> Gauge füllt von 0 bis Limit, Warning-Marker bei 80%. Status OK / Warning / Breach. Breaches & Warnings zeigen sofortige Action-Hints.</div>
+    <div class="rl-grid">${tilesHtml}</div>
   </div>`;
   root.setAttribute("aria-busy","false");
 })();
