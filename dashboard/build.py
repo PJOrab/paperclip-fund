@@ -3260,6 +3260,52 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .nx-panel{padding:var(--s3)}
 }
 @media print{.nx-panel{break-inside:avoid;page-break-inside:avoid}.nx-side{break-inside:avoid}}
+/* Watchlist Heat (HED-150 Zyklus 211) — pipeline ranking of non-thesis universe names.
+   Ranked heat cards: 5-signal score (momentum/trend/headroom/consensus/price action).
+   Top picks surface as potential entry candidates. */
+.wh-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.wh-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.wh-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.wh-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.wh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--s2)}
+.wh-card{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:var(--s3);display:flex;flex-direction:column;gap:5px;position:relative;overflow:hidden;transition:border-color .15s}
+.wh-card:hover{border-color:rgba(77,163,255,.4)}
+.wh-card-top{border-top:3px solid var(--accent)}
+.wh-card-high{border-top-color:#3fb950}
+.wh-card-mid{border-top-color:#e3b341}
+.wh-card-low{border-top-color:var(--line)}
+.wh-card-h{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+.wh-tk{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;font-size:15px;color:var(--txt);letter-spacing:.02em}
+.wh-score{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;padding:2px 7px;border-radius:12px;line-height:1.4}
+.wh-score-high{background:rgba(63,185,80,.15);color:#3fb950}
+.wh-score-mid{background:rgba(227,179,65,.14);color:#e3b341}
+.wh-score-low{background:rgba(139,148,158,.12);color:var(--mut)}
+.wh-price-row{display:flex;align-items:baseline;justify-content:space-between;font-size:12px;margin-top:1px}
+.wh-price{color:var(--txt);font-variant-numeric:tabular-nums;font-weight:600}
+.wh-chg{font-variant-numeric:tabular-nums;font-weight:600;font-size:11px}
+.wh-chg-up{color:#3fb950}
+.wh-chg-dn{color:#f85149}
+.wh-signals{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.wh-sig{font-size:9.5px;padding:1px 5px;border-radius:3px;font-weight:600;letter-spacing:.03em}
+.wh-sig-pos{background:rgba(63,185,80,.12);color:#3fb950;border:1px solid rgba(63,185,80,.2)}
+.wh-sig-warn{background:rgba(227,179,65,.10);color:#e3b341;border:1px solid rgba(227,179,65,.2)}
+.wh-sig-neg{background:rgba(248,81,73,.08);color:#f85149;border:1px solid rgba(248,81,73,.15)}
+.wh-sig-neu{background:rgba(139,148,158,.08);color:var(--mut);border:1px solid var(--line)}
+.wh-sec{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.wh-bar-wrap{margin-top:4px}
+.wh-bar-bg{height:3px;background:rgba(255,255,255,.06);border-radius:1.5px;overflow:hidden}
+.wh-bar-fill{height:100%;border-radius:1.5px;background:linear-gradient(90deg,var(--accent),rgba(63,185,80,.8))}
+.wh-legend{display:flex;gap:var(--s3);flex-wrap:wrap;margin-top:var(--s3);font-size:9.5px;color:var(--mut);align-items:center}
+.wh-legend-item{display:flex;align-items:center;gap:4px}
+.wh-legend-dot{width:8px;height:8px;border-radius:50%}
+@media(max-width:760px){
+  .wh-panel{padding:var(--s3)}
+  .wh-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){
+  .wh-grid{grid-template-columns:1fr}
+}
+@media print{.wh-panel{break-inside:avoid;page-break-inside:avoid}.wh-card{break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -6345,6 +6391,14 @@ main:focus{outline:none}
   <section aria-labelledby="h-sektorheat">
     <h2 id="h-sektorheat">Sektor-Heatmap <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Relative Strength · 1d / 5d / 30d</span></h2>
     <div id="sektor-heatmap" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:72%"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
+  </section>
+
+  <!-- Watchlist Heat (HED-150 Zyklus 211): pipeline view of non-thesis universe names.
+       Scores each out-of-thesis ticker across 5 signals → heat rank. Shows research
+       engine is scanning continuously; identifies names approaching entry criteria. -->
+  <section aria-labelledby="h-watchheat">
+    <h2 id="h-watchheat">Watchlist Heat <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Pipeline · Universe-Scan · Signal-Stärke</span></h2>
+    <div id="watchlist-heat" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:75%"></div><div class="skel skel-line" style="width:55%"></div><div class="skel skel-line" style="width:88%"></div></div></div>
   </section>
 
   <!-- Net/Gross Exposure (HED-150 Zyklus 210): canonical hedge-fund exposure disclosure.
@@ -19801,6 +19855,168 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 })();
 
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
+// Watchlist Heat (HED-150 Zyklus 211): pipeline ranking of non-thesis universe names.
+// For each ticker in sector_view that is NOT in an active thesis, compute a 5-signal
+// heat score: Momentum (RSI14), Trend (pct_vs_ma30), Headroom (% below 52w high),
+// Analyst consensus (rec → buy/hold/sell), Price action (1d change_pct).
+// Sorted by score DESC → top names are closest to entry criteria.
+(function initWatchlistHeat(){
+  const root=$("watchlist-heat"); if(!root) return;
+
+  const sv=D.sector_view||{};
+  const sectors=sv.sectors||[];
+  if(!sectors.length){
+    root.innerHTML='<div class="panel wh-panel"><div class="wh-sub">Sektor-Daten nicht verfügbar — sector_view.json fehlt.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+
+  // Build set of active thesis tickers (exclude from watchlist)
+  const tr=D.track_record||{};
+  const activeSet=new Set();
+  (tr.theses||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date)).forEach(t=>{
+    (t.tickers||[]).forEach(tk=>activeSet.add(tk.toUpperCase()));
+  });
+
+  // Build flat ticker list with sector context; skip active thesis tickers
+  const candidates=[];
+  sectors.forEach(s=>{
+    (s.tickers||[]).forEach(t=>{
+      if(activeSet.has(t.ticker)) return;  // already in book
+      if(t.price==null) return;
+      candidates.push({...t, secName:s.name, secId:s.id});
+    });
+  });
+
+  if(!candidates.length){
+    root.innerHTML='<div class="panel wh-panel"><div class="wh-sub">Keine Watchlist-Kandidaten — alle Universe-Ticker sind aktive Thesis-Calls.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+
+  // Score each candidate (0-100 per signal, weighted average)
+  function scoreCandidate(t){
+    const sigs=[];
+    let total=0;
+
+    // 1. Momentum: RSI14. Sweet spot 40–65 (healthy, not overbought).
+    //    <30 = oversold (potential reversal, +), 30-40 = building (+), 40-65 = momentum (+),
+    //    65-80 = hot, 80+ = overbought (−)
+    if(t.rsi14!=null){
+      let s;
+      if(t.rsi14<30) s=60;          // oversold, contrarian entry
+      else if(t.rsi14<40) s=70;     // building momentum
+      else if(t.rsi14<=65) s=85;    // healthy uptrend
+      else if(t.rsi14<=80) s=50;    // hot, watch for reversal
+      else s=20;                     // overbought
+      sigs.push({key:"RSI",val:t.rsi14.toFixed(0), score:s,
+        cls:s>=70?"wh-sig-pos":s>=50?"wh-sig-warn":"wh-sig-neg",
+        lbl:`RSI ${t.rsi14.toFixed(0)}`});
+      total+=s;
+    }
+
+    // 2. Trend: pct_vs_ma30. Above MA30 = trend intact.
+    //    +3% above MA → strong, 0-3% → near, -3-0 → testing support, < -3% → broken
+    if(t.pct_vs_ma30!=null){
+      const v=t.pct_vs_ma30;
+      let s=v>5?90:v>2?75:v>0?65:v>-3?45:v>-8?30:15;
+      sigs.push({key:"MA30",val:(v>=0?"+":"")+v.toFixed(1)+"%", score:s,
+        cls:s>=65?"wh-sig-pos":s>=45?"wh-sig-warn":"wh-sig-neg",
+        lbl:`vs MA30 ${v>=0?"+":""}${v.toFixed(1)}%`});
+      total+=s;
+    }
+
+    // 3. Headroom vs 52w high. <70% of high = value/entry zone, 70-85% = mid, 85%+ = near ATH
+    if(t.pct_of_52w_high!=null){
+      const v=t.pct_of_52w_high;
+      let s=v<60?80:v<70?75:v<80?65:v<90?50:35; // less = more room = better entry
+      sigs.push({key:"52W",val:v.toFixed(0)+"%", score:s,
+        cls:s>=65?"wh-sig-pos":s>=50?"wh-sig-warn":"wh-sig-neg",
+        lbl:`52w ${v.toFixed(0)}%`});
+      total+=s;
+    }
+
+    // 4. Analyst consensus: buy > hold > underperform
+    const rec=(t.consensus?.rec||"").toLowerCase();
+    if(rec){
+      let s=rec.includes("strong_buy")||rec==="buy"?80:
+             rec.includes("hold")||rec.includes("neutral")?50:
+             rec.includes("underperform")||rec.includes("sell")?20:50;
+      const recLabel=rec.replace(/_/g," ").toUpperCase().slice(0,4);
+      sigs.push({key:"REC",val:recLabel, score:s,
+        cls:s>=70?"wh-sig-pos":s>=45?"wh-sig-warn":"wh-sig-neg",
+        lbl:`Rec: ${recLabel}`});
+      total+=s;
+    }
+
+    // 5. Price action 1d: >2% up = momentum, -2–+2 = neutral, <-2% = pressure
+    if(t.change_pct!=null){
+      const v=t.change_pct;
+      let s=v>3?85:v>1?70:v>-1?55:v>-3?35:20;
+      sigs.push({key:"1d",val:(v>=0?"+":"")+v.toFixed(1)+"%", score:s,
+        cls:s>=70?"wh-sig-pos":s>=45?"wh-sig-warn":"wh-sig-neg",
+        lbl:`1d ${v>=0?"+":""}${v.toFixed(1)}%`});
+      total+=s;
+    }
+
+    const avgScore=sigs.length ? total/sigs.length : 0;
+    return {sigs, avgScore: Math.round(avgScore)};
+  }
+
+  const scored=candidates.map(t=>{
+    const {sigs, avgScore}=scoreCandidate(t);
+    return {...t, sigs, avgScore};
+  }).sort((a,b)=>b.avgScore-a.avgScore);
+
+  // Show top 12 to keep layout manageable
+  const shown=scored.slice(0,12);
+  const maxScore=Math.max(...shown.map(t=>t.avgScore),1);
+
+  const fmt=v=>(v>=0?"+":"")+v.toFixed(1)+"%";
+
+  const cardsHtml=shown.map((t,i)=>{
+    const tier=t.avgScore>=70?"high":t.avgScore>=50?"mid":"low";
+    const topBadge=i<3?"wh-card-top":"";
+    const chgCls=t.change_pct>=0?"wh-chg-up":"wh-chg-dn";
+    const barW=(t.avgScore/maxScore*100).toFixed(1);
+    const sigsHtml=t.sigs.map(s=>`<span class="wh-sig ${s.cls}">${s.lbl}</span>`).join("");
+    return `<div class="wh-card ${topBadge} wh-card-${tier}" role="listitem">
+      <div class="wh-card-h">
+        <span class="wh-tk">${t.ticker}</span>
+        <span class="wh-score wh-score-${tier}">${t.avgScore}</span>
+      </div>
+      <div class="wh-price-row">
+        <span class="wh-price">$${t.price!=null?t.price.toFixed(2):"—"}</span>
+        ${t.change_pct!=null?`<span class="wh-chg ${chgCls}">${fmt(t.change_pct)}</span>`:""}
+      </div>
+      <div class="wh-sec">${t.secName||t.secId||""}</div>
+      <div class="wh-signals">${sigsHtml}</div>
+      <div class="wh-bar-wrap"><div class="wh-bar-bg"><div class="wh-bar-fill" style="width:${barW}%"></div></div></div>
+    </div>`;
+  }).join("");
+
+  const topPick=shown[0];
+  const topPickSummary=topPick
+    ? `Top-Kandidat: <b>${topPick.ticker}</b> · Score ${topPick.avgScore}/100 · ${topPick.sigs.filter(s=>s.score>=70).map(s=>s.lbl).slice(0,2).join(", ") || "—"}`
+    : "";
+
+  root.innerHTML=`<div class="panel wh-panel">
+    <div class="wh-h">
+      <h3 class="wh-title">Watchlist Pipeline</h3>
+      <span style="font-size:9.5px;color:var(--mut)">${scored.length} Kandidaten · ${activeSet.size} im Buch</span>
+    </div>
+    <div class="wh-sub">Universe-Ticker ohne aktive Thesis, nach Signal-Stärke gerankt. Score 0–100 aus 5 Signals: RSI-Momentum · MA30-Trend · 52w-Headroom · Analyst-Konsens · Price-Action. <b>Top-Picks = nächste Kandidaten für Thesis-Initiation.</b></div>
+    <div class="wh-grid" role="list">${cardsHtml}</div>
+    ${topPickSummary?`<div style="margin-top:var(--s3);padding:8px 12px;background:rgba(77,163,255,.06);border-left:3px solid var(--accent);border-radius:5px;font-size:var(--fs-cap)">${topPickSummary}</div>`:""}
+    <div class="wh-legend">
+      <span class="wh-legend-item"><span class="wh-legend-dot" style="background:#3fb950"></span>Score ≥70 · Starker Kandidat</span>
+      <span class="wh-legend-item"><span class="wh-legend-dot" style="background:#e3b341"></span>Score 50–69 · Beobachten</span>
+      <span class="wh-legend-item"><span class="wh-legend-dot" style="background:var(--line)"></span>Score &lt;50 · Kein Signal</span>
+    </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 // Net/Gross Exposure (HED-150 Zyklus 210): canonical hedge-fund exposure disclosure.
 // First question every LP/allocator asks: "what's your net long/short exposure to the tape?"
 // Conv-weighted long/short stacked bar + KPI strip (Long%, Short%, Net%, Gross%, L/S Ratio).
