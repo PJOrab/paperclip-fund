@@ -3063,6 +3063,36 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .vc-foot{grid-template-columns:repeat(2,1fr)}
 }
 @media print{.vc-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Per-Name Beta-Vol Risk Profile (HED-150 Zyklus 206) — scatter β × σ per call.
+   Granular per-name risk profile: idiosyncratic vs market-amplifier quadrants.  */
+.bv-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.bv-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.bv-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.bv-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.bv-body{display:flex;gap:var(--s4);align-items:flex-start;flex-wrap:wrap}
+.bv-chart-wrap{flex:1 1 380px;min-width:300px;overflow:hidden}
+.bv-side{flex:1 1 220px;min-width:200px;display:flex;flex-direction:column;gap:var(--s3)}
+.bv-axis{stroke:rgba(139,148,158,.18);stroke-width:1}
+.bv-quadline{stroke:rgba(139,148,158,.45);stroke-width:1;stroke-dasharray:3,3}
+.bv-axlbl{fill:var(--mut);font-size:10px;font-variant-numeric:tabular-nums}
+.bv-axttl{fill:var(--mut);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.bv-quadlbl{fill:rgba(139,148,158,.55);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;text-anchor:middle}
+.bv-dot{stroke:var(--panel);stroke-width:1.4}
+.bv-dot-long{fill:#3fb950}
+.bv-dot-short{fill:#f85149}
+.bv-tklbl{fill:var(--txt);font-size:11px;font-weight:700;letter-spacing:.04em}
+.bv-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--s2) var(--s3)}
+.bv-stat-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
+.bv-stat-val{font-size:18px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums;line-height:1.1;margin-top:1px}
+.bv-stat-sub{font-size:var(--fs-cap);color:var(--mut);margin-top:1px}
+.bv-interp{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;padding:8px 10px;background:rgba(88,166,255,.05);border-left:2px solid #58a6ff;border-radius:3px}
+.bv-interp b{color:var(--txt);font-weight:600}
+.bv-empty{font-size:var(--fs-cap);color:var(--mut);padding:var(--s3) 0}
+@media(max-width:600px){
+  .bv-panel{padding:var(--s3)}
+  .bv-stat-val{font-size:16px}
+}
+@media print{.bv-panel{break-inside:avoid;page-break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -6126,6 +6156,13 @@ main:focus{outline:none}
   <section aria-labelledby="h-volctr">
     <h2 id="h-volctr" class="visually-hidden" style="position:absolute;left:-9999px">Volatility Contribution</h2>
     <div id="vol-ctr" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <!-- Per-Name Beta-Vol Risk Profile (HED-150 Zyklus 206): scatter β × σ per call.
+       Granular per-name risk profile — idiosyncratic vs market-amplifier quadrants. -->
+  <section aria-labelledby="h-betavol">
+    <h2 id="h-betavol" class="visually-hidden" style="position:absolute;left:-9999px">Per-Name Beta-Vol Risk Profile</h2>
+    <div id="beta-vol" aria-live="polite" aria-busy="true"></div>
   </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
@@ -18942,6 +18979,195 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
         <div class="vc-callout-lbl">Top Vol Contributor</div>
         <div class="vc-callout-val">${topCtr.tk} · ${_pct1(topCtr.volCtr)}</div>
         <div class="vc-callout-sub">${(topCtr.volCtr/sumVolCtr*100).toFixed(0)}% des Risk-Budgets</div>
+      </div>
+    </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
+// Per-Name Beta-Vol Risk Profile (HED-150 Zyklus 206): scatter β × σ per call.
+// Computes 30d realized annualized σ and β-to-SPY individually for each ticker,
+// then plots on a 2D scatter with quadrants split at β=1 and at avg-σ.
+//   - High-β + High-σ = Market amplifier (high-octane long-tech)
+//   - Low-β + High-σ  = Idiosyncratic (alpha territory)
+//   - High-β + Low-σ  = Market beta carrier
+//   - Low-β + Low-σ   = Sleeper / defensive
+// Bridges Z201's aggregate book β with Z205's per-name vol contribution.
+(function initBetaVol(){
+  const root=document.getElementById("beta-vol");
+  if(!root) return;
+  const tr=D.track_record;
+  const sv=D.sector_view||{};
+  const spySpark=((sv.benchmarks||{}).SPY||{}).spark;
+  if(!Array.isArray(spySpark)||spySpark.length<5){
+    root.innerHTML='<div class="panel bv-panel"><div class="bv-empty">Beta-Vol-Panel braucht SPY-Spark im sector_view.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const sparkMap={};
+  (sv.sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{
+    if(t&&t.ticker&&Array.isArray(t.spark)) sparkMap[String(t.ticker).toUpperCase()]=t.spark;
+  }));
+  const active=((tr&&tr.theses)||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  // SPY tail returns over last 30 days
+  const _retsFromTail=(sp,n)=>{
+    if(!Array.isArray(sp)||sp.length<3) return [];
+    const tail=sp.slice(Math.max(0,sp.length-n-1));
+    const r=[];
+    for(let i=1;i<tail.length;i++){
+      const p0=tail[i-1],p1=tail[i];
+      if(p0==null||p1==null||p0===0) continue;
+      r.push(p1/p0-1);
+    }
+    return r;
+  };
+  const window=31; // up to 30 returns
+  const spyR=_retsFromTail(spySpark, window);
+  if(spyR.length<3){
+    root.innerHTML='<div class="panel bv-panel"><div class="bv-empty">SPY-Returns < 3 — Beta-Schätzung nicht möglich.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const calls=active.map(t=>{
+    const tk=String((t.tickers||[])[0]||"").toUpperCase();
+    const sp=sparkMap[tk];
+    if(!tk||!Array.isArray(sp)||sp.length<3) return null;
+    const tkR=_retsFromTail(sp, window);
+    // Align by tail length: trim both to min
+    const n=Math.min(tkR.length, spyR.length);
+    if(n<3) return null;
+    const tk30=tkR.slice(tkR.length-n);
+    const spy30=spyR.slice(spyR.length-n);
+    // σ ann
+    let m=0; tk30.forEach(v=>m+=v); m/=n;
+    let varSum=0; tk30.forEach(v=>varSum+=(v-m)*(v-m));
+    const sd=Math.sqrt(varSum/Math.max(1,n-1));
+    const volAnn=sd*Math.sqrt(252)*100;
+    // β via OLS slope
+    let mS=0; spy30.forEach(v=>mS+=v); mS/=n;
+    let cov=0, varS=0;
+    for(let i=0;i<n;i++){
+      const dT=tk30[i]-m, dS=spy30[i]-mS;
+      cov+=dT*dS; varS+=dS*dS;
+    }
+    const beta = varS>0 ? cov/varS : 0;
+    return {tk, dir:(t.direction||"long").toLowerCase(), conv:t.conviction||0, vol:volAnn, beta, n};
+  }).filter(Boolean);
+  if(calls.length===0){
+    root.innerHTML='<div class="panel bv-panel"><div class="bv-empty">Beta-Vol nicht verfügbar — keine Calls mit Spark-Historie.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const Ndays=Math.max(...calls.map(c=>c.n));
+
+  // Quadrant centers: β=1 vertical; σ at avg-vol horizontal
+  const avgVol=calls.reduce((a,c)=>a+c.vol,0)/calls.length;
+  const avgBeta=calls.reduce((a,c)=>a+c.beta,0)/calls.length;
+
+  // SVG geometry
+  const W=540, H=360;
+  const pL=58, pR=20, pT=28, pB=46;
+  const pw=W-pL-pR, ph=H-pT-pB;
+  const betas=calls.map(c=>c.beta), vols=calls.map(c=>c.vol);
+  let xLo=Math.min(0, Math.min(...betas)), xHi=Math.max(2, Math.max(...betas));
+  let yLo=Math.min(0, Math.min(...vols)*0.85), yHi=Math.max(50, Math.max(...vols)*1.12);
+  // Pad
+  const xPad=(xHi-xLo)*0.08, yPad=(yHi-yLo)*0.05;
+  xLo-=xPad; xHi+=xPad; yLo=Math.max(0,yLo-yPad); yHi+=yPad;
+  const _mx=v=>pL+(v-xLo)/(xHi-xLo)*pw;
+  const _my=v=>pT+(yHi-v)/(yHi-yLo)*ph;
+  const xBeta1=_mx(1), yAvgVol=_my(avgVol);
+  // Ticks
+  const xTicks=[0, 0.5, 1, 1.5, 2].filter(t=>t>=xLo && t<=xHi);
+  const yTicks=[20, 30, 40, 50, 60].filter(t=>t>=yLo && t<=yHi);
+  const xTickHtml=xTicks.map(t=>{
+    const x=_mx(t).toFixed(1);
+    return `<line class="bv-axis" x1="${x}" x2="${x}" y1="${pT}" y2="${pT+ph}" />
+            <text class="bv-axlbl" x="${x}" y="${(pT+ph+13).toFixed(1)}" text-anchor="middle">${t.toFixed(1)}</text>`;
+  }).join("");
+  const yTickHtml=yTicks.map(t=>{
+    const y=_my(t).toFixed(1);
+    return `<line class="bv-axis" x1="${pL}" x2="${pL+pw}" y1="${y}" y2="${y}" />
+            <text class="bv-axlbl" x="${pL-6}" y="${(parseFloat(y)+3).toFixed(1)}" text-anchor="end">${t}%</text>`;
+  }).join("");
+
+  // Quadrant labels (positioned in centers of each quadrant)
+  const _qCenter=(xCenter,yCenter,dx,dy)=>({x:xCenter+dx, y:yCenter+dy});
+  const qHi=(yAvgVol-pT)/2, qLo=(pT+ph-yAvgVol)/2;
+  const qLft=(xBeta1-pL)/2, qRgt=(pL+pw-xBeta1)/2;
+  const qLabels=`
+    <text class="bv-quadlbl" x="${(pL+qLft).toFixed(1)}" y="${(pT+qHi+5).toFixed(1)}">Idiosynkratisch</text>
+    <text class="bv-quadlbl" x="${(xBeta1+qRgt).toFixed(1)}" y="${(pT+qHi+5).toFixed(1)}">Market Amplifier</text>
+    <text class="bv-quadlbl" x="${(pL+qLft).toFixed(1)}" y="${(yAvgVol+qLo+5).toFixed(1)}">Sleeper</text>
+    <text class="bv-quadlbl" x="${(xBeta1+qRgt).toFixed(1)}" y="${(yAvgVol+qLo+5).toFixed(1)}">Market Beta</text>`;
+
+  // Dots + ticker labels (offset slightly so they don't overlap markers)
+  const dotsHtml=calls.map(c=>{
+    const x=_mx(c.beta).toFixed(1), y=_my(c.vol).toFixed(1);
+    const r=Math.max(4, Math.min(10, 4+c.conv*8)); // size by conviction (0.4 → 7.2, 0.7 → 9.6)
+    const dotCls=c.dir==="short"?"bv-dot-short":"bv-dot-long";
+    return `<g>
+      <circle class="bv-dot ${dotCls}" cx="${x}" cy="${y}" r="${r.toFixed(1)}"><title>${c.tk} · β=${c.beta.toFixed(2)} · σ=${c.vol.toFixed(1)}% · conv ${c.conv.toFixed(2)} · n=${c.n}d</title></circle>
+      <text class="bv-tklbl" x="${x}" y="${(parseFloat(y)-r-4).toFixed(1)}" text-anchor="middle">${c.tk}</text>
+    </g>`;
+  }).join("");
+
+  const svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Per-Name Beta-Vol Risk Profile">
+    ${xTickHtml}${yTickHtml}
+    <line class="bv-quadline" x1="${xBeta1.toFixed(1)}" x2="${xBeta1.toFixed(1)}" y1="${pT}" y2="${pT+ph}" />
+    <line class="bv-quadline" x1="${pL}" x2="${pL+pw}" y1="${yAvgVol.toFixed(1)}" y2="${yAvgVol.toFixed(1)}" />
+    ${qLabels}
+    ${dotsHtml}
+    <text class="bv-axttl" x="${(pL+pw/2).toFixed(1)}" y="${H-6}" text-anchor="middle">Beta vs SPY</text>
+    <text class="bv-axttl" x="${-((pT+ph/2))}" y="13" transform="rotate(-90)" text-anchor="middle">σ ann. (30d realized)</text>
+    <text class="bv-axlbl" x="${(xBeta1+3).toFixed(1)}" y="${(pT+12).toFixed(1)}" text-anchor="start">β=1</text>
+    <text class="bv-axlbl" x="${(pL+pw-3).toFixed(1)}" y="${(yAvgVol-4).toFixed(1)}" text-anchor="end">σ avg ${avgVol.toFixed(0)}%</text>
+  </svg>`;
+
+  // Top stats
+  const highBeta=calls.slice().sort((a,b)=>b.beta-a.beta)[0];
+  const lowBeta=calls.slice().sort((a,b)=>a.beta-b.beta)[0];
+  const highVol=calls.slice().sort((a,b)=>b.vol-a.vol)[0];
+  // Idiosyncratic name: low beta + high vol
+  const idio=calls.slice().sort((a,b)=>(b.vol-avgVol)-(a.vol-avgVol)+((a.beta-1)-(b.beta-1)))[0];
+  // Most market-amplifying: high beta + high vol
+  const amp=calls.slice().sort((a,b)=>(b.vol-avgVol+b.beta-1)-(a.vol-avgVol+a.beta-1))[0];
+
+  const interp = amp && amp.beta>1.1 && amp.vol>avgVol
+    ? `<b>${amp.tk}</b> ist die "Market-Amplifier"-Position: β ${amp.beta.toFixed(2)} und σ ${amp.vol.toFixed(0)}% — bei Markt-Drawdowns trifft sie das Buch überproportional.`
+    : (idio && idio.beta<0.9 && idio.vol>avgVol)
+      ? `<b>${idio.tk}</b> ist idiosynkratisch (β ${idio.beta.toFixed(2)}, σ ${idio.vol.toFixed(0)}%) — bewegt sich unabhängig von SPY, alpha-Territorium.`
+      : `Alle Positionen liegen in einem engen β-σ-Band — diversifikation kommt über Carry-Differenz, nicht über Risikoprofil.`;
+
+  root.innerHTML=`<div class="panel bv-panel">
+    <div class="bv-h"><h3 class="bv-title">Per-Name Beta-Vol Risk Profile · 30d</h3></div>
+    <div class="bv-sub">Pro Call: individueller β vs SPY und annualisierte σ über die letzten ${Ndays} Handelstage. Vertical Split bei β=1 (Markt-Sensitivität), Horizontal Split bei Avg-σ. Dot-Size = Conviction. Quadranten: <b>Idiosynkratisch</b> (low-β + high-σ = Alpha-Territory) / <b>Market Amplifier</b> (high-β + high-σ) / <b>Sleeper</b> (low-β + low-σ) / <b>Market Beta</b> (high-β + low-σ).</div>
+    <div class="bv-body">
+      <div class="bv-chart-wrap">${svg}</div>
+      <div class="bv-side">
+        <div class="bv-stat-grid">
+          <div>
+            <div class="bv-stat-lbl">Avg Beta</div>
+            <div class="bv-stat-val">${avgBeta.toFixed(2)}</div>
+            <div class="bv-stat-sub">über ${calls.length} Calls</div>
+          </div>
+          <div>
+            <div class="bv-stat-lbl">Avg σ ann.</div>
+            <div class="bv-stat-val">${avgVol.toFixed(1)}%</div>
+            <div class="bv-stat-sub">30d realized</div>
+          </div>
+          <div>
+            <div class="bv-stat-lbl">Highest β</div>
+            <div class="bv-stat-val">${highBeta.tk} · ${highBeta.beta.toFixed(2)}</div>
+            <div class="bv-stat-sub">σ ${highBeta.vol.toFixed(0)}%</div>
+          </div>
+          <div>
+            <div class="bv-stat-lbl">Lowest β</div>
+            <div class="bv-stat-val">${lowBeta.tk} · ${lowBeta.beta.toFixed(2)}</div>
+            <div class="bv-stat-sub">σ ${lowBeta.vol.toFixed(0)}%</div>
+          </div>
+        </div>
+        <div class="bv-interp">${interp}</div>
       </div>
     </div>
   </div>`;
