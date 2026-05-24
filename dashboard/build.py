@@ -3447,6 +3447,41 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 }
 @media(max-width:480px){.rpc-panel{padding:var(--s2)}}
 @media print{.rpc-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Performance Attribution (HED-150 Zyklus 217): per-sector P&L contribution breakdown.
+   Brinson-style: total return decomposed by sector. Table + horizontal bar chart.
+   Uses D.closed_trades. Answers LP question: sector bet vs stock selection? */
+.pfa-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.pfa-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.pfa-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.pfa-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.pfa-body{display:flex;flex-wrap:wrap;gap:var(--s4);align-items:flex-start}
+.pfa-bars{flex:0 0 260px;display:flex;flex-direction:column;gap:6px}
+.pfa-bar-row{display:flex;align-items:center;gap:6px}
+.pfa-bar-label{font-size:var(--fs-cap);color:var(--mut);min-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.pfa-bar-track{flex:1;height:10px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;position:relative}
+.pfa-bar-fill-pos{height:100%;border-radius:3px;background:linear-gradient(90deg,rgba(63,185,80,.5),rgba(63,185,80,.75));transition:width .4s ease}
+.pfa-bar-fill-neg{height:100%;border-radius:3px;background:linear-gradient(90deg,rgba(248,81,73,.5),rgba(248,81,73,.75));transition:width .4s ease}
+.pfa-bar-val{font-size:var(--fs-cap);font-variant-numeric:tabular-nums;font-weight:700;min-width:42px;text-align:right}
+.pfa-bar-val-pos{color:#3fb950}.pfa-bar-val-neg{color:#f85149}
+.pfa-table-wrap{flex:1;min-width:300px;overflow-x:auto}
+.pfa-table{width:100%;border-collapse:collapse;font-size:var(--fs-cap)}
+.pfa-table th{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:600;padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.pfa-table td{padding:5px 8px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.pfa-table tr:last-child td{border-bottom:none}
+.pfa-sec-nm{font-weight:700;color:var(--txt);font-size:var(--fs-sm)}
+.pfa-contr-pos{color:#3fb950;font-weight:700;font-variant-numeric:tabular-nums}
+.pfa-contr-neg{color:#f85149;font-weight:700;font-variant-numeric:tabular-nums}
+.pfa-contr-neu{color:var(--mut);font-variant-numeric:tabular-nums}
+.pfa-wr-high{color:#3fb950;font-variant-numeric:tabular-nums}
+.pfa-wr-low{color:#f85149;font-variant-numeric:tabular-nums}
+.pfa-wr-neu{color:var(--mut);font-variant-numeric:tabular-nums}
+.pfa-total-row td{border-top:1px solid var(--line);font-weight:700;padding-top:7px}
+.pfa-kpis{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3)}
+.pfa-kpi{padding:5px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;font-size:var(--fs-cap);color:var(--mut);flex:1;min-width:100px;text-align:center}
+.pfa-kpi b{display:block;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--txt);margin-top:2px}
+.pfa-note{margin-top:var(--s3);font-size:10px;color:var(--mut);line-height:1.4;padding:6px 10px;background:rgba(255,255,255,.03);border-radius:5px;border-left:2px solid var(--line)}
+@media(max-width:680px){.pfa-bars{flex:0 0 100%}.pfa-panel{padding:var(--s3)}}
+@media print{.pfa-panel{break-inside:avoid;page-break-inside:avoid}}
 /* Active Thesis Cards (HED-150 Zyklus 215): per-thesis investment cards.
    Grid of cards, one per active thesis. Each: ticker + direction badge, spark
    mini-chart, conviction meter, Δ% from entry, horizon, devil note, Bull/Base/Bear
@@ -6639,6 +6674,14 @@ main:focus{outline:none}
   <section aria-labelledby="h-trackcurve">
     <h2 id="h-trackcurve">Open-Book MTM <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Rolling 30-Day · Conv-Weighted Sparks</span></h2>
     <div id="track-curve" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:80%"></div><div class="skel skel-line" style="width:95%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
+  </section>
+
+  <!-- Performance Attribution (HED-150 Zyklus 217): per-sector P&L contribution breakdown.
+       Uses D.closed_trades. Sector × contribution table + horizontal bar chart.
+       Answers LP: how much P&L came from sector bets vs stock picks? -->
+  <section aria-labelledby="h-perfattr">
+    <h2 id="h-perfattr">Performance Attribution <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Sektor-Beitrag · Brinson-Stil</span></h2>
+    <div id="perf-attrib" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:75%"></div><div class="skel skel-line" style="width:58%"></div><div class="skel skel-line" style="width:88%"></div></div></div>
   </section>
 
   <!-- Position Crossover Map (HED-150 Zyklus 213): conviction-tiered concentration pyramid.
@@ -20300,6 +20343,138 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
   root.setAttribute("aria-busy","false");
 })();
 
+(function initPerfAttrib(){
+  // Z217: Performance Attribution — per-sector P&L contribution breakdown
+  const root=$("perf-attrib"); if(!root) return;
+  const ct=D.closed_trades||{trades:[],is_live:false};
+  const trades=ct.trades||[];
+  if(!trades.length){
+    root.innerHTML=`<div class="panel pfa-panel"><p style="color:var(--mut);font-size:var(--fs-cap)">No closed trades — attribution unavailable.</p></div>`;
+    root.setAttribute("aria-busy","false"); return;
+  }
+
+  // Ticker → sector classification (AI/Tech universe taxonomy)
+  const SECTOR={
+    NVDA:"AI Semis",AMD:"AI Semis",ARM:"AI Semis",AVGO:"AI Semis",TSM:"AI Semis",INTC:"AI Semis",
+    MSFT:"AI Software",ORCL:"AI Software",PLTR:"AI Software",NOW:"AI Software",
+    SNOW:"AI Software",CRM:"AI Software",DDOG:"AI Software",WDAY:"AI Software",
+    META:"AI Internet",GOOGL:"AI Internet",SNAP:"AI Internet",
+    AMZN:"Cloud/Commerce",BABA:"Cloud/Commerce",
+    TSLA:"EV/Automation",UBER:"EV/Automation",
+    AAPL:"Consumer Tech",DELL:"Consumer Tech",
+  };
+  const sectorOf=tk=>(SECTOR[tk.toUpperCase()]||"Other");
+
+  // Aggregate per sector
+  const bySector={};
+  trades.forEach(t=>{
+    const sec=sectorOf(t.ticker||"—");
+    const r=Number(t.return_pct)||0;
+    if(!bySector[sec]) bySector[sec]={name:sec,trades:[],total:0,wins:0};
+    bySector[sec].trades.push(t);
+    bySector[sec].total+=r;
+    if(r>0) bySector[sec].wins++;
+  });
+
+  // Sort sectors by absolute total contribution desc
+  const sectors=Object.values(bySector).sort((a,b)=>Math.abs(b.total)-Math.abs(a.total));
+  const totalContrib=sectors.reduce((s,sec)=>s+sec.total,0);
+
+  // Best / worst sector
+  const sorted=[...sectors].sort((a,b)=>b.total-a.total);
+  const best=sorted[0], worst=sorted[sorted.length-1];
+
+  // Max abs value for bar scaling
+  const maxAbs=Math.max(...sectors.map(s=>Math.abs(s.total)),1);
+
+  // Bar chart rows
+  const barRows=sectors.map(s=>{
+    const barW=(Math.abs(s.total)/maxAbs*100).toFixed(1);
+    const pos=s.total>=0;
+    const cls=pos?"pfa-bar-fill-pos":"pfa-bar-fill-neg";
+    const valCls=pos?"pfa-bar-val-pos":"pfa-bar-val-neg";
+    const valStr=(pos?"+":"")+s.total.toFixed(2)+"%";
+    return `<div class="pfa-bar-row">
+      <span class="pfa-bar-label" title="${s.name}">${s.name}</span>
+      <div class="pfa-bar-track"><div class="${cls}" style="width:${barW}%"></div></div>
+      <span class="pfa-bar-val ${valCls}">${valStr}</span>
+    </div>`;
+  }).join("");
+
+  // Table rows
+  const tableRows=sectors.map(s=>{
+    const n=s.trades.length;
+    const wr=n?(s.wins/n*100):0;
+    const avgR=n?s.total/n:0;
+    const pos=s.total>=0;
+    const cCls=pos?"pfa-contr-pos":"pfa-contr-neg";
+    const wrCls=wr>=60?"pfa-wr-high":wr<=40?"pfa-wr-low":"pfa-wr-neu";
+    const contrStr=(pos?"+":"")+s.total.toFixed(2)+"%";
+    const avgStr=(avgR>=0?"+":"")+avgR.toFixed(2)+"%";
+    return `<tr>
+      <td class="pfa-sec-nm">${s.name}</td>
+      <td style="text-align:center">${n}</td>
+      <td class="${wrCls}" style="text-align:center">${wr.toFixed(0)}%</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums">${avgStr}</td>
+      <td class="${cCls}" style="text-align:right">${contrStr}</td>
+    </tr>`;
+  }).join("");
+
+  const totalPos=totalContrib>=0;
+  const totalCls=totalPos?"pfa-contr-pos":"pfa-contr-neg";
+  const totalStr=(totalPos?"+":"")+totalContrib.toFixed(2)+"%";
+  const totalWins=trades.filter(t=>(Number(t.return_pct)||0)>0).length;
+  const overallWR=trades.length?(totalWins/trades.length*100):0;
+
+  const tableTotal=`<tr class="pfa-total-row">
+    <td><b>Total</b></td>
+    <td style="text-align:center"><b>${trades.length}</b></td>
+    <td style="text-align:center"><b>${overallWR.toFixed(0)}%</b></td>
+    <td></td>
+    <td class="${totalCls}" style="text-align:right"><b>${totalStr}</b></td>
+  </tr>`;
+
+  // KPIs
+  const bestStr=(best.total>=0?"+":"")+best.total.toFixed(2)+"%";
+  const worstStr=(worst.total>=0?"+":"")+worst.total.toFixed(2)+"%";
+  const topSecPct=Math.abs(best.total)/Math.max(Math.abs(totalContrib),0.01)*100;
+  const diversStr=totalContrib!==0?(Math.abs(worst.total)/Math.abs(totalContrib)*100).toFixed(0)+"%":"—";
+  const kpis=`<div class="pfa-kpis">
+    <div class="pfa-kpi">Best Sector<b style="color:#3fb950">${best.name} ${bestStr}</b></div>
+    <div class="pfa-kpi">Worst Sector<b style="color:#f85149">${worst.name} ${worstStr}</b></div>
+    <div class="pfa-kpi">Top-Sektor Conc<b>${topSecPct.toFixed(0)}%</b></div>
+    <div class="pfa-kpi">Drag (worst)<b style="color:#f85149">${diversStr}</b></div>
+  </div>`;
+
+  const isLive=!!ct.is_live;
+  const srcTag=isLive?`<span style="font-size:9px;color:#3fb950;font-weight:700">LIVE</span>`:`<span style="font-size:9px;color:#e3b341;font-weight:700">BACKTEST</span>`;
+
+  root.innerHTML=`<div class="panel pfa-panel">
+    <div class="pfa-h">
+      <h3 class="pfa-title">Return Attribution by Sector ${srcTag}</h3>
+    </div>
+    <div class="pfa-sub">Total P&amp;L contribution per sector across ${trades.length} closed trades. Bar width = absolute contribution vs max sector. Sum = total compounded chain return basis.</div>
+    <div class="pfa-body">
+      <div class="pfa-bars">${barRows}</div>
+      <div class="pfa-table-wrap">
+        <table class="pfa-table" aria-label="Per-sector P&L attribution">
+          <thead><tr>
+            <th>Sector</th>
+            <th style="text-align:center">Trades</th>
+            <th style="text-align:center">Win %</th>
+            <th style="text-align:right">Avg Ret</th>
+            <th style="text-align:right">Total</th>
+          </tr></thead>
+          <tbody>${tableRows}${tableTotal}</tbody>
+        </table>
+      </div>
+    </div>
+    ${kpis}
+    <div class="pfa-note">Simple sum attribution (not Brinson-compounded). Each sector's contribution = Σ return_pct for trades in that sector. Benchmark comparison requires live sector-level returns — available from D.sector_view.sectors when sparks are populated.</div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 (function initRealizedCurve(){
   // Z214: Realized P&L · Closed-Trade Equity Curve.
   // Z216: data source promoted to D.closed_trades (Python-built, auditable via JSON blob).
@@ -21422,7 +21597,7 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
   root.setAttribute("aria-busy","false");
 })();
 
-["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","techlevels","insidertape","opttape","ivrvedge","signalmatrix","pos-map","realized-curve","thesis-cards"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","techlevels","insidertape","opttape","ivrvedge","signalmatrix","pos-map","realized-curve","thesis-cards","perf-attrib"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
 // Section nav: highlight the anchor pill whose section is currently most in view
 (function(){
