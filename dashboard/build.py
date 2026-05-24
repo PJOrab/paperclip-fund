@@ -2989,6 +2989,46 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .ec-grid{grid-template-columns:1fr}
 }
 @media print{.ec-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Position Aging & Score-Window (HED-150 Zyklus 204) — days-held vs horizon plan
+   + countdown to thesis-score date. Post-trade-management view.  */
+.ag-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.ag-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.ag-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.ag-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.ag-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.ag-tbl thead th{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600;padding:3px 8px 6px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+.ag-tbl thead th:first-child{text-align:left;padding-left:0}
+.ag-tbl tbody td{font-size:var(--fs-sm);padding:8px;border-top:1px solid rgba(255,255,255,.05);text-align:right;vertical-align:middle;white-space:nowrap}
+.ag-tbl tbody td:first-child{text-align:left;padding-left:0}
+.ag-tk{font-weight:700;color:var(--txt);font-size:13px;letter-spacing:.03em}
+.ag-dir{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:2px 5px;border-radius:3px;font-weight:700;margin-left:6px;vertical-align:middle}
+.ag-dir-long{background:rgba(63,185,80,.12);color:#3fb950}
+.ag-dir-short{background:rgba(248,81,73,.12);color:#f85149}
+.ag-hz{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.ag-prog{position:relative;height:10px;background:var(--panel);border-radius:3px;overflow:hidden;border:1px solid var(--line)}
+.ag-prog-fill{position:absolute;top:0;bottom:0;left:0;border-radius:3px}
+.ag-prog-fresh{background:#3fb950}
+.ag-prog-mid{background:#e3b341}
+.ag-prog-late{background:#f0883e}
+.ag-prog-over{background:#f85149}
+.ag-prog-marker{position:absolute;top:-2px;bottom:-2px;width:2px;background:#58a6ff;border-radius:1px}
+.ag-status{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;padding:2px 6px;border-radius:3px;display:inline-block}
+.ag-status-fresh{background:rgba(63,185,80,.12);color:#3fb950}
+.ag-status-mid{background:rgba(227,179,65,.14);color:#e3b341}
+.ag-status-late{background:rgba(240,136,62,.14);color:#f0883e}
+.ag-status-over{background:rgba(248,81,73,.14);color:#f85149}
+.ag-foot{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s3);margin-top:var(--s3);padding-top:var(--s3);border-top:1px solid var(--line)}
+.ag-callout{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:var(--s2) var(--s3)}
+.ag-callout-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600;margin-bottom:3px}
+.ag-callout-val{font-size:16px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums;line-height:1.1}
+.ag-callout-sub{font-size:var(--fs-cap);color:var(--mut);margin-top:2px}
+.ag-empty{font-size:var(--fs-cap);color:var(--mut);padding:var(--s3) 0}
+@media(max-width:600px){
+  .ag-panel{padding:var(--s3)}
+  .ag-tbl thead th.ag-h-hm,.ag-tbl tbody td.ag-h-hm{display:none}
+  .ag-foot{grid-template-columns:repeat(2,1fr)}
+}
+@media print{.ag-panel{break-inside:avoid;page-break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -6038,6 +6078,13 @@ main:focus{outline:none}
   <section aria-labelledby="h-earncal">
     <h2 id="h-earncal" class="visually-hidden" style="position:absolute;left:-9999px">Earnings Calendar Impact</h2>
     <div id="earn-cal" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <!-- Position Aging & Score-Window (HED-150 Zyklus 204): days-held vs horizon plan
+       + countdown to thesis-score date. Post-trade-management view. -->
+  <section aria-labelledby="h-posaging">
+    <h2 id="h-posaging" class="visually-hidden" style="position:absolute;left:-9999px">Position Aging & Score-Window</h2>
+    <div id="pos-aging" aria-live="polite" aria-busy="true"></div>
   </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
@@ -18573,6 +18620,153 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
       <span class="ec-summary-i"><b style="color:${imminentCount>0?'#f0883e':'var(--txt)'}">${imminentCount}</b> imminent (&lt;3d)</span>
     </div>
     <div class="ec-grid">${cardsHtml}</div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
+// Position Aging & Score-Window (HED-150 Zyklus 204): days-held vs horizon plan
+// + countdown to thesis-score date. Per call:
+//   - days_held = today - thesis.date
+//   - score_in  = thesis.earliest_score_date - today
+//   - horizon_band = days/weeks (14d) / weeks-months (30d) / months (60d) / quarters (90d) / year (250d)
+//   - progress = days_held / horizon_band  (>1 → over plan)
+// Status colors: Fresh <40%, Maturing 40-80%, Late 80-100%, Over >100%.
+// Marker on bar = blue line at "score date" position (= today's progress).
+(function initPosAging(){
+  const root=document.getElementById("pos-aging");
+  if(!root) return;
+  const tr=D.track_record;
+  if(!tr||!Array.isArray(tr.theses)){
+    root.innerHTML='<div class="panel ag-panel"><div class="ag-empty">Aging-Panel braucht track_record.theses.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const active=tr.theses.filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  if(active.length===0){
+    root.innerHTML='<div class="panel ag-panel"><div class="ag-empty">Keine aktiven Calls für Aging-View.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const today=new Date(); today.setHours(0,0,0,0);
+  const _dDays=(iso)=>{
+    if(!iso) return null;
+    const d=new Date(iso+"T00:00:00");
+    if(isNaN(d.getTime())) return null;
+    return Math.round((d.getTime()-today.getTime())/86400000);
+  };
+  const _hzBand=(h)=>{
+    const s=String(h||"").toLowerCase();
+    if(s.includes("day")) return {days:14, lbl:"Days"};
+    if(s.includes("week")) return {days:30, lbl:"Weeks"};
+    if(s.includes("month")) return {days:60, lbl:"Months"};
+    if(s.includes("quarter")) return {days:90, lbl:"Quarter"};
+    if(s.includes("year")) return {days:250, lbl:"Year"};
+    return {days:30, lbl:"—"};
+  };
+
+  const rows=active.map(t=>{
+    const tk=String((t.tickers||[])[0]||"").toUpperCase();
+    const dir=(t.direction||"long").toLowerCase();
+    const daysToEntry=_dDays(t.date);
+    const daysHeld = daysToEntry==null?null:Math.max(0,-daysToEntry);
+    const daysToScore=_dDays(t.earliest_score_date);
+    const hz=_hzBand(t.horizon);
+    const progress = daysHeld!=null ? daysHeld/hz.days*100 : 0;
+    let statusCls="ag-status-fresh", fillCls="ag-prog-fresh", statusLbl="Fresh";
+    if(progress>=100){statusCls="ag-status-over"; fillCls="ag-prog-over"; statusLbl="Over Plan";}
+    else if(progress>=80){statusCls="ag-status-late"; fillCls="ag-prog-late"; statusLbl="Late";}
+    else if(progress>=40){statusCls="ag-status-mid"; fillCls="ag-prog-mid"; statusLbl="Maturing";}
+    return {tk,dir,conv:t.conviction||0,horizon:hz,daysHeld,daysToScore,progress,statusCls,fillCls,statusLbl,title:t.label||""};
+  }).filter(r=>r.daysHeld!=null).sort((a,b)=>b.progress-a.progress);
+
+  if(rows.length===0){
+    root.innerHTML='<div class="panel ag-panel"><div class="ag-empty">Keine Calls mit Entry-Datum.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+
+  const _fmtConv=v=>v.toFixed(2);
+  const _scoreFmt=(d)=>{
+    if(d==null) return "—";
+    if(d===0) return "Heute";
+    if(d>0) return "in "+d+"d";
+    return "überfällig "+(-d)+"d";
+  };
+  const _scoreCls=(d)=>{
+    if(d==null) return "ag-mut";
+    if(d<0) return "ag-prog-over";
+    if(d<=3) return "ag-status-late";
+    if(d<=7) return "ag-status-mid";
+    return "ag-mut";
+  };
+
+  const rowsHtml=rows.map(r=>{
+    const fillW=Math.min(100,Math.max(2,r.progress)).toFixed(1);
+    const markerLeft=Math.min(100,r.progress).toFixed(1);
+    return `<tr>
+      <td>
+        <span class="ag-tk">${r.tk}</span>
+        <span class="ag-dir ag-dir-${r.dir}">${r.dir==="short"?"S":"L"}</span>
+      </td>
+      <td class="ag-h-hm"><span class="ag-hz">${r.horizon.lbl} · ${r.horizon.days}d</span></td>
+      <td><b>${r.daysHeld}</b><span class="ag-mut" style="font-size:9.5px;margin-left:3px">d</span></td>
+      <td style="width:30%;min-width:140px;padding-right:8px">
+        <div class="ag-prog">
+          <div class="ag-prog-fill ${r.fillCls}" style="width:${fillW}%"></div>
+          <div class="ag-prog-marker" style="left:${markerLeft}%"></div>
+        </div>
+      </td>
+      <td><span class="ag-status ${r.statusCls}">${r.statusLbl}</span></td>
+      <td class="ag-h-hm">${_fmtConv(r.conv)}</td>
+      <td class="ag-h-hm"><span style="color:${r.daysToScore!=null&&r.daysToScore<0?'#f85149':(r.daysToScore<=3?'#f0883e':'var(--txt)')};font-weight:600">${_scoreFmt(r.daysToScore)}</span></td>
+    </tr>`;
+  }).join("");
+
+  // Aggregates
+  const avgHeld = rows.reduce((a,r)=>a+r.daysHeld,0)/rows.length;
+  const maxHeld = rows.reduce((a,r)=>Math.max(a,r.daysHeld),0);
+  const oldest = rows.reduce((a,r)=>a.daysHeld>r.daysHeld?a:r);
+  const nextScore = rows.filter(r=>r.daysToScore!=null && r.daysToScore>=0).sort((a,b)=>a.daysToScore-b.daysToScore)[0];
+  const overdueCount = rows.filter(r=>r.daysToScore!=null && r.daysToScore<0).length;
+  const lateCount = rows.filter(r=>r.progress>=80).length;
+
+  root.innerHTML=`<div class="panel ag-panel">
+    <div class="ag-h"><h3 class="ag-title">Position Aging & Score-Window</h3></div>
+    <div class="ag-sub">Days-held gegen geplanten Horizont · Countdown bis Thesis-Score. Progress-Bar = held/horizon; Status-Farbe Fresh→Maturing→Late→Over. Score-Spalte = Tage bis Re-Evaluation (rot wenn überfällig).</div>
+    <table class="ag-tbl">
+      <thead><tr>
+        <th>Position</th>
+        <th class="ag-h-hm">Horizont</th>
+        <th>Held</th>
+        <th style="text-align:right">Progress vs Plan</th>
+        <th>Status</th>
+        <th class="ag-h-hm">Conv</th>
+        <th class="ag-h-hm">Score</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <div class="ag-foot">
+      <div class="ag-callout">
+        <div class="ag-callout-lbl">Avg Held</div>
+        <div class="ag-callout-val">${avgHeld.toFixed(1)}<span class="ag-mut" style="font-size:11px;margin-left:2px">d</span></div>
+        <div class="ag-callout-sub">über ${rows.length} Calls</div>
+      </div>
+      <div class="ag-callout">
+        <div class="ag-callout-lbl">Oldest Position</div>
+        <div class="ag-callout-val">${oldest.tk} · ${oldest.daysHeld}d</div>
+        <div class="ag-callout-sub">${oldest.statusLbl}</div>
+      </div>
+      <div class="ag-callout">
+        <div class="ag-callout-lbl">Next Score Date</div>
+        <div class="ag-callout-val">${nextScore?nextScore.tk+' · '+_scoreFmt(nextScore.daysToScore):'—'}</div>
+        <div class="ag-callout-sub">${nextScore?nextScore.horizon.lbl+' horizon':'keine'}</div>
+      </div>
+      <div class="ag-callout">
+        <div class="ag-callout-lbl">⚠ Late/Overdue</div>
+        <div class="ag-callout-val" style="color:${(lateCount+overdueCount)>0?'#f0883e':'var(--txt)'}">${lateCount+overdueCount}</div>
+        <div class="ag-callout-sub">${lateCount} late · ${overdueCount} überfällig</div>
+      </div>
+    </div>
   </div>`;
   root.setAttribute("aria-busy","false");
 })();
