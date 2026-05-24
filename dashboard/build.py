@@ -2914,6 +2914,41 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .ba-stat-val{font-size:18px}
 }
 @media print{.ba-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Position P&L Attribution (HED-150 Zyklus 202) — ticker-level PORT-style ladder.
+   Ranked horizontal bars of each call's conviction-weighted contribution.  */
+.pa-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.pa-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.pa-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.pa-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.pa-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.pa-tbl thead th{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600;padding:3px 8px 6px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+.pa-tbl thead th:first-child{text-align:left;padding-left:0}
+.pa-tbl tbody td{font-size:var(--fs-sm);padding:8px;border-top:1px solid rgba(255,255,255,.05);text-align:right;white-space:nowrap;vertical-align:middle}
+.pa-tbl tbody td:first-child{text-align:left;padding-left:0}
+.pa-tk{font-weight:700;color:var(--txt);letter-spacing:.03em;font-size:13px}
+.pa-dir{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:2px 5px;border-radius:3px;font-weight:700;margin-left:6px;vertical-align:middle}
+.pa-dir-long{background:rgba(63,185,80,.12);color:#3fb950}
+.pa-dir-short{background:rgba(248,81,73,.12);color:#f85149}
+.pa-pos{color:#3fb950}.pa-neg{color:#f85149}.pa-mut{color:var(--mut)}
+.pa-bar-wrap{position:relative;height:14px;background:transparent;width:100%;min-width:120px;display:flex;align-items:center}
+.pa-bar-axis{position:absolute;top:0;bottom:0;left:50%;width:1px;background:rgba(139,148,158,.45)}
+.pa-bar-pos{position:absolute;top:1px;bottom:1px;background:#3fb950;border-radius:2px}
+.pa-bar-neg{position:absolute;top:1px;bottom:1px;background:#f85149;border-radius:2px}
+.pa-foot{border-top:1px solid var(--line);padding-top:8px;margin-top:6px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:var(--s2);font-size:var(--fs-cap);color:var(--mut)}
+.pa-foot b{color:var(--txt);font-weight:600}
+.pa-foot-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s3);margin-top:var(--s3);padding-top:var(--s3);border-top:1px solid var(--line)}
+.pa-callout{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:var(--s2) var(--s3)}
+.pa-callout-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600;margin-bottom:3px}
+.pa-callout-val{font-size:16px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums;line-height:1.1}
+.pa-callout-sub{font-size:var(--fs-cap);color:var(--mut);margin-top:2px}
+.pa-empty{font-size:var(--fs-cap);color:var(--mut);padding:var(--s3) 0}
+@media(max-width:600px){
+  .pa-panel{padding:var(--s3)}
+  .pa-tbl thead th.pa-h-hm,.pa-tbl tbody td.pa-h-hm{display:none}
+  .pa-bar-wrap{min-width:80px}
+  .pa-foot-grid{grid-template-columns:1fr}
+}
+@media print{.pa-panel{break-inside:avoid;page-break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -5949,6 +5984,13 @@ main:focus{outline:none}
   <section aria-labelledby="h-betaalpha">
     <h2 id="h-betaalpha" class="visually-hidden" style="position:absolute;left:-9999px">Beta-Adjusted Alpha</h2>
     <div id="beta-alpha" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <!-- Position P&L Attribution (HED-150 Zyklus 202): ticker-level PORT-style ranked ladder.
+       Each call's conviction-weighted contribution to total book P&L. -->
+  <section aria-labelledby="h-posattrib">
+    <h2 id="h-posattrib" class="visually-hidden" style="position:absolute;left:-9999px">Position P&L Attribution</h2>
+    <div id="pos-attrib" aria-live="polite" aria-busy="true"></div>
   </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
@@ -18244,6 +18286,131 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
         </div>
         <div class="ba-interp ${interpCls}">${interp}</div>
         ${caveat}
+      </div>
+    </div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
+// Position P&L Attribution (HED-150 Zyklus 202): ticker-level PORT-style ranked ladder.
+// Decomposes total book P&L into per-call conviction-weighted contributions:
+//   contribution_i = (conv_i / Σ conv) × raw_pnl_i × sign_i
+// Sorted descending. Shows each call's weight, raw P&L%, and contribution-to-book bar.
+// Companion to Z194 sector attribution but at ticker level — the "who's making/losing money"
+// breakdown that LPs ask first.
+(function initPosAttrib(){
+  const root=document.getElementById("pos-attrib");
+  if(!root) return;
+  const tr=D.track_record;
+  const sv=D.sector_view||{};
+  const livePx={};
+  (sv.sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{
+    if(t&&t.ticker){
+      const tk=String(t.ticker).toUpperCase();
+      const sp=Array.isArray(t.spark)?t.spark:null;
+      const last=sp&&sp.length?sp[sp.length-1]:(t.price!=null?t.price:null);
+      livePx[tk]={price:last,spark:sp};
+    }
+  }));
+  const active=((tr&&tr.theses)||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  const calls=active.map(t=>{
+    const tk=String((t.tickers||[])[0]||"").toUpperCase();
+    const lp=livePx[tk];
+    if(!tk||!lp||lp.price==null||t.baseline_price==null||t.baseline_price===0) return null;
+    const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+    const rawPnl=(lp.price-t.baseline_price)/t.baseline_price*100*sign; // %
+    const conv=Math.max(0, t.conviction||0);
+    return {
+      tk,
+      dir:(t.direction||"long").toLowerCase(),
+      conv,
+      rawPnl,
+      base:t.baseline_price,
+      cur:lp.price,
+      spark:lp.spark
+    };
+  }).filter(Boolean);
+  if(calls.length===0){
+    root.innerHTML='<div class="panel pa-panel"><div class="pa-empty">P&L-Attribution-Panel nicht verfügbar — keine Calls mit Live-Preis.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const totalConv=calls.reduce((a,c)=>a+c.conv,0) || 1;
+  calls.forEach(c=>{
+    c.weight = c.conv/totalConv*100; // %
+    c.contribution = c.weight/100 * c.rawPnl; // contribution to book P&L (%)
+  });
+  calls.sort((a,b)=>b.contribution-a.contribution);
+  const bookPnl=calls.reduce((a,c)=>a+c.contribution,0);
+  const maxAbs=Math.max(0.5, ...calls.map(c=>Math.abs(c.contribution)));
+
+  // Build table rows
+  const _pct1=v=>(v>=0?"+":"")+v.toFixed(2)+"%";
+  const _wpct=v=>v.toFixed(1)+"%";
+  const _cls=v=>v>0.001?"pa-pos":(v<-0.001?"pa-neg":"pa-mut");
+
+  const rowsHtml=calls.map(c=>{
+    const dirCls=c.dir==="short"?"pa-dir-short":"pa-dir-long";
+    const dirLbl=c.dir==="short"?"S":"L";
+    const barPct=Math.abs(c.contribution)/maxAbs*50; // half-width of bar wrapper
+    const barCls=c.contribution>=0?"pa-bar-pos":"pa-bar-neg";
+    const barStyle=c.contribution>=0
+      ? `left:50%;width:${barPct.toFixed(1)}%`
+      : `right:50%;width:${barPct.toFixed(1)}%`;
+    return `<tr>
+      <td><span class="pa-tk">${c.tk}</span><span class="pa-dir ${dirCls}">${dirLbl}</span></td>
+      <td class="pa-h-hm pa-mut">${_wpct(c.weight)}</td>
+      <td class="pa-h-hm ${_cls(c.rawPnl)}">${_pct1(c.rawPnl)}</td>
+      <td class="${_cls(c.contribution)}"><b>${_pct1(c.contribution)}</b></td>
+      <td style="width:32%;min-width:130px;padding-right:0">
+        <div class="pa-bar-wrap">
+          <div class="pa-bar-axis"></div>
+          <div class="${barCls}" style="${barStyle}"></div>
+        </div>
+      </td>
+    </tr>`;
+  }).join("");
+
+  const topC=calls[0];
+  const botC=calls[calls.length-1];
+  // Net long/short snapshot
+  const longConv=calls.filter(c=>c.dir==="long").reduce((a,c)=>a+c.conv,0);
+  const shortConv=calls.filter(c=>c.dir==="short").reduce((a,c)=>a+c.conv,0);
+  const longPct=totalConv>0?longConv/totalConv*100:0;
+  const shortPct=totalConv>0?shortConv/totalConv*100:0;
+
+  root.innerHTML=`<div class="panel pa-panel">
+    <div class="pa-h"><h3 class="pa-title">Position P&L Attribution · Ticker-Level</h3></div>
+    <div class="pa-sub">Beitrag jeder Position zum Buch-P&L = (conv-Gewicht) × (raw P&L × direction). Bloomberg-PORT-Stil ranked ladder; sortiert nach Beitrag. Sum cross-checked vs. aggregat Buch unten.</div>
+    <table class="pa-tbl">
+      <thead><tr>
+        <th>Position</th>
+        <th class="pa-h-hm">Weight</th>
+        <th class="pa-h-hm">Raw P&L</th>
+        <th>Contribution</th>
+        <th style="text-align:right">Bar</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <div class="pa-foot">
+      <span><b>${calls.length}</b> aktive Calls · Σ conviction <b>${totalConv.toFixed(2)}</b> · Long <b>${longPct.toFixed(0)}%</b> · Short <b>${shortPct.toFixed(0)}%</b></span>
+      <span>Aggregat Buch-P&L (sum): <b class="${_cls(bookPnl)}">${_pct1(bookPnl)}</b></span>
+    </div>
+    <div class="pa-foot-grid">
+      <div class="pa-callout">
+        <div class="pa-callout-lbl">Top Contributor</div>
+        <div class="pa-callout-val ${_cls(topC.contribution)}">${topC.tk} · ${_pct1(topC.contribution)}</div>
+        <div class="pa-callout-sub">${_pct1(topC.rawPnl)} raw · ${_wpct(topC.weight)} weight</div>
+      </div>
+      <div class="pa-callout">
+        <div class="pa-callout-lbl">Top Detractor</div>
+        <div class="pa-callout-val ${_cls(botC.contribution)}">${botC.tk} · ${_pct1(botC.contribution)}</div>
+        <div class="pa-callout-sub">${_pct1(botC.rawPnl)} raw · ${_wpct(botC.weight)} weight</div>
+      </div>
+      <div class="pa-callout">
+        <div class="pa-callout-lbl">Spread Top-Bottom</div>
+        <div class="pa-callout-val">${_pct1(topC.contribution-botC.contribution)}</div>
+        <div class="pa-callout-sub">Range über alle Calls</div>
       </div>
     </div>
   </div>`;
