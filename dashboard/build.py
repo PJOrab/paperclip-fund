@@ -2809,6 +2809,39 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .dd-stat-val{font-size:14px}
 }
 @media print{.dd-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Risk-Adjusted Stats — Sharpe / Sortino / Calmar (HED-150 Zyklus 199).
+   LP-language canonical risk-adjusted return metrics, annualized.  */
+.ra-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.ra-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.ra-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.ra-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.ra-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s3)}
+.ra-tile{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:var(--s3);display:flex;flex-direction:column;gap:6px;font-variant-numeric:tabular-nums}
+.ra-tile-h{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s2)}
+.ra-tile-nm{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:600}
+.ra-tile-fl{font-size:9px;color:var(--mut);font-style:italic}
+.ra-tile-val{font-size:30px;font-weight:700;line-height:1;color:var(--txt);font-variant-numeric:tabular-nums}
+.ra-tile-val-pos{color:#3fb950}
+.ra-tile-val-neg{color:#f85149}
+.ra-tile-val-mut{color:var(--mut)}
+.ra-tile-unit{font-size:11px;color:var(--mut);font-weight:500;margin-left:4px}
+.ra-tile-formula{font-size:10px;color:var(--mut);font-family:var(--mono, ui-monospace,SFMono-Regular,monospace);letter-spacing:.01em}
+.ra-tile-interp{font-size:var(--fs-cap);color:var(--mut);line-height:1.35;margin-top:2px}
+.ra-tile-interp b{color:var(--txt);font-weight:600}
+.ra-tile-spark{height:32px;margin-top:4px}
+.ra-spark-line{fill:none;stroke:#58a6ff;stroke-width:1.4;vector-effect:non-scaling-stroke}
+.ra-spark-base{stroke:rgba(139,148,158,.35);stroke-width:1;stroke-dasharray:2,3}
+.ra-spark-pos{fill:rgba(63,185,80,.18)}
+.ra-spark-neg{fill:rgba(248,81,73,.18)}
+.ra-caveat{margin-top:var(--s3);padding:8px 10px;background:rgba(227,179,65,.08);border-left:2px solid #e3b341;border-radius:3px;font-size:var(--fs-cap);color:var(--mut);line-height:1.4}
+.ra-caveat b{color:#e3b341;font-weight:600}
+.ra-empty{font-size:var(--fs-cap);color:var(--mut);padding:var(--s3) 0}
+@media(max-width:600px){
+  .ra-panel{padding:var(--s3)}
+  .ra-grid{grid-template-columns:1fr}
+  .ra-tile-val{font-size:26px}
+}
+@media print{.ra-panel{break-inside:avoid;page-break-inside:avoid}.ra-tile{break-inside:avoid;page-break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -5823,6 +5856,13 @@ main:focus{outline:none}
   <section aria-labelledby="h-drawdown">
     <h2 id="h-drawdown" class="visually-hidden" style="position:absolute;left:-9999px">Drawdown Waterfall</h2>
     <div id="drawdown" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <!-- Risk-Adjusted Stats (HED-150 Zyklus 199): Sharpe / Sortino / Calmar tiles.
+       Canonical LP-language risk-adjusted metrics. Honest small-N caveat. -->
+  <section aria-labelledby="h-riskadj">
+    <h2 id="h-riskadj" class="visually-hidden" style="position:absolute;left:-9999px">Risk-Adjusted Stats</h2>
+    <div id="risk-adj" aria-live="polite" aria-busy="true"></div>
   </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
@@ -17528,6 +17568,182 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
     </div>
     <div class="dd-svgw">${svg}</div>
     <div class="dd-stats">${statsHtml}</div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
+// Risk-Adjusted Stats (HED-150 Zyklus 199): Sharpe / Sortino / Calmar tiles.
+// Re-uses the conviction-weighted aggregate book curve. Daily returns from %-return curve,
+// annualized via *sqrt(252). Sortino downside σ uses negative-only deviations from 0.
+// Calmar = ann_return / |maxDD|. Small-N caveat surfaced explicitly when N < 30.
+(function initRiskAdj(){
+  const root=document.getElementById("risk-adj");
+  if(!root) return;
+  const tr=D.track_record;
+  const sv=D.sector_view||{};
+  const sparkMap={};
+  (sv.sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{
+    if(t&&t.ticker&&Array.isArray(t.spark)) sparkMap[String(t.ticker).toUpperCase()]=t.spark;
+  }));
+  const active=((tr&&tr.theses)||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  const calls=active.map(t=>{
+    const tk=String((t.tickers||[])[0]||"").toUpperCase();
+    const sp=sparkMap[tk];
+    if(!tk||!sp||sp.length<2||t.baseline_price==null) return null;
+    let bestIdx=-1, bestDiff=Infinity;
+    sp.forEach((v,i)=>{
+      if(v==null) return;
+      const d=Math.abs(v-t.baseline_price)/t.baseline_price;
+      if(d<bestDiff){bestDiff=d; bestIdx=i;}
+    });
+    if(bestIdx<0||bestDiff>0.05) return null;
+    const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+    return {tk,spark:sp,eIdx:bestIdx,sign,conv:t.conviction||0,base:t.baseline_price};
+  }).filter(Boolean);
+  if(calls.length===0){
+    root.innerHTML='<div class="panel ra-panel"><div class="ra-empty">Risk-Adjusted-Panel nicht verfügbar — keine Calls mit Spark-Historie passend zum Entry.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const eFirst=Math.min(...calls.map(c=>c.eIdx));
+  const bookSparkLen=Math.max(...calls.map(c=>c.spark.length));
+  const bookPct=[];
+  for(let idx=eFirst; idx<bookSparkLen; idx++){
+    let pSum=0, wSum=0;
+    calls.forEach(c=>{
+      if(idx<c.eIdx||idx>=c.spark.length) return;
+      const cur=c.spark[idx]; if(cur==null) return;
+      const pnl=(cur-c.base)/c.base*100*c.sign;
+      pSum+=c.conv*pnl; wSum+=c.conv;
+    });
+    bookPct.push(wSum>0?pSum/wSum:0);
+  }
+  if(bookPct.length<3){
+    root.innerHTML='<div class="panel ra-panel"><div class="ra-empty">Risk-Adjusted-Panel braucht ≥ 3 Datentage für σ.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const N=bookPct.length;
+  // Daily returns (in decimals, not %): r_t = (1+p_t/100)/(1+p_{t-1}/100) - 1
+  const dailyRet=[];
+  for(let i=1;i<N;i++){
+    const e0=1+bookPct[i-1]/100, e1=1+bookPct[i]/100;
+    dailyRet.push(e0>0?(e1/e0-1):0);
+  }
+  const Nd=dailyRet.length;
+  // Cumulative ann return (geometric)
+  const finalEquity=1+bookPct[N-1]/100;
+  const annReturn = Nd>0 ? (Math.pow(finalEquity, 252/Nd) - 1) : 0; // annualized geometric
+  // Daily avg / std
+  const avg=dailyRet.reduce((a,b)=>a+b,0)/Nd;
+  let varSum=0, downSum=0, downCount=0;
+  dailyRet.forEach(r=>{
+    varSum+=(r-avg)*(r-avg);
+    if(r<0){downSum+=r*r; downCount++;}
+  });
+  const std=Math.sqrt(varSum/Math.max(1,Nd-1));
+  const downStd=Math.sqrt(downSum/Math.max(1,Nd)); // MAR=0 downside semi-deviation
+  // Annualized risk metrics. Rf = 0 (cash-rate assumption, conservative).
+  const sharpe = std>0 ? (avg/std)*Math.sqrt(252) : 0;
+  const sortino = downStd>0 ? (avg/downStd)*Math.sqrt(252) : (downCount===0 && avg>0 ? Infinity : 0);
+  // Max drawdown (re-computed for Calmar)
+  const equity=bookPct.map(p=>1+p/100);
+  let curPeak=equity[0], maxDD=0;
+  for(let i=0;i<N;i++){ if(equity[i]>curPeak) curPeak=equity[i]; const d=(equity[i]-curPeak)/curPeak; if(d<maxDD) maxDD=d; }
+  const maxDDAbs=Math.abs(maxDD);
+  const calmar = maxDDAbs>0 ? annReturn/maxDDAbs : (annReturn>0 ? Infinity : 0);
+
+  // Helper: cumulative return spark for tile chart
+  const cumSpark=bookPct.slice();
+
+  // Spark SVG generator
+  const _spark=(vals)=>{
+    const sw=240, sh=32, sp=2;
+    const lo=Math.min(...vals, 0), hi=Math.max(...vals, 0);
+    const span=Math.max(0.5, hi-lo);
+    const _sx=i=>vals.length>1?sp+i/(vals.length-1)*(sw-sp*2):sw/2;
+    const _sy=v=>sp+(hi-v)/span*(sh-sp*2);
+    const zeroY=_sy(0).toFixed(1);
+    const pts=vals.map((v,i)=>`${_sx(i).toFixed(1)},${_sy(v).toFixed(1)}`).join(" ");
+    const term=vals[vals.length-1];
+    const areaCls=term>=0?"ra-spark-pos":"ra-spark-neg";
+    const areaPts=`${_sx(0).toFixed(1)},${zeroY} `+pts+` ${_sx(vals.length-1).toFixed(1)},${zeroY}`;
+    return `<svg viewBox="0 0 ${sw} ${sh}" preserveAspectRatio="none" class="ra-tile-spark" role="img" aria-hidden="true">
+      <polygon class="${areaCls}" points="${areaPts}" />
+      <line class="ra-spark-base" x1="0" y1="${zeroY}" x2="${sw}" y2="${zeroY}" />
+      <polyline class="ra-spark-line" points="${pts}" />
+    </svg>`;
+  };
+
+  // Interp text per metric
+  const _interpSharpe=v=>{
+    if(!isFinite(v)) return "Volatilität = 0 — Sharpe undefiniert.";
+    if(v>=2) return "<b>Exzellent</b> · Top-Decile institutional.";
+    if(v>=1) return "<b>Solide</b> · LP-akzeptabel (1.0 = Schwelle).";
+    if(v>=0) return "Positiv, aber unter LP-Schwelle (1.0).";
+    return "<b>Negativ</b> · Risikoadjustiert verliert das Buch.";
+  };
+  const _interpSortino=v=>{
+    if(!isFinite(v)) return "Keine negativen Tage bisher.";
+    if(v>=2) return "<b>Exzellent</b> · Downside gut kontrolliert.";
+    if(v>=1) return "<b>Solide</b> · Asymmetrie funktioniert.";
+    if(v>=0) return "Positiv, Downside-Vol drückt.";
+    return "<b>Negativ</b> · Downside dominiert.";
+  };
+  const _interpCalmar=v=>{
+    if(!isFinite(v)) return "Kein Drawdown bisher.";
+    if(v>=3) return "<b>Exzellent</b> · Hedge-Fund-Decile.";
+    if(v>=1) return "<b>Solide</b> · Return überkompensiert Worst-DD.";
+    if(v>=0) return "Schwach · DD frisst Return.";
+    return "<b>Negativ</b> · Verlust + Drawdown.";
+  };
+
+  const _fmt=v=>{
+    if(!isFinite(v)) return "∞";
+    return (v>=0?"+":"")+v.toFixed(2);
+  };
+  const _cls=v=>{
+    if(!isFinite(v)) return "ra-tile-val-mut";
+    if(v>0.001) return "ra-tile-val-pos";
+    if(v<-0.001) return "ra-tile-val-neg";
+    return "ra-tile-val-mut";
+  };
+
+  const smallN=Nd<30;
+  const caveatHtml = smallN
+    ? `<div class="ra-caveat"><b>Small-N Caveat:</b> Nur ${Nd} tägliche Returns. Annualisierung via ×√252 ist konvention-konform, aber σ-Schätzung instabil. Werte werden nach 30+ Tagen aussagekräftig.</div>`
+    : "";
+
+  const tiles=[
+    {nm:"Sharpe Ratio", val:sharpe, formula:"(avg / σ) × √252 · Rf=0",
+     interp:_interpSharpe(sharpe)},
+    {nm:"Sortino Ratio", val:sortino, formula:"(avg / σ_down) × √252 · MAR=0",
+     interp:_interpSortino(sortino)},
+    {nm:"Calmar Ratio", val:calmar, formula:"ann. Return / |Max-DD|",
+     interp:_interpCalmar(calmar)},
+  ];
+  const flagSmall = smallN ? '<span class="ra-tile-fl">n=' + Nd + '</span>' : '';
+  const tileHtml=tiles.map(t=>`
+    <div class="ra-tile">
+      <div class="ra-tile-h">
+        <span class="ra-tile-nm">${t.nm}</span>
+        ${flagSmall}
+      </div>
+      <div class="ra-tile-val ${_cls(t.val)}">${_fmt(t.val)}<span class="ra-tile-unit">ann.</span></div>
+      <div class="ra-tile-formula">${t.formula}</div>
+      <div class="ra-tile-interp">${t.interp}</div>
+      ${_spark(cumSpark)}
+    </div>`).join("");
+
+  root.innerHTML=`<div class="panel ra-panel">
+    <div class="ra-h">
+      <div>
+        <h3 class="ra-title">Risk-Adjusted Stats</h3>
+      </div>
+    </div>
+    <div class="ra-sub">Sharpe / Sortino / Calmar — annualisiert, Rf=0. Konv.-gewichtete Buchkurve, geometric ann. Return. LP-Sprache: drei Zahlen, die jeder Allocator vor dem zweiten Meeting fragt.</div>
+    <div class="ra-grid">${tileHtml}</div>
+    ${caveatHtml}
   </div>`;
   root.setAttribute("aria-busy","false");
 })();
