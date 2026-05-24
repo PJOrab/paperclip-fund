@@ -2583,6 +2583,64 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
 @media print{
   .pf-bt-strip{display:none!important}
 }
+/* Hero Performance Panel (HED-150 Zyklus 193) — dedicated, prominent equity-curve at top.
+   Cumulative %P&L line + HWM dashed + drawdown shading + Bloomberg-KPI strip. Hero placement
+   makes performance the first thing a Bloomberg user sees after the live tape. */
+.hp-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.hp-empty{padding:var(--s3);color:var(--mut);font-style:italic}
+.hp-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:var(--s3);margin-bottom:var(--s3)}
+.hp-title-block{flex:1;min-width:240px}
+.hp-title{font-size:var(--fs-h2);font-weight:700;margin:0;color:var(--txt);letter-spacing:.01em;line-height:1.2}
+.hp-sub{font-size:var(--fs-cap);color:var(--mut);margin-top:3px;line-height:1.4}
+.hp-hero-val{font-size:36px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.01em}
+.hp-hero-val.hp-kpi-pos{color:#3fb950}
+.hp-hero-val.hp-kpi-neg{color:#f85149}
+.hp-hero-val.hp-kpi-flat{color:var(--mut)}
+.hp-hero-lbl{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);font-weight:600;margin-bottom:3px}
+.hp-svg-wrap{margin:0 -4px}
+.hp-svg{width:100%;height:auto;display:block;max-width:100%}
+.hp-equity-line{fill:none;stroke-width:2.25;stroke-linejoin:round;stroke-linecap:round}
+.hp-line-pos{stroke:#3fb950}
+.hp-line-neg{stroke:#f85149}
+.hp-line-flat{stroke:#6e7681}
+.hp-hwm-line{fill:none;stroke:rgba(63,185,80,.5);stroke-width:1.25;stroke-dasharray:4 3}
+.hp-dd-area{fill:rgba(248,81,73,.1)}
+.hp-zero{stroke:rgba(139,148,158,.4);stroke-width:1;stroke-dasharray:2 4}
+.hp-grid{stroke:rgba(139,148,158,.07);stroke-width:1}
+.hp-tick{font-size:9.5px;fill:var(--mut);text-anchor:end;font-variant-numeric:tabular-nums}
+.hp-xlbl{font-size:10px;fill:var(--mut)}
+.hp-dot{stroke:var(--bg);stroke-width:2}
+.hp-dot-pos{fill:#3fb950}
+.hp-dot-neg{fill:#f85149}
+.hp-dot-flat{fill:#6e7681}
+.hp-legend{display:flex;gap:14px;font-size:10px;color:var(--mut);margin-top:6px;flex-wrap:wrap;padding-left:46px}
+.hp-leg-sw{display:inline-block;width:12px;height:2px;vertical-align:middle;margin-right:5px}
+.hp-leg-sw-eq{background:#3fb950}
+.hp-leg-sw-hwm{background:rgba(63,185,80,.55);border-top:1px dashed rgba(63,185,80,.7);height:0}
+.hp-leg-sw-dd{background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.3);height:8px;width:14px}
+.hp-stats{display:flex;flex-wrap:wrap;gap:0;margin-top:var(--s3);border-top:1px solid rgba(139,148,158,.15);padding-top:8px}
+.hp-stat{display:flex;flex-direction:column;padding:6px 16px;border-right:1px solid rgba(139,148,158,.1);flex:1;min-width:96px}
+.hp-stat:last-child{border-right:none}
+.hp-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:600;margin-bottom:3px;white-space:nowrap}
+.hp-stat-val{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--txt);line-height:1.1}
+.hp-stat-val.hp-kpi-pos{color:#3fb950}
+.hp-stat-val.hp-kpi-neg{color:#f85149}
+.hp-stat-faded{opacity:.55}
+.hp-stat-faded .hp-stat-val{color:var(--mut)}
+.hp-foot{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-top:var(--s3)}
+@media(max-width:600px){
+  .hp-panel{padding:var(--s3)}
+  .hp-h{margin-bottom:var(--s2)}
+  .hp-hero-val{font-size:28px}
+  .hp-stat{min-width:70px;padding:5px 8px}
+  .hp-stat-val{font-size:13px}
+  .hp-stat-lbl{font-size:8px}
+  .hp-legend{padding-left:32px;gap:10px;font-size:9.5px}
+  .hp-title{font-size:var(--fs-body)}
+}
+@media print{
+  .hp-panel{break-inside:avoid;page-break-inside:avoid}
+}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -5559,6 +5617,14 @@ main:focus{outline:none}
   <!-- Book-Tape (HED-150 Zyklus 191): sticky strip of all active calls under the status bar.
        Mini-tile per thesis · live P&L · click scrolls to Position-Matrix. -->
   <div id="pf-book-tape" class="pf-bt-strip" aria-label="Active Calls — Live P&L Tape" hidden></div>
+
+  <!-- Hero Performance Panel (HED-150 Zyklus 193): dedicated Bloomberg-style equity-curve hero
+       at top of page. SVG cumulative %P&L line + HWM dashed + drawdown shading + KPI strip.
+       Honest labeling: unrealized conv-weighted MTM since inception (0 closed trades yet). -->
+  <section aria-labelledby="h-heroperf">
+    <h2 id="h-heroperf" class="visually-hidden" style="position:absolute;left:-9999px">Performance · Equity Curve</h2>
+    <div id="hero-perf" aria-live="polite" aria-busy="true"></div>
+  </section>
 
   <!-- Keyboard-Shortcut Overlay (HED-150 Zyklus 182): "?" opens, Esc closes. g+letter jumps. -->
   <div id="pf-kb-overlay" class="pf-kb-overlay" role="dialog" aria-modal="true" aria-label="Keyboard Shortcuts" hidden>
@@ -16410,6 +16476,163 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
       </table>
     </div>
     <div class="us-foot">${openNote?`<span class="muted">${esc(openNote)}</span> · `:""}Score-Methodik: Rec (+2 Strong Buy, +1 Buy, −1 Sell) + RSI (+2 Überverkauft<35, +1 <50, −1 >65) + Trend (+1 vs MA30 >+2%) + 52w-Range (+1 unter 65%). Max Score = 6. Long-Bias-Screen — kein Short-Screening, keine Gewichtung. Sortiert nach Score dann RSI (niedrigster RSI = bester Einstieg). Nur Tickers ohne aktive Position im Buch.</div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
+// Hero Performance Panel (HED-150 Zyklus 193) — top-of-page equity-curve hero.
+// Renders cumulative %P&L since inception as a Bloomberg-style chart with HWM line and
+// drawdown shading, plus a KPI strip below (Total Return, Max DD, Peak, Days Live, # Calls).
+// Data: unrealized conv-weighted MTM from sector_view spark[] (close-day prices for the
+// last ~30 days). Honestly labelled as unrealized — Win-Rate requires close_date schema
+// extension which is DE-owned (Z190 push-back still pending).
+(function initHeroPerf(){
+  const root=document.getElementById("hero-perf");
+  if(!root) return;
+  const tr=D.track_record;
+  const sv=D.sector_view||{};
+  const sparkMap={};
+  (sv.sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{
+    if(t&&t.ticker&&Array.isArray(t.spark)) sparkMap[String(t.ticker).toUpperCase()]=t.spark;
+  }));
+  const active=((tr&&tr.theses)||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  const calls=active.map(t=>{
+    const tk=String((t.tickers||[])[0]||"").toUpperCase();
+    const sp=sparkMap[tk];
+    if(!tk||!sp||sp.length<2||t.baseline_price==null) return null;
+    // Find spark index whose price is closest to baseline (entry day)
+    let bestIdx=-1, bestDiff=Infinity;
+    sp.forEach((v,i)=>{
+      if(v==null) return;
+      const d=Math.abs(v-t.baseline_price)/t.baseline_price;
+      if(d<bestDiff){bestDiff=d; bestIdx=i;}
+    });
+    // Slack: require entry within 5% of a spark point
+    if(bestIdx<0||bestDiff>0.05) return null;
+    const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+    return {tk,spark:sp,eIdx:bestIdx,sign,conv:t.conviction||0,base:t.baseline_price};
+  }).filter(Boolean);
+
+  if(calls.length===0){
+    root.innerHTML='<div class="panel hp-panel hp-empty">Performance-Equity-Kurve nicht verfügbar — keine Calls mit Spark-Historie passend zum Entry. Sektor-View-Feed schweigt für aktive Tickers oder Baseline weicht von Close-Preisen ab.</div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  // Aggregate daily curve from earliest entry to latest spark
+  const eFirst=Math.min(...calls.map(c=>c.eIdx));
+  const sparkLen=Math.max(...calls.map(c=>c.spark.length));
+  const curve=[]; let runMax=0;
+  for(let idx=eFirst; idx<sparkLen; idx++){
+    let pSum=0, wSum=0;
+    calls.forEach(c=>{
+      if(idx<c.eIdx||idx>=c.spark.length) return;
+      const cur=c.spark[idx]; if(cur==null) return;
+      const pnl=(cur-c.base)/c.base*100*c.sign;
+      pSum+=c.conv*pnl; wSum+=c.conv;
+    });
+    const pct=wSum>0?pSum/wSum:0;
+    if(pct>runMax) runMax=pct;
+    curve.push({pct,hwm:runMax});
+  }
+  if(curve.length<2){
+    root.innerHTML='<div class="panel hp-panel hp-empty">Performance-Kurve braucht ≥ 2 Datentage Live-Historie.</div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+  const lastPct=curve[curve.length-1].pct;
+  const peakPct=Math.max(0,...curve.map(p=>p.pct));
+  const maxDD=Math.min(0,...curve.map(p=>p.pct-p.hwm));
+  const daysLive=curve.length-1;
+
+  // SVG geometry
+  const W=760, H=240;
+  const pL=46, pR=18, pT=22, pB=34;
+  const pw=W-pL-pR, ph=H-pT-pB;
+  const allVals=curve.flatMap(p=>[p.pct,p.hwm]).concat([0]);
+  let yLo=Math.min(...allVals), yHi=Math.max(...allVals);
+  if(yHi-yLo<1){yLo-=0.5;yHi+=0.5;}
+  const yPad=(yHi-yLo)*0.18; yLo-=yPad; yHi+=yPad;
+  const ySpan=yHi-yLo;
+  const _mx=i=>curve.length>1?pL+i/(curve.length-1)*pw:pL+pw/2;
+  const _my=v=>pT+(yHi-v)/ySpan*ph;
+
+  const linePts=curve.map((p,i)=>`${_mx(i).toFixed(1)},${_my(p.pct).toFixed(1)}`).join(" ");
+  const hwmPts=curve.map((p,i)=>`${_mx(i).toFixed(1)},${_my(p.hwm).toFixed(1)}`).join(" ");
+  // Drawdown shaded area = polygon between HWM (top edge) and equity (bottom edge)
+  const ddTop=curve.map((p,i)=>`${_mx(i).toFixed(1)},${_my(p.hwm).toFixed(1)}`).join(" L ");
+  const ddBot=curve.slice().reverse().map((p,j)=>{
+    const i=curve.length-1-j;
+    return `${_mx(i).toFixed(1)},${_my(p.pct).toFixed(1)}`;
+  }).join(" L ");
+  const ddArea=`M ${ddTop} L ${ddBot} Z`;
+  const yZero=_my(0).toFixed(1);
+
+  // Y ticks
+  const rawStep=ySpan/4;
+  const tStep=rawStep>=2?1:rawStep>=1?0.5:rawStep>=0.5?0.25:0.1;
+  const yT0=Math.ceil(yLo/tStep)*tStep;
+  const yTicks=[];
+  for(let v=yT0; v<=yHi+0.001; v=Math.round((v+tStep)*1000)/1000) yTicks.push(v);
+  const yTickSvg=yTicks.map(v=>{
+    const y=_my(v); if(y<pT-2||y>pT+ph+2) return "";
+    const lbl=(v>=0?"+":"−")+Math.abs(v).toFixed(Math.abs(v)<1?2:1)+"%";
+    return `<line x1="${pL}" y1="${y.toFixed(1)}" x2="${(pL+pw).toFixed(1)}" y2="${y.toFixed(1)}" class="hp-grid"/>
+      <text class="hp-tick" x="${pL-6}" y="${(y+3.5).toFixed(1)}">${lbl}</text>`;
+  }).join("");
+
+  const lineCls=lastPct>=0.05?"hp-line-pos":lastPct<=-0.05?"hp-line-neg":"hp-line-flat";
+  const dotCls=lastPct>=0.05?"hp-dot-pos":lastPct<=-0.05?"hp-dot-neg":"hp-dot-flat";
+  const heroCls=lastPct>=0.05?"hp-kpi-pos":lastPct<=-0.05?"hp-kpi-neg":"hp-kpi-flat";
+
+  const lastX=_mx(curve.length-1);
+  const lastY=_my(lastPct);
+  const lastDot=`<circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="4.5" class="hp-dot ${dotCls}"/>`;
+
+  const xAxLbl=`<text class="hp-xlbl" x="${pL}" y="${(H-10).toFixed(1)}">Inception · T−${daysLive}d</text>
+    <text class="hp-xlbl" x="${(pL+pw).toFixed(1)}" y="${(H-10).toFixed(1)}" text-anchor="end">Heute</text>`;
+
+  const fmt=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
+  const totalRet=fmt(lastPct);
+  const maxDDfmt=maxDD<-0.005?fmt(maxDD):"0.00%";
+  const peakFmt=peakPct>0.005?fmt(peakPct):"0.00%";
+  const ddCls=maxDD<-0.5?"hp-kpi-neg":"";
+
+  root.innerHTML=`<div class="panel hp-panel">
+    <div class="hp-h">
+      <div class="hp-title-block">
+        <h2 class="hp-title">Performance · Equity Curve</h2>
+        <div class="hp-sub">Unrealized P&amp;L · Conviction-Weighted MTM seit Inception (T−${daysLive}d). <strong>0 Closed Trades</strong> — Win-Rate kommt mit erstem Exit (close_date Schema-Extension DE-owned).</div>
+      </div>
+      <div style="text-align:right">
+        <span class="hp-hero-lbl">Total Return</span>
+        <div class="hp-hero-val ${heroCls}" title="Konv.-gewichtete kumulierte MTM-Rendite seit frühestem Entry">${totalRet}</div>
+      </div>
+    </div>
+    <div class="hp-svg-wrap">
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" class="hp-svg" role="img" aria-label="Equity Curve seit Inception: aktuell ${totalRet}, Max Drawdown ${maxDDfmt}, Peak ${peakFmt}">
+        ${yTickSvg}
+        <line x1="${pL}" y1="${yZero}" x2="${(pL+pw).toFixed(1)}" y2="${yZero}" class="hp-zero"/>
+        <path d="${ddArea}" class="hp-dd-area"><title>Drawdown vom HWM</title></path>
+        <polyline points="${hwmPts}" class="hp-hwm-line"><title>High-Water-Mark (rollierendes Hoch)</title></polyline>
+        <polyline points="${linePts}" class="hp-equity-line ${lineCls}"><title>Equity-Linie</title></polyline>
+        ${lastDot}
+        ${xAxLbl}
+      </svg>
+    </div>
+    <div class="hp-legend">
+      <span><span class="hp-leg-sw hp-leg-sw-eq"></span>Equity</span>
+      <span><span class="hp-leg-sw hp-leg-sw-hwm"></span>High-Water-Mark</span>
+      <span><span class="hp-leg-sw hp-leg-sw-dd"></span>Drawdown</span>
+    </div>
+    <div class="hp-stats">
+      <div class="hp-stat"><span class="hp-stat-lbl">Total Return</span><span class="hp-stat-val ${heroCls}">${totalRet}</span></div>
+      <div class="hp-stat"><span class="hp-stat-lbl">Max Drawdown</span><span class="hp-stat-val ${ddCls}">${maxDDfmt}</span></div>
+      <div class="hp-stat"><span class="hp-stat-lbl">Peak</span><span class="hp-stat-val">${peakFmt}</span></div>
+      <div class="hp-stat"><span class="hp-stat-lbl">Tage Live</span><span class="hp-stat-val">${daysLive}</span></div>
+      <div class="hp-stat"><span class="hp-stat-lbl">Aktive Calls</span><span class="hp-stat-val">${calls.length}</span></div>
+      <div class="hp-stat hp-stat-faded" title="Geschlossene Trades — Win-Rate berechenbar sobald erste Position exitiert. DE-Issue für close_date/return_pct Schema-Extension pending."><span class="hp-stat-lbl">Closed · Win-Rate</span><span class="hp-stat-val">0 · —</span></div>
+    </div>
+    <div class="hp-foot"><b>Lesart:</b> Solide Linie = tägliche konv.-gewichtete Mark-to-Market aller offenen Calls (sign-flipped für Shorts), indexiert bei 0% am Inception-Tag (frühester Entry). Gestrichelte Linie = High-Water-Mark (rollierendes Hoch). Rote Fläche = Drawdown vom HWM zur aktuellen Equity. Realized Win-Rate-Kurve braucht close_date/return_pct/exit_price im Schema (DE-owned, Z190 push-back pending).</div>
   </div>`;
   root.setAttribute("aria-busy","false");
 })();
