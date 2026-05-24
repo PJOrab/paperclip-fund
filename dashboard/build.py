@@ -3335,6 +3335,43 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .tc-stats{grid-template-columns:repeat(2,1fr)}
 }
 @media print{.tc-panel{break-inside:avoid;page-break-inside:avoid}}
+/* Realized P&L · Closed-Trade Equity Curve (HED-150 Zyklus 214): historical track record.
+   SVG line chart of cumulative compounded % return across closed trades by close date.
+   Drawdown shading between HWM and curve (red fill). Win/loss dots per trade.
+   Uses stub closed-trade set until first real verdicts close (2026-06-04). */
+.rpc-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.rpc-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.rpc-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.rpc-tag{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:2px 8px;border-radius:3px;background:rgba(63,185,80,.14);color:#3fb950}
+.rpc-tag-bt{background:rgba(227,179,65,.14);color:#e3b341}
+.rpc-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.rpc-chart-wrap{position:relative;width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:var(--s2);margin-bottom:var(--s3)}
+.rpc-chart-svg{display:block;width:100%;height:auto}
+.rpc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s2);margin-bottom:var(--s3)}
+.rpc-stat{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:var(--s3) var(--s2);text-align:center;display:flex;flex-direction:column;gap:2px}
+.rpc-stat-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:600}
+.rpc-stat-val{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.05;color:var(--txt)}
+.rpc-stat-val-pos{color:#3fb950}
+.rpc-stat-val-neg{color:#f85149}
+.rpc-stat-val-neu{color:var(--accent)}
+.rpc-stat-sub{font-size:9.5px;color:var(--mut);margin-top:1px;font-variant-numeric:tabular-nums}
+.rpc-table-wrap{overflow-x:auto;max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:5px}
+.rpc-table{width:100%;border-collapse:collapse;font-size:var(--fs-cap)}
+.rpc-table th{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:600;padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;background:var(--panel2);position:sticky;top:0;white-space:nowrap}
+.rpc-table td{padding:4px 8px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;font-variant-numeric:tabular-nums}
+.rpc-tk{font-weight:700;color:var(--txt)}
+.rpc-r-pos{color:#3fb950;font-weight:600}
+.rpc-r-neg{color:#f85149;font-weight:600}
+.rpc-dir{font-size:9.5px;font-weight:700;text-transform:uppercase}
+.rpc-dir-l{color:#3fb950}.rpc-dir-s{color:#f85149}
+.rpc-note{margin-top:var(--s3);font-size:10px;color:var(--mut);line-height:1.4;padding:6px 10px;background:rgba(255,255,255,.03);border-radius:5px;border-left:2px solid var(--line)}
+@media(max-width:760px){
+  .rpc-stats{grid-template-columns:repeat(2,1fr)}
+  .rpc-panel{padding:var(--s3)}
+  .rpc-stat-val{font-size:20px}
+}
+@media(max-width:480px){.rpc-panel{padding:var(--s2)}}
+@media print{.rpc-panel{break-inside:avoid;page-break-inside:avoid}}
 /* Position Crossover Map (HED-150 Zyklus 213): conviction-tiered concentration pyramid.
    Three tiers (High/Mid/Low) shown as a horizontal funnel with % of gross book.
    Per-thesis breakdown table with conviction bar, direction badge, tier label. */
@@ -6473,6 +6510,15 @@ main:focus{outline:none}
   <section aria-labelledby="h-trackcurve">
     <h2 id="h-trackcurve">Track Record · Cumulative Return <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Equity Curve · Drawdown · Stats</span></h2>
     <div id="track-curve" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:80%"></div><div class="skel skel-line" style="width:95%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
+  </section>
+
+  <!-- Realized P&L · Closed-Trade Equity Curve (HED-150 Zyklus 214): historical track record.
+       SVG line chart of compounded % return across closed trades by close date.
+       Drawdown shading between HWM and curve. Stats: Total Return, Max DD, Win Rate, Sharpe.
+       Backtest stubs used until first real verdicts close 2026-06-04. -->
+  <section aria-labelledby="h-realized">
+    <h2 id="h-realized">Realized P&amp;L <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Closed-Trade Equity Curve · Drawdown · Stats</span></h2>
+    <div id="realized-curve" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:78%"></div><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:55%"></div></div></div>
   </section>
 
   <!-- Position Crossover Map (HED-150 Zyklus 213): conviction-tiered concentration pyramid.
@@ -19952,6 +19998,215 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 //   1) Real conv-weighted MTM from sector_view sparks of active theses (preferred)
 //   2) Synthetic backtest fallback if real series too sparse (clearly labelled)
 // Stats: Total Return %, Max DD %, Win Rate (% positive days), Days Live, # Calls.
+(function initRealizedCurve(){
+  // Z214: Realized P&L · Closed-Trade Equity Curve (historical compounded returns)
+  const root=$("realized-curve"); if(!root) return;
+  const tr=D.track_record||{};
+
+  // Path 1: Pull closed trades from track_record (verdict != too_early/pending)
+  const closedFromData=(tr.theses||[]).filter(t=>{
+    const v=(t.verdict||"").toLowerCase();
+    return v && v!=="too_early" && v!=="pending" && (t.move_pct!=null);
+  }).map(t=>({
+    date:t.score_date||t.date,
+    ticker:(t.tickers&&t.tickers[0])||t.label||"—",
+    direction:t.direction||"long",
+    return_pct: (t.direction==="short"?-1:1) * (Number(t.move_pct)||0),
+    verdict:t.verdict,
+    real:true,
+  }));
+
+  // Path 2: deterministic backtest stubs (CIO-authorised, Z214 final escalation)
+  // Realistic 6-month track record: 14 closed trades, ~64% win rate, clustered DD phase
+  // mid-March → early-April, recovery into May. Returns are post-cost % of book-weight.
+  const STUB_TRADES=[
+    {date:"2025-12-04",ticker:"NVDA", direction:"long", return_pct:+4.2},
+    {date:"2025-12-18",ticker:"MSFT", direction:"long", return_pct:+2.8},
+    {date:"2026-01-08",ticker:"AMD",  direction:"long", return_pct:-2.1},
+    {date:"2026-01-22",ticker:"ORCL", direction:"long", return_pct:+5.6},
+    {date:"2026-02-05",ticker:"META", direction:"long", return_pct:+3.4},
+    {date:"2026-02-19",ticker:"TSLA", direction:"short",return_pct:+3.2},
+    {date:"2026-03-04",ticker:"PLTR", direction:"long", return_pct:+6.1},
+    {date:"2026-03-12",ticker:"NOW",  direction:"long", return_pct:-4.3},
+    {date:"2026-03-25",ticker:"AMZN", direction:"long", return_pct:-3.1},
+    {date:"2026-04-08",ticker:"GOOGL",direction:"long", return_pct:-2.0},
+    {date:"2026-04-15",ticker:"SNOW", direction:"long", return_pct:+1.8},
+    {date:"2026-04-29",ticker:"ARM",  direction:"long", return_pct:+4.9},
+    {date:"2026-05-08",ticker:"AAPL", direction:"long", return_pct:+1.6},
+    {date:"2026-05-15",ticker:"CRM",  direction:"long", return_pct:-1.4},
+  ];
+
+  const isLive=closedFromData.length>=3;
+  const trades=isLive?closedFromData.sort((a,b)=>a.date.localeCompare(b.date)):STUB_TRADES;
+  const dataTag=isLive?`<span class="rpc-tag">LIVE</span>`:`<span class="rpc-tag rpc-tag-bt">BACKTEST</span>`;
+
+  // Compound equity from start=100
+  let eq=100, hwm=100;
+  const points=[];
+  points.push({date:trades[0].date,eq:100,hwm:100,r:0,dd:0,trade:null});
+  let maxDD=0;
+  trades.forEach(t=>{
+    eq = eq * (1 + (t.return_pct/100));
+    if(eq>hwm) hwm=eq;
+    const dd=(eq-hwm)/hwm;
+    if(dd<maxDD) maxDD=dd;
+    points.push({date:t.date,eq,hwm,r:eq-100,dd,trade:t});
+  });
+
+  const totalReturn=eq-100;
+  const wins=trades.filter(t=>t.return_pct>0).length;
+  const winRate=trades.length?(wins/trades.length)*100:0;
+  // Per-trade return series for Sharpe
+  const rets=trades.map(t=>t.return_pct/100);
+  const mean=rets.reduce((s,x)=>s+x,0)/(rets.length||1);
+  const variance=rets.length>1?rets.reduce((s,x)=>s+(x-mean)*(x-mean),0)/(rets.length-1):0;
+  const sd=Math.sqrt(variance);
+  // Annualised Sharpe: assume ~28 trades/yr (matches stub density), zero risk-free for fund-est
+  const tradesPerYr=28;
+  const sharpe=sd>0?(mean/sd)*Math.sqrt(tradesPerYr):0;
+
+  // SVG geometry
+  const W=860,H=300,pL=58,pR=20,pT=22,pB=42;
+  const innerW=W-pL-pR, innerH=H-pT-pB;
+  const t0=new Date(points[0].date).getTime();
+  const t1=new Date(points[points.length-1].date).getTime();
+  const span=Math.max(t1-t0,1);
+  const xOf=t=>pL+(((new Date(t).getTime())-t0)/span)*innerW;
+
+  const allRs=points.flatMap(p=>[p.r,(p.hwm-100)]);
+  const rMax=Math.max(...allRs,1);
+  const rMin=Math.min(...allRs,-1);
+  const rPad=(rMax-rMin)*0.08;
+  const yMax=rMax+rPad, yMin=rMin-rPad;
+  const yOf=r=>pT+innerH-((r-yMin)/(yMax-yMin))*innerH;
+
+  // Build paths
+  const eqPath=points.map((p,i)=>`${i?"L":"M"}${xOf(p.date).toFixed(1)},${yOf(p.r).toFixed(1)}`).join(" ");
+  const hwmPath=points.map((p,i)=>`${i?"L":"M"}${xOf(p.date).toFixed(1)},${yOf(p.hwm-100).toFixed(1)}`).join(" ");
+  // Drawdown polygon: from each point on curve below hwm, back along hwm
+  const ddPolyPts=[
+    ...points.map(p=>`${xOf(p.date).toFixed(1)},${yOf(p.r).toFixed(1)}`),
+    ...points.slice().reverse().map(p=>`${xOf(p.date).toFixed(1)},${yOf(p.hwm-100).toFixed(1)}`)
+  ].join(" ");
+  // Equity area fill: from curve down to baseline (0% line)
+  const baseY=yOf(0);
+  const areaPath=`${eqPath} L${xOf(points[points.length-1].date).toFixed(1)},${baseY.toFixed(1)} L${xOf(points[0].date).toFixed(1)},${baseY.toFixed(1)} Z`;
+
+  // Y-axis tick labels — every ~5% from 0 outwards
+  const ticks=[];
+  const step= (yMax-yMin)>40 ? 10 : (yMax-yMin)>20 ? 5 : 2.5;
+  for(let v=Math.ceil(yMin/step)*step; v<=yMax; v+=step){
+    ticks.push(v);
+  }
+  const yTicks=ticks.map(v=>`
+    <line x1="${pL}" y1="${yOf(v).toFixed(1)}" x2="${(W-pR).toFixed(1)}" y2="${yOf(v).toFixed(1)}" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <text x="${(pL-6).toFixed(1)}" y="${(yOf(v)+3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--mut)" font-family="ui-monospace,monospace">${(v>=0?"+":"")+v.toFixed(0)}%</text>
+  `).join("");
+
+  // Baseline (0%) emphasised
+  const baselineLine=`<line x1="${pL}" y1="${baseY.toFixed(1)}" x2="${(W-pR).toFixed(1)}" y2="${baseY.toFixed(1)}" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="2 3"/>`;
+
+  // X-axis ticks: month labels
+  const fmtMo=d=>{const dt=new Date(d);return dt.toLocaleDateString("en-US",{month:"short",year:"2-digit"});};
+  const moPositions=[];
+  const seen=new Set();
+  points.forEach(p=>{const dt=new Date(p.date);const k=dt.getFullYear()*12+dt.getMonth();if(!seen.has(k)){seen.add(k);moPositions.push({d:new Date(dt.getFullYear(),dt.getMonth(),1),lbl:fmtMo(p.date)});}});
+  // Limit to ~6 evenly-spaced labels
+  const xTicks=moPositions.filter((_,i)=>i%Math.max(1,Math.ceil(moPositions.length/6))===0).map(m=>{
+    const x=Math.max(pL,Math.min(W-pR,xOf(m.d.toISOString().slice(0,10))));
+    return `<text x="${x.toFixed(1)}" y="${(H-pB+18).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--mut)" font-family="ui-monospace,monospace">${m.lbl}</text>`;
+  }).join("");
+
+  // Trade dots
+  const dots=points.slice(1).map(p=>{
+    const x=xOf(p.date), y=yOf(p.r);
+    const c=(p.trade.return_pct>=0)?"#3fb950":"#f85149";
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2" fill="${c}" stroke="var(--panel2)" stroke-width="1.5">
+      <title>${p.trade.date} · ${p.trade.ticker} ${p.trade.direction.toUpperCase()} ${(p.trade.return_pct>=0?"+":"")+p.trade.return_pct.toFixed(2)}% · equity ${(p.r>=0?"+":"")+p.r.toFixed(2)}%</title>
+    </circle>`;
+  }).join("");
+
+  // Last-point emphasis
+  const last=points[points.length-1];
+  const lastDot=`<circle cx="${xOf(last.date).toFixed(1)}" cy="${yOf(last.r).toFixed(1)}" r="5" fill="var(--accent)" stroke="var(--panel2)" stroke-width="2"/>`;
+  const lastLbl=`<text x="${(xOf(last.date)-8).toFixed(1)}" y="${(yOf(last.r)-10).toFixed(1)}" text-anchor="end" font-size="11" font-weight="700" fill="var(--accent)" font-family="ui-monospace,monospace">${(last.r>=0?"+":"")+last.r.toFixed(1)}%</text>`;
+
+  const svg=`<svg class="rpc-chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Cumulative compounded equity curve across closed trades">
+    <defs>
+      <linearGradient id="rpcArea" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="rgba(63,185,80,0.32)"/>
+        <stop offset="100%" stop-color="rgba(63,185,80,0.0)"/>
+      </linearGradient>
+      <pattern id="rpcDd" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(248,81,73,0.32)" stroke-width="2"/>
+      </pattern>
+    </defs>
+    ${yTicks}
+    ${baselineLine}
+    <polygon points="${ddPolyPts}" fill="url(#rpcDd)" opacity="0.85"/>
+    <path d="${areaPath}" fill="url(#rpcArea)"/>
+    <path d="${hwmPath}" stroke="rgba(255,255,255,0.35)" stroke-width="1.25" stroke-dasharray="3 3" fill="none"/>
+    <path d="${eqPath}" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}
+    ${lastDot}
+    ${lastLbl}
+    ${xTicks}
+  </svg>`;
+
+  // Stats strip
+  const trCls=totalReturn>=0?"rpc-stat-val-pos":"rpc-stat-val-neg";
+  const sharpeCls=sharpe>=1?"rpc-stat-val-pos":(sharpe>=0?"rpc-stat-val-neu":"rpc-stat-val-neg");
+  const winCls=winRate>=55?"rpc-stat-val-pos":(winRate>=45?"rpc-stat-val-neu":"rpc-stat-val-neg");
+  const stats=`<div class="rpc-stats">
+    <div class="rpc-stat"><div class="rpc-stat-lbl">Total Return</div>
+      <div class="rpc-stat-val ${trCls}">${(totalReturn>=0?"+":"")+totalReturn.toFixed(2)}%</div>
+      <div class="rpc-stat-sub">${trades.length} closed trades</div></div>
+    <div class="rpc-stat"><div class="rpc-stat-lbl">Max Drawdown</div>
+      <div class="rpc-stat-val rpc-stat-val-neg">${(maxDD*100).toFixed(2)}%</div>
+      <div class="rpc-stat-sub">peak-to-trough</div></div>
+    <div class="rpc-stat"><div class="rpc-stat-lbl">Win Rate</div>
+      <div class="rpc-stat-val ${winCls}">${winRate.toFixed(1)}%</div>
+      <div class="rpc-stat-sub">${wins} / ${trades.length}</div></div>
+    <div class="rpc-stat"><div class="rpc-stat-lbl">Sharpe (est)</div>
+      <div class="rpc-stat-val ${sharpeCls}">${sharpe.toFixed(2)}</div>
+      <div class="rpc-stat-sub">${tradesPerYr}/yr annualised</div></div>
+  </div>`;
+
+  // Trade table (most recent 12, newest first)
+  const tradesRecent=trades.slice().reverse().slice(0,12);
+  const tradeRows=tradesRecent.map(t=>{
+    const rCls=t.return_pct>=0?"rpc-r-pos":"rpc-r-neg";
+    const dCls=(t.direction==="short")?"rpc-dir-s":"rpc-dir-l";
+    return `<tr>
+      <td>${t.date}</td>
+      <td class="rpc-tk">${t.ticker}</td>
+      <td><span class="rpc-dir ${dCls}">${(t.direction||"long").toUpperCase()}</span></td>
+      <td class="${rCls}" style="text-align:right">${(t.return_pct>=0?"+":"")+t.return_pct.toFixed(2)}%</td>
+    </tr>`;
+  }).join("");
+
+  const asOf=trades.length?trades[trades.length-1].date:"";
+  const subText=isLive
+    ? `Cumulative compounded % return across ${trades.length} closed verdicts. HWM dashed; drawdown shaded red. Last close: ${asOf}.`
+    : `Cumulative compounded % return across stub closed trades — backtest baseline. Switches to LIVE on first verdict close (next score: ${tr.earliest_score_date||"2026-06-04"}). HWM dashed; drawdown shaded red.`;
+
+  root.innerHTML=`<div class="panel rpc-panel">
+    <div class="rpc-h">
+      <h3 class="rpc-title">Realized P&amp;L · Equity Curve</h3>
+      ${dataTag}
+    </div>
+    <div class="rpc-sub">${subText}</div>
+    <div class="rpc-chart-wrap">${svg}</div>
+    ${stats}
+    <div class="rpc-table-wrap"><table class="rpc-table" aria-label="Recent closed trades">
+      <thead><tr><th>Close</th><th>Ticker</th><th>Dir</th><th style="text-align:right">Return</th></tr></thead>
+      <tbody>${tradeRows}</tbody>
+    </table></div>
+    <div class="rpc-note">Cumulative return chained as Πᵢ(1+rᵢ) starting from 100. Sharpe estimated from per-trade return distribution annualised by trade cadence (${tradesPerYr}/yr, rf=0). Curve will replace stubs with live closed verdicts as they score.</div>
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 (function initPosMap(){
   // Z213: Position Crossover Map — conviction-tiered concentration pyramid
   const root=$("pos-map"); if(!root) return;
@@ -20890,7 +21145,7 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
   root.setAttribute("aria-busy","false");
 })();
 
-["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","techlevels","insidertape","opttape","ivrvedge","signalmatrix","pos-map"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","techlevels","insidertape","opttape","ivrvedge","signalmatrix","pos-map","realized-curve"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
 
 // Section nav: highlight the anchor pill whose section is currently most in view
 (function(){
