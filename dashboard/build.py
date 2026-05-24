@@ -3207,6 +3207,59 @@ max-width:var(--measure);margin-inline:0;line-height:1.75}
   .ms-impact-val{font-size:24px}
 }
 @media print{.ms-panel{break-inside:avoid;page-break-inside:avoid}.ms-scenario{break-inside:avoid}}
+/* Net/Gross Exposure (HED-150 Zyklus 210) — hedge-fund exposure disclosure.
+   Stacked bar (long | short), KPI strip, per-side ticker breakdown. */
+.nx-panel{padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.nx-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--s2);flex-wrap:wrap;gap:var(--s2)}
+.nx-title{font-size:var(--fs-sm);font-weight:600;color:var(--txt);margin:0}
+.nx-asof{font-size:9.5px;color:var(--mut)}
+.nx-sub{font-size:var(--fs-cap);color:var(--mut);line-height:1.4;margin-bottom:var(--s3)}
+.nx-kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--s2);margin-bottom:var(--s3)}
+.nx-kpi{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:var(--s3) var(--s2);text-align:center;display:flex;flex-direction:column;gap:2px}
+.nx-kpi-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:600}
+.nx-kpi-val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.05;color:var(--txt)}
+.nx-kpi-val-long{color:#3fb950}
+.nx-kpi-val-short{color:#a855f7}
+.nx-kpi-val-net{color:var(--accent)}
+.nx-kpi-sub{font-size:9.5px;color:var(--mut);margin-top:1px}
+.nx-bar-wrap{margin-bottom:var(--s3)}
+.nx-bar-lbl{display:flex;justify-content:space-between;font-size:9.5px;color:var(--mut);margin-bottom:4px}
+.nx-bar-lbl-l{color:#3fb950;font-weight:600}
+.nx-bar-lbl-s{color:#a855f7;font-weight:600}
+.nx-bar{position:relative;height:24px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;overflow:hidden;display:flex}
+.nx-bar-long{background:linear-gradient(90deg,rgba(63,185,80,.35),rgba(63,185,80,.7));height:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;color:#fff;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;min-width:0}
+.nx-bar-short{background:linear-gradient(90deg,rgba(168,85,247,.7),rgba(168,85,247,.35));height:100%;display:flex;align-items:center;justify-content:flex-start;padding-left:6px;color:#fff;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;min-width:0}
+.nx-bar-net-mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--accent);box-shadow:0 0 0 1px rgba(11,15,23,.6);z-index:2}
+.nx-bar-net-mark::after{content:"net";position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--panel);padding:1px 4px;border-radius:2px;white-space:nowrap}
+.nx-breakdown{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
+.nx-side{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:var(--s3)}
+.nx-side-long{border-left:3px solid #3fb950}
+.nx-side-short{border-left:3px solid #a855f7}
+.nx-side-h{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);font-weight:700;margin-bottom:var(--s2)}
+.nx-side-h-long{color:#3fb950}
+.nx-side-h-short{color:#a855f7}
+.nx-call-row{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 0;border-bottom:1px solid rgba(38,50,72,.5);font-size:11px}
+.nx-call-row:last-child{border-bottom:none}
+.nx-call-tk{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--txt);font-weight:700;font-size:12px}
+.nx-call-conv{font-size:9.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+.nx-call-w{font-variant-numeric:tabular-nums;font-weight:600;color:var(--txt)}
+.nx-call-bar{height:3px;background:rgba(255,255,255,.06);border-radius:1.5px;margin-top:2px;overflow:hidden}
+.nx-call-bar-fill-long{background:#3fb950;height:100%}
+.nx-call-bar-fill-short{background:#a855f7;height:100%}
+.nx-empty{font-size:var(--fs-cap);color:var(--mut);padding:var(--s3) 0;text-align:center}
+.nx-verdict{margin-top:var(--s3);padding:8px 12px;background:rgba(77,163,255,.06);border-left:3px solid var(--accent);border-radius:5px;font-size:var(--fs-cap);line-height:1.4;color:var(--txt)}
+.nx-verdict b{color:var(--accent);font-weight:700}
+@media(max-width:760px){
+  .nx-kpi-strip{grid-template-columns:repeat(3,1fr)}
+  .nx-kpi:nth-child(4),.nx-kpi:nth-child(5){grid-column:span 1}
+  .nx-breakdown{grid-template-columns:1fr}
+  .nx-kpi-val{font-size:18px}
+}
+@media(max-width:480px){
+  .nx-kpi-strip{grid-template-columns:repeat(2,1fr)}
+  .nx-panel{padding:var(--s3)}
+}
+@media print{.nx-panel{break-inside:avoid;page-break-inside:avoid}.nx-side{break-inside:avoid}}
 /* Conviction-vs-P&L Quadrant Map (HED-150 Zyklus 192) — PM morning positioning check.
    SVG scatter of active calls: X=conviction, Y=direction-adj unrealized P&L.
    Four colour-coded quadrants (Monitor/Hold, Thesis-at-Risk, Lucky Win, Exit).  */
@@ -6292,6 +6345,14 @@ main:focus{outline:none}
   <section aria-labelledby="h-sektorheat">
     <h2 id="h-sektorheat">Sektor-Heatmap <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Relative Strength · 1d / 5d / 30d</span></h2>
     <div id="sektor-heatmap" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:72%"></div><div class="skel skel-line" style="width:90%"></div><div class="skel skel-line" style="width:60%"></div></div></div>
+  </section>
+
+  <!-- Net/Gross Exposure (HED-150 Zyklus 210): canonical hedge-fund exposure disclosure.
+       Conv-weighted Long%, Short%, Net%, Gross%, L/S ratio with stacked-bar visual.
+       Answers the first LP/allocator question: "what's your net exposure to the tape?" -->
+  <section aria-labelledby="h-netexp">
+    <h2 id="h-netexp">Net / Gross Exposure <span class="muted" style="font-weight:400;font-size:var(--fs-cap)">Long-Short Balance · Conv-Weighted</span></h2>
+    <div id="net-exp" aria-live="polite" aria-busy="true"><div class="skel-loader" aria-hidden="true"><div class="skel skel-line" style="width:55%"></div><div class="skel skel-line" style="width:78%"></div></div></div>
   </section>
 
   <!-- Macro-Sensitivity (HED-150 Zyklus 209): Bloomberg MARS-style stress-test matrix.
@@ -19740,6 +19801,132 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 })();
 
 // loading complete: clear skeleton busy-state so assistive tech announces rendered content
+// Net/Gross Exposure (HED-150 Zyklus 210): canonical hedge-fund exposure disclosure.
+// First question every LP/allocator asks: "what's your net long/short exposure to the tape?"
+// Conv-weighted long/short stacked bar + KPI strip (Long%, Short%, Net%, Gross%, L/S Ratio).
+// Per-side breakdown lists active calls sorted by conv weight.
+(function initNetExposure(){
+  const root=$("net-exp"); if(!root) return;
+
+  const tr=D.track_record||{};
+  const active=(tr.theses||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+
+  if(!active.length){
+    root.innerHTML='<div class="panel nx-panel"><div class="nx-empty">Keine aktiven Calls — Exposure-Aufstellung wird nach dem nächsten Briefing-Lauf angezeigt.</div></div>';
+    root.setAttribute("aria-busy","false");
+    return;
+  }
+
+  // Build per-call weight rows. Weight = conviction (normalised below).
+  const rows=active.map(t=>{
+    const tks=(t.tickers||[]).filter(s=>typeof s==="string"&&s.length>0);
+    const primary=tks.length ? tks.join("·") : "?";
+    const dir=(t.direction||"long").toLowerCase();
+    const conv=Number(t.conviction??0.5);
+    return {ticker:primary, dir, conv, label:t.label||""};
+  });
+
+  const longs=rows.filter(r=>r.dir!=="short").sort((a,b)=>b.conv-a.conv);
+  const shorts=rows.filter(r=>r.dir==="short").sort((a,b)=>b.conv-a.conv);
+
+  const longSum=longs.reduce((s,r)=>s+r.conv,0);
+  const shortSum=shorts.reduce((s,r)=>s+r.conv,0);
+  const grossSum=longSum+shortSum;
+
+  // Express as % of gross book (so gross = 100%)
+  const longPct = grossSum>0 ? longSum/grossSum*100 : 0;
+  const shortPct = grossSum>0 ? shortSum/grossSum*100 : 0;
+  const netPct = longPct - shortPct;
+  const grossPct = 100; // by construction
+  const lsRatio = shortSum>1e-6 ? longSum/shortSum : (longSum>0?Infinity:0);
+
+  // Verdict text — institutional posture interpretation
+  let posture, postureExp;
+  if(Math.abs(netPct)<10){posture="Market-Neutral"; postureExp="Long und Short halten sich die Waage.";}
+  else if(netPct>=40){posture="Net Long Direktional"; postureExp="Buch trägt klar positives Markt-Beta.";}
+  else if(netPct>=10){posture="Moderat Net Long"; postureExp="Long-Bias mit Short-Hedges.";}
+  else if(netPct<=-40){posture="Net Short Direktional"; postureExp="Buch profitiert von fallenden Märkten.";}
+  else {posture="Moderat Net Short"; postureExp="Short-Bias mit Long-Hedges.";}
+
+  const fmt=v=>v.toFixed(0)+"%";
+  const fmt1=v=>(v>=0?"+":"")+v.toFixed(1)+"%";
+  const lsFmt=v=>v===Infinity?"∞":v.toFixed(2)+"×";
+
+  // Net marker position on the bar: 0% (all short) → 50% (neutral) → 100% (all long)
+  // Net pct ranges from -100 (all short) to +100 (all long)
+  const netMarkerPos = ((netPct+100)/200*100).toFixed(1);
+
+  const kpis=[
+    {lbl:"Long", val:fmt(longPct), sub:`${longs.length} Position${longs.length===1?"":"en"}`, cls:"nx-kpi-val-long"},
+    {lbl:"Short", val:fmt(shortPct), sub:`${shorts.length} Position${shorts.length===1?"":"en"}`, cls:"nx-kpi-val-short"},
+    {lbl:"Net", val:fmt1(netPct), sub:posture, cls:"nx-kpi-val-net"},
+    {lbl:"Gross", val:fmt(grossPct), sub:"Sum |Exposure|", cls:""},
+    {lbl:"L/S Ratio", val:lsFmt(lsRatio), sub:shortSum>1e-6?"long $ / short $":"keine Shorts", cls:""},
+  ];
+
+  const kpiHtml=kpis.map(k=>`<div class="nx-kpi">
+    <div class="nx-kpi-lbl">${k.lbl}</div>
+    <div class="nx-kpi-val ${k.cls}">${k.val}</div>
+    <div class="nx-kpi-sub">${k.sub}</div>
+  </div>`).join("");
+
+  // Stacked bar — long on left, short on right, net marker overlaid
+  const longBarW=longPct.toFixed(1), shortBarW=shortPct.toFixed(1);
+  const barHtml=`<div class="nx-bar-wrap">
+    <div class="nx-bar-lbl">
+      <span class="nx-bar-lbl-l">↑ Long ${fmt(longPct)}</span>
+      <span class="nx-bar-lbl-s">Short ${fmt(shortPct)} ↓</span>
+    </div>
+    <div class="nx-bar">
+      <div class="nx-bar-long" style="width:${longBarW}%">${longPct>=8?fmt(longPct):""}</div>
+      <div class="nx-bar-short" style="width:${shortBarW}%">${shortPct>=8?fmt(shortPct):""}</div>
+    </div>
+  </div>`;
+
+  // Per-side breakdown
+  const renderSide=(items,side)=>{
+    if(!items.length) return `<div class="nx-side nx-side-${side}">
+      <div class="nx-side-h nx-side-h-${side}">${side==="long"?"Long Calls":"Short Calls"}</div>
+      <div class="nx-empty" style="padding:8px 0">Keine ${side==="long"?"Long":"Short"}-Positionen</div>
+    </div>`;
+    const rowsHtml=items.map(r=>{
+      const wPct = grossSum>0 ? (r.conv/grossSum*100) : 0;
+      return `<div class="nx-call-row">
+        <span><span class="nx-call-tk">${r.ticker}</span></span>
+        <span><span class="nx-call-conv">conv ${r.conv.toFixed(2)}</span> · <span class="nx-call-w">${wPct.toFixed(0)}% gross</span></span>
+      </div>
+      <div class="nx-call-bar"><div class="nx-call-bar-fill-${side}" style="width:${(r.conv/Math.max(longSum,shortSum,0.01)*100).toFixed(1)}%"></div></div>`;
+    }).join("");
+    return `<div class="nx-side nx-side-${side}">
+      <div class="nx-side-h nx-side-h-${side}">${side==="long"?"Long Calls ↑":"Short Calls ↓"} <span style="color:var(--mut);font-weight:500">· ${items.length}</span></div>
+      ${rowsHtml}
+    </div>`;
+  };
+
+  const breakdownHtml=`<div class="nx-breakdown">
+    ${renderSide(longs,"long")}
+    ${renderSide(shorts,"short")}
+  </div>`;
+
+  const verdictHtml=`<div class="nx-verdict">
+    Posture: <b>${posture}</b> · Net ${fmt1(netPct)} · Gross ${fmt(grossPct)} · ${postureExp}
+  </div>`;
+
+  const asOf=(tr.earliest_score_date) ? `as of next score ${tr.earliest_score_date}` : "";
+  root.innerHTML=`<div class="panel nx-panel">
+    <div class="nx-h">
+      <h3 class="nx-title">Net / Gross Exposure</h3>
+      ${asOf?`<span class="nx-asof">${asOf}</span>`:""}
+    </div>
+    <div class="nx-sub">Conviction-gewichtete Long-/Short-Exposure als % of Gross Book. <b>Erste Frage jedes Allocators:</b> "Was ist eure Netto-Exposure zum Markt?"</div>
+    <div class="nx-kpi-strip">${kpiHtml}</div>
+    ${barHtml}
+    ${breakdownHtml}
+    ${verdictHtml}
+  </div>`;
+  root.setAttribute("aria-busy","false");
+})();
+
 // Macro-Sensitivity (HED-150 Zyklus 209): Bloomberg MARS-style stress-test matrix.
 // 4 macro shock scenarios × per-thesis impact → conviction-weighted book P&L estimate.
 // Scenarios: Rate Shock (+100bps), VIX Spike (+10pts), Dollar Surge (+3%), Tech Selloff (-15%).
