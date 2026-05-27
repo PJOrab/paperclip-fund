@@ -20287,7 +20287,11 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
   // Build a ticker→spark map from sector_view for mini-charts
   const sv=D.sector_view||{};
   const sparkMap={};
-  (sv.sectors||[]).forEach(sec=>(sec.tickers||[]).forEach(t=>{if(t.spark&&t.spark.length) sparkMap[t.ticker]=t.spark;}));
+  const svPriceMap={};  // ticker→current price from sector_view (build-time)
+  (sv.sectors||[]).forEach(sec=>(sec.tickers||[]).forEach(t=>{
+    if(t.spark&&t.spark.length) sparkMap[t.ticker]=t.spark;
+    if(t.ticker&&t.price!=null) svPriceMap[String(t.ticker).toUpperCase()]=t.price;
+  }));
 
   // Mini spark SVG: width=160, height=44, thin line, area fill
   const miniSvg=(spark,dir)=>{
@@ -20377,13 +20381,20 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 
     // Δ% from baseline
     const bp=Number(t.baseline_price)||0;
-    const cp=Number(t.current_price)||0;
+    // Prefer JSON current_price, fall back to sector_view build-time price, then live Yahoo price
+    const cpJson=Number(t.current_price)||0;
+    const cpSv=svPriceMap[ticker]||0;
+    // _liveYahoo is populated by initLivePriceFeed() after initial render
+    const cpYahoo=(window._liveYahoo&&window._liveYahoo[ticker])||0;
+    const cp=cpJson||cpYahoo||cpSv;
+    const priceSource=cpJson?"json":cpYahoo?"live":cpSv?"sector_view":"";
     let deltaHtml="";
     if(bp>0){
       if(cp>0){
         const d=(cp-bp)/bp*100*(dir==="short"?-1:1);
         const cls=d>=0?"atc-delta-pos":d>=-2?"atc-delta-neu":"atc-delta-neg";
-        deltaHtml=`<span class="${cls}">${(d>=0?"+":"")+d.toFixed(2)}%</span>`;
+        const liveTag=cpYahoo?`<span style="font-size:8px;color:#58a6ff;margin-left:3px">●LIVE</span>`:"";
+        deltaHtml=`<span class="${cls}">${(d>=0?"+":"")+d.toFixed(2)}%</span>${liveTag}`;
       } else {
         deltaHtml=`<span class="atc-delta-neu">–</span>`;
       }
@@ -22059,6 +22070,100 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 })();
 
 ["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","techlevels","insidertape","opttape","ivrvedge","signalmatrix","pos-map","realized-curve","thesis-cards","perf-attrib"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+
+// Live price feed (HED-159): fetch Yahoo Finance prices for active thesis tickers every 2 min.
+// Populates window._liveYahoo → triggers re-render of thesis cards and status bar.
+(function initLivePriceFeed(){
+  const tr=D.track_record||{};
+  const theses=(tr.theses||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+  if(!theses.length) return;
+  // Collect unique tickers
+  const tickers=[...new Set(theses.flatMap(t=>t.tickers||[]).filter(Boolean).map(s=>String(s).toUpperCase()))];
+  if(!tickers.length) return;
+  window._liveYahoo=window._liveYahoo||{};
+  window._liveYahooTs=window._liveYahooTs||0;
+
+  async function fetchBatch(syms){
+    // Yahoo Finance v7/finance/quote — no auth required, CORS open for browser fetch
+    const url=`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${syms.join(",")}&fields=regularMarketPrice,symbol&formatted=false&lang=en-US&region=US&corsDomain=finance.yahoo.com`;
+    try{
+      const resp=await fetch(url,{headers:{"Accept":"application/json"}});
+      if(!resp.ok) return;
+      const data=await resp.json();
+      const quotes=(data&&data.quoteResponse&&data.quoteResponse.result)||[];
+      quotes.forEach(q=>{
+        if(q.symbol&&q.regularMarketPrice!=null){
+          window._liveYahoo[q.symbol.toUpperCase()]=q.regularMarketPrice;
+        }
+      });
+      window._liveYahooTs=Date.now();
+    }catch(e){/* CORS or network — silently skip */}
+  }
+
+  function reRenderThesisCards(){
+    // Re-invoke initThesisCards if it's re-callable (it's an IIFE so we can't call it again).
+    // Instead: patch each card's delta in place by re-reading _liveYahoo.
+    const cards=document.querySelectorAll(".atc-card");
+    cards.forEach(card=>{
+      const tkEl=card.querySelector(".atc-tk");
+      const ticker=tkEl?String(tkEl.textContent).trim().toUpperCase():"";
+      if(!ticker) return;
+      const livePrice=window._liveYahoo[ticker];
+      if(!livePrice) return;
+      // Find corresponding thesis
+      const thesis=theses.find(t=>(t.tickers||[]).map(s=>s.toUpperCase()).includes(ticker));
+      if(!thesis||!thesis.baseline_price) return;
+      const bp=thesis.baseline_price;
+      const dir=(thesis.direction||"long").toLowerCase();
+      const d=(livePrice-bp)/bp*100*(dir==="short"?-1:1);
+      const cls=d>=0?"atc-delta-pos":d>=-2?"atc-delta-neu":"atc-delta-neg";
+      // Update price row if present
+      const priceRow=card.querySelector(".atc-price-row");
+      if(priceRow){
+        // Update "Now" value
+        const vals=priceRow.querySelectorAll(".atc-price-val");
+        if(vals.length>=2) vals[1].textContent=`$${livePrice.toFixed(2)}`;
+        // Update delta
+        const deltaEls=priceRow.querySelectorAll(".atc-delta-pos,.atc-delta-neg,.atc-delta-neu");
+        deltaEls.forEach(el=>{
+          el.className=cls;
+          el.textContent=(d>=0?"+":"")+d.toFixed(2)+"%";
+        });
+        // Add LIVE badge
+        if(!priceRow.querySelector(".atc-live-badge")){
+          const badge=document.createElement("span");
+          badge.className="atc-live-badge";
+          badge.style.cssText="font-size:8px;color:#58a6ff;margin-left:4px;vertical-align:middle";
+          badge.textContent="●LIVE";
+          const lastDelta=priceRow.querySelector(".atc-delta-pos,.atc-delta-neg,.atc-delta-neu");
+          if(lastDelta) lastDelta.after(badge);
+        }
+      }
+    });
+    // Re-render status bar age indicator with LIVE marker
+    const bar=document.getElementById("pf-status-bar");
+    if(bar){
+      const existing=bar.querySelector(".pf-live-yf");
+      if(!existing){
+        const liveEl=document.createElement("span");
+        liveEl.className="pf-live-yf";
+        liveEl.style.cssText="font-size:10px;color:#58a6ff;font-weight:600";
+        liveEl.textContent="● YF Live";
+        const spacer=bar.querySelector(".pf-status-spacer");
+        if(spacer) spacer.before(liveEl);
+      }
+    }
+  }
+
+  async function refresh(){
+    await fetchBatch(tickers);
+    reRenderThesisCards();
+  }
+
+  // Delay initial fetch so page loads fast, then refresh every 2 min
+  setTimeout(refresh, 3000);
+  setInterval(refresh, 120000);
+})();
 
 // Section nav: highlight the anchor pill whose section is currently most in view
 (function(){
