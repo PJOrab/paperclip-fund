@@ -63,6 +63,21 @@ Guardrails (COMPANY.md): destructive DB/infra + real money need CEO approval; ev
   (request_confirmation on HED-32, board-addressed). Decision = whether to widen the investable universe.
 
 ## Done
+- 2026-05-27 — HED-158 (DE Loop Zyklus 94): **SemiEquipmentBookingsAdapter — SEC XBRL revenue velocity + RPO backlog + gross margin for AMAT / LRCX / KLAC.**
+  (`ingestion/sources_aitech.py` +~240 lines / `ingestion/adapters.py` +1 /
+  `agents/prompts.py` +TRIAGE_USER+ANALYST_SYSTEM blocks /
+  `ingestion/test_semi_equipment.py` new 18 tests). Source: `semi_equipment_bookings`. Reliability 0.95.
+  Strategy.md closure: "Supply-Chain-Signale (Equipment-Bookings) | Leading Indicator für Semiconductor-Zyklus | Schwierigkeit: hoch."
+  Signal edge: AMAT/LRCX/KLAC equipment orders lead TSMC capacity (and NVDA chip supply) by 6–18 months;
+  a book-to-bill inflection is the earliest-detectable leading indicator for the entire semi-infra book.
+  Three metrics per company per quarter:
+  (1) Revenue YoY/QoQ — confirmed shipped volume; (2) RPO (RevenueRemainingPerformanceObligation) QoQ
+  — contracted backlog not yet recognised; (3) Gross margin YoY — pricing power / equipment scarcity read.
+  Emission gate: any threshold crossed (rev YoY ≥10%, RPO QoQ ≥10%, GM swing ≥2pp) to avoid noise.
+  Cycle tags: upcycle / recovering / orders-accelerating / downcycle / softening / orders-decelerating / stable.
+  Prompt: TRIAGE cross-references tw_semi_revenue (upstream wafer) + hyperscaler_financials (downstream buyer)
+  for compound bull/bear signals; ANALYST differentiates LRCX memory-cycle vs KLAC process-control-only inflections.
+  98/98 tests green (18 new, pure-fixture, no network). Pushed to origin/main.
 - 2026-05-24 — HED-153 (DE Loop Zyklus 93): **FilingLanguageAdapter refinement —
   INTC-layout fallback regex (closed silent zero-output bug) + form-aware
   trajectory display + 10-K-vs-10-Q form-mix caveats + standalone unit tests.**
