@@ -1993,12 +1993,9 @@ class OptionsMarketAdapter:
 
     SOURCE = "options_market"
     RELIABILITY = 0.82
-    # Emit only for liquid-options top positions to keep runtime ≤ 20s
-    TICKERS = [
-        "NVDA", "MSFT", "GOOGL", "META", "AMZN", "AAPL",
-        "AMD", "TSM", "ASML", "ARM", "AVGO", "PLTR",
-        "ORCL", "NOW", "CRM", "SNOW", "CRWD",
-    ]
+    # Full watchlist universe — options chain exists for all 34 names; adapters
+    # degrade gracefully (return None) for any ticker without listed options.
+    TICKERS = W.TICKERS
     # Thresholds for "notable" signals
     PC_BULLISH = 0.50   # P/C ratio below this = notably bullish
     PC_BEARISH = 1.20   # P/C ratio above this = notably bearish
@@ -2136,12 +2133,9 @@ class EpsRevisionsAdapter:
 
     SOURCE = "eps_revisions"
     RELIABILITY = 0.85
-    # Same 17 liquid watchlist names used by OptionsMarketAdapter / ShortInterest
-    TICKERS = [
-        "NVDA", "MSFT", "GOOGL", "META", "AMZN", "AAPL",
-        "AMD", "TSM", "ASML", "ARM", "AVGO", "PLTR",
-        "ORCL", "NOW", "CRM", "SNOW", "CRWD",
-    ]
+    # Full watchlist — yfinance provides EPS estimates for all listed tickers;
+    # adapters degrade gracefully for any ticker with no analyst coverage.
+    TICKERS = W.TICKERS
     # Thresholds for "directional" — designed to filter out routine churn
     NET_7D_MIN = 3       # |up_7d - down_7d|
     NET_30D_MIN = 5      # |up_30d - down_30d|
@@ -2357,11 +2351,9 @@ class AnalystConsensusAdapter:
 
     SOURCE = "analyst_consensus"
     RELIABILITY = 0.83
-    TICKERS = [
-        "NVDA", "MSFT", "GOOGL", "META", "AMZN", "AAPL",
-        "AMD", "TSM", "ASML", "ARM", "AVGO", "PLTR",
-        "ORCL", "NOW", "CRM", "SNOW", "CRWD",
-    ]
+    # Full watchlist — all 34 names have sell-side analyst coverage; adapters
+    # degrade gracefully for any ticker below MIN_ANALYSTS threshold.
+    TICKERS = W.TICKERS
     UPSIDE_MIN = 0.20         # ≥20% implied upside/downside vs spot
     DISPERSION_MIN = 0.75     # high−low spread ≥75% of mean PT
     DRIFT_MIN = 4             # |3m bucket migration| ≥ 4 net analysts
@@ -2981,13 +2973,9 @@ class TechnicalLevelsAdapter:
     MA_BREACH_BAND = 0.02     # within ±2% of MA = "near the breach"
     HISTORY_PERIOD = "1y"     # ~252 trading days, enough for 200d SMA + 52w
 
-    # Same liquid-options universe as OptionsMarketAdapter — these are the
-    # names where technical levels actually matter for institutional flow.
-    TICKERS = [
-        "NVDA", "MSFT", "GOOGL", "META", "AMZN", "AAPL",
-        "AMD", "TSM", "ASML", "ARM", "AVGO", "PLTR",
-        "ORCL", "NOW", "CRM", "SNOW", "CRWD",
-    ]
+    # Full watchlist — technical levels (SMA crosses, 52w extremes, RSI,
+    # volume spikes) are meaningful for all 34 liquid watchlist names.
+    TICKERS = W.TICKERS
 
     def fetch(self) -> list[dict]:
         try:
@@ -3328,9 +3316,14 @@ class EarningsTranscriptAdapter:
     # Restricting coverage keeps the feed signal-dense; Q1/Q2 transcripts repeat for
     # weeks otherwise. Off-list watchlist names still get 8-K and analyst signals.
     COVERAGE = (
-        "NVDA", "AMD", "AVGO", "TSM", "ARM", "MU", "ANET",
+        # Semis & hardware (full watchlist minus energy names)
+        "NVDA", "AMD", "AVGO", "TSM", "ASML", "ARM", "MU", "ANET",
+        "QCOM", "MRVL", "INTC", "SMCI", "VRT", "DELL",
+        # Hyperscalers & big tech
         "MSFT", "GOOGL", "AMZN", "META", "AAPL",
-        "PLTR", "ORCL", "NOW", "CRM", "SNOW",
+        # AI-software
+        "PLTR", "ORCL", "NOW", "CRM", "SNOW", "CRWD", "ADBE",
+        # S5 energy/power — skip VST/CEG/GEV/ETN: transcript API coverage sparse
     )
 
     # Forward-guidance signal: a verb pattern bound to a forward time window.

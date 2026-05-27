@@ -429,6 +429,10 @@ SOURCE_RELIABILITY = {
     # time the 13F is public. Still a strong smart-money flow signal that
     # quant funds pay Novus/Bloomberg five figures/yr for in aggregated form.
     "institutional_13f": 0.88,
+    # Quarterly SEC XBRL revenue velocity + RPO + gross margin for AMAT/LRCX/KLAC.
+    # Same primary-filing tier as hyperscaler_financials (0.95); emits only when
+    # a material threshold is crossed (rev YoY ≥10%, RPO QoQ ≥10%, GM swing ≥2pp).
+    "semi_equipment_bookings": 0.95,
 }
 
 # Job-posting velocity targets — public Greenhouse + Lever boards. Source the
