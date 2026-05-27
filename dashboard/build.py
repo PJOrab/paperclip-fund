@@ -6611,6 +6611,29 @@ main:focus{outline:none}
     transition-duration:.001ms!important;scroll-behavior:auto!important}
   .brief-proc-icon{animation:none!important}
 }
+
+/* ── Mobile Quick View (HED-159) ──────────────────────────────────────────── */
+/* Shown only on mobile (<640px). Collapsed grid of the 4 most critical KPIs
+   a PM needs at market open: book P&L, top mover, macro regime, next catalyst. */
+.mqv{display:none}
+@media(max-width:640px){
+  .mqv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 6px;padding:0}
+  .mqv-card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:3px}
+  .mqv-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:700}
+  .mqv-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;color:var(--txt)}
+  .mqv-val-pos{color:#3fb950}
+  .mqv-val-neg{color:#f85149}
+  .mqv-val-neu{color:var(--mut)}
+  .mqv-sub{font-size:10px;color:var(--mut);margin-top:2px}
+  .mqv-badge{display:inline-block;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:2px 5px;border-radius:3px;margin-top:3px}
+  .mqv-badge-g{background:rgba(63,185,80,.18);color:#3fb950}
+  .mqv-badge-a{background:rgba(227,179,65,.18);color:#e3b341}
+  .mqv-badge-r{background:rgba(248,81,73,.18);color:#f85149}
+  .mqv-badge-b{background:rgba(88,166,255,.18);color:#58a6ff}
+  .mqv-refresh{font-size:8px;color:var(--mut);text-align:right;margin-top:4px;grid-column:1/-1}
+  .mqv-full{grid-column:1/-1}
+}
+/* ─────────────────────────────────────────────────────────────────────────── */
 </style></head>
 <body>
 <a href="#main" class="skip-link">Zum Briefing springen</a>
@@ -6628,6 +6651,10 @@ main:focus{outline:none}
   <!-- Book-Tape (HED-150 Zyklus 191): sticky strip of all active calls under the status bar.
        Mini-tile per thesis · live P&L · click scrolls to Position-Matrix. -->
   <div id="pf-book-tape" class="pf-bt-strip" aria-label="Active Calls — Live P&L Tape" hidden></div>
+
+  <!-- Mobile Quick View (HED-159 Zyklus 224): compact at-a-glance card grid shown only on mobile.
+       Book P&L · Top Mover · Macro Regime · Next Catalyst. Rendered by initMobileQuickView(). -->
+  <div id="mqv-root" class="mqv" aria-label="Quick View — Book PnL, Top Mover, Macro, Catalyst"></div>
 
   <!-- Realized P&L · Closed-Trade Equity Curve (HED-150 Zyklus 214/216/218): canonical track record.
        Z218: promoted to TOP of page so an LP sees the closed-trade equity curve first, above
@@ -22070,6 +22097,126 @@ function esc(s){return (s||"").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":
 })();
 
 ["macropulse","briefing","trackrecord","portfolioview","catalysts","sectorview","universe-scanner","consspread","earnplay","qualityscore","epsrev","techlevels","insidertape","opttape","ivrvedge","signalmatrix","pos-map","realized-curve","thesis-cards","perf-attrib"].forEach(id=>{const el=$(id);if(el)el.setAttribute("aria-busy","false");});
+
+// Mobile Quick View (HED-159 Zyklus 224): compact above-the-fold grid for phones.
+// Shows only on <640px. 4 cards: Book P&L, Top Mover, Macro Regime, Next Catalyst.
+(function initMobileQuickView(){
+  const root=document.getElementById("mqv-root"); if(!root) return;
+  // Only render on mobile (CSS shows it, but avoid DOM work on desktop)
+  if(window.innerWidth>640 && !window._mqvForce) return;
+
+  const tr=D.track_record||{}, sv=D.sector_view||{}, mp=D.macro_pulse||{};
+  const active=(tr.theses||[]).filter(t=>t.verdict==="too_early"||(!t.verdict&&t.earliest_score_date));
+
+  // Build price map from sector_view
+  const priceMap={};
+  (sv.sectors||[]).forEach(s=>(s.tickers||[]).forEach(t=>{if(t&&t.ticker&&t.price!=null)priceMap[String(t.ticker).toUpperCase()]=t.price;}));
+
+  // Card 1: Book P&L
+  function bookCard(){
+    const priced=active.filter(t=>{
+      const tk=(t.tickers||[])[0]; return tk&&t.baseline_price!=null&&priceMap[String(tk).toUpperCase()]!=null;
+    });
+    if(!priced.length) return `<div class="mqv-card">
+      <span class="mqv-lbl">Buch P&amp;L</span>
+      <span class="mqv-val mqv-val-neu">—</span>
+      <span class="mqv-sub">Keine Preisdaten</span>
+    </div>`;
+    const wSum=priced.reduce((s,t)=>s+(t.conviction||0),0);
+    const bookPnl=priced.reduce((s,t)=>{
+      const tk=String((t.tickers||[])[0]).toUpperCase();
+      const cur=priceMap[tk]; const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+      return s+(t.conviction||0)*((cur-t.baseline_price)/t.baseline_price*100)*sign;
+    },0)/(wSum||1);
+    const cls=bookPnl>=0.05?"mqv-val-pos":bookPnl<=-0.05?"mqv-val-neg":"mqv-val-neu";
+    const sign=bookPnl>=0?"+":"";
+    const liveTag=(window._liveYahoo&&Object.keys(window._liveYahoo).length)?' <span class="mqv-badge mqv-badge-b">Live</span>':"";
+    return `<div class="mqv-card">
+      <span class="mqv-lbl">Buch P&amp;L (unreal.)</span>
+      <span class="mqv-val ${cls}">${sign}${bookPnl.toFixed(2)}%</span>
+      <span class="mqv-sub">${priced.length} von ${active.length} Calls bepreist</span>
+      ${liveTag}
+    </div>`;
+  }
+
+  // Card 2: Top Mover (biggest absolute P&L move in the book today)
+  function topMoverCard(){
+    if(!active.length) return `<div class="mqv-card"><span class="mqv-lbl">Top Mover</span><span class="mqv-val mqv-val-neu">—</span><span class="mqv-sub">Keine aktiven Calls</span></div>`;
+    let best=null, bestAbs=0;
+    active.forEach(t=>{
+      const tk=String((t.tickers||[])[0]||"").toUpperCase();
+      const cur=priceMap[tk]; if(!cur||!t.baseline_price) return;
+      const sign=(t.direction||"").toLowerCase()==="short"?-1:1;
+      const d=(cur-t.baseline_price)/t.baseline_price*100*sign;
+      if(Math.abs(d)>bestAbs){bestAbs=Math.abs(d);best={tk,d,label:t.label||tk};}
+    });
+    if(!best) return `<div class="mqv-card"><span class="mqv-lbl">Top Mover</span><span class="mqv-val mqv-val-neu">—</span><span class="mqv-sub">Keine Preisänderung</span></div>`;
+    const cls=best.d>=0?"mqv-val-pos":"mqv-val-neg";
+    const sign=best.d>=0?"+":"";
+    const badge=best.d>=1?"mqv-badge-g":best.d<=-1?"mqv-badge-r":"mqv-badge-a";
+    return `<div class="mqv-card">
+      <span class="mqv-lbl">Top Mover</span>
+      <span class="mqv-val ${cls}">${sign}${best.d.toFixed(2)}%</span>
+      <span class="mqv-sub">${best.tk}</span>
+      <span class="mqv-badge ${badge}">${best.d>=0?"Bull":"Bear"}</span>
+    </div>`;
+  }
+
+  // Card 3: Macro Regime (from macro_pulse verdict)
+  function macroCard(){
+    const v=mp.verdict||{}; const tiles=mp.tiles||[];
+    const label=v.label||"—"; const read=v.tech_read||"";
+    const vixTile=tiles.find(t=>t.sid==="VIXCLS");
+    const vixVal=vixTile?vixTile.display:"—";
+    const badge=v.color==="g"?"mqv-badge-g":v.color==="r"?"mqv-badge-r":v.color==="a"?"mqv-badge-a":"mqv-badge-b";
+    return `<div class="mqv-card">
+      <span class="mqv-lbl">Macro-Regime</span>
+      <span class="mqv-val" style="font-size:14px">${label}</span>
+      <span class="mqv-sub">VIX ${vixVal}</span>
+      <span class="mqv-badge ${badge}">${read||label}</span>
+    </div>`;
+  }
+
+  // Card 4: Next Catalyst
+  function catalystCard(){
+    const cal=(sv.earnings_calendar||[]).slice().sort((a,b)=>(a.days_out||99)-(b.days_out||99));
+    if(!cal.length) return `<div class="mqv-card"><span class="mqv-lbl">Next Catalyst</span><span class="mqv-val mqv-val-neu">—</span><span class="mqv-sub">Keine Earnings in 14d</span></div>`;
+    const next=cal[0];
+    const d=next.days_out||99;
+    const urgTxt=d===0?"Heute":d===1?"Morgen":`${d}d`;
+    const badge=d<=2?"mqv-badge-r":d<=7?"mqv-badge-a":"mqv-badge-b";
+    return `<div class="mqv-card">
+      <span class="mqv-lbl">Next Catalyst</span>
+      <span class="mqv-val" style="font-size:16px">${next.ticker}</span>
+      <span class="mqv-sub">Earnings ${urgTxt}</span>
+      <span class="mqv-badge ${badge}">${urgTxt}</span>
+    </div>`;
+  }
+
+  const asOf=(sv.as_of||"").slice(0,16).replace("T"," ");
+  root.innerHTML=bookCard()+topMoverCard()+macroCard()+catalystCard()
+    +`<div class="mqv-refresh">Stand: ${asOf} UTC · Live-Preise aktualisieren alle 2 Min</div>`;
+
+  // Re-render after live prices load
+  window._mqvRerender=function(){
+    const newRoot=document.getElementById("mqv-root"); if(!newRoot) return;
+    newRoot.innerHTML=bookCard()+topMoverCard()+macroCard()+catalystCard()
+      +`<div class="mqv-refresh">Stand: ${asOf} UTC · <span style="color:#58a6ff">●</span> Live</div>`;
+  };
+})();
+
+// Re-render MQV after Yahoo live prices load
+const _origLiveFeedDone=window._mqvRerender;
+(function patchLiveYahooForMqv(){
+  const origFetch=window._liveYahooTs;
+  let _lastTs=origFetch||0;
+  setInterval(function(){
+    if(window._liveYahooTs&&window._liveYahooTs!==_lastTs){
+      _lastTs=window._liveYahooTs;
+      if(typeof window._mqvRerender==="function") window._mqvRerender();
+    }
+  },5000);
+})();
 
 // Live price feed (HED-159): fetch Yahoo Finance prices for active thesis tickers every 2 min.
 // Populates window._liveYahoo → triggers re-render of thesis cards and status bar.
